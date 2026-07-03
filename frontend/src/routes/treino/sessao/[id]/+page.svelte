@@ -113,8 +113,21 @@
 	</div>
 {:else}
 	<header class="mb-4">
-		<p class="text-sm font-semibold text-emerald-600">{m.workout_in_progress()}</p>
-		<h1 class="text-2xl font-bold">{routineName}</h1>
+		<div class="flex items-center gap-2">
+			<a
+				href="/treino"
+				aria-label={m.back()}
+				class="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-white text-slate-500 shadow-sm"
+			>
+				<svg viewBox="0 0 24 24" class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="2">
+					<path d="M15 6l-6 6 6 6" stroke-linecap="round" stroke-linejoin="round" />
+				</svg>
+			</a>
+			<div class="min-w-0">
+				<p class="text-sm font-semibold text-emerald-600">{m.workout_in_progress()}</p>
+				<h1 class="truncate text-2xl font-bold">{routineName}</h1>
+			</div>
+		</div>
 		<div class="mt-3 h-2 overflow-hidden rounded-full bg-slate-200">
 			<div
 				class="h-full rounded-full bg-emerald-600 transition-all"
@@ -157,34 +170,39 @@
 
 				<div class="space-y-2">
 					{#each block.sets as row (row.setNumber)}
-						<div
-							class="flex items-center gap-2 rounded-2xl p-1.5 {row.done ? 'bg-emerald-50' : 'bg-slate-50'}"
-						>
-							<span class="grid h-8 w-8 shrink-0 place-items-center text-sm font-bold text-slate-400">
-								{block.isCardio ? '⏱' : row.setNumber}
-							</span>
+						<div class="rounded-2xl p-3 {row.done ? 'bg-emerald-50' : 'bg-slate-50'}">
+							<div class="mb-2 flex items-center justify-between">
+								<span class="text-sm font-bold text-slate-500">
+									{block.isCardio ? m.cardio_label() : `${m.set_word()} ${row.setNumber}`}
+								</span>
+								<button
+									type="button"
+									aria-label={m.done()}
+									disabled={row.saving}
+									onclick={() => toggleSet(block, row)}
+									class="grid h-10 w-10 shrink-0 place-items-center rounded-xl text-xl font-bold transition-colors
+										{row.done ? 'bg-emerald-600 text-white' : 'border-2 border-slate-200 bg-white text-slate-300'}"
+								>
+									✓
+								</button>
+							</div>
 							{#if block.isCardio}
-								<div class="flex-1">
+								<div>
+									<p class="mb-1 text-xs font-semibold text-slate-500">{m.duration_label()}</p>
 									<Stepper bind:value={row.duration} min={1} max={300} step={1} unit={m.minutes_short()} />
 								</div>
 							{:else}
-								<div class="flex-1">
-									<Stepper bind:value={row.weight} min={0} max={1000} step={2.5} decimals={1} unit="kg" />
-								</div>
-								<div class="w-24 shrink-0">
-									<Stepper bind:value={row.reps} min={0} max={100} unit={m.reps_short()} />
+								<div class="grid grid-cols-2 gap-3">
+									<div>
+										<p class="mb-1 text-xs font-semibold text-slate-500">{m.weight()} (kg)</p>
+										<Stepper bind:value={row.weight} min={0} max={1000} step={2.5} decimals={1} />
+									</div>
+									<div>
+										<p class="mb-1 text-xs font-semibold text-slate-500">{m.reps_label()}</p>
+										<Stepper bind:value={row.reps} min={0} max={100} />
+									</div>
 								</div>
 							{/if}
-							<button
-								type="button"
-								aria-label={m.done()}
-								disabled={row.saving}
-								onclick={() => toggleSet(block, row)}
-								class="grid h-12 w-12 shrink-0 place-items-center rounded-2xl text-xl font-bold transition-colors
-									{row.done ? 'bg-emerald-600 text-white' : 'border-2 border-slate-200 bg-white text-slate-300'}"
-							>
-								✓
-							</button>
 						</div>
 					{/each}
 				</div>

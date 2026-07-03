@@ -4,12 +4,21 @@
 	import { goto } from '$app/navigation';
 	import favicon from '$lib/assets/favicon.svg';
 	import TabBar from '$lib/components/TabBar.svelte';
+	import Toast from '$lib/components/Toast.svelte';
 	import { bootstrap, session } from '$lib/session.svelte';
 
 	let { children } = $props();
 
 	const PUBLIC_ROUTES = ['/login', '/registro'];
 	const isPublic = $derived(PUBLIC_ROUTES.includes(page.url.pathname));
+
+	// Telas de foco (sub-rotas de treino/dieta): escondem a barra de abas
+	// para o usuário não sair sem querer no meio do fluxo.
+	const TAB_ROUTES = ['/', '/treino', '/dieta', '/progresso', '/perfil'];
+	const isFocusRoute = $derived(
+		!TAB_ROUTES.includes(page.url.pathname) &&
+			(page.url.pathname.startsWith('/treino/') || page.url.pathname.startsWith('/dieta/'))
+	);
 
 	bootstrap();
 
@@ -28,11 +37,17 @@
 	});
 
 	const showTabBar = $derived(
-		session.loaded && session.user?.has_profile && !isPublic && page.url.pathname !== '/onboarding'
+		session.loaded &&
+			session.user?.has_profile &&
+			!isPublic &&
+			!isFocusRoute &&
+			page.url.pathname !== '/onboarding'
 	);
 </script>
 
 <svelte:head><link rel="icon" href={favicon} /></svelte:head>
+
+<Toast />
 
 <div class="min-h-dvh bg-slate-50 text-slate-900">
 	{#if session.loaded || isPublic}

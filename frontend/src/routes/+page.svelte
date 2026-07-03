@@ -1,15 +1,20 @@
 <script lang="ts">
-	import { api, type GoalsOut } from '$lib/api';
+	import { api, localDay, type DiaryDay, type GoalsOut } from '$lib/api';
 	import { session } from '$lib/session.svelte';
 	import WaterCard from '$lib/components/WaterCard.svelte';
+	import MacroSummary from '$lib/components/MacroSummary.svelte';
 	import { m } from '$lib/paraglide/messages';
 	import { getLocale } from '$lib/paraglide/runtime';
 
 	let goals = $state<GoalsOut | null>(null);
+	let diary = $state<DiaryDay | null>(null);
+
+	const dietOn = $derived(session.profile?.diet_enabled ?? false);
 
 	$effect(() => {
 		if (session.user?.has_profile) {
 			api.getGoals().then((g) => (goals = g));
+			if (dietOn) api.getDiary(localDay()).then((d) => (diary = d));
 		}
 	});
 
@@ -31,37 +36,59 @@
 </header>
 
 {#if goals}
-	<section class="rounded-3xl bg-white p-6 shadow-sm">
-		<p class="text-sm font-semibold text-slate-500">{m.daily_target()}</p>
-		<p class="mt-1 text-5xl font-black tracking-tight">
-			{nf.format(goals.target_kcal)}
-			<span class="text-lg font-semibold text-slate-400">kcal</span>
-		</p>
-		<div class="mt-5 grid grid-cols-3 gap-2 border-t border-slate-100 pt-4">
-			<div>
-				<p class="text-xs font-semibold text-slate-500">{m.protein()}</p>
-				<p class="text-xl font-bold">
-					{goals.protein_g}<span class="text-sm font-medium text-slate-400">g</span>
-				</p>
+	{#if dietOn}
+		{#if diary}
+			<MacroSummary totals={diary.totals} goals={diary.goals} />
+			<a
+				href="/dieta"
+				class="mt-3 flex h-12 w-full items-center justify-center rounded-2xl bg-emerald-600 font-bold text-white active:bg-emerald-700"
+			>
+				+ {m.add_food()}
+			</a>
+		{/if}
+	{:else}
+		<section class="rounded-3xl bg-white p-6 shadow-sm">
+			<p class="text-sm font-semibold text-slate-500">{m.daily_target()}</p>
+			<p class="mt-1 text-5xl font-black tracking-tight">
+				{nf.format(goals.target_kcal)}
+				<span class="text-lg font-semibold text-slate-400">kcal</span>
+			</p>
+			<div class="mt-5 grid grid-cols-3 gap-2 border-t border-slate-100 pt-4">
+				<div>
+					<p class="text-xs font-semibold text-slate-500">{m.protein()}</p>
+					<p class="text-xl font-bold">{goals.protein_g}<span class="text-sm font-medium text-slate-400">g</span></p>
+				</div>
+				<div>
+					<p class="text-xs font-semibold text-slate-500">{m.carbs()}</p>
+					<p class="text-xl font-bold">{goals.carbs_g}<span class="text-sm font-medium text-slate-400">g</span></p>
+				</div>
+				<div>
+					<p class="text-xs font-semibold text-slate-500">{m.fat()}</p>
+					<p class="text-xl font-bold">{goals.fat_g}<span class="text-sm font-medium text-slate-400">g</span></p>
+				</div>
 			</div>
-			<div>
-				<p class="text-xs font-semibold text-slate-500">{m.carbs()}</p>
-				<p class="text-xl font-bold">
-					{goals.carbs_g}<span class="text-sm font-medium text-slate-400">g</span>
-				</p>
-			</div>
-			<div>
-				<p class="text-xs font-semibold text-slate-500">{m.fat()}</p>
-				<p class="text-xl font-bold">
-					{goals.fat_g}<span class="text-sm font-medium text-slate-400">g</span>
-				</p>
-			</div>
-		</div>
-	</section>
+		</section>
+	{/if}
 
 	<div class="mt-3">
 		<WaterCard />
 	</div>
+
+	<a
+		href="/treino"
+		class="mt-3 flex items-center justify-between rounded-3xl bg-white p-5 shadow-sm active:bg-slate-50"
+	>
+		<div class="flex items-center gap-3">
+			<span class="grid h-11 w-11 place-items-center rounded-2xl bg-emerald-50 text-emerald-600">
+				<svg viewBox="0 0 24 24" class="h-6 w-6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6.5 6.5v11M17.5 6.5v11M3 9.5v5M21 9.5v5M6.5 12h11" /></svg>
+			</span>
+			<div>
+				<p class="font-bold text-slate-900">{m.tab_workout()}</p>
+				<p class="text-sm text-slate-500">{m.go_to_workouts()}</p>
+			</div>
+		</div>
+		<svg viewBox="0 0 24 24" class="h-5 w-5 text-slate-300" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 6l6 6-6 6" stroke-linecap="round" stroke-linejoin="round" /></svg>
+	</a>
 
 	<section class="mt-3 grid grid-cols-3 gap-3">
 		<div class="rounded-3xl bg-white p-4 shadow-sm">
@@ -77,15 +104,8 @@
 			<p class="mt-1 text-xl font-bold">{nf.format(goals.bmr_kcal)}</p>
 		</div>
 	</section>
-
-	<section class="mt-3 rounded-3xl border-2 border-dashed border-slate-200 p-6 text-center">
-		<p class="font-semibold text-slate-600">{m.workout_coming()}</p>
-		<p class="mt-1 text-sm text-slate-400">{m.phase_hint()}</p>
-	</section>
 {:else}
 	<div class="flex justify-center py-16">
-		<div
-			class="h-8 w-8 animate-spin rounded-full border-4 border-emerald-600 border-t-transparent"
-		></div>
+		<div class="h-8 w-8 animate-spin rounded-full border-4 border-emerald-600 border-t-transparent"></div>
 	</div>
 {/if}

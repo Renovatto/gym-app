@@ -45,14 +45,14 @@
 </script>
 
 <div
-	class="fixed inset-0 z-50 flex items-end justify-center bg-black/60 sm:items-center sm:p-4"
+	class="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4"
 	role="button"
 	tabindex="-1"
 	onclick={onClose}
 	onkeydown={(e) => e.key === 'Escape' && onClose()}
 >
 	<div
-		class="w-full max-w-md rounded-t-3xl bg-white p-5 sm:rounded-3xl"
+		class="max-h-[90dvh] w-full max-w-md overflow-y-auto rounded-3xl bg-white p-5"
 		role="dialog"
 		tabindex="-1"
 		onclick={(e) => e.stopPropagation()}

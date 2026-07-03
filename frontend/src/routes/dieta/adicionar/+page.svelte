@@ -8,6 +8,7 @@
 	import { getLocale } from '$lib/paraglide/runtime';
 
 	const meal = $derived((page.url.searchParams.get('meal') ?? 'breakfast') as MealType);
+	const entryDay = $derived(page.url.searchParams.get('day') ?? localDay());
 	const nf = new Intl.NumberFormat(getLocale());
 
 	let tab = $state<'foods' | 'recipes'>('foods');
@@ -22,6 +23,15 @@
 	let grams = $state(100);
 	let servings = $state(1);
 	let saving = $state(false);
+
+	// quantidade por porção (ex.: 2 unidades) ou por gramas
+	let qtyMode = $state<'portion' | 'grams'>('grams');
+	let selPortion = $state<{ label_key: string; grams: number } | null>(null);
+	let count = $state(1);
+
+	const effectiveGrams = $derived(
+		qtyMode === 'portion' && selPortion ? count * selPortion.grams : grams
+	);
 
 	async function loadFoods(): Promise<void> {
 		loading = true;
@@ -42,7 +52,17 @@
 
 	function pickFood(food: Food): void {
 		selFood = food;
-		grams = food.default_portion_g;
+		count = 1;
+		// se o alimento tem porções (ex.: unidade de 50g), começa no modo porção
+		if (food.portions.length > 0) {
+			selPortion = food.portions[0];
+			qtyMode = 'portion';
+			grams = food.default_portion_g;
+		} else {
+			selPortion = null;
+			qtyMode = 'grams';
+			grams = food.default_portion_g;
+		}
 	}
 
 	function pickRecipe(recipe: Recipe): void {
@@ -53,10 +73,10 @@
 	const foodPreview = $derived(
 		selFood
 			? {
-					kcal: (selFood.kcal * grams) / 100,
-					protein: (selFood.protein_g * grams) / 100,
-					carbs: (selFood.carbs_g * grams) / 100,
-					fat: (selFood.fat_g * grams) / 100
+					kcal: (selFood.kcal * effectiveGrams) / 100,
+					protein: (selFood.protein_g * effectiveGrams) / 100,
+					carbs: (selFood.carbs_g * effectiveGrams) / 100,
+					fat: (selFood.fat_g * effectiveGrams) / 100
 				}
 			: null
 	);
@@ -76,11 +96,11 @@
 		saving = true;
 		try {
 			await api.addDiaryEntry({
-				entry_date: localDay(),
+				entry_date: entryDay,
 				meal_type: meal,
 				source: 'food',
 				food_id: selFood.id,
-				quantity: grams
+				quantity: effectiveGrams
 			});
 			await goto('/dieta');
 		} finally {
@@ -93,7 +113,7 @@
 		saving = true;
 		try {
 			await api.addDiaryEntry({
-				entry_date: localDay(),
+				entry_date: entryDay,
 				meal_type: meal,
 				source: 'recipe',
 				recipe_id: selRecipe.id,
@@ -200,43 +220,57 @@
 <!-- Painel de quantidade (alimento) -->
 {#if selFood}
 	<div
-		class="fixed inset-0 z-50 flex items-end justify-center bg-black/50"
+		class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
 		role="button"
 		tabindex="-1"
 		onclick={() => (selFood = null)}
 		onkeydown={(e) => e.key === 'Escape' && (selFood = null)}
 	>
 		<div
-			class="w-full max-w-md rounded-t-3xl bg-white p-5"
+			class="max-h-[90dvh] w-full max-w-md overflow-y-auto rounded-3xl bg-white p-5"
 			role="dialog"
 			tabindex="-1"
 			onclick={(e) => e.stopPropagation()}
 			onkeydown={() => {}}
 		>
 			<h2 class="text-lg font-bold text-slate-900">{selFood.name}</h2>
+
 			{#if selFood.portions.length > 0}
-				<div class="mt-3 flex flex-wrap gap-2">
+				<p class="mt-3 mb-2 text-xs font-semibold text-slate-500">{m.measure_by()}</p>
+				<div class="flex flex-wrap gap-2">
 					{#each selFood.portions as portion (portion.label_key)}
 						<button
 							type="button"
-							onclick={() => (grams = portion.grams)}
-							class="rounded-full border-2 px-3 py-1.5 text-sm font-semibold {grams === portion.grams ? 'border-emerald-600 bg-emerald-50 text-emerald-800' : 'border-slate-200 text-slate-600'}"
+							onclick={() => {
+								qtyMode = 'portion';
+								selPortion = portion;
+							}}
+							class="rounded-full border-2 px-3 py-1.5 text-sm font-semibold {qtyMode === 'portion' && selPortion?.label_key === portion.label_key ? 'border-emerald-600 bg-emerald-50 text-emerald-800' : 'border-slate-200 text-slate-600'}"
 						>
 							{portionLabel(portion.label_key, portion.grams)}
 						</button>
 					{/each}
 					<button
 						type="button"
-						onclick={() => (grams = 100)}
-						class="rounded-full border-2 px-3 py-1.5 text-sm font-semibold {grams === 100 ? 'border-emerald-600 bg-emerald-50 text-emerald-800' : 'border-slate-200 text-slate-600'}"
+						onclick={() => (qtyMode = 'grams')}
+						class="rounded-full border-2 px-3 py-1.5 text-sm font-semibold {qtyMode === 'grams' ? 'border-emerald-600 bg-emerald-50 text-emerald-800' : 'border-slate-200 text-slate-600'}"
 					>
-						100 g
+						{m.by_grams()}
 					</button>
 				</div>
 			{/if}
+
 			<div class="mt-4">
-				<Stepper bind:value={grams} min={1} max={2000} step={5} unit="g" />
+				{#if qtyMode === 'portion' && selPortion}
+					<p class="mb-1 text-center text-xs text-slate-400">
+						{count} × {portionLabel(selPortion.label_key, selPortion.grams)} = {effectiveGrams} g
+					</p>
+					<Stepper bind:value={count} min={1} max={50} step={1} unit="×" />
+				{:else}
+					<Stepper bind:value={grams} min={1} max={2000} step={5} unit="g" />
+				{/if}
 			</div>
+
 			{#if foodPreview}
 				<div class="mt-4 flex justify-around rounded-2xl bg-slate-50 py-3 text-center">
 					<div><p class="text-lg font-bold">{nf.format(Math.round(foodPreview.kcal))}</p><p class="text-xs text-slate-400">kcal</p></div>
@@ -260,14 +294,14 @@
 <!-- Painel de quantidade (receita) -->
 {#if selRecipe}
 	<div
-		class="fixed inset-0 z-50 flex items-end justify-center bg-black/50"
+		class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
 		role="button"
 		tabindex="-1"
 		onclick={() => (selRecipe = null)}
 		onkeydown={(e) => e.key === 'Escape' && (selRecipe = null)}
 	>
 		<div
-			class="w-full max-w-md rounded-t-3xl bg-white p-5"
+			class="max-h-[90dvh] w-full max-w-md overflow-y-auto rounded-3xl bg-white p-5"
 			role="dialog"
 			tabindex="-1"
 			onclick={(e) => e.stopPropagation()}

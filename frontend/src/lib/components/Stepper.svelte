@@ -37,26 +37,26 @@
 	}
 </script>
 
-<div class="flex items-center gap-3">
+<div class="flex items-center gap-1.5">
 	<button
 		type="button"
 		aria-label="-"
-		class="h-14 w-14 shrink-0 rounded-2xl border-2 border-slate-200 bg-white text-2xl font-bold text-slate-700 active:bg-slate-100"
+		class="h-12 w-12 shrink-0 rounded-xl border-2 border-slate-200 bg-white text-2xl font-bold text-slate-700 active:bg-slate-100"
 		onclick={() => nudge(-1)}>−</button
 	>
-	<div class="flex flex-1 items-baseline justify-center gap-1">
+	<div class="flex min-w-0 flex-1 items-baseline justify-center gap-0.5">
 		<input
 			inputmode="decimal"
-			class="w-24 border-none bg-transparent text-center text-3xl font-bold text-slate-900 outline-none"
+			class="w-full min-w-0 border-none bg-transparent text-center text-2xl font-bold text-slate-900 outline-none"
 			value={value.toFixed(decimals)}
 			onchange={onInput}
 		/>
-		{#if unit}<span class="text-lg text-slate-500">{unit}</span>{/if}
+		{#if unit}<span class="shrink-0 text-xs text-slate-400">{unit}</span>{/if}
 	</div>
 	<button
 		type="button"
 		aria-label="+"
-		class="h-14 w-14 shrink-0 rounded-2xl border-2 border-slate-200 bg-white text-2xl font-bold text-slate-700 active:bg-slate-100"
+		class="h-12 w-12 shrink-0 rounded-xl border-2 border-slate-200 bg-white text-2xl font-bold text-slate-700 active:bg-slate-100"
 		onclick={() => nudge(1)}>+</button
 	>
 </div>

@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { goto } from '$app/navigation';
-	import { api, type Routine, type SessionSummary } from '$lib/api';
+	import { api, localDay, type Routine, type SessionSummary } from '$lib/api';
+	import { showToast } from '$lib/toast.svelte';
 	import { m } from '$lib/paraglide/messages';
 	import { getLocale } from '$lib/paraglide/runtime';
 
@@ -40,10 +41,20 @@
 		try {
 			await api.completeRoutine(routineId);
 			await load();
+			showToast(m.workout_done_toast());
 		} finally {
 			completingId = null;
 		}
 	}
+
+	// rotinas com sessão concluída hoje (mostra selo "feito hoje")
+	const doneTodayNames = $derived(
+		new Set(
+			sessions
+				.filter((s) => s.finished_at && s.started_at.slice(0, 10) === localDay())
+				.map((s) => s.routine_name)
+		)
+	);
 
 	$effect(() => {
 		load();
@@ -107,14 +118,37 @@
 		</div>
 	{:else}
 		{#if showTemplates}
-			<div class="mb-3">{@render templatePicker()}</div>
+			<div
+				class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
+				role="button"
+				tabindex="-1"
+				onclick={() => (showTemplates = false)}
+				onkeydown={(e) => e.key === 'Escape' && (showTemplates = false)}
+			>
+				<div
+					class="w-full max-w-md"
+					role="dialog"
+					tabindex="-1"
+					onclick={(e) => e.stopPropagation()}
+					onkeydown={() => {}}
+				>
+					{@render templatePicker()}
+				</div>
+			</div>
 		{/if}
 		<div class="space-y-3">
 			{#each routines as routine (routine.id)}
 				<section class="rounded-3xl bg-white p-5 shadow-sm">
 					<div class="flex items-start justify-between gap-2">
 						<div class="min-w-0">
-							<h2 class="truncate text-lg font-bold text-slate-900">{routine.name}</h2>
+							<div class="flex items-center gap-2">
+								<h2 class="truncate text-lg font-bold text-slate-900">{routine.name}</h2>
+								{#if doneTodayNames.has(routine.name)}
+									<span class="shrink-0 rounded-full bg-emerald-100 px-2 py-0.5 text-xs font-bold text-emerald-700">
+										✓ {m.done_today()}
+									</span>
+								{/if}
+							</div>
 							<p class="text-sm text-slate-500">
 								{routine.items.length}
 								{routine.items.length === 1 ? m.exercise_singular() : m.exercise_plural()}
