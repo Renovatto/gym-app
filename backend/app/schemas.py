@@ -126,6 +126,16 @@ class LocaleUpdate(BaseModel):
     locale: str = Field(pattern=r"^(pt-BR|en|es)$")
 
 
+class WeekSummaryOut(BaseModel):
+    workouts: int
+    total_volume_kg: float
+    total_sets: int
+    avg_kcal: int
+    days_logged_diet: int
+    avg_water_ml: int
+    days_with_water: int
+
+
 class PasswordChange(BaseModel):
     current_password: str
     new_password: str = Field(min_length=8, max_length=128)

@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { api, type WeightHistory } from '$lib/api';
+	import { api, localDay, type WeekSummary, type WeightHistory } from '$lib/api';
 	import Stepper from '$lib/components/Stepper.svelte';
 	import WeightChart from '$lib/components/WeightChart.svelte';
 	import { bootstrap, session } from '$lib/session.svelte';
@@ -7,16 +7,19 @@
 	import { getLocale } from '$lib/paraglide/runtime';
 
 	let history = $state<WeightHistory | null>(null);
+	let week = $state<WeekSummary | null>(null);
 	let newWeight = $state(session.profile?.weight_kg ?? 75);
 	let busy = $state(false);
 	let adding = $state(false);
 
+	const dietOn = $derived(session.profile?.diet_enabled ?? false);
 	const nf = new Intl.NumberFormat(getLocale());
 	const df = new Intl.DateTimeFormat(getLocale(), { day: '2-digit', month: 'short' });
 
 	async function load(): Promise<void> {
 		history = await api.getWeightHistory();
 		if (history.current_kg !== null) newWeight = history.current_kg;
+		week = await api.getWeekSummary(localDay(), new Date().getTimezoneOffset());
 	}
 
 	async function save(): Promise<void> {
@@ -44,7 +47,41 @@
 	const reversedLogs = $derived(history ? [...history.logs].reverse() : []);
 </script>
 
-<h1 class="mb-6 text-2xl font-bold">{m.tab_progress()}</h1>
+<h1 class="mb-4 text-2xl font-bold">{m.tab_progress()}</h1>
+
+{#if week}
+	<section class="mb-4 rounded-3xl bg-white p-5 shadow-sm">
+		<p class="mb-3 text-sm font-bold text-slate-400 uppercase">{m.this_week()}</p>
+		<div class="grid grid-cols-2 gap-3">
+			<div class="rounded-2xl bg-slate-50 p-3">
+				<p class="text-2xl font-black text-slate-900">{week.workouts}</p>
+				<p class="text-xs font-semibold text-slate-500">{m.workouts_label()}</p>
+			</div>
+			<div class="rounded-2xl bg-slate-50 p-3">
+				<p class="text-2xl font-black text-slate-900">
+					{nf.format(week.total_volume_kg)}<span class="text-sm font-medium text-slate-400"> kg</span>
+				</p>
+				<p class="text-xs font-semibold text-slate-500">{m.volume_label()}</p>
+			</div>
+			{#if dietOn}
+				<div class="rounded-2xl bg-slate-50 p-3">
+					<p class="text-2xl font-black text-slate-900">
+						{week.days_logged_diet > 0 ? nf.format(week.avg_kcal) : '—'}
+						{#if week.days_logged_diet > 0}<span class="text-sm font-medium text-slate-400"> kcal</span>{/if}
+					</p>
+					<p class="text-xs font-semibold text-slate-500">{m.avg_calories()}</p>
+				</div>
+			{/if}
+			<div class="rounded-2xl bg-slate-50 p-3">
+				<p class="text-2xl font-black text-slate-900">
+					{week.days_with_water > 0 ? nf.format(week.avg_water_ml / 1000) : '—'}
+					{#if week.days_with_water > 0}<span class="text-sm font-medium text-slate-400"> L</span>{/if}
+				</p>
+				<p class="text-xs font-semibold text-slate-500">{m.avg_water()}</p>
+			</div>
+		</div>
+	</section>
+{/if}
 
 {#if history}
 	<section class="rounded-3xl bg-white p-6 shadow-sm">

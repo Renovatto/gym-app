@@ -183,6 +183,16 @@ export interface SessionSummary {
 	total_volume_kg: number;
 }
 
+export interface WeekSummary {
+	workouts: number;
+	total_volume_kg: number;
+	total_sets: number;
+	avg_kcal: number;
+	days_logged_diet: number;
+	avg_water_ml: number;
+	days_with_water: number;
+}
+
 // --- Dieta ---
 export type FoodCategory =
 	| 'protein'
@@ -441,6 +451,8 @@ export const api = {
 	finishSession: (sessionId: number) =>
 		request<WorkoutSession>(`/me/sessions/${sessionId}/finish`, { method: 'POST' }),
 	getSessions: () => request<SessionSummary[]>('/me/sessions'),
+	getWeekSummary: (day: string, tzOffset: number) =>
+		request<WeekSummary>(`/me/summary/week?day=${day}&tz_offset=${tzOffset}`),
 	// dieta
 	getFoods: (q = '', category?: FoodCategory) => {
 		const params = new URLSearchParams();
