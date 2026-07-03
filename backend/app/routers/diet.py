@@ -149,8 +149,8 @@ def update_recipe(
     recipe = _get_owned_recipe(session, recipe_id, user.id)
     recipe.name = data.name.strip()
     recipe.servings = data.servings
-    for ing in list(recipe.ingredients):
-        session.delete(ing)
+    # limpar pela coleção (delete-orphan) evita re-adicionar instâncias deletadas
+    recipe.ingredients.clear()
     session.flush()
     for ing in data.ingredients:
         if _visible_food(session, ing.food_id, user.id) is None:

@@ -181,6 +181,10 @@
 							<Stepper bind:value={item.target_reps} min={1} max={100} />
 						</div>
 					</div>
+					<div class="mt-3">
+						<p class="mb-1 text-xs font-semibold text-slate-500">{m.rest_seconds_label()}</p>
+						<Stepper bind:value={item.rest_seconds} min={0} max={600} step={15} unit="s" />
+					</div>
 				{/if}
 			</section>
 		{/each}

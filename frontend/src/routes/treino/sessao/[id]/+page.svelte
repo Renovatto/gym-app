@@ -4,6 +4,7 @@
 	import { api, type Exercise, type RoutineItem } from '$lib/api';
 	import ExercisePhotoModal from '$lib/components/ExercisePhotoModal.svelte';
 	import Stepper from '$lib/components/Stepper.svelte';
+	import { showToast } from '$lib/toast.svelte';
 	import { m } from '$lib/paraglide/messages';
 
 	interface SetRow {
@@ -29,9 +30,72 @@
 	let finishing = $state(false);
 	let photoOf = $state<Exercise | null>(null);
 
+	// relógio único: tempo total da sessão + contagem do descanso
+	let startedAtMs = $state(0);
+	let now = $state(Date.now());
+	let restRemaining = $state(0);
+	let restTotal = $state(0);
+	let restActive = $state(false);
+
+	function formatTime(totalSeconds: number): string {
+		const s = Math.max(0, Math.floor(totalSeconds));
+		const h = Math.floor(s / 3600);
+		const mm = String(Math.floor((s % 3600) / 60)).padStart(2, '0');
+		const ss = String(s % 60).padStart(2, '0');
+		return h > 0 ? `${h}:${mm}:${ss}` : `${mm}:${ss}`;
+	}
+
+	const elapsed = $derived(startedAtMs > 0 ? (now - startedAtMs) / 1000 : 0);
+
+	function beep(): void {
+		try {
+			const ctx = new AudioContext();
+			const osc = ctx.createOscillator();
+			const gain = ctx.createGain();
+			osc.connect(gain);
+			gain.connect(ctx.destination);
+			osc.frequency.value = 880;
+			gain.gain.setValueAtTime(0.3, ctx.currentTime);
+			gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.5);
+			osc.start();
+			osc.stop(ctx.currentTime + 0.5);
+		} catch {
+			// áudio bloqueado: vibração já cobre
+		}
+	}
+
+	function startRest(seconds: number): void {
+		restTotal = seconds;
+		restRemaining = seconds;
+		restActive = true;
+	}
+
+	function stopRest(): void {
+		restActive = false;
+		restRemaining = 0;
+	}
+
+	$effect(() => {
+		const timer = setInterval(() => {
+			now = Date.now();
+			if (restActive) {
+				restRemaining -= 1;
+				if (restRemaining <= 0) {
+					restActive = false;
+					restRemaining = 0;
+					navigator.vibrate?.(400);
+					beep();
+				}
+			}
+		}, 1000);
+		return () => clearInterval(timer);
+	});
+
 	async function load(): Promise<void> {
 		const session = await api.getSession(sessionId);
 		routineName = session.routine_name ?? m.free_workout();
+		// backend envia UTC sem sufixo Z
+		startedAtMs = new Date(session.started_at + 'Z').getTime();
 		if (session.routine_id === null) {
 			blocks = [];
 			loading = false;
@@ -77,6 +141,9 @@
 				});
 				row.logId = log.id;
 				row.done = true;
+				if (!block.isCardio) {
+					startRest(block.item.rest_seconds || 90);
+				}
 			} else if (row.logId !== null) {
 				await api.deleteSet(sessionId, row.logId);
 				row.logId = null;
@@ -89,8 +156,10 @@
 
 	async function finish(): Promise<void> {
 		finishing = true;
+		stopRest();
 		try {
 			await api.finishSession(sessionId);
+			showToast(m.workout_finished_in({ time: formatTime(elapsed) }));
 			await goto('/treino');
 		} finally {
 			finishing = false;
@@ -123,9 +192,15 @@
 					<path d="M15 6l-6 6 6 6" stroke-linecap="round" stroke-linejoin="round" />
 				</svg>
 			</a>
-			<div class="min-w-0">
+			<div class="min-w-0 flex-1">
 				<p class="text-sm font-semibold text-emerald-600">{m.workout_in_progress()}</p>
 				<h1 class="truncate text-2xl font-bold">{routineName}</h1>
+			</div>
+			<div class="shrink-0 rounded-2xl bg-slate-900 px-3 py-2 text-center">
+				<p class="font-mono text-lg leading-none font-bold text-white tabular-nums">
+					{formatTime(elapsed)}
+				</p>
+				<p class="mt-0.5 text-[10px] font-semibold text-slate-400 uppercase">{m.total_time()}</p>
 			</div>
 		</div>
 		<div class="mt-3 h-2 overflow-hidden rounded-full bg-slate-200">
@@ -214,10 +289,49 @@
 		type="button"
 		disabled={finishing}
 		onclick={finish}
-		class="mt-5 h-14 w-full rounded-2xl bg-slate-900 text-lg font-bold text-white active:bg-slate-800 disabled:opacity-50"
+		class="mt-5 h-14 w-full rounded-2xl bg-slate-900 text-lg font-bold text-white active:bg-slate-800 disabled:opacity-50
+			{restActive ? 'mb-24' : ''}"
 	>
 		{m.finish_workout()}
 	</button>
+{/if}
+
+{#if restActive}
+	<div class="fixed inset-x-0 bottom-0 z-20 bg-slate-900 pb-[env(safe-area-inset-bottom)] text-white">
+		<div class="h-1 bg-slate-700">
+			<div
+				class="h-full bg-emerald-400 transition-all duration-1000 ease-linear"
+				style="width: {restTotal > 0 ? (restRemaining / restTotal) * 100 : 0}%"
+			></div>
+		</div>
+		<div class="mx-auto flex max-w-md items-center justify-between gap-3 px-4 py-3">
+			<div>
+				<p class="text-[10px] font-semibold text-slate-400 uppercase">{m.rest_label()}</p>
+				<p class="font-mono text-3xl leading-none font-black tabular-nums">
+					{formatTime(restRemaining)}
+				</p>
+			</div>
+			<div class="flex gap-2">
+				<button
+					type="button"
+					onclick={() => {
+						restRemaining += 30;
+						restTotal += 30;
+					}}
+					class="h-12 rounded-2xl bg-slate-700 px-4 font-bold active:bg-slate-600"
+				>
+					{m.plus_30s()}
+				</button>
+				<button
+					type="button"
+					onclick={stopRest}
+					class="h-12 rounded-2xl bg-emerald-600 px-5 font-bold active:bg-emerald-700"
+				>
+					{m.skip()}
+				</button>
+			</div>
+		</div>
+	</div>
 {/if}
 
 {#if photoOf}

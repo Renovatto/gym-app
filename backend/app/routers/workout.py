@@ -157,8 +157,8 @@ def update_routine(
 ) -> RoutineOut:
     routine = _get_owned_routine(session, routine_id, user.id)
     routine.name = data.name
-    for item in list(routine.items):
-        session.delete(item)
+    # limpar pela coleção (delete-orphan) evita re-adicionar instâncias deletadas
+    routine.items.clear()
     session.flush()
     for position, item in enumerate(data.items):
         if _visible_exercise(session, item.exercise_id, user.id) is None:
