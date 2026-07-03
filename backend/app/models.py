@@ -50,6 +50,7 @@ class User(SQLModel, table=True):
 
     profile: "Profile" = Relationship(back_populates="user", cascade_delete=True)
     weight_logs: list["WeightLog"] = Relationship(back_populates="user", cascade_delete=True)
+    water_logs: list["WaterLog"] = Relationship(back_populates="user", cascade_delete=True)
 
 
 class Profile(SQLModel, table=True):
@@ -78,3 +79,14 @@ class WeightLog(SQLModel, table=True):
     logged_at: datetime = Field(default_factory=utcnow, index=True)
 
     user: User = Relationship(back_populates="weight_logs")
+
+
+class WaterLog(SQLModel, table=True):
+    __tablename__ = "water_logs"
+
+    id: int | None = Field(default=None, primary_key=True)
+    user_id: int = Field(foreign_key="users.id", index=True, ondelete="CASCADE")
+    amount_ml: int
+    logged_at: datetime = Field(default_factory=utcnow, index=True)
+
+    user: User = Relationship(back_populates="water_logs")

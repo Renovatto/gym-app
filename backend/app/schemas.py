@@ -1,6 +1,6 @@
 from datetime import date, datetime
 
-from pydantic import BaseModel, EmailStr, Field
+from pydantic import BaseModel, ConfigDict, EmailStr, Field
 
 from .models import ActivityLevel, Objective, Plan, Sex, WeightSource
 
@@ -68,11 +68,45 @@ class GoalsOut(BaseModel):
     water_ml: int
 
 
+class WeightLogIn(BaseModel):
+    weight_kg: float = Field(gt=20, lt=400)
+    source: WeightSource = WeightSource.manual
+    logged_at: datetime | None = None
+
+
 class WeightLogOut(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
     id: int
     weight_kg: float
     source: WeightSource
     logged_at: datetime
+
+
+class WeightHistoryOut(BaseModel):
+    logs: list[WeightLogOut]
+    current_kg: float | None
+    start_kg: float | None
+    delta_kg: float | None
+
+
+class WaterLogIn(BaseModel):
+    amount_ml: int = Field(gt=0, le=5000)
+
+
+class WaterLogOut(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: int
+    amount_ml: int
+    logged_at: datetime
+
+
+class WaterDayOut(BaseModel):
+    date: date
+    total_ml: int
+    goal_ml: int
+    logs: list[WaterLogOut]
 
 
 class LocaleUpdate(BaseModel):

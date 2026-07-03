@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { api, type GoalsOut } from '$lib/api';
 	import { session } from '$lib/session.svelte';
+	import WaterCard from '$lib/components/WaterCard.svelte';
 	import { m } from '$lib/paraglide/messages';
 	import { getLocale } from '$lib/paraglide/runtime';
 
@@ -58,31 +59,22 @@
 		</div>
 	</section>
 
-	<section class="mt-3 grid grid-cols-2 gap-3">
-		<div class="rounded-3xl bg-white p-5 shadow-sm">
-			<p class="text-xs font-semibold text-slate-500">{m.water_goal()}</p>
-			<p class="mt-1 text-2xl font-bold">
-				{nf.format(goals.water_ml / 1000)}
-				<span class="text-sm font-medium text-slate-400">L</span>
-			</p>
-		</div>
-		<div class="rounded-3xl bg-white p-5 shadow-sm">
+	<div class="mt-3">
+		<WaterCard />
+	</div>
+
+	<section class="mt-3 grid grid-cols-3 gap-3">
+		<div class="rounded-3xl bg-white p-4 shadow-sm">
 			<p class="text-xs font-semibold text-slate-500">{m.bmi()}</p>
-			<p class="mt-1 text-2xl font-bold">{nf.format(goals.bmi)}</p>
+			<p class="mt-1 text-xl font-bold">{nf.format(goals.bmi)}</p>
 		</div>
-		<div class="rounded-3xl bg-white p-5 shadow-sm">
+		<div class="rounded-3xl bg-white p-4 shadow-sm">
 			<p class="text-xs font-semibold text-slate-500">{m.tdee()}</p>
-			<p class="mt-1 text-2xl font-bold">
-				{nf.format(goals.tdee_kcal)}
-				<span class="text-sm font-medium text-slate-400">kcal</span>
-			</p>
+			<p class="mt-1 text-xl font-bold">{nf.format(goals.tdee_kcal)}</p>
 		</div>
-		<div class="rounded-3xl bg-white p-5 shadow-sm">
+		<div class="rounded-3xl bg-white p-4 shadow-sm">
 			<p class="text-xs font-semibold text-slate-500">{m.bmr()}</p>
-			<p class="mt-1 text-2xl font-bold">
-				{nf.format(goals.bmr_kcal)}
-				<span class="text-sm font-medium text-slate-400">kcal</span>
-			</p>
+			<p class="mt-1 text-xl font-bold">{nf.format(goals.bmr_kcal)}</p>
 		</div>
 	</section>
 

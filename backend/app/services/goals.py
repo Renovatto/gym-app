@@ -34,6 +34,10 @@ KCAL_PER_G_CARB = 4
 KCAL_PER_G_FAT = 9
 
 
+def water_goal_ml(weight_kg: float) -> int:
+    return round(weight_kg * WATER_ML_PER_KG)
+
+
 def age_from_birthdate(birthdate: date, today: date | None = None) -> int:
     today = today or date.today()
     return today.year - birthdate.year - (
@@ -63,5 +67,5 @@ def compute_goals(profile: Profile, weight_kg: float) -> GoalsOut:
         protein_g=round(protein_g),
         fat_g=round(fat_g),
         carbs_g=round(carbs_g),
-        water_ml=round(weight_kg * WATER_ML_PER_KG),
+        water_ml=water_goal_ml(weight_kg),
     )

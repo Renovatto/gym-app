@@ -52,6 +52,33 @@ export interface GoalsOut {
 	water_ml: number;
 }
 
+export interface WeightLog {
+	id: number;
+	weight_kg: number;
+	source: 'manual' | 'ble';
+	logged_at: string;
+}
+
+export interface WeightHistory {
+	logs: WeightLog[];
+	current_kg: number | null;
+	start_kg: number | null;
+	delta_kg: number | null;
+}
+
+export interface WaterLog {
+	id: number;
+	amount_ml: number;
+	logged_at: string;
+}
+
+export interface WaterDay {
+	date: string;
+	total_ml: number;
+	goal_ml: number;
+	logs: WaterLog[];
+}
+
 export function getTokens(): { access: string | null; refresh: string | null } {
 	return {
 		access: localStorage.getItem(ACCESS_KEY),
@@ -144,6 +171,23 @@ export const api = {
 	saveProfile: (profile: Omit<ProfileData, 'weight_kg'> & { weight_kg: number }) =>
 		request<ProfileData>('/me/profile', { method: 'PUT', body: profile }),
 	getGoals: () => request<GoalsOut>('/me/goals'),
+	getWeightHistory: () => request<WeightHistory>('/me/weight'),
+	addWeight: (weight_kg: number) =>
+		request<WeightLog>('/me/weight', { method: 'POST', body: { weight_kg } }),
+	deleteWeight: (id: number) => request<void>(`/me/weight/${id}`, { method: 'DELETE' }),
+	getWaterDay: (day: string, tzOffset: number) =>
+		request<WaterDay>(`/me/water?day=${day}&tz_offset=${tzOffset}`),
+	addWater: (amount_ml: number) =>
+		request<WaterLog>('/me/water', { method: 'POST', body: { amount_ml } }),
+	deleteWater: (id: number) => request<void>(`/me/water/${id}`, { method: 'DELETE' }),
 	exportData: () => request<unknown>('/me/account/export'),
 	deleteAccount: () => request<void>('/me/account', { method: 'DELETE' })
 };
+
+export function localDayParams(): { day: string; tzOffset: number } {
+	const now = new Date();
+	const day = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(
+		now.getDate()
+	).padStart(2, '0')}`;
+	return { day, tzOffset: now.getTimezoneOffset() };
+}
