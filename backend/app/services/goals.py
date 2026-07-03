@@ -18,11 +18,13 @@ KCAL_MULTIPLIER: dict[Objective, float] = {
     Objective.lose_fat: 0.80,
     Objective.maintain: 1.0,
     Objective.gain_muscle: 1.10,
+    Objective.recomp: 0.90,
 }
 PROTEIN_G_PER_KG: dict[Objective, float] = {
     Objective.lose_fat: 2.0,
     Objective.maintain: 1.6,
     Objective.gain_muscle: 2.0,
+    Objective.recomp: 2.2,
 }
 
 FAT_KCAL_SHARE = 0.25

@@ -25,6 +25,7 @@ class Objective(str, Enum):
     lose_fat = "lose_fat"
     maintain = "maintain"
     gain_muscle = "gain_muscle"
+    recomp = "recomp"  # ganhar músculo e perder gordura ao mesmo tempo
 
 
 class Plan(str, Enum):

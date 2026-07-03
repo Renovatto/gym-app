@@ -18,6 +18,7 @@
 		{
 			gain_muscle: m.objective_gain_muscle(),
 			lose_fat: m.objective_lose_fat(),
+			recomp: m.objective_recomp(),
 			maintain: m.objective_maintain()
 		}[session.profile?.objective ?? 'maintain']
 	);

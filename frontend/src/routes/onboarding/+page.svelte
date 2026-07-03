@@ -119,6 +119,7 @@
 				options={[
 					{ value: 'gain_muscle', label: m.objective_gain_muscle(), hint: m.objective_gain_muscle_hint() },
 					{ value: 'lose_fat', label: m.objective_lose_fat(), hint: m.objective_lose_fat_hint() },
+					{ value: 'recomp', label: m.objective_recomp(), hint: m.objective_recomp_hint() },
 					{ value: 'maintain', label: m.objective_maintain(), hint: m.objective_maintain_hint() }
 				]}
 			/>

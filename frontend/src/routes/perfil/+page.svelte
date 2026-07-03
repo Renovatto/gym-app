@@ -107,6 +107,7 @@
 			options={[
 				{ value: 'gain_muscle', label: m.objective_gain_muscle() },
 				{ value: 'lose_fat', label: m.objective_lose_fat() },
+				{ value: 'recomp', label: m.objective_recomp() },
 				{ value: 'maintain', label: m.objective_maintain() }
 			]}
 		/>

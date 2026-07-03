@@ -47,6 +47,8 @@
 	"objective_gain_muscle_hint": "Superávit calórico + proteína alta",
 	"objective_lose_fat": "Perder gordura",
 	"objective_lose_fat_hint": "Déficit calórico preservando músculo",
+	"objective_recomp": "Ganhar músculo e perder gordura",
+	"objective_recomp_hint": "Recomposição: leve déficit + proteína muito alta",
 	"objective_maintain": "Manter o peso",
 	"objective_maintain_hint": "Equilíbrio entre consumo e gasto",
 	"ob_diet_title": "Quer controlar a alimentação?",

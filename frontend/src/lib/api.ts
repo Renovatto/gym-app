@@ -27,7 +27,7 @@ export interface UserOut {
 
 export type Sex = 'male' | 'female';
 export type ActivityLevel = 'sedentary' | 'light' | 'moderate' | 'active' | 'very_active';
-export type Objective = 'lose_fat' | 'maintain' | 'gain_muscle';
+export type Objective = 'lose_fat' | 'maintain' | 'gain_muscle' | 'recomp';
 
 export interface ProfileData {
 	height_cm: number;

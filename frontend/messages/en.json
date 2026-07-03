@@ -47,6 +47,8 @@
 	"objective_gain_muscle_hint": "Calorie surplus + high protein",
 	"objective_lose_fat": "Lose fat",
 	"objective_lose_fat_hint": "Calorie deficit while keeping muscle",
+	"objective_recomp": "Build muscle & lose fat",
+	"objective_recomp_hint": "Recomposition: slight deficit + very high protein",
 	"objective_maintain": "Maintain weight",
 	"objective_maintain_hint": "Balance intake and expenditure",
 	"ob_diet_title": "Want to track your nutrition?",
