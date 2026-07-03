@@ -211,6 +211,8 @@
 	"next_day": "Next day",
 	"day_copied": "Copied from previous day",
 	"repeat_previous_day": "Repeat previous day",
+	"recent_label": "Recent",
+	"all_foods_label": "All foods",
 	"rest_label": "Rest",
 	"skip": "Skip",
 	"plus_30s": "+30s",

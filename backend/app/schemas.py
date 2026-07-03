@@ -297,6 +297,10 @@ class DiaryEntryIn(BaseModel):
     quantity: float = Field(gt=0, le=5000)
 
 
+class DiaryEntryUpdate(BaseModel):
+    quantity: float = Field(gt=0, le=5000)
+
+
 class DiaryEntryOut(BaseModel):
     id: int
     meal_type: MealType

@@ -20,6 +20,7 @@ from ..schemas import (
     DiaryDayOut,
     DiaryEntryIn,
     DiaryEntryOut,
+    DiaryEntryUpdate,
     FoodIn,
     FoodOut,
     MacrosOut,
@@ -67,6 +68,34 @@ def list_foods(
         out.append(to_food_out(food, user.locale))
     out.sort(key=lambda f: f.name.lower())
     return out[:limit]
+
+
+@router.get("/me/foods/recent", response_model=list[FoodOut])
+def recent_foods(
+    user: CurrentUser,
+    session: SessionDep,
+    limit: int = Query(default=12, ge=1, le=40),
+) -> list[FoodOut]:
+    """Alimentos lançados mais recentemente pelo usuário, sem repetir."""
+    rows = session.exec(
+        select(DiaryEntry.food_id)
+        .where(DiaryEntry.user_id == user.id)
+        .where(DiaryEntry.source == EntrySource.food)
+        .where(DiaryEntry.food_id.is_not(None))
+        .order_by(desc(DiaryEntry.logged_at))
+    ).all()
+    seen: list[int] = []
+    for food_id in rows:
+        if food_id not in seen:
+            seen.append(food_id)
+        if len(seen) >= limit:
+            break
+    out = []
+    for food_id in seen:
+        food = _visible_food(session, food_id, user.id)
+        if food is not None:
+            out.append(to_food_out(food, user.locale))
+    return out
 
 
 @router.post("/me/foods", response_model=FoodOut, status_code=status.HTTP_201_CREATED)
@@ -224,29 +253,35 @@ def get_diary(
     return DiaryDayOut(date=day, meals=meals, totals=totals, goals=_daily_goals(session, user.id))
 
 
-@router.post("/me/diary", response_model=DiaryEntryOut, status_code=status.HTTP_201_CREATED)
-def add_diary_entry(data: DiaryEntryIn, user: CurrentUser, session: SessionDep) -> DiaryEntryOut:
-    if data.source == EntrySource.food:
-        if data.food_id is None:
+def _entry_macros_and_name(
+    session: Session, user_id: int, locale: str, source: EntrySource,
+    food_id: int | None, recipe_id: int | None, quantity: float
+) -> tuple[MacrosOut, str]:
+    if source == EntrySource.food:
+        if food_id is None:
             raise HTTPException(status.HTTP_400_BAD_REQUEST, detail="FOOD_REQUIRED")
-        food = _visible_food(session, data.food_id, user.id)
+        food = _visible_food(session, food_id, user_id)
         if food is None:
             raise HTTPException(status.HTTP_400_BAD_REQUEST, detail="FOOD_NOT_FOUND")
-        macros = food_macros(food, data.quantity)
-        name = localized_food_name(food, user.locale)
-    else:
-        if data.recipe_id is None:
-            raise HTTPException(status.HTTP_400_BAD_REQUEST, detail="RECIPE_REQUIRED")
-        recipe = _get_owned_recipe(session, data.recipe_id, user.id)
-        _, _, per_serving = recipe_breakdown(session, recipe, user.locale)
-        macros = MacrosOut(
-            kcal=round(per_serving.kcal * data.quantity, 1),
-            protein_g=round(per_serving.protein_g * data.quantity, 1),
-            carbs_g=round(per_serving.carbs_g * data.quantity, 1),
-            fat_g=round(per_serving.fat_g * data.quantity, 1),
-        )
-        name = recipe.name
+        return food_macros(food, quantity), localized_food_name(food, locale)
+    if recipe_id is None:
+        raise HTTPException(status.HTTP_400_BAD_REQUEST, detail="RECIPE_REQUIRED")
+    recipe = _get_owned_recipe(session, recipe_id, user_id)
+    _, _, per_serving = recipe_breakdown(session, recipe, locale)
+    macros = MacrosOut(
+        kcal=round(per_serving.kcal * quantity, 1),
+        protein_g=round(per_serving.protein_g * quantity, 1),
+        carbs_g=round(per_serving.carbs_g * quantity, 1),
+        fat_g=round(per_serving.fat_g * quantity, 1),
+    )
+    return macros, recipe.name
 
+
+@router.post("/me/diary", response_model=DiaryEntryOut, status_code=status.HTTP_201_CREATED)
+def add_diary_entry(data: DiaryEntryIn, user: CurrentUser, session: SessionDep) -> DiaryEntryOut:
+    macros, name = _entry_macros_and_name(
+        session, user.id, user.locale, data.source, data.food_id, data.recipe_id, data.quantity
+    )
     entry = DiaryEntry(
         user_id=user.id,
         entry_date=data.entry_date,
@@ -261,6 +296,28 @@ def add_diary_entry(data: DiaryEntryIn, user: CurrentUser, session: SessionDep) 
         carbs_g=macros.carbs_g,
         fat_g=macros.fat_g,
     )
+    session.add(entry)
+    session.commit()
+    session.refresh(entry)
+    return _entry_out(entry)
+
+
+@router.put("/me/diary/{entry_id}", response_model=DiaryEntryOut)
+def update_diary_entry(
+    entry_id: int, data: DiaryEntryUpdate, user: CurrentUser, session: SessionDep
+) -> DiaryEntryOut:
+    entry = session.get(DiaryEntry, entry_id)
+    if entry is None or entry.user_id != user.id:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, detail="ENTRY_NOT_FOUND")
+    macros, name = _entry_macros_and_name(
+        session, user.id, user.locale, entry.source, entry.food_id, entry.recipe_id, data.quantity
+    )
+    entry.quantity = data.quantity
+    entry.name_snapshot = name
+    entry.kcal = macros.kcal
+    entry.protein_g = macros.protein_g
+    entry.carbs_g = macros.carbs_g
+    entry.fat_g = macros.fat_g
     session.add(entry)
     session.commit()
     session.refresh(entry)

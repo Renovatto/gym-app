@@ -449,6 +449,7 @@ export const api = {
 		const qs = params.toString();
 		return request<Food[]>(`/foods${qs ? `?${qs}` : ''}`);
 	},
+	getRecentFoods: () => request<Food[]>('/me/foods/recent'),
 	createFood: (food: FoodInput) => request<Food>('/me/foods', { method: 'POST', body: food }),
 	getRecipes: () => request<Recipe[]>('/me/recipes'),
 	createRecipe: (recipe: RecipeInput) =>
@@ -459,6 +460,8 @@ export const api = {
 	getDiary: (day: string) => request<DiaryDay>(`/me/diary?day=${day}`),
 	addDiaryEntry: (entry: DiaryEntryInput) =>
 		request<DiaryEntry>('/me/diary', { method: 'POST', body: entry }),
+	updateDiaryEntry: (id: number, quantity: number) =>
+		request<DiaryEntry>(`/me/diary/${id}`, { method: 'PUT', body: { quantity } }),
 	deleteDiaryEntry: (id: number) => request<void>(`/me/diary/${id}`, { method: 'DELETE' }),
 	copyPreviousDay: (day: string, fromDay: string, mealType?: MealType) => {
 		const params = new URLSearchParams({ day, from_day: fromDay });

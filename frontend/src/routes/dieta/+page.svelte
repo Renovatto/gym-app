@@ -1,6 +1,7 @@
 <script lang="ts">
-	import { api, localDay, type DiaryDay, type MealType } from '$lib/api';
+	import { api, localDay, type DiaryDay, type DiaryEntry, type MealType } from '$lib/api';
 	import MacroSummary from '$lib/components/MacroSummary.svelte';
+	import Stepper from '$lib/components/Stepper.svelte';
 	import { showToast } from '$lib/toast.svelte';
 	import { MEAL_TYPES, mealTypeLabel } from '$lib/labels';
 	import { m } from '$lib/paraglide/messages';
@@ -9,6 +10,47 @@
 	let diary = $state<DiaryDay | null>(null);
 	let loading = $state(true);
 	let day = $state(localDay());
+
+	// edição de um lançamento existente
+	let editing = $state<DiaryEntry | null>(null);
+	let editQty = $state(0);
+	let editBusy = $state(false);
+
+	function openEdit(entry: DiaryEntry): void {
+		editing = entry;
+		editQty = entry.quantity;
+	}
+
+	async function saveEdit(): Promise<void> {
+		if (!editing) return;
+		editBusy = true;
+		try {
+			await api.updateDiaryEntry(editing.id, editQty);
+			editing = null;
+			await load();
+		} finally {
+			editBusy = false;
+		}
+	}
+
+	async function deleteEditing(): Promise<void> {
+		if (!editing) return;
+		editBusy = true;
+		try {
+			await api.deleteDiaryEntry(editing.id);
+			editing = null;
+			await load();
+		} finally {
+			editBusy = false;
+		}
+	}
+
+	// prévia dos macros ao mudar a quantidade (proporção linear ao valor atual)
+	const editPreview = $derived(
+		editing && editing.quantity > 0
+			? Math.round((editing.macros.kcal / editing.quantity) * editQty)
+			: 0
+	);
 
 	const nf = new Intl.NumberFormat(getLocale());
 	const df = new Intl.DateTimeFormat(getLocale(), { weekday: 'short', day: '2-digit', month: 'short' });
@@ -25,11 +67,6 @@
 		loading = true;
 		diary = await api.getDiary(day);
 		loading = false;
-	}
-
-	async function removeEntry(id: number): Promise<void> {
-		await api.deleteDiaryEntry(id);
-		await load();
 	}
 
 	async function repeatPrevious(): Promise<void> {
@@ -98,7 +135,11 @@
 				{#if group && group.entries.length > 0}
 					<div class="mt-2 space-y-1">
 						{#each group.entries as entry (entry.id)}
-							<div class="flex items-center gap-2 rounded-xl bg-slate-50 px-3 py-2">
+							<button
+								type="button"
+								onclick={() => openEdit(entry)}
+								class="flex w-full items-center gap-2 rounded-xl bg-slate-50 px-3 py-2 text-left active:bg-slate-100"
+							>
 								<div class="min-w-0 flex-1">
 									<p class="truncate text-sm font-semibold text-slate-800">{entry.name}</p>
 									<p class="text-xs text-slate-500">
@@ -108,17 +149,8 @@
 										· {nf.format(Math.round(entry.macros.kcal))} kcal
 									</p>
 								</div>
-								<button
-									type="button"
-									aria-label={m.remove()}
-									onclick={() => removeEntry(entry.id)}
-									class="text-slate-300 active:text-red-500"
-								>
-									<svg viewBox="0 0 24 24" class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2">
-										<path d="M6 6l12 12M18 6L6 18" stroke-linecap="round" />
-									</svg>
-								</button>
-							</div>
+								<svg viewBox="0 0 24 24" class="h-4 w-4 shrink-0 text-slate-300" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 6l6 6-6 6" stroke-linecap="round" stroke-linejoin="round" /></svg>
+							</button>
 						{/each}
 					</div>
 				{/if}
@@ -149,4 +181,48 @@
 	>
 		{m.my_recipes()}
 	</a>
+{/if}
+
+{#if editing}
+	<div
+		class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
+		role="button"
+		tabindex="-1"
+		onclick={() => (editing = null)}
+		onkeydown={(e) => e.key === 'Escape' && (editing = null)}
+	>
+		<div
+			class="w-full max-w-md rounded-3xl bg-white p-5"
+			role="dialog"
+			tabindex="-1"
+			onclick={(e) => e.stopPropagation()}
+			onkeydown={() => {}}
+		>
+			<h2 class="text-lg font-bold text-slate-900">{editing.name}</h2>
+			<p class="mb-4 text-sm text-slate-500">{editPreview} kcal</p>
+			{#if editing.source === 'recipe'}
+				<Stepper bind:value={editQty} min={1} max={20} step={1} unit={m.serving_plural()} />
+			{:else}
+				<Stepper bind:value={editQty} min={1} max={2000} step={5} unit="g" />
+			{/if}
+			<div class="mt-5 flex gap-2">
+				<button
+					type="button"
+					disabled={editBusy}
+					onclick={deleteEditing}
+					class="h-12 flex-1 rounded-2xl border-2 border-red-200 font-semibold text-red-600 active:bg-red-50 disabled:opacity-50"
+				>
+					{m.remove()}
+				</button>
+				<button
+					type="button"
+					disabled={editBusy}
+					onclick={saveEdit}
+					class="h-12 flex-[2] rounded-2xl bg-emerald-600 font-bold text-white active:bg-emerald-700 disabled:opacity-50"
+				>
+					{m.save()}
+				</button>
+			</div>
+		</div>
+	</div>
 {/if}

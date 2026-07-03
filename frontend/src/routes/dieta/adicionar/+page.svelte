@@ -14,8 +14,11 @@
 	let tab = $state<'foods' | 'recipes'>('foods');
 	let query = $state('');
 	let foods = $state<Food[]>([]);
+	let recentFoods = $state<Food[]>([]);
 	let recipes = $state<Recipe[]>([]);
 	let loading = $state(false);
+
+	const searching = $derived(query.trim().length > 0);
 
 	// item selecionado para lançar
 	let selFood = $state<Food | null>(null);
@@ -44,6 +47,9 @@
 		recipes = await api.getRecipes();
 		loading = false;
 	}
+
+	// recentes carregam uma vez (mostrados quando não há busca)
+	api.getRecentFoods().then((r) => (recentFoods = r));
 
 	$effect(() => {
 		if (tab === 'foods') loadFoods();
@@ -170,6 +176,25 @@
 			<div class="h-7 w-7 animate-spin rounded-full border-4 border-emerald-600 border-t-transparent"></div>
 		</div>
 	{:else}
+		{#if !searching && recentFoods.length > 0}
+			<p class="mb-2 text-xs font-bold text-slate-400 uppercase">{m.recent_label()}</p>
+			<div class="mb-4 space-y-2">
+				{#each recentFoods as food (food.id)}
+					<button
+						type="button"
+						onclick={() => pickFood(food)}
+						class="flex w-full items-center justify-between rounded-2xl bg-white p-3.5 text-left shadow-sm active:bg-slate-50"
+					>
+						<span class="min-w-0 flex-1">
+							<span class="block truncate font-semibold text-slate-900">{food.name}</span>
+							<span class="text-xs text-slate-500">{nf.format(food.kcal)} kcal / 100 g</span>
+						</span>
+						<svg viewBox="0 0 24 24" class="h-4 w-4 shrink-0 text-slate-300" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 8v4l3 2M21 12a9 9 0 11-18 0 9 9 0 0118 0z" stroke-linecap="round" stroke-linejoin="round" /></svg>
+					</button>
+				{/each}
+			</div>
+			<p class="mb-2 text-xs font-bold text-slate-400 uppercase">{m.all_foods_label()}</p>
+		{/if}
 		<div class="space-y-2">
 			{#each foods as food (food.id)}
 				<button
