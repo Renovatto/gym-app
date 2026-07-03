@@ -2,7 +2,17 @@ from datetime import date, datetime
 
 from pydantic import BaseModel, ConfigDict, EmailStr, Field
 
-from .models import ActivityLevel, Equipment, MuscleGroup, Objective, Plan, Sex, WeightSource
+from .models import (
+    ActivityLevel,
+    Equipment,
+    ExerciseKind,
+    ExerciseLevel,
+    MuscleGroup,
+    Objective,
+    Plan,
+    Sex,
+    WeightSource,
+)
 
 
 class RegisterRequest(BaseModel):
@@ -122,15 +132,18 @@ class ExerciseOut(BaseModel):
     name: str
     muscle_group: MuscleGroup
     equipment: Equipment
-    media_url: str | None
+    kind: ExerciseKind
+    level: ExerciseLevel | None
+    media_urls: list[str]
     is_custom: bool
 
 
 class RoutineItemIn(BaseModel):
     exercise_id: int
     target_sets: int = Field(default=3, ge=1, le=20)
-    target_reps: int = Field(default=10, ge=1, le=100)
+    target_reps: int = Field(default=10, ge=0, le=100)
     target_weight_kg: float | None = Field(default=None, ge=0, le=1000)
+    target_duration_min: int | None = Field(default=None, ge=1, le=300)
     rest_seconds: int = Field(default=90, ge=0, le=600)
 
 
@@ -146,6 +159,7 @@ class RoutineItemOut(BaseModel):
     target_sets: int
     target_reps: int
     target_weight_kg: float | None
+    target_duration_min: int | None
     rest_seconds: int
     last_weight_kg: float | None = None
 
@@ -160,8 +174,9 @@ class RoutineOut(BaseModel):
 class SetLogIn(BaseModel):
     exercise_id: int
     set_number: int = Field(ge=1, le=50)
-    reps: int = Field(ge=0, le=100)
-    weight_kg: float = Field(ge=0, le=1000)
+    reps: int = Field(default=0, ge=0, le=100)
+    weight_kg: float = Field(default=0, ge=0, le=1000)
+    duration_min: float | None = Field(default=None, ge=0, le=600)
     done: bool = True
 
 
@@ -173,6 +188,7 @@ class SetLogOut(BaseModel):
     set_number: int
     reps: int
     weight_kg: float
+    duration_min: float | None
     done: bool
 
 

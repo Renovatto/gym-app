@@ -48,6 +48,18 @@ class MuscleGroup(str, Enum):
     glutes = "glutes"
     abs = "abs"
     calves = "calves"
+    cardio = "cardio"
+
+
+class ExerciseKind(str, Enum):
+    strength = "strength"
+    cardio = "cardio"
+
+
+class ExerciseLevel(str, Enum):
+    beginner = "beginner"
+    intermediate = "intermediate"
+    expert = "expert"
 
 
 class Equipment(str, Enum):
@@ -122,7 +134,10 @@ class Exercise(SQLModel, table=True):
     slug: str = Field(index=True)
     muscle_group: MuscleGroup = Field(index=True)
     equipment: Equipment
+    kind: ExerciseKind = Field(default=ExerciseKind.strength, index=True)
+    level: ExerciseLevel | None = Field(default=None, index=True)
     media_url: str | None = Field(default=None)
+    media_url2: str | None = Field(default=None)
     # None = exercício global (catálogo); preenchido = exercício criado pelo usuário.
     user_id: int | None = Field(default=None, foreign_key="users.id", ondelete="CASCADE")
 
@@ -164,6 +179,7 @@ class RoutineExercise(SQLModel, table=True):
     target_sets: int = Field(default=3)
     target_reps: int = Field(default=10)
     target_weight_kg: float | None = Field(default=None)
+    target_duration_min: int | None = Field(default=None)  # cardio
     rest_seconds: int = Field(default=90)
 
     routine: Routine = Relationship(back_populates="items")
@@ -191,6 +207,7 @@ class SetLog(SQLModel, table=True):
     set_number: int
     reps: int
     weight_kg: float
+    duration_min: float | None = Field(default=None)  # cardio
     done: bool = Field(default=True)
     logged_at: datetime = Field(default_factory=utcnow)
 

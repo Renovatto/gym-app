@@ -10,12 +10,14 @@
 		setNumber: number;
 		reps: number;
 		weight: number;
+		duration: number;
 		done: boolean;
 		logId: number | null;
 		saving: boolean;
 	}
 	interface ExerciseBlock {
 		item: RoutineItem;
+		isCardio: boolean;
 		sets: SetRow[];
 	}
 
@@ -37,8 +39,11 @@
 		}
 		const routine = await api.getRoutine(session.routine_id);
 		blocks = routine.items.map((item) => {
+			const isCardio = item.exercise.kind === 'cardio';
 			const prefill = item.last_weight_kg ?? item.target_weight_kg ?? 0;
-			const sets: SetRow[] = Array.from({ length: item.target_sets }, (_, i) => {
+			// cardio normalmente é uma "série" só (a duração total)
+			const setCount = isCardio ? 1 : item.target_sets;
+			const sets: SetRow[] = Array.from({ length: setCount }, (_, i) => {
 				const logged = session.sets.find(
 					(s) => s.exercise_id === item.exercise.id && s.set_number === i + 1
 				);
@@ -46,12 +51,13 @@
 					setNumber: i + 1,
 					reps: logged?.reps ?? item.target_reps,
 					weight: logged?.weight_kg ?? prefill,
+					duration: logged?.duration_min ?? item.target_duration_min ?? 20,
 					done: logged?.done ?? false,
 					logId: logged?.id ?? null,
 					saving: false
 				};
 			});
-			return { item, sets };
+			return { item, isCardio, sets };
 		});
 		loading = false;
 	}
@@ -64,8 +70,9 @@
 				const log = await api.logSet(sessionId, {
 					exercise_id: block.item.exercise.id,
 					set_number: row.setNumber,
-					reps: row.reps,
-					weight_kg: row.weight,
+					reps: block.isCardio ? 0 : row.reps,
+					weight_kg: block.isCardio ? 0 : row.weight,
+					duration_min: block.isCardio ? row.duration : null,
 					done: true
 				});
 				row.logId = log.id;
@@ -127,8 +134,8 @@
 						onclick={() => (photoOf = block.item.exercise)}
 						class="grid h-12 w-12 shrink-0 place-items-center overflow-hidden rounded-xl bg-slate-100"
 					>
-						{#if block.item.exercise.media_url}
-							<img src={block.item.exercise.media_url} alt="" class="h-full w-full object-cover" loading="lazy" />
+						{#if block.item.exercise.media_urls.length > 0}
+							<img src={block.item.exercise.media_urls[0]} alt="" class="h-full w-full object-cover" loading="lazy" />
 						{:else}
 							<svg viewBox="0 0 24 24" class="h-5 w-5 text-slate-400" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3" /><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7z" /></svg>
 						{/if}
@@ -136,9 +143,13 @@
 					<div class="min-w-0 flex-1">
 						<p class="truncate font-bold text-slate-900">{block.item.exercise.name}</p>
 						<p class="text-sm text-slate-500">
-							{block.item.target_sets} × {block.item.target_reps}
-							{#if block.item.last_weight_kg !== null}
-								· {m.last_time()}: {block.item.last_weight_kg} kg
+							{#if block.isCardio}
+								{m.cardio_label()}
+							{:else}
+								{block.item.target_sets} × {block.item.target_reps}
+								{#if block.item.last_weight_kg !== null}
+									· {m.last_time()}: {block.item.last_weight_kg} kg
+								{/if}
 							{/if}
 						</p>
 					</div>
@@ -150,16 +161,20 @@
 							class="flex items-center gap-2 rounded-2xl p-1.5 {row.done ? 'bg-emerald-50' : 'bg-slate-50'}"
 						>
 							<span class="grid h-8 w-8 shrink-0 place-items-center text-sm font-bold text-slate-400">
-								{row.setNumber}
+								{block.isCardio ? '⏱' : row.setNumber}
 							</span>
-							<div class="flex flex-1 items-center gap-1">
+							{#if block.isCardio}
+								<div class="flex-1">
+									<Stepper bind:value={row.duration} min={1} max={300} step={1} unit={m.minutes_short()} />
+								</div>
+							{:else}
 								<div class="flex-1">
 									<Stepper bind:value={row.weight} min={0} max={1000} step={2.5} decimals={1} unit="kg" />
 								</div>
-							</div>
-							<div class="w-24 shrink-0">
-								<Stepper bind:value={row.reps} min={0} max={100} unit={m.reps_short()} />
-							</div>
+								<div class="w-24 shrink-0">
+									<Stepper bind:value={row.reps} min={0} max={100} unit={m.reps_short()} />
+								</div>
+							{/if}
 							<button
 								type="button"
 								aria-label={m.done()}

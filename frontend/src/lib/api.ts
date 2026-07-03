@@ -88,7 +88,8 @@ export type MuscleGroup =
 	| 'legs'
 	| 'glutes'
 	| 'abs'
-	| 'calves';
+	| 'calves'
+	| 'cardio';
 
 export type Equipment =
 	| 'barbell'
@@ -100,13 +101,18 @@ export type Equipment =
 	| 'band'
 	| 'other';
 
+export type ExerciseKind = 'strength' | 'cardio';
+export type ExerciseLevel = 'beginner' | 'intermediate' | 'expert';
+
 export interface Exercise {
 	id: number;
 	slug: string;
 	name: string;
 	muscle_group: MuscleGroup;
 	equipment: Equipment;
-	media_url: string | null;
+	kind: ExerciseKind;
+	level: ExerciseLevel | null;
+	media_urls: string[];
 	is_custom: boolean;
 }
 
@@ -117,6 +123,7 @@ export interface RoutineItem {
 	target_sets: number;
 	target_reps: number;
 	target_weight_kg: number | null;
+	target_duration_min: number | null;
 	rest_seconds: number;
 	last_weight_kg: number | null;
 }
@@ -133,6 +140,7 @@ export interface RoutineItemInput {
 	target_sets: number;
 	target_reps: number;
 	target_weight_kg: number | null;
+	target_duration_min: number | null;
 	rest_seconds: number;
 }
 
@@ -142,6 +150,7 @@ export interface SetLog {
 	set_number: number;
 	reps: number;
 	weight_kg: number;
+	duration_min: number | null;
 	done: boolean;
 }
 
@@ -265,8 +274,17 @@ export const api = {
 		request<WaterLog>('/me/water', { method: 'POST', body: { amount_ml } }),
 	deleteWater: (id: number) => request<void>(`/me/water/${id}`, { method: 'DELETE' }),
 	// treino
-	getExercises: (muscleGroup?: MuscleGroup) =>
-		request<Exercise[]>(`/exercises${muscleGroup ? `?muscle_group=${muscleGroup}` : ''}`),
+	getExercises: (
+		muscleGroup?: MuscleGroup,
+		opts: { level?: ExerciseLevel; full?: boolean } = {}
+	) => {
+		const params = new URLSearchParams();
+		if (muscleGroup) params.set('muscle_group', muscleGroup);
+		if (opts.level) params.set('level', opts.level);
+		if (opts.full) params.set('full', 'true');
+		const qs = params.toString();
+		return request<Exercise[]>(`/exercises${qs ? `?${qs}` : ''}`);
+	},
 	getRoutines: () => request<Routine[]>('/me/routines'),
 	getRoutine: (id: number) => request<Routine>(`/me/routines/${id}`),
 	createRoutine: (name: string, items: RoutineItemInput[]) =>
@@ -276,12 +294,21 @@ export const api = {
 	deleteRoutine: (id: number) => request<void>(`/me/routines/${id}`, { method: 'DELETE' }),
 	createFromTemplate: (frequency: number) =>
 		request<Routine[]>(`/me/routines/from-template?frequency=${frequency}`, { method: 'POST' }),
+	completeRoutine: (routineId: number) =>
+		request<WorkoutSession>(`/me/routines/${routineId}/complete`, { method: 'POST' }),
 	startSession: (routineId: number | null) =>
 		request<WorkoutSession>('/me/sessions', { method: 'POST', body: { routine_id: routineId } }),
 	getSession: (id: number) => request<WorkoutSession>(`/me/sessions/${id}`),
 	logSet: (
 		sessionId: number,
-		set: { exercise_id: number; set_number: number; reps: number; weight_kg: number; done: boolean }
+		set: {
+			exercise_id: number;
+			set_number: number;
+			reps: number;
+			weight_kg: number;
+			duration_min?: number | null;
+			done: boolean;
+		}
 	) => request<SetLog>(`/me/sessions/${sessionId}/sets`, { method: 'POST', body: set }),
 	deleteSet: (sessionId: number, setId: number) =>
 		request<void>(`/me/sessions/${sessionId}/sets/${setId}`, { method: 'DELETE' }),

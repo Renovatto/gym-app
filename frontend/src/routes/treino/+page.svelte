@@ -8,6 +8,8 @@
 	let sessions = $state<SessionSummary[]>([]);
 	let loading = $state(true);
 	let creatingTemplate = $state(false);
+	let showTemplates = $state(false);
+	let completingId = $state<number | null>(null);
 
 	const df = new Intl.DateTimeFormat(getLocale(), { day: '2-digit', month: 'short' });
 	const nf = new Intl.NumberFormat(getLocale());
@@ -21,6 +23,7 @@
 		creatingTemplate = true;
 		try {
 			await api.createFromTemplate(frequency);
+			showTemplates = false;
 			await load();
 		} finally {
 			creatingTemplate = false;
@@ -30,6 +33,16 @@
 	async function start(routineId: number): Promise<void> {
 		const session = await api.startSession(routineId);
 		await goto(`/treino/sessao/${session.id}`);
+	}
+
+	async function markDone(routineId: number): Promise<void> {
+		completingId = routineId;
+		try {
+			await api.completeRoutine(routineId);
+			await load();
+		} finally {
+			completingId = null;
+		}
 	}
 
 	$effect(() => {
@@ -49,36 +62,53 @@
 	</a>
 </div>
 
+{#snippet templatePicker()}
+	<section class="rounded-3xl bg-white p-6 shadow-sm">
+		<h2 class="text-lg font-bold text-slate-900">{m.no_routines_title()}</h2>
+		<p class="mt-1 text-sm text-slate-500">{m.no_routines_text()}</p>
+		<p class="mt-5 mb-2 text-sm font-semibold text-slate-600">{m.pick_frequency()}</p>
+		<div class="grid grid-cols-2 gap-2">
+			{#each [2, 3, 4, 5] as freq (freq)}
+				<button
+					type="button"
+					disabled={creatingTemplate}
+					onclick={() => useTemplate(freq)}
+					class="min-h-16 rounded-2xl border-2 border-emerald-100 bg-emerald-50 p-3 text-left font-bold text-emerald-800 active:bg-emerald-100 disabled:opacity-50"
+				>
+					<span class="block text-xl">{freq}×</span>
+					<span class="text-xs font-medium text-emerald-600">{m.days_per_week()}</span>
+				</button>
+			{/each}
+		</div>
+		{#if showTemplates}
+			<p class="mt-3 text-xs text-slate-400">{m.template_adds_hint()}</p>
+			<button
+				type="button"
+				onclick={() => (showTemplates = false)}
+				class="mt-2 text-sm font-semibold text-slate-500"
+			>
+				{m.cancel()}
+			</button>
+		{/if}
+	</section>
+{/snippet}
+
 {#if loading}
 	<div class="flex justify-center py-16">
 		<div class="h-8 w-8 animate-spin rounded-full border-4 border-emerald-600 border-t-transparent"></div>
 	</div>
 {:else}
 	{#if routines.length === 0}
-		<section class="rounded-3xl bg-white p-6 shadow-sm">
-			<h2 class="text-lg font-bold text-slate-900">{m.no_routines_title()}</h2>
-			<p class="mt-1 text-sm text-slate-500">{m.no_routines_text()}</p>
-			<p class="mt-5 mb-2 text-sm font-semibold text-slate-600">{m.pick_frequency()}</p>
-			<div class="grid grid-cols-2 gap-2">
-				{#each [2, 3, 4, 5] as freq (freq)}
-					<button
-						type="button"
-						disabled={creatingTemplate}
-						onclick={() => useTemplate(freq)}
-						class="min-h-16 rounded-2xl border-2 border-emerald-100 bg-emerald-50 p-3 text-left font-bold text-emerald-800 active:bg-emerald-100 disabled:opacity-50"
-					>
-						<span class="block text-xl">{freq}×</span>
-						<span class="text-xs font-medium text-emerald-600">{m.days_per_week()}</span>
-					</button>
-				{/each}
-			</div>
-		</section>
+		{@render templatePicker()}
 		<div class="mt-3 text-center">
 			<a href="/treino/rotina/nova" class="text-sm font-semibold text-emerald-700">
 				{m.create_routine_manual()}
 			</a>
 		</div>
 	{:else}
+		{#if showTemplates}
+			<div class="mb-3">{@render templatePicker()}</div>
+		{/if}
 		<div class="space-y-3">
 			{#each routines as routine (routine.id)}
 				<section class="rounded-3xl bg-white p-5 shadow-sm">
@@ -109,14 +139,24 @@
 							</span>
 						{/if}
 					</div>
-					<button
-						type="button"
-						onclick={() => start(routine.id)}
-						disabled={routine.items.length === 0}
-						class="mt-4 h-12 w-full rounded-2xl bg-emerald-600 font-bold text-white active:bg-emerald-700 disabled:opacity-40"
-					>
-						{m.start_workout()}
-					</button>
+					<div class="mt-4 flex gap-2">
+						<button
+							type="button"
+							onclick={() => start(routine.id)}
+							disabled={routine.items.length === 0}
+							class="h-12 flex-[2] rounded-2xl bg-emerald-600 font-bold text-white active:bg-emerald-700 disabled:opacity-40"
+						>
+							{m.start_workout()}
+						</button>
+						<button
+							type="button"
+							onclick={() => markDone(routine.id)}
+							disabled={routine.items.length === 0 || completingId === routine.id}
+							class="h-12 flex-1 rounded-2xl border-2 border-emerald-200 font-bold text-emerald-700 active:bg-emerald-50 disabled:opacity-40"
+						>
+							{completingId === routine.id ? '…' : m.mark_done()}
+						</button>
+					</div>
 				</section>
 			{/each}
 		</div>
@@ -128,6 +168,13 @@
 			>
 				{m.new_routine()}
 			</a>
+			<button
+				type="button"
+				onclick={() => (showTemplates = !showTemplates)}
+				class="flex h-12 flex-1 items-center justify-center rounded-2xl border-2 border-slate-200 bg-white font-semibold text-slate-700 active:bg-slate-100"
+			>
+				{m.use_template()}
+			</button>
 		</div>
 	{/if}
 

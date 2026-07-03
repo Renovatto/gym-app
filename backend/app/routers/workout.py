@@ -6,6 +6,7 @@ from sqlmodel import Session, asc, desc, select
 from ..deps import CurrentUser, SessionDep
 from ..models import (
     Exercise,
+    ExerciseLevel,
     MuscleGroup,
     Routine,
     RoutineExercise,
@@ -24,7 +25,12 @@ from ..schemas import (
     SetLogIn,
     SetLogOut,
 )
-from ..services.exercises import TEMPLATES, exercise_by_slug, to_exercise_out
+from ..services.exercises import (
+    TEMPLATES,
+    exercise_by_slug,
+    has_locale_translation,
+    to_exercise_out,
+)
 
 router = APIRouter(tags=["workout"])
 
@@ -55,13 +61,21 @@ def list_exercises(
     user: CurrentUser,
     session: SessionDep,
     muscle_group: MuscleGroup | None = Query(default=None),
+    level: ExerciseLevel | None = Query(default=None),
+    full: bool = Query(default=False, description="true = base completa; false = só traduzidos"),
 ) -> list[ExerciseOut]:
     query = select(Exercise).where(
         (Exercise.user_id.is_(None)) | (Exercise.user_id == user.id)
     )
     if muscle_group is not None:
         query = query.where(Exercise.muscle_group == muscle_group)
+    if level is not None:
+        query = query.where(Exercise.level == level)
     exercises = session.exec(query).all()
+    # Modo padrão mostra só exercícios com nome no idioma do usuário (curados);
+    # modo completo mostra tudo (nomes em inglês como fallback).
+    if not full:
+        exercises = [ex for ex in exercises if has_locale_translation(ex, user.locale)]
     out = [to_exercise_out(session, ex, user.locale) for ex in exercises]
     out.sort(key=lambda e: e.name.lower())
     return out
@@ -83,6 +97,7 @@ def _routine_out(session: Session, routine: Routine, user: User) -> RoutineOut:
                 target_sets=item.target_sets,
                 target_reps=item.target_reps,
                 target_weight_kg=item.target_weight_kg,
+                target_duration_min=item.target_duration_min,
                 rest_seconds=item.rest_seconds,
                 last_weight_kg=_last_weight(session, user.id, item.exercise_id),
             )
@@ -115,6 +130,7 @@ def create_routine(data: RoutineIn, user: CurrentUser, session: SessionDep) -> R
                 target_sets=item.target_sets,
                 target_reps=item.target_reps,
                 target_weight_kg=item.target_weight_kg,
+                target_duration_min=item.target_duration_min,
                 rest_seconds=item.rest_seconds,
             )
         )
@@ -155,6 +171,7 @@ def update_routine(
                 target_sets=item.target_sets,
                 target_reps=item.target_reps,
                 target_weight_kg=item.target_weight_kg,
+                target_duration_min=item.target_duration_min,
                 rest_seconds=item.rest_seconds,
             )
         )
@@ -167,6 +184,13 @@ def update_routine(
 @router.delete("/me/routines/{routine_id}", status_code=status.HTTP_204_NO_CONTENT)
 def delete_routine(routine_id: int, user: CurrentUser, session: SessionDep) -> None:
     routine = _get_owned_routine(session, routine_id, user.id)
+    # Preserva o histórico: sessões guardam routine_name, então só soltamos o vínculo.
+    linked = session.exec(
+        select(WorkoutSession).where(WorkoutSession.routine_id == routine_id)
+    ).all()
+    for ws in linked:
+        ws.routine_id = None
+        session.add(ws)
     session.delete(routine)
     session.commit()
 
@@ -214,6 +238,37 @@ def _session_out(user_session: WorkoutSession) -> SessionOut:
     )
 
 
+@router.post("/me/routines/{routine_id}/complete", response_model=SessionOut, status_code=status.HTTP_201_CREATED)
+def complete_routine(routine_id: int, user: CurrentUser, session: SessionDep) -> SessionOut:
+    """Registra o treino como feito conforme planejado, sem passar pela execução
+    passo a passo. Cria uma sessão já finalizada com as séries-alvo marcadas."""
+    routine = _get_owned_routine(session, routine_id, user.id)
+    now = datetime.now(timezone.utc)
+    ws = WorkoutSession(
+        user_id=user.id, routine_id=routine.id, routine_name=routine.name,
+        started_at=now, finished_at=now,
+    )
+    session.add(ws)
+    session.flush()
+    for item in sorted(routine.items, key=lambda i: i.position):
+        weight = _last_weight(session, user.id, item.exercise_id) or item.target_weight_kg or 0
+        for set_number in range(1, item.target_sets + 1):
+            session.add(
+                SetLog(
+                    session_id=ws.id,
+                    exercise_id=item.exercise_id,
+                    set_number=set_number,
+                    reps=item.target_reps,
+                    weight_kg=weight,
+                    duration_min=item.target_duration_min,
+                    done=True,
+                )
+            )
+    session.commit()
+    session.refresh(ws)
+    return _session_out(ws)
+
+
 @router.post("/me/sessions", response_model=SessionOut, status_code=status.HTTP_201_CREATED)
 def start_session(data: SessionStartIn, user: CurrentUser, session: SessionDep) -> SessionOut:
     routine_name = None
@@ -249,6 +304,7 @@ def log_set(
         set_number=data.set_number,
         reps=data.reps,
         weight_kg=data.weight_kg,
+        duration_min=data.duration_min,
         done=data.done,
     )
     session.add(log)

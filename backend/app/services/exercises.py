@@ -18,15 +18,22 @@ def localized_name(session: Session, exercise: Exercise, locale: str) -> str:
 
 
 def to_exercise_out(session: Session, exercise: Exercise, locale: str) -> ExerciseOut:
+    media = [u for u in (exercise.media_url, exercise.media_url2) if u]
     return ExerciseOut(
         id=exercise.id,
         slug=exercise.slug,
         name=localized_name(session, exercise, locale),
         muscle_group=exercise.muscle_group,
         equipment=exercise.equipment,
-        media_url=exercise.media_url,
+        kind=exercise.kind,
+        level=exercise.level,
+        media_urls=media,
         is_custom=exercise.user_id is not None,
     )
+
+
+def has_locale_translation(exercise: Exercise, locale: str) -> bool:
+    return any(t.locale == locale for t in exercise.translations)
 
 
 def exercise_by_slug(session: Session, slug: str) -> Exercise | None:

@@ -5,7 +5,8 @@
 		max = 999,
 		step = 1,
 		unit = '',
-		decimals = 0
+		decimals = 0,
+		onchange
 	}: {
 		value: number;
 		min?: number;
@@ -13,20 +14,26 @@
 		step?: number;
 		unit?: string;
 		decimals?: number;
+		onchange?: (value: number) => void;
 	} = $props();
 
 	function clamp(v: number): number {
 		return Math.min(max, Math.max(min, Math.round(v / step) * step));
 	}
 
+	function set(v: number): void {
+		value = Number(v.toFixed(decimals));
+		onchange?.(value);
+	}
+
 	function nudge(direction: 1 | -1): void {
-		value = Number(clamp(value + direction * step).toFixed(decimals));
+		set(clamp(value + direction * step));
 	}
 
 	function onInput(event: Event): void {
 		const raw = (event.currentTarget as HTMLInputElement).value.replace(',', '.');
 		const parsed = Number(raw);
-		if (!Number.isNaN(parsed)) value = clamp(parsed);
+		if (!Number.isNaN(parsed)) set(clamp(parsed));
 	}
 </script>
 

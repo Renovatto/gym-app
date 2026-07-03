@@ -11,6 +11,7 @@
 		target_sets: number;
 		target_reps: number;
 		target_weight_kg: number | null;
+		target_duration_min: number | null;
 		rest_seconds: number;
 	}
 
@@ -35,6 +36,7 @@
 				target_sets: i.target_sets,
 				target_reps: i.target_reps,
 				target_weight_kg: i.target_weight_kg,
+				target_duration_min: i.target_duration_min,
 				rest_seconds: i.rest_seconds
 			}));
 		}
@@ -43,9 +45,17 @@
 
 	function addExercise(exercise: Exercise): void {
 		if (items.some((i) => i.exercise.id === exercise.id)) return;
+		const cardio = exercise.kind === 'cardio';
 		items = [
 			...items,
-			{ exercise, target_sets: 3, target_reps: 10, target_weight_kg: null, rest_seconds: 90 }
+			{
+				exercise,
+				target_sets: cardio ? 1 : 3,
+				target_reps: 10,
+				target_weight_kg: null,
+				target_duration_min: cardio ? 20 : null,
+				rest_seconds: 90
+			}
 		];
 	}
 
@@ -64,6 +74,7 @@
 			target_sets: i.target_sets,
 			target_reps: i.target_reps,
 			target_weight_kg: i.target_weight_kg,
+			target_duration_min: i.target_duration_min,
 			rest_seconds: i.rest_seconds
 		}));
 		try {
@@ -148,16 +159,29 @@
 						</svg>
 					</button>
 				</div>
-				<div class="grid grid-cols-2 gap-3">
+				{#if item.exercise.kind === 'cardio'}
 					<div>
-						<p class="mb-1 text-xs font-semibold text-slate-500">{m.sets_label()}</p>
-						<Stepper bind:value={item.target_sets} min={1} max={20} />
+						<p class="mb-1 text-xs font-semibold text-slate-500">{m.duration_label()}</p>
+						<Stepper
+							value={item.target_duration_min ?? 20}
+							min={1}
+							max={300}
+							unit={m.minutes_short()}
+							onchange={(v) => (item.target_duration_min = v)}
+						/>
 					</div>
-					<div>
-						<p class="mb-1 text-xs font-semibold text-slate-500">{m.reps_label()}</p>
-						<Stepper bind:value={item.target_reps} min={1} max={100} />
+				{:else}
+					<div class="grid grid-cols-2 gap-3">
+						<div>
+							<p class="mb-1 text-xs font-semibold text-slate-500">{m.sets_label()}</p>
+							<Stepper bind:value={item.target_sets} min={1} max={20} />
+						</div>
+						<div>
+							<p class="mb-1 text-xs font-semibold text-slate-500">{m.reps_label()}</p>
+							<Stepper bind:value={item.target_reps} min={1} max={100} />
+						</div>
 					</div>
-				</div>
+				{/if}
 			</section>
 		{/each}
 	</div>

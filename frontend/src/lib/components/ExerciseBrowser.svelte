@@ -1,7 +1,7 @@
 <script lang="ts">
-	import { api, type Exercise, type MuscleGroup } from '$lib/api';
+	import { api, type Exercise, type ExerciseLevel, type MuscleGroup } from '$lib/api';
 	import ExercisePhotoModal from './ExercisePhotoModal.svelte';
-	import { MUSCLE_GROUPS, equipmentLabel, muscleGroupLabel } from '$lib/labels';
+	import { LEVELS, MUSCLE_GROUPS, equipmentLabel, levelLabel, muscleGroupLabel } from '$lib/labels';
 	import { m } from '$lib/paraglide/messages';
 
 	let {
@@ -10,18 +10,20 @@
 	}: { onPick?: (exercise: Exercise) => void; selectedIds?: Set<number> } = $props();
 
 	let group = $state<MuscleGroup>('chest');
+	let level = $state<ExerciseLevel | null>(null);
+	let full = $state(false);
 	let exercises = $state<Exercise[]>([]);
 	let loading = $state(true);
 	let photoOf = $state<Exercise | null>(null);
 
-	async function load(g: MuscleGroup): Promise<void> {
+	async function load(g: MuscleGroup, lvl: ExerciseLevel | null, showAll: boolean): Promise<void> {
 		loading = true;
-		exercises = await api.getExercises(g);
+		exercises = await api.getExercises(g, { level: lvl ?? undefined, full: showAll });
 		loading = false;
 	}
 
 	$effect(() => {
-		load(group);
+		load(group, level, full);
 	});
 </script>
 
@@ -40,6 +42,34 @@
 	</div>
 </div>
 
+<div class="mt-2 flex items-center justify-between gap-2">
+	<div class="flex gap-1.5">
+		<button
+			type="button"
+			onclick={() => (level = null)}
+			class="h-8 rounded-full px-3 text-xs font-semibold {level === null ? 'bg-slate-800 text-white' : 'bg-white text-slate-500'}"
+		>
+			{m.level_all()}
+		</button>
+		{#each LEVELS as lvl (lvl)}
+			<button
+				type="button"
+				onclick={() => (level = lvl)}
+				class="h-8 rounded-full px-3 text-xs font-semibold {level === lvl ? 'bg-slate-800 text-white' : 'bg-white text-slate-500'}"
+			>
+				{levelLabel(lvl)}
+			</button>
+		{/each}
+	</div>
+	<button
+		type="button"
+		onclick={() => (full = !full)}
+		class="h-8 shrink-0 rounded-full px-3 text-xs font-semibold {full ? 'bg-emerald-600 text-white' : 'bg-white text-emerald-700'}"
+	>
+		{full ? m.showing_all() : m.show_all()}
+	</button>
+</div>
+
 {#if loading}
 	<div class="flex justify-center py-12">
 		<div class="h-8 w-8 animate-spin rounded-full border-4 border-emerald-600 border-t-transparent"></div>
@@ -53,10 +83,15 @@
 					type="button"
 					aria-label={m.view_photo()}
 					onclick={() => (photoOf = exercise)}
-					class="grid h-14 w-14 shrink-0 place-items-center overflow-hidden rounded-xl bg-slate-100"
+					class="relative grid h-14 w-14 shrink-0 place-items-center overflow-hidden rounded-xl bg-slate-100"
 				>
-					{#if exercise.media_url}
-						<img src={exercise.media_url} alt="" class="h-full w-full object-cover" loading="lazy" />
+					{#if exercise.media_urls.length > 0}
+						<img src={exercise.media_urls[0]} alt="" class="h-full w-full object-cover" loading="lazy" />
+						{#if exercise.media_urls.length > 1}
+							<span class="absolute right-1 bottom-1 grid h-5 w-5 place-items-center rounded-full bg-emerald-600 text-white">
+								<svg viewBox="0 0 24 24" class="h-3 w-3" fill="currentColor"><path d="M8 5v14l11-7z" /></svg>
+							</span>
+						{/if}
 					{:else}
 						<svg viewBox="0 0 24 24" class="h-6 w-6 text-slate-400" fill="none" stroke="currentColor" stroke-width="2">
 							<rect x="3" y="3" width="18" height="18" rx="2" /><path d="M3 15l5-5 4 4 3-3 6 6" stroke-linecap="round" stroke-linejoin="round" />

@@ -1,4 +1,4 @@
-import type { Equipment, MuscleGroup } from '$lib/api';
+import type { Equipment, ExerciseLevel, MuscleGroup } from '$lib/api';
 import { m } from '$lib/paraglide/messages';
 
 export function muscleGroupLabel(group: MuscleGroup): string {
@@ -11,7 +11,8 @@ export function muscleGroupLabel(group: MuscleGroup): string {
 		legs: m.mg_legs(),
 		glutes: m.mg_glutes(),
 		abs: m.mg_abs(),
-		calves: m.mg_calves()
+		calves: m.mg_calves(),
+		cardio: m.mg_cardio()
 	}[group];
 }
 
@@ -24,8 +25,19 @@ export const MUSCLE_GROUPS: MuscleGroup[] = [
 	'triceps',
 	'glutes',
 	'abs',
-	'calves'
+	'calves',
+	'cardio'
 ];
+
+export const LEVELS: ExerciseLevel[] = ['beginner', 'intermediate', 'expert'];
+
+export function levelLabel(level: ExerciseLevel): string {
+	return {
+		beginner: m.level_beginner(),
+		intermediate: m.level_intermediate(),
+		expert: m.level_expert()
+	}[level];
+}
 
 export function equipmentLabel(equipment: Equipment): string {
 	return {
