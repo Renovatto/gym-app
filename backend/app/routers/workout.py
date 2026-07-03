@@ -269,8 +269,31 @@ def complete_routine(routine_id: int, user: CurrentUser, session: SessionDep) ->
     return _session_out(ws)
 
 
+def _find_active_session(session: Session, user_id: int) -> WorkoutSession | None:
+    return session.exec(
+        select(WorkoutSession)
+        .where(WorkoutSession.user_id == user_id)
+        .where(WorkoutSession.finished_at.is_(None))
+        .order_by(desc(WorkoutSession.started_at))
+    ).first()
+
+
+@router.get("/me/sessions/active", response_model=SessionOut | None)
+def active_session(user: CurrentUser, session: SessionDep) -> SessionOut | None:
+    ws = _find_active_session(session, user.id)
+    return _session_out(ws) if ws else None
+
+
 @router.post("/me/sessions", response_model=SessionOut, status_code=status.HTTP_201_CREATED)
 def start_session(data: SessionStartIn, user: CurrentUser, session: SessionDep) -> SessionOut:
+    # evita sessões duplicadas: reaproveita a ativa com séries, descarta a vazia
+    active = _find_active_session(session, user.id)
+    if active is not None:
+        if active.sets:
+            return _session_out(active)
+        session.delete(active)
+        session.flush()
+
     routine_name = None
     if data.routine_id is not None:
         routine = _get_owned_routine(session, data.routine_id, user.id)
@@ -362,3 +385,10 @@ def list_sessions(user: CurrentUser, session: SessionDep) -> list[SessionSummary
 @router.get("/me/sessions/{session_id}", response_model=SessionOut)
 def get_session(session_id: int, user: CurrentUser, session: SessionDep) -> SessionOut:
     return _session_out(_get_owned_session(session, session_id, user.id))
+
+
+@router.delete("/me/sessions/{session_id}", status_code=status.HTTP_204_NO_CONTENT)
+def discard_session(session_id: int, user: CurrentUser, session: SessionDep) -> None:
+    ws = _get_owned_session(session, session_id, user.id)
+    session.delete(ws)
+    session.commit()

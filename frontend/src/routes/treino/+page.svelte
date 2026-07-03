@@ -1,12 +1,19 @@
 <script lang="ts">
 	import { goto } from '$app/navigation';
-	import { api, localDay, type Routine, type SessionSummary } from '$lib/api';
+	import {
+		api,
+		localDay,
+		type Routine,
+		type SessionSummary,
+		type WorkoutSession
+	} from '$lib/api';
 	import { showToast } from '$lib/toast.svelte';
 	import { m } from '$lib/paraglide/messages';
 	import { getLocale } from '$lib/paraglide/runtime';
 
 	let routines = $state<Routine[]>([]);
 	let sessions = $state<SessionSummary[]>([]);
+	let activeSession = $state<WorkoutSession | null>(null);
 	let loading = $state(true);
 	let creatingTemplate = $state(false);
 	let showTemplates = $state(false);
@@ -16,8 +23,18 @@
 	const nf = new Intl.NumberFormat(getLocale());
 
 	async function load(): Promise<void> {
-		[routines, sessions] = await Promise.all([api.getRoutines(), api.getSessions()]);
+		[routines, sessions, activeSession] = await Promise.all([
+			api.getRoutines(),
+			api.getSessions(),
+			api.getActiveSession()
+		]);
 		loading = false;
+	}
+
+	async function discardActive(): Promise<void> {
+		if (!activeSession) return;
+		await api.deleteSession(activeSession.id);
+		await load();
 	}
 
 	async function useTemplate(frequency: number): Promise<void> {
@@ -109,6 +126,27 @@
 		<div class="h-8 w-8 animate-spin rounded-full border-4 border-emerald-600 border-t-transparent"></div>
 	</div>
 {:else}
+	{#if activeSession}
+		<section class="mb-3 rounded-3xl bg-emerald-600 p-5 text-white shadow-sm">
+			<p class="text-sm font-semibold text-emerald-100">{m.workout_in_progress()}</p>
+			<p class="truncate text-lg font-bold">{activeSession.routine_name ?? m.free_workout()}</p>
+			<div class="mt-3 flex gap-2">
+				<a
+					href="/treino/sessao/{activeSession.id}"
+					class="flex h-11 flex-[2] items-center justify-center rounded-2xl bg-white font-bold text-emerald-700 active:bg-emerald-50"
+				>
+					{m.resume_workout()}
+				</a>
+				<button
+					type="button"
+					onclick={discardActive}
+					class="h-11 flex-1 rounded-2xl border-2 border-emerald-400 font-semibold text-white active:bg-emerald-700"
+				>
+					{m.discard()}
+				</button>
+			</div>
+		</section>
+	{/if}
 	{#if routines.length === 0}
 		{@render templatePicker()}
 		<div class="mt-3 text-center">

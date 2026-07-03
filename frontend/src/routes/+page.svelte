@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { api, localDay, type DiaryDay, type GoalsOut } from '$lib/api';
+	import { api, localDay, type DiaryDay, type GoalsOut, type WorkoutSession } from '$lib/api';
 	import { session } from '$lib/session.svelte';
 	import WaterCard from '$lib/components/WaterCard.svelte';
 	import MacroSummary from '$lib/components/MacroSummary.svelte';
@@ -8,12 +8,14 @@
 
 	let goals = $state<GoalsOut | null>(null);
 	let diary = $state<DiaryDay | null>(null);
+	let activeSession = $state<WorkoutSession | null>(null);
 
 	const dietOn = $derived(session.profile?.diet_enabled ?? false);
 
 	$effect(() => {
 		if (session.user?.has_profile) {
 			api.getGoals().then((g) => (goals = g));
+			api.getActiveSession().then((s) => (activeSession = s));
 			if (dietOn) api.getDiary(localDay()).then((d) => (diary = d));
 		}
 	});
@@ -75,19 +77,30 @@
 	</div>
 
 	<a
-		href="/treino"
-		class="mt-3 flex items-center justify-between rounded-3xl bg-white p-5 shadow-sm active:bg-slate-50"
+		href={activeSession ? `/treino/sessao/${activeSession.id}` : '/treino'}
+		class="mt-3 flex items-center justify-between rounded-3xl p-5 shadow-sm
+			{activeSession ? 'bg-emerald-600 text-white active:bg-emerald-700' : 'bg-white active:bg-slate-50'}"
 	>
 		<div class="flex items-center gap-3">
-			<span class="grid h-11 w-11 place-items-center rounded-2xl bg-emerald-50 text-emerald-600">
+			<span
+				class="grid h-11 w-11 place-items-center rounded-2xl
+					{activeSession ? 'bg-emerald-500 text-white' : 'bg-emerald-50 text-emerald-600'}"
+			>
 				<svg viewBox="0 0 24 24" class="h-6 w-6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6.5 6.5v11M17.5 6.5v11M3 9.5v5M21 9.5v5M6.5 12h11" /></svg>
 			</span>
 			<div>
-				<p class="font-bold text-slate-900">{m.tab_workout()}</p>
-				<p class="text-sm text-slate-500">{m.go_to_workouts()}</p>
+				{#if activeSession}
+					<p class="font-bold">{m.resume_workout()}</p>
+					<p class="text-sm text-emerald-100">
+						{activeSession.routine_name ?? m.free_workout()}
+					</p>
+				{:else}
+					<p class="font-bold text-slate-900">{m.tab_workout()}</p>
+					<p class="text-sm text-slate-500">{m.go_to_workouts()}</p>
+				{/if}
 			</div>
 		</div>
-		<svg viewBox="0 0 24 24" class="h-5 w-5 text-slate-300" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 6l6 6-6 6" stroke-linecap="round" stroke-linejoin="round" /></svg>
+		<svg viewBox="0 0 24 24" class="h-5 w-5 {activeSession ? 'text-emerald-200' : 'text-slate-300'}" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 6l6 6-6 6" stroke-linecap="round" stroke-linejoin="round" /></svg>
 	</a>
 
 	<section class="mt-3 grid grid-cols-3 gap-3">

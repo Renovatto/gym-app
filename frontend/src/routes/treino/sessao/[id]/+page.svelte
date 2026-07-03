@@ -20,6 +20,7 @@
 		item: RoutineItem;
 		isCardio: boolean;
 		sets: SetRow[];
+		collapsed: boolean;
 	}
 
 	const sessionId = $derived(Number(page.params.id));
@@ -121,9 +122,24 @@
 					saving: false
 				};
 			});
-			return { item, isCardio, sets };
+			// bloco já 100% concluído (sessão retomada) começa minimizado
+			return { item, isCardio, sets, collapsed: sets.every((s) => s.done) };
 		});
 		loading = false;
+	}
+
+	function addSet(block: ExerciseBlock): void {
+		const last = block.sets[block.sets.length - 1];
+		block.sets.push({
+			setNumber: block.sets.length + 1,
+			reps: last?.reps ?? block.item.target_reps,
+			weight: last?.weight ?? 0,
+			duration: last?.duration ?? block.item.target_duration_min ?? 20,
+			done: false,
+			logId: null,
+			saving: false
+		});
+		block.collapsed = false;
 	}
 
 	async function toggleSet(block: ExerciseBlock, row: SetRow): Promise<void> {
@@ -141,6 +157,10 @@
 				});
 				row.logId = log.id;
 				row.done = true;
+				// exercício 100% concluído minimiza; descanso roda entre séries e exercícios
+				if (block.sets.every((s) => s.done)) {
+					block.collapsed = true;
+				}
 				if (!block.isCardio) {
 					startRest(block.item.rest_seconds || 90);
 				}
@@ -214,8 +234,10 @@
 
 	<div class="space-y-4">
 		{#each blocks as block (block.item.id)}
+			{@const doneSets = block.sets.filter((s) => s.done).length}
+			{@const allDone = doneSets === block.sets.length}
 			<section class="rounded-3xl bg-white p-4 shadow-sm">
-				<div class="mb-3 flex items-center gap-3">
+				<div class="flex items-center gap-3 {block.collapsed ? '' : 'mb-3'}">
 					<button
 						type="button"
 						aria-label={m.view_photo()}
@@ -228,10 +250,16 @@
 							<svg viewBox="0 0 24 24" class="h-5 w-5 text-slate-400" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3" /><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7z" /></svg>
 						{/if}
 					</button>
-					<div class="min-w-0 flex-1">
+					<button
+						type="button"
+						class="min-w-0 flex-1 text-left"
+						onclick={() => (block.collapsed = !block.collapsed)}
+					>
 						<p class="truncate font-bold text-slate-900">{block.item.exercise.name}</p>
 						<p class="text-sm text-slate-500">
-							{#if block.isCardio}
+							{#if block.collapsed}
+								{doneSets}/{block.sets.length} {m.sets_label()}
+							{:else if block.isCardio}
 								{m.cardio_label()}
 							{:else}
 								{block.item.target_sets} × {block.item.target_reps}
@@ -240,10 +268,23 @@
 								{/if}
 							{/if}
 						</p>
-					</div>
+					</button>
+					{#if allDone}
+						<span class="grid h-8 w-8 shrink-0 place-items-center rounded-full bg-emerald-600 text-sm font-bold text-white">✓</span>
+					{/if}
+					<button
+						type="button"
+						aria-label={block.collapsed ? m.expand() : m.collapse()}
+						onclick={() => (block.collapsed = !block.collapsed)}
+						class="grid h-8 w-8 shrink-0 place-items-center text-slate-400"
+					>
+						<svg viewBox="0 0 24 24" class="h-5 w-5 transition-transform {block.collapsed ? '' : 'rotate-180'}" fill="none" stroke="currentColor" stroke-width="2">
+							<path d="M6 9l6 6 6-6" stroke-linecap="round" stroke-linejoin="round" />
+						</svg>
+					</button>
 				</div>
 
-				<div class="space-y-2">
+				<div class="space-y-2 {block.collapsed ? 'hidden' : ''}">
 					{#each block.sets as row (row.setNumber)}
 						<div class="rounded-2xl p-3 {row.done ? 'bg-emerald-50' : 'bg-slate-50'}">
 							<div class="mb-2 flex items-center justify-between">
@@ -277,9 +318,18 @@
 										<Stepper bind:value={row.reps} min={0} max={100} />
 									</div>
 								</div>
-							{/if}
+						{/if}
 						</div>
 					{/each}
+					{#if !block.isCardio}
+						<button
+							type="button"
+							onclick={() => addSet(block)}
+							class="h-11 w-full rounded-2xl border-2 border-dashed border-slate-200 text-sm font-bold text-slate-500 active:bg-slate-50"
+						>
+							+ {m.add_set()}
+						</button>
+					{/if}
 				</div>
 			</section>
 		{/each}

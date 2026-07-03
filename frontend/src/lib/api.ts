@@ -405,6 +405,8 @@ export const api = {
 		request<WorkoutSession>(`/me/routines/${routineId}/complete`, { method: 'POST' }),
 	startSession: (routineId: number | null) =>
 		request<WorkoutSession>('/me/sessions', { method: 'POST', body: { routine_id: routineId } }),
+	getActiveSession: () => request<WorkoutSession | null>('/me/sessions/active'),
+	deleteSession: (id: number) => request<void>(`/me/sessions/${id}`, { method: 'DELETE' }),
 	getSession: (id: number) => request<WorkoutSession>(`/me/sessions/${id}`),
 	logSet: (
 		sessionId: number,
