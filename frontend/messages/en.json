@@ -218,6 +218,7 @@
 	"rest_seconds_label": "Rest (sec)",
 	"workout_finished_in": "Workout done in {time}! 💪",
 	"add_set": "Add set",
+	"search_exercise": "Search exercise…",
 	"expand": "Expand",
 	"collapse": "Collapse",
 	"resume_workout": "Resume workout",

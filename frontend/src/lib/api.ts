@@ -383,9 +383,10 @@ export const api = {
 	// treino
 	getExercises: (
 		muscleGroup?: MuscleGroup,
-		opts: { level?: ExerciseLevel; full?: boolean } = {}
+		opts: { level?: ExerciseLevel; full?: boolean; q?: string } = {}
 	) => {
 		const params = new URLSearchParams();
+		if (opts.q) params.set('q', opts.q);
 		if (muscleGroup) params.set('muscle_group', muscleGroup);
 		if (opts.level) params.set('level', opts.level);
 		if (opts.full) params.set('full', 'true');

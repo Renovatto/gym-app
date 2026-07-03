@@ -218,6 +218,7 @@
 	"rest_seconds_label": "Descanso (seg)",
 	"workout_finished_in": "¡Entrenamiento hecho en {time}! 💪",
 	"add_set": "Añadir serie",
+	"search_exercise": "Buscar ejercicio…",
 	"expand": "Expandir",
 	"collapse": "Minimizar",
 	"resume_workout": "Continuar entrenamiento",

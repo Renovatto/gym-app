@@ -12,22 +12,43 @@
 	let group = $state<MuscleGroup>('chest');
 	let level = $state<ExerciseLevel | null>(null);
 	let full = $state(false);
+	let query = $state('');
 	let exercises = $state<Exercise[]>([]);
 	let loading = $state(true);
 	let photoOf = $state<Exercise | null>(null);
 
-	async function load(g: MuscleGroup, lvl: ExerciseLevel | null, showAll: boolean): Promise<void> {
+	const searching = $derived(query.trim().length > 0);
+
+	async function load(): Promise<void> {
 		loading = true;
-		exercises = await api.getExercises(g, { level: lvl ?? undefined, full: showAll });
+		const q = query.trim();
+		// com busca: global (sem grupo); sem busca: filtro por grupo
+		exercises = await api.getExercises(q ? undefined : group, {
+			level: level ?? undefined,
+			full,
+			q: q || undefined
+		});
 		loading = false;
 	}
 
 	$effect(() => {
-		load(group, level, full);
+		// dependências reativas + debounce de 300ms para a digitação
+		query;
+		group;
+		level;
+		full;
+		const timer = setTimeout(load, 300);
+		return () => clearTimeout(timer);
 	});
 </script>
 
-<div class="-mx-4 overflow-x-auto px-4">
+<input
+	bind:value={query}
+	placeholder={m.search_exercise()}
+	class="mb-2 h-12 w-full rounded-2xl border-2 border-slate-200 bg-white px-4 outline-none focus:border-emerald-600"
+/>
+
+<div class="-mx-4 overflow-x-auto px-4 {searching ? 'pointer-events-none opacity-40' : ''}">
 	<div class="flex w-max gap-2 pb-1">
 		{#each MUSCLE_GROUPS as g (g)}
 			<button
@@ -64,7 +85,9 @@
 	<button
 		type="button"
 		onclick={() => (full = !full)}
-		class="h-8 shrink-0 rounded-full px-3 text-xs font-semibold {full ? 'bg-emerald-600 text-white' : 'bg-white text-emerald-700'}"
+		class="h-8 shrink-0 rounded-full px-3 text-xs font-semibold
+			{searching ? 'pointer-events-none opacity-40' : ''}
+			{full ? 'bg-emerald-600 text-white' : 'bg-white text-emerald-700'}"
 	>
 		{full ? m.showing_all() : m.show_all()}
 	</button>

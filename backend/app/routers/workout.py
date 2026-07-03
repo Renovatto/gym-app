@@ -31,6 +31,7 @@ from ..services.exercises import (
     has_locale_translation,
     to_exercise_out,
 )
+from ..services.text import normalize_search
 
 router = APIRouter(tags=["workout"])
 
@@ -60,9 +61,11 @@ def _visible_exercise(session: Session, exercise_id: int, user_id: int) -> Exerc
 def list_exercises(
     user: CurrentUser,
     session: SessionDep,
+    q: str = Query(default="", max_length=60),
     muscle_group: MuscleGroup | None = Query(default=None),
     level: ExerciseLevel | None = Query(default=None),
     full: bool = Query(default=False, description="true = base completa; false = só traduzidos"),
+    limit: int = Query(default=100, ge=1, le=300),
 ) -> list[ExerciseOut]:
     query = select(Exercise).where(
         (Exercise.user_id.is_(None)) | (Exercise.user_id == user.id)
@@ -72,13 +75,23 @@ def list_exercises(
     if level is not None:
         query = query.where(Exercise.level == level)
     exercises = session.exec(query).all()
-    # Modo padrão mostra só exercícios com nome no idioma do usuário (curados);
-    # modo completo mostra tudo (nomes em inglês como fallback).
-    if not full:
+
+    term = normalize_search(q.strip())
+    if term:
+        # busca ignora acentos/caixa e vale para a base inteira (ignora `full`)
+        exercises = [
+            ex
+            for ex in exercises
+            if any(term in normalize_search(t.name) for t in ex.translations)
+        ]
+    elif not full:
+        # Modo padrão mostra só exercícios com nome no idioma do usuário (curados);
+        # modo completo mostra tudo (nomes em inglês como fallback).
         exercises = [ex for ex in exercises if has_locale_translation(ex, user.locale)]
+
     out = [to_exercise_out(session, ex, user.locale) for ex in exercises]
     out.sort(key=lambda e: e.name.lower())
-    return out
+    return out[:limit]
 
 
 # --- Rotinas --------------------------------------------------------------
