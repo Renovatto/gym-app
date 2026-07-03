@@ -35,6 +35,7 @@ from ..services.diet import (
     to_food_out,
 )
 from ..services.goals import compute_goals
+from ..services.text import normalize_search
 
 router = APIRouter(tags=["diet"])
 
@@ -55,13 +56,13 @@ def list_foods(
         query = query.where(Food.category == category)
     foods = session.exec(query).all()
 
-    term = q.strip().lower()
+    term = normalize_search(q.strip())
     out = []
     for food in foods:
         name = localized_food_name(food, user.locale)
-        if term and term not in name.lower():
+        if term and term not in normalize_search(name):
             # também busca em qualquer idioma cadastrado (ex.: nome em inglês)
-            if not any(term in t.name.lower() for t in food.translations):
+            if not any(term in normalize_search(t.name) for t in food.translations):
                 continue
         out.append(to_food_out(food, user.locale))
     out.sort(key=lambda f: f.name.lower())

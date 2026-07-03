@@ -187,9 +187,12 @@ curl -s http://localhost:8765/me/sessions/active -H "Authorization: Bearer $ACCE
 
 - Adicionar param `q: str = Query(default="", max_length=60)`.
 - Se `q` não vazio: filtrar em Python (mesmo padrão do `/foods`): manter exercício
-  se o termo (lowercase) estiver no nome localizado OU em qualquer tradução.
+  se o termo estiver no nome localizado OU em qualquer tradução.
   Quando há busca, IGNORAR o filtro `full` (buscar na base inteira), mas manter
   `muscle_group`/`level` se enviados.
+- **PADRÃO DO SISTEMA**: comparar SEMPRE com `normalize_search` (de
+  `app/services/text.py`) dos dois lados — busca ignora acentos e caixa
+  ("supino" acha "Supino", "flexao" acha "Flexão"). Toda busca futura usa isso.
 
 Teste curl: `/exercises?q=supino` deve retornar os supinos; `/exercises?q=curl&full=false` deve achar mesmo sem tradução pt.
 
