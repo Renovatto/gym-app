@@ -1,0 +1,453 @@
+[
+ {
+  "slug": "barbell-bench-press",
+  "muscle_group": "chest",
+  "equipment": "barbell",
+  "media_url": "https://raw.githubusercontent.com/yuhonas/free-exercise-db/main/exercises/Barbell_Bench_Press_-_Medium_Grip/0.jpg",
+  "names": {
+   "en": "Barbell Bench Press",
+   "pt-BR": "Supino reto com barra",
+   "es": "Press de banca con barra"
+  }
+ },
+ {
+  "slug": "incline-dumbbell-press",
+  "muscle_group": "chest",
+  "equipment": "dumbbell",
+  "media_url": "https://raw.githubusercontent.com/yuhonas/free-exercise-db/main/exercises/Incline_Dumbbell_Press/0.jpg",
+  "names": {
+   "en": "Incline Dumbbell Press",
+   "pt-BR": "Supino inclinado com halteres",
+   "es": "Press inclinado con mancuernas"
+  }
+ },
+ {
+  "slug": "dumbbell-flyes",
+  "muscle_group": "chest",
+  "equipment": "dumbbell",
+  "media_url": "https://raw.githubusercontent.com/yuhonas/free-exercise-db/main/exercises/Dumbbell_Flyes/0.jpg",
+  "names": {
+   "en": "Dumbbell Flyes",
+   "pt-BR": "Crucifixo com halteres",
+   "es": "Aperturas con mancuernas"
+  }
+ },
+ {
+  "slug": "push-ups",
+  "muscle_group": "chest",
+  "equipment": "bodyweight",
+  "media_url": "https://raw.githubusercontent.com/yuhonas/free-exercise-db/main/exercises/Pushups/0.jpg",
+  "names": {
+   "en": "Push-Ups",
+   "pt-BR": "Flexão de braço",
+   "es": "Flexiones"
+  }
+ },
+ {
+  "slug": "cable-crossover",
+  "muscle_group": "chest",
+  "equipment": "cable",
+  "media_url": "https://raw.githubusercontent.com/yuhonas/free-exercise-db/main/exercises/Cable_Crossover/0.jpg",
+  "names": {
+   "en": "Cable Crossover",
+   "pt-BR": "Crossover na polia",
+   "es": "Cruce de poleas"
+  }
+ },
+ {
+  "slug": "chest-dips",
+  "muscle_group": "chest",
+  "equipment": "bodyweight",
+  "media_url": "https://raw.githubusercontent.com/yuhonas/free-exercise-db/main/exercises/Dips_-_Chest_Version/0.jpg",
+  "names": {
+   "en": "Chest Dips",
+   "pt-BR": "Mergulho para peito (paralelas)",
+   "es": "Fondos para pecho"
+  }
+ },
+ {
+  "slug": "deadlift",
+  "muscle_group": "back",
+  "equipment": "barbell",
+  "media_url": "https://raw.githubusercontent.com/yuhonas/free-exercise-db/main/exercises/Barbell_Deadlift/0.jpg",
+  "names": {
+   "en": "Deadlift",
+   "pt-BR": "Levantamento terra",
+   "es": "Peso muerto"
+  }
+ },
+ {
+  "slug": "bent-over-barbell-row",
+  "muscle_group": "back",
+  "equipment": "barbell",
+  "media_url": "https://raw.githubusercontent.com/yuhonas/free-exercise-db/main/exercises/Bent_Over_Barbell_Row/0.jpg",
+  "names": {
+   "en": "Bent-Over Barbell Row",
+   "pt-BR": "Remada curvada com barra",
+   "es": "Remo con barra inclinado"
+  }
+ },
+ {
+  "slug": "pull-ups",
+  "muscle_group": "back",
+  "equipment": "bodyweight",
+  "media_url": "https://raw.githubusercontent.com/yuhonas/free-exercise-db/main/exercises/Pullups/0.jpg",
+  "names": {
+   "en": "Pull-Ups",
+   "pt-BR": "Barra fixa",
+   "es": "Dominadas"
+  }
+ },
+ {
+  "slug": "lat-pulldown",
+  "muscle_group": "back",
+  "equipment": "cable",
+  "media_url": "https://raw.githubusercontent.com/yuhonas/free-exercise-db/main/exercises/Wide-Grip_Lat_Pulldown/0.jpg",
+  "names": {
+   "en": "Lat Pulldown",
+   "pt-BR": "Puxada alta (pulley)",
+   "es": "Jalón al pecho"
+  }
+ },
+ {
+  "slug": "seated-cable-row",
+  "muscle_group": "back",
+  "equipment": "cable",
+  "media_url": "https://raw.githubusercontent.com/yuhonas/free-exercise-db/main/exercises/Seated_Cable_Rows/0.jpg",
+  "names": {
+   "en": "Seated Cable Row",
+   "pt-BR": "Remada baixa sentado",
+   "es": "Remo sentado en polea"
+  }
+ },
+ {
+  "slug": "back-extension",
+  "muscle_group": "back",
+  "equipment": "bodyweight",
+  "media_url": "https://raw.githubusercontent.com/yuhonas/free-exercise-db/main/exercises/Hyperextensions_Back_Extensions/0.jpg",
+  "names": {
+   "en": "Back Extension",
+   "pt-BR": "Extensão lombar (hiperextensão)",
+   "es": "Extensión lumbar"
+  }
+ },
+ {
+  "slug": "barbell-squat",
+  "muscle_group": "legs",
+  "equipment": "barbell",
+  "media_url": "https://raw.githubusercontent.com/yuhonas/free-exercise-db/main/exercises/Barbell_Full_Squat/0.jpg",
+  "names": {
+   "en": "Barbell Squat",
+   "pt-BR": "Agachamento livre com barra",
+   "es": "Sentadilla con barra"
+  }
+ },
+ {
+  "slug": "leg-press",
+  "muscle_group": "legs",
+  "equipment": "machine",
+  "media_url": "https://raw.githubusercontent.com/yuhonas/free-exercise-db/main/exercises/Leg_Press/0.jpg",
+  "names": {
+   "en": "Leg Press",
+   "pt-BR": "Leg press",
+   "es": "Prensa de piernas"
+  }
+ },
+ {
+  "slug": "barbell-lunge",
+  "muscle_group": "legs",
+  "equipment": "barbell",
+  "media_url": "https://raw.githubusercontent.com/yuhonas/free-exercise-db/main/exercises/Barbell_Lunge/0.jpg",
+  "names": {
+   "en": "Barbell Lunge",
+   "pt-BR": "Afundo com barra",
+   "es": "Zancada con barra"
+  }
+ },
+ {
+  "slug": "leg-extension",
+  "muscle_group": "legs",
+  "equipment": "machine",
+  "media_url": "https://raw.githubusercontent.com/yuhonas/free-exercise-db/main/exercises/Leg_Extensions/0.jpg",
+  "names": {
+   "en": "Leg Extension",
+   "pt-BR": "Cadeira extensora",
+   "es": "Extensión de piernas"
+  }
+ },
+ {
+  "slug": "lying-leg-curl",
+  "muscle_group": "legs",
+  "equipment": "machine",
+  "media_url": "https://raw.githubusercontent.com/yuhonas/free-exercise-db/main/exercises/Lying_Leg_Curls/0.jpg",
+  "names": {
+   "en": "Lying Leg Curl",
+   "pt-BR": "Mesa flexora (deitado)",
+   "es": "Curl femoral tumbado"
+  }
+ },
+ {
+  "slug": "romanian-deadlift",
+  "muscle_group": "legs",
+  "equipment": "barbell",
+  "media_url": "https://raw.githubusercontent.com/yuhonas/free-exercise-db/main/exercises/Romanian_Deadlift/0.jpg",
+  "names": {
+   "en": "Romanian Deadlift",
+   "pt-BR": "Levantamento terra romeno",
+   "es": "Peso muerto rumano"
+  }
+ },
+ {
+  "slug": "standing-calf-raise",
+  "muscle_group": "calves",
+  "equipment": "machine",
+  "media_url": "https://raw.githubusercontent.com/yuhonas/free-exercise-db/main/exercises/Standing_Calf_Raises/0.jpg",
+  "names": {
+   "en": "Standing Calf Raise",
+   "pt-BR": "Elevação de panturrilha em pé",
+   "es": "Elevación de gemelos de pie"
+  }
+ },
+ {
+  "slug": "seated-calf-raise",
+  "muscle_group": "calves",
+  "equipment": "machine",
+  "media_url": "https://raw.githubusercontent.com/yuhonas/free-exercise-db/main/exercises/Seated_Calf_Raise/0.jpg",
+  "names": {
+   "en": "Seated Calf Raise",
+   "pt-BR": "Panturrilha sentado",
+   "es": "Elevación de gemelos sentado"
+  }
+ },
+ {
+  "slug": "overhead-press",
+  "muscle_group": "shoulders",
+  "equipment": "barbell",
+  "media_url": "https://raw.githubusercontent.com/yuhonas/free-exercise-db/main/exercises/Barbell_Shoulder_Press/0.jpg",
+  "names": {
+   "en": "Overhead Press",
+   "pt-BR": "Desenvolvimento com barra",
+   "es": "Press militar con barra"
+  }
+ },
+ {
+  "slug": "lateral-raise",
+  "muscle_group": "shoulders",
+  "equipment": "dumbbell",
+  "media_url": "https://raw.githubusercontent.com/yuhonas/free-exercise-db/main/exercises/Side_Lateral_Raise/0.jpg",
+  "names": {
+   "en": "Lateral Raise",
+   "pt-BR": "Elevação lateral",
+   "es": "Elevaciones laterales"
+  }
+ },
+ {
+  "slug": "front-raise",
+  "muscle_group": "shoulders",
+  "equipment": "dumbbell",
+  "media_url": "https://raw.githubusercontent.com/yuhonas/free-exercise-db/main/exercises/Front_Dumbbell_Raise/0.jpg",
+  "names": {
+   "en": "Front Raise",
+   "pt-BR": "Elevação frontal",
+   "es": "Elevaciones frontales"
+  }
+ },
+ {
+  "slug": "reverse-fly",
+  "muscle_group": "shoulders",
+  "equipment": "dumbbell",
+  "media_url": "https://raw.githubusercontent.com/yuhonas/free-exercise-db/main/exercises/Reverse_Flyes/0.jpg",
+  "names": {
+   "en": "Reverse Fly",
+   "pt-BR": "Crucifixo invertido",
+   "es": "Aperturas invertidas"
+  }
+ },
+ {
+  "slug": "arnold-press",
+  "muscle_group": "shoulders",
+  "equipment": "dumbbell",
+  "media_url": "https://raw.githubusercontent.com/yuhonas/free-exercise-db/main/exercises/Arnold_Dumbbell_Press/0.jpg",
+  "names": {
+   "en": "Arnold Press",
+   "pt-BR": "Desenvolvimento Arnold",
+   "es": "Press Arnold"
+  }
+ },
+ {
+  "slug": "face-pull",
+  "muscle_group": "shoulders",
+  "equipment": "cable",
+  "media_url": "https://raw.githubusercontent.com/yuhonas/free-exercise-db/main/exercises/Face_Pull/0.jpg",
+  "names": {
+   "en": "Face Pull",
+   "pt-BR": "Face pull (puxada para o rosto)",
+   "es": "Face pull"
+  }
+ },
+ {
+  "slug": "barbell-curl",
+  "muscle_group": "biceps",
+  "equipment": "barbell",
+  "media_url": "https://raw.githubusercontent.com/yuhonas/free-exercise-db/main/exercises/Barbell_Curl/0.jpg",
+  "names": {
+   "en": "Barbell Curl",
+   "pt-BR": "Rosca direta com barra",
+   "es": "Curl con barra"
+  }
+ },
+ {
+  "slug": "dumbbell-curl",
+  "muscle_group": "biceps",
+  "equipment": "dumbbell",
+  "media_url": "https://raw.githubusercontent.com/yuhonas/free-exercise-db/main/exercises/Dumbbell_Bicep_Curl/0.jpg",
+  "names": {
+   "en": "Dumbbell Curl",
+   "pt-BR": "Rosca alternada com halteres",
+   "es": "Curl con mancuernas"
+  }
+ },
+ {
+  "slug": "hammer-curl",
+  "muscle_group": "biceps",
+  "equipment": "dumbbell",
+  "media_url": "https://raw.githubusercontent.com/yuhonas/free-exercise-db/main/exercises/Hammer_Curls/0.jpg",
+  "names": {
+   "en": "Hammer Curl",
+   "pt-BR": "Rosca martelo",
+   "es": "Curl martillo"
+  }
+ },
+ {
+  "slug": "preacher-curl",
+  "muscle_group": "biceps",
+  "equipment": "barbell",
+  "media_url": "https://raw.githubusercontent.com/yuhonas/free-exercise-db/main/exercises/Preacher_Curl/0.jpg",
+  "names": {
+   "en": "Preacher Curl",
+   "pt-BR": "Rosca Scott",
+   "es": "Curl predicador"
+  }
+ },
+ {
+  "slug": "triceps-pushdown",
+  "muscle_group": "triceps",
+  "equipment": "cable",
+  "media_url": "https://raw.githubusercontent.com/yuhonas/free-exercise-db/main/exercises/Triceps_Pushdown/0.jpg",
+  "names": {
+   "en": "Triceps Pushdown",
+   "pt-BR": "Tríceps na polia (corda/barra)",
+   "es": "Extensión de tríceps en polea"
+  }
+ },
+ {
+  "slug": "overhead-triceps-extension",
+  "muscle_group": "triceps",
+  "equipment": "dumbbell",
+  "media_url": "https://raw.githubusercontent.com/yuhonas/free-exercise-db/main/exercises/Standing_Dumbbell_Triceps_Extension/0.jpg",
+  "names": {
+   "en": "Overhead Triceps Extension",
+   "pt-BR": "Tríceps testa com haltere (acima da cabeça)",
+   "es": "Extensión de tríceps sobre la cabeza"
+  }
+ },
+ {
+  "slug": "bench-dips",
+  "muscle_group": "triceps",
+  "equipment": "bodyweight",
+  "media_url": "https://raw.githubusercontent.com/yuhonas/free-exercise-db/main/exercises/Bench_Dips/0.jpg",
+  "names": {
+   "en": "Bench Dips",
+   "pt-BR": "Mergulho no banco",
+   "es": "Fondos en banco"
+  }
+ },
+ {
+  "slug": "close-grip-bench-press",
+  "muscle_group": "triceps",
+  "equipment": "barbell",
+  "media_url": "https://raw.githubusercontent.com/yuhonas/free-exercise-db/main/exercises/Close-Grip_Barbell_Bench_Press/0.jpg",
+  "names": {
+   "en": "Close-Grip Bench Press",
+   "pt-BR": "Supino fechado (pegada fechada)",
+   "es": "Press de banca agarre cerrado"
+  }
+ },
+ {
+  "slug": "crunches",
+  "muscle_group": "abs",
+  "equipment": "bodyweight",
+  "media_url": "https://raw.githubusercontent.com/yuhonas/free-exercise-db/main/exercises/Crunches/0.jpg",
+  "names": {
+   "en": "Crunches",
+   "pt-BR": "Abdominal supra (crunch)",
+   "es": "Encogimientos (crunch)"
+  }
+ },
+ {
+  "slug": "hanging-leg-raise",
+  "muscle_group": "abs",
+  "equipment": "bodyweight",
+  "media_url": "https://raw.githubusercontent.com/yuhonas/free-exercise-db/main/exercises/Hanging_Leg_Raise/0.jpg",
+  "names": {
+   "en": "Hanging Leg Raise",
+   "pt-BR": "Elevação de pernas na barra",
+   "es": "Elevación de piernas colgado"
+  }
+ },
+ {
+  "slug": "plank",
+  "muscle_group": "abs",
+  "equipment": "bodyweight",
+  "media_url": "https://raw.githubusercontent.com/yuhonas/free-exercise-db/main/exercises/Plank/0.jpg",
+  "names": {
+   "en": "Plank",
+   "pt-BR": "Prancha isométrica",
+   "es": "Plancha"
+  }
+ },
+ {
+  "slug": "russian-twist",
+  "muscle_group": "abs",
+  "equipment": "bodyweight",
+  "media_url": "https://raw.githubusercontent.com/yuhonas/free-exercise-db/main/exercises/Russian_Twist/0.jpg",
+  "names": {
+   "en": "Russian Twist",
+   "pt-BR": "Rotação russa (russian twist)",
+   "es": "Giro ruso"
+  }
+ },
+ {
+  "slug": "cable-crunch",
+  "muscle_group": "abs",
+  "equipment": "cable",
+  "media_url": "https://raw.githubusercontent.com/yuhonas/free-exercise-db/main/exercises/Cable_Crunch/0.jpg",
+  "names": {
+   "en": "Cable Crunch",
+   "pt-BR": "Abdominal na polia",
+   "es": "Crunch en polea"
+  }
+ },
+ {
+  "slug": "hip-thrust",
+  "muscle_group": "glutes",
+  "equipment": "barbell",
+  "media_url": "https://raw.githubusercontent.com/yuhonas/free-exercise-db/main/exercises/Barbell_Hip_Thrust/0.jpg",
+  "names": {
+   "en": "Hip Thrust",
+   "pt-BR": "Elevação pélvica com barra",
+   "es": "Empuje de cadera con barra"
+  }
+ },
+ {
+  "slug": "glute-bridge",
+  "muscle_group": "glutes",
+  "equipment": "barbell",
+  "media_url": "https://raw.githubusercontent.com/yuhonas/free-exercise-db/main/exercises/Barbell_Glute_Bridge/0.jpg",
+  "names": {
+   "en": "Glute Bridge",
+   "pt-BR": "Ponte de glúteo com barra",
+   "es": "Puente de glúteos con barra"
+  }
+ }
+]

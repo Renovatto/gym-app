@@ -5,12 +5,14 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from .config import settings
 from .db import init_db
-from .routers import account, auth, profile, water, weight
+from .routers import account, auth, profile, water, weight, workout
+from .seed import seed_exercises
 
 
 @asynccontextmanager
 async def lifespan(_app: FastAPI):
     init_db()
+    seed_exercises()
     yield
 
 
@@ -28,6 +30,7 @@ app.include_router(auth.router)
 app.include_router(profile.router)
 app.include_router(weight.router)
 app.include_router(water.router)
+app.include_router(workout.router)
 app.include_router(account.router)
 
 

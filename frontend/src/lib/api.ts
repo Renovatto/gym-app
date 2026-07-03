@@ -79,6 +79,90 @@ export interface WaterDay {
 	logs: WaterLog[];
 }
 
+export type MuscleGroup =
+	| 'chest'
+	| 'back'
+	| 'shoulders'
+	| 'biceps'
+	| 'triceps'
+	| 'legs'
+	| 'glutes'
+	| 'abs'
+	| 'calves';
+
+export type Equipment =
+	| 'barbell'
+	| 'dumbbell'
+	| 'machine'
+	| 'cable'
+	| 'bodyweight'
+	| 'kettlebell'
+	| 'band'
+	| 'other';
+
+export interface Exercise {
+	id: number;
+	slug: string;
+	name: string;
+	muscle_group: MuscleGroup;
+	equipment: Equipment;
+	media_url: string | null;
+	is_custom: boolean;
+}
+
+export interface RoutineItem {
+	id: number;
+	exercise: Exercise;
+	position: number;
+	target_sets: number;
+	target_reps: number;
+	target_weight_kg: number | null;
+	rest_seconds: number;
+	last_weight_kg: number | null;
+}
+
+export interface Routine {
+	id: number;
+	name: string;
+	position: number;
+	items: RoutineItem[];
+}
+
+export interface RoutineItemInput {
+	exercise_id: number;
+	target_sets: number;
+	target_reps: number;
+	target_weight_kg: number | null;
+	rest_seconds: number;
+}
+
+export interface SetLog {
+	id: number;
+	exercise_id: number;
+	set_number: number;
+	reps: number;
+	weight_kg: number;
+	done: boolean;
+}
+
+export interface WorkoutSession {
+	id: number;
+	routine_id: number | null;
+	routine_name: string | null;
+	started_at: string;
+	finished_at: string | null;
+	sets: SetLog[];
+}
+
+export interface SessionSummary {
+	id: number;
+	routine_name: string | null;
+	started_at: string;
+	finished_at: string | null;
+	total_sets: number;
+	total_volume_kg: number;
+}
+
 export function getTokens(): { access: string | null; refresh: string | null } {
 	return {
 		access: localStorage.getItem(ACCESS_KEY),
@@ -180,6 +264,30 @@ export const api = {
 	addWater: (amount_ml: number) =>
 		request<WaterLog>('/me/water', { method: 'POST', body: { amount_ml } }),
 	deleteWater: (id: number) => request<void>(`/me/water/${id}`, { method: 'DELETE' }),
+	// treino
+	getExercises: (muscleGroup?: MuscleGroup) =>
+		request<Exercise[]>(`/exercises${muscleGroup ? `?muscle_group=${muscleGroup}` : ''}`),
+	getRoutines: () => request<Routine[]>('/me/routines'),
+	getRoutine: (id: number) => request<Routine>(`/me/routines/${id}`),
+	createRoutine: (name: string, items: RoutineItemInput[]) =>
+		request<Routine>('/me/routines', { method: 'POST', body: { name, items } }),
+	updateRoutine: (id: number, name: string, items: RoutineItemInput[]) =>
+		request<Routine>(`/me/routines/${id}`, { method: 'PUT', body: { name, items } }),
+	deleteRoutine: (id: number) => request<void>(`/me/routines/${id}`, { method: 'DELETE' }),
+	createFromTemplate: (frequency: number) =>
+		request<Routine[]>(`/me/routines/from-template?frequency=${frequency}`, { method: 'POST' }),
+	startSession: (routineId: number | null) =>
+		request<WorkoutSession>('/me/sessions', { method: 'POST', body: { routine_id: routineId } }),
+	getSession: (id: number) => request<WorkoutSession>(`/me/sessions/${id}`),
+	logSet: (
+		sessionId: number,
+		set: { exercise_id: number; set_number: number; reps: number; weight_kg: number; done: boolean }
+	) => request<SetLog>(`/me/sessions/${sessionId}/sets`, { method: 'POST', body: set }),
+	deleteSet: (sessionId: number, setId: number) =>
+		request<void>(`/me/sessions/${sessionId}/sets/${setId}`, { method: 'DELETE' }),
+	finishSession: (sessionId: number) =>
+		request<WorkoutSession>(`/me/sessions/${sessionId}/finish`, { method: 'POST' }),
+	getSessions: () => request<SessionSummary[]>('/me/sessions'),
 	exportData: () => request<unknown>('/me/account/export'),
 	deleteAccount: () => request<void>('/me/account', { method: 'DELETE' })
 };

@@ -2,7 +2,7 @@ from datetime import date, datetime
 
 from pydantic import BaseModel, ConfigDict, EmailStr, Field
 
-from .models import ActivityLevel, Objective, Plan, Sex, WeightSource
+from .models import ActivityLevel, Equipment, MuscleGroup, Objective, Plan, Sex, WeightSource
 
 
 class RegisterRequest(BaseModel):
@@ -111,3 +111,88 @@ class WaterDayOut(BaseModel):
 
 class LocaleUpdate(BaseModel):
     locale: str = Field(pattern=r"^(pt-BR|en|es)$")
+
+
+# --- Treino ---------------------------------------------------------------
+
+
+class ExerciseOut(BaseModel):
+    id: int
+    slug: str
+    name: str
+    muscle_group: MuscleGroup
+    equipment: Equipment
+    media_url: str | None
+    is_custom: bool
+
+
+class RoutineItemIn(BaseModel):
+    exercise_id: int
+    target_sets: int = Field(default=3, ge=1, le=20)
+    target_reps: int = Field(default=10, ge=1, le=100)
+    target_weight_kg: float | None = Field(default=None, ge=0, le=1000)
+    rest_seconds: int = Field(default=90, ge=0, le=600)
+
+
+class RoutineIn(BaseModel):
+    name: str = Field(min_length=1, max_length=80)
+    items: list[RoutineItemIn]
+
+
+class RoutineItemOut(BaseModel):
+    id: int
+    exercise: ExerciseOut
+    position: int
+    target_sets: int
+    target_reps: int
+    target_weight_kg: float | None
+    rest_seconds: int
+    last_weight_kg: float | None = None
+
+
+class RoutineOut(BaseModel):
+    id: int
+    name: str
+    position: int
+    items: list[RoutineItemOut]
+
+
+class SetLogIn(BaseModel):
+    exercise_id: int
+    set_number: int = Field(ge=1, le=50)
+    reps: int = Field(ge=0, le=100)
+    weight_kg: float = Field(ge=0, le=1000)
+    done: bool = True
+
+
+class SetLogOut(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: int
+    exercise_id: int
+    set_number: int
+    reps: int
+    weight_kg: float
+    done: bool
+
+
+class SessionStartIn(BaseModel):
+    routine_id: int | None = None
+
+
+class SessionOut(BaseModel):
+    id: int
+    routine_id: int | None
+    routine_name: str | None
+    started_at: datetime
+    finished_at: datetime | None
+    sets: list[SetLogOut]
+
+
+class SessionSummaryOut(BaseModel):
+    id: int
+    routine_name: str | None
+    started_at: datetime
+    finished_at: datetime | None
+    total_sets: int
+    total_volume_kg: float
