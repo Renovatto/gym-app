@@ -6,8 +6,11 @@
 	import TabBar from '$lib/components/TabBar.svelte';
 	import Toast from '$lib/components/Toast.svelte';
 	import { bootstrap, session } from '$lib/session.svelte';
+	import { initTheme } from '$lib/theme.svelte';
 
 	let { children } = $props();
+
+	initTheme();
 
 	const PUBLIC_ROUTES = ['/login', '/registro'];
 	const isPublic = $derived(PUBLIC_ROUTES.includes(page.url.pathname));

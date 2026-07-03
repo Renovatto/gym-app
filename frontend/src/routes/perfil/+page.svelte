@@ -6,6 +6,7 @@
 	import { bootstrap, session, signOut } from '$lib/session.svelte';
 	import { m } from '$lib/paraglide/messages';
 	import { getLocale, setLocale, type Locale } from '$lib/paraglide/runtime';
+	import { setTheme, theme, type ThemePref } from '$lib/theme.svelte';
 	import { toBackendLocale } from '$lib/errors';
 
 	let height = $state(session.profile?.height_cm ?? 170);
@@ -143,6 +144,20 @@
 			{ value: 'pt-br', label: 'Português' },
 			{ value: 'en', label: 'English' },
 			{ value: 'es', label: 'Español' }
+		]}
+	/>
+</section>
+
+<section class="mt-4 rounded-3xl bg-white p-5 shadow-sm">
+	<p class="mb-3 font-semibold text-slate-600">{m.theme_label()}</p>
+	<ChoiceChips
+		columns={3}
+		value={theme.pref}
+		onselect={(v: ThemePref) => setTheme(v)}
+		options={[
+			{ value: 'light', label: m.theme_light() },
+			{ value: 'dark', label: m.theme_dark() },
+			{ value: 'system', label: m.theme_system() }
 		]}
 	/>
 </section>

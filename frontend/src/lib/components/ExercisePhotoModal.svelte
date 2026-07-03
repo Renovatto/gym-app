@@ -106,7 +106,7 @@
 					type="button"
 					onclick={toggleAnimate}
 					class="flex h-12 flex-1 items-center justify-center gap-2 rounded-2xl font-bold text-white
-						{animating ? 'bg-slate-700' : 'bg-emerald-600 active:bg-emerald-700'}"
+						{animating ? 'bg-ink-2' : 'bg-emerald-600 active:bg-emerald-700'}"
 				>
 					{#if animating}
 						<svg viewBox="0 0 24 24" class="h-5 w-5" fill="currentColor"><rect x="6" y="5" width="4" height="14" rx="1" /><rect x="14" y="5" width="4" height="14" rx="1" /></svg>

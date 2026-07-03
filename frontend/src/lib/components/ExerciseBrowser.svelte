@@ -68,7 +68,7 @@
 		<button
 			type="button"
 			onclick={() => (level = null)}
-			class="h-8 rounded-full px-3 text-xs font-semibold {level === null ? 'bg-slate-800 text-white' : 'bg-white text-slate-500'}"
+			class="h-8 rounded-full px-3 text-xs font-semibold {level === null ? 'bg-ink text-white' : 'bg-white text-slate-500'}"
 		>
 			{m.level_all()}
 		</button>
@@ -76,7 +76,7 @@
 			<button
 				type="button"
 				onclick={() => (level = lvl)}
-				class="h-8 rounded-full px-3 text-xs font-semibold {level === lvl ? 'bg-slate-800 text-white' : 'bg-white text-slate-500'}"
+				class="h-8 rounded-full px-3 text-xs font-semibold {level === lvl ? 'bg-ink text-white' : 'bg-white text-slate-500'}"
 			>
 				{levelLabel(lvl)}
 			</button>

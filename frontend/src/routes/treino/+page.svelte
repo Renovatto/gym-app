@@ -199,15 +199,27 @@
 							{m.edit()}
 						</a>
 					</div>
-					<div class="mt-2 flex flex-wrap gap-1">
-						{#each routine.items.slice(0, 4) as item (item.id)}
-							<span class="rounded-full bg-slate-100 px-2.5 py-1 text-xs font-medium text-slate-600">
-								{item.exercise.name}
-							</span>
+					<div class="mt-3 flex items-center gap-1.5">
+						{#each routine.items.slice(0, 5) as item (item.id)}
+							{#if item.exercise.media_urls.length > 0}
+								<img
+									src={item.exercise.media_urls[0]}
+									alt={item.exercise.name}
+									title={item.exercise.name}
+									loading="lazy"
+									class="h-12 w-12 rounded-xl border border-slate-100 object-cover"
+								/>
+							{:else}
+								<span
+									class="grid h-12 w-12 place-items-center rounded-xl bg-slate-100 text-xs font-bold text-slate-400"
+								>
+									{item.exercise.name.slice(0, 2)}
+								</span>
+							{/if}
 						{/each}
-						{#if routine.items.length > 4}
-							<span class="rounded-full bg-slate-100 px-2.5 py-1 text-xs font-medium text-slate-400">
-								+{routine.items.length - 4}
+						{#if routine.items.length > 5}
+							<span class="grid h-12 w-12 place-items-center rounded-xl bg-slate-100 text-xs font-bold text-slate-500">
+								+{routine.items.length - 5}
 							</span>
 						{/if}
 					</div>

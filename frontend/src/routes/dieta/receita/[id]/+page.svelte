@@ -168,7 +168,7 @@
 	</button>
 
 	{#if ingredients.length > 0}
-		<div class="mt-3 rounded-2xl bg-slate-800 p-4 text-white">
+		<div class="mt-3 rounded-2xl bg-ink p-4 text-white">
 			<div class="flex items-center justify-between">
 				<span class="text-sm font-semibold text-slate-300">{m.per_serving()}</span>
 				<span class="text-lg font-bold">{nf.format(Math.round(perServing.kcal))} kcal</span>

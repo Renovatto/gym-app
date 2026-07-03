@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { goto } from '$app/navigation';
 	import { page } from '$app/state';
+	import { slide } from 'svelte/transition';
 	import { api, type Exercise, type RoutineItem } from '$lib/api';
 	import ExercisePhotoModal from '$lib/components/ExercisePhotoModal.svelte';
 	import Stepper from '$lib/components/Stepper.svelte';
@@ -194,6 +195,8 @@
 		blocks.reduce((acc, b) => acc + b.sets.filter((s) => s.done).length, 0)
 	);
 	const totalCount = $derived(blocks.reduce((acc, b) => acc + b.sets.length, 0));
+	// exercício "atual": primeiro com série pendente
+	const currentIndex = $derived(blocks.findIndex((b) => b.sets.some((s) => !s.done)));
 </script>
 
 {#if loading}
@@ -201,7 +204,7 @@
 		<div class="h-8 w-8 animate-spin rounded-full border-4 border-emerald-600 border-t-transparent"></div>
 	</div>
 {:else}
-	<header class="mb-4">
+	<header class="sticky top-0 z-10 -mx-4 mb-4 bg-slate-50/90 px-4 pt-2 pb-3 backdrop-blur">
 		<div class="flex items-center gap-2">
 			<a
 				href="/treino"
@@ -216,7 +219,7 @@
 				<p class="text-sm font-semibold text-emerald-600">{m.workout_in_progress()}</p>
 				<h1 class="truncate text-2xl font-bold">{routineName}</h1>
 			</div>
-			<div class="shrink-0 rounded-2xl bg-slate-900 px-3 py-2 text-center">
+			<div class="shrink-0 rounded-2xl bg-ink px-3 py-2 text-center">
 				<p class="font-mono text-lg leading-none font-bold text-white tabular-nums">
 					{formatTime(elapsed)}
 				</p>
@@ -233,10 +236,15 @@
 	</header>
 
 	<div class="space-y-4">
-		{#each blocks as block (block.item.id)}
+		{#each blocks as block, blockIndex (block.item.id)}
 			{@const doneSets = block.sets.filter((s) => s.done).length}
 			{@const allDone = doneSets === block.sets.length}
-			<section class="rounded-3xl bg-white p-4 shadow-sm">
+			{@const isCurrent = blockIndex === currentIndex}
+			<section
+				class="rounded-3xl bg-white p-4 shadow-sm transition-all
+					{isCurrent ? 'ring-2 ring-emerald-500' : ''}
+					{allDone ? 'opacity-60' : ''}"
+			>
 				<div class="flex items-center gap-3 {block.collapsed ? '' : 'mb-3'}">
 					<button
 						type="button"
@@ -284,53 +292,76 @@
 					</button>
 				</div>
 
-				<div class="space-y-2 {block.collapsed ? 'hidden' : ''}">
-					{#each block.sets as row (row.setNumber)}
-						<div class="rounded-2xl p-3 {row.done ? 'bg-emerald-50' : 'bg-slate-50'}">
-							<div class="mb-2 flex items-center justify-between">
-								<span class="text-sm font-bold text-slate-500">
-									{block.isCardio ? m.cardio_label() : `${m.set_word()} ${row.setNumber}`}
-								</span>
-								<button
-									type="button"
-									aria-label={m.done()}
-									disabled={row.saving}
-									onclick={() => toggleSet(block, row)}
-									class="grid h-10 w-10 shrink-0 place-items-center rounded-xl text-xl font-bold transition-colors
-										{row.done ? 'bg-emerald-600 text-white' : 'border-2 border-slate-200 bg-white text-slate-300'}"
-								>
-									✓
-								</button>
-							</div>
-							{#if block.isCardio}
-								<div>
-									<p class="mb-1 text-xs font-semibold text-slate-500">{m.duration_label()}</p>
-									<Stepper bind:value={row.duration} min={1} max={300} step={1} unit={m.minutes_short()} />
+				{#if !block.collapsed}
+					<div class="space-y-2" transition:slide={{ duration: 200 }}>
+						{#each block.sets as row (row.setNumber)}
+							{#if row.done}
+								<!-- série concluída: linha compacta; tocar no ✓ desfaz -->
+								<div class="flex items-center justify-between rounded-2xl bg-emerald-50 px-3 py-2">
+									<span class="text-sm font-bold text-emerald-900">
+										{#if block.isCardio}
+											{m.cardio_label()} · {row.duration} {m.minutes_short()}
+										{:else}
+											{m.set_word()} {row.setNumber} · {row.weight} kg × {row.reps}
+										{/if}
+									</span>
+									<button
+										type="button"
+										aria-label={m.done()}
+										disabled={row.saving}
+										onclick={() => toggleSet(block, row)}
+										class="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-emerald-600 text-lg font-bold text-white"
+									>
+										✓
+									</button>
 								</div>
 							{:else}
-								<div class="grid grid-cols-2 gap-3">
-									<div>
-										<p class="mb-1 text-xs font-semibold text-slate-500">{m.weight()} (kg)</p>
-										<Stepper bind:value={row.weight} min={0} max={1000} step={2.5} decimals={1} />
+								<div class="rounded-2xl bg-slate-50 p-3">
+									<div class="mb-2 flex items-center justify-between">
+										<span class="text-sm font-bold text-slate-500">
+											{block.isCardio ? m.cardio_label() : `${m.set_word()} ${row.setNumber}`}
+										</span>
+										<button
+											type="button"
+											aria-label={m.done()}
+											disabled={row.saving}
+											onclick={() => toggleSet(block, row)}
+											class="grid h-10 w-10 shrink-0 place-items-center rounded-xl border-2 border-slate-200 bg-white text-xl font-bold text-slate-300 transition-colors"
+										>
+											✓
+										</button>
 									</div>
-									<div>
-										<p class="mb-1 text-xs font-semibold text-slate-500">{m.reps_label()}</p>
-										<Stepper bind:value={row.reps} min={0} max={100} />
-									</div>
+									{#if block.isCardio}
+										<div>
+											<p class="mb-1 text-xs font-semibold text-slate-500">{m.duration_label()}</p>
+											<Stepper bind:value={row.duration} min={1} max={300} step={1} unit={m.minutes_short()} />
+										</div>
+									{:else}
+										<div class="grid grid-cols-2 gap-3">
+											<div>
+												<p class="mb-1 text-xs font-semibold text-slate-500">{m.weight()} (kg)</p>
+												<Stepper bind:value={row.weight} min={0} max={1000} step={2.5} decimals={1} />
+											</div>
+											<div>
+												<p class="mb-1 text-xs font-semibold text-slate-500">{m.reps_label()}</p>
+												<Stepper bind:value={row.reps} min={0} max={100} />
+											</div>
+										</div>
+									{/if}
 								</div>
+							{/if}
+						{/each}
+						{#if !block.isCardio}
+							<button
+								type="button"
+								onclick={() => addSet(block)}
+								class="h-11 w-full rounded-2xl border-2 border-dashed border-slate-200 text-sm font-bold text-slate-500 active:bg-slate-50"
+							>
+								+ {m.add_set()}
+							</button>
 						{/if}
-						</div>
-					{/each}
-					{#if !block.isCardio}
-						<button
-							type="button"
-							onclick={() => addSet(block)}
-							class="h-11 w-full rounded-2xl border-2 border-dashed border-slate-200 text-sm font-bold text-slate-500 active:bg-slate-50"
-						>
-							+ {m.add_set()}
-						</button>
-					{/if}
-				</div>
+					</div>
+				{/if}
 			</section>
 		{/each}
 	</div>
@@ -339,7 +370,7 @@
 		type="button"
 		disabled={finishing}
 		onclick={finish}
-		class="mt-5 h-14 w-full rounded-2xl bg-slate-900 text-lg font-bold text-white active:bg-slate-800 disabled:opacity-50
+		class="mt-5 h-14 w-full rounded-2xl bg-ink text-lg font-bold text-white active:bg-ink-2 disabled:opacity-50
 			{restActive ? 'mb-24' : ''}"
 	>
 		{m.finish_workout()}
@@ -347,8 +378,8 @@
 {/if}
 
 {#if restActive}
-	<div class="fixed inset-x-0 bottom-0 z-20 bg-slate-900 pb-[env(safe-area-inset-bottom)] text-white">
-		<div class="h-1 bg-slate-700">
+	<div class="fixed inset-x-0 bottom-0 z-20 bg-ink pb-[env(safe-area-inset-bottom)] text-white">
+		<div class="h-1 bg-ink-2">
 			<div
 				class="h-full bg-emerald-400 transition-all duration-1000 ease-linear"
 				style="width: {restTotal > 0 ? (restRemaining / restTotal) * 100 : 0}%"
@@ -357,7 +388,10 @@
 		<div class="mx-auto flex max-w-md items-center justify-between gap-3 px-4 py-3">
 			<div>
 				<p class="text-[10px] font-semibold text-slate-400 uppercase">{m.rest_label()}</p>
-				<p class="font-mono text-3xl leading-none font-black tabular-nums">
+				<p
+					class="font-mono text-3xl leading-none font-black tabular-nums
+						{restRemaining <= 5 ? 'animate-pulse text-emerald-400' : ''}"
+				>
 					{formatTime(restRemaining)}
 				</p>
 			</div>
@@ -368,7 +402,7 @@
 						restRemaining += 30;
 						restTotal += 30;
 					}}
-					class="h-12 rounded-2xl bg-slate-700 px-4 font-bold active:bg-slate-600"
+					class="h-12 rounded-2xl bg-ink-2 px-4 font-bold active:bg-slate-500"
 				>
 					{m.plus_30s()}
 				</button>

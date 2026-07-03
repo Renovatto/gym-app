@@ -1,1 +1,60 @@
 @import 'tailwindcss';
+
+/* Superfícies intencionalmente escuras nos DOIS temas (toast, timer, destaque). */
+@theme {
+	--color-ink: #0f172a;
+	--color-ink-2: #334155;
+}
+
+body {
+	background-color: var(--color-slate-50);
+}
+
+/*
+ * Modo escuro por troca de tokens: os componentes usam a paleta neutra
+ * (white/slate) e os tons claros de acento (emerald-50 etc.); aqui eles são
+ * remapeados quando <html class="dark">. Tons médios (emerald-600, sky-500…)
+ * funcionam nos dois temas e não mudam.
+ */
+.dark {
+	color-scheme: dark;
+
+	/* neutros */
+	--color-white: #1e293b; /* cartões */
+	--color-slate-50: #0f172a; /* fundo da página / linhas internas */
+	--color-slate-100: #293548; /* chips, miniaturas */
+	--color-slate-200: #3e4c63; /* bordas */
+	--color-slate-300: #64748b;
+	--color-slate-400: #94a3b8;
+	--color-slate-500: #a7b4c7;
+	--color-slate-600: #c4cfdd;
+	--color-slate-700: #dde5ee;
+	--color-slate-800: #eef2f7;
+	--color-slate-900: #f4f7fa; /* texto principal */
+
+	/* superfícies escuras ficam um tom abaixo do fundo */
+	--color-ink: #060b16;
+	--color-ink-2: #26334a;
+
+	/* acentos: tons claros viram tints escuros; textos escuros clareiam */
+	--color-emerald-50: #0a2b21;
+	--color-emerald-100: #0e3f2f;
+	--color-emerald-200: #14532d;
+	--color-emerald-300: #166534;
+	--color-emerald-700: #34d399;
+	--color-emerald-800: #6ee7b7;
+	--color-emerald-900: #a7f3d0;
+
+	--color-sky-50: #0b2536;
+	--color-sky-100: #0c4a6e;
+	--color-sky-600: #38bdf8;
+	--color-sky-700: #7dd3fc;
+
+	--color-red-50: #391b1b;
+	--color-red-200: #7f1d1d;
+	--color-red-600: #f87171;
+	--color-red-700: #fca5a5;
+
+	--color-amber-50: #372a10;
+	--color-amber-700: #fbbf24;
+}
