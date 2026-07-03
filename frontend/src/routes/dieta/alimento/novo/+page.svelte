@@ -1,0 +1,113 @@
+<script lang="ts">
+	import { goto } from '$app/navigation';
+	import { api, type FoodCategory } from '$lib/api';
+	import ChoiceChips from '$lib/components/ChoiceChips.svelte';
+	import Stepper from '$lib/components/Stepper.svelte';
+	import { m } from '$lib/paraglide/messages';
+
+	let name = $state('');
+	let category = $state<FoodCategory>('protein');
+	let kcal = $state(0);
+	let protein = $state(0);
+	let carbs = $state(0);
+	let fat = $state(0);
+	let portion = $state(100);
+	let busy = $state(false);
+
+	const canSave = $derived(name.trim().length > 0);
+
+	async function save(): Promise<void> {
+		if (!canSave) return;
+		busy = true;
+		try {
+			await api.createFood({
+				name: name.trim(),
+				category,
+				kcal,
+				protein_g: protein,
+				carbs_g: carbs,
+				fat_g: fat,
+				default_portion_g: portion
+			});
+			history.back();
+		} finally {
+			busy = false;
+		}
+	}
+</script>
+
+<div class="mb-4 flex items-center gap-2">
+	<button
+		type="button"
+		aria-label={m.back()}
+		onclick={() => history.back()}
+		class="grid h-10 w-10 place-items-center rounded-full bg-white text-slate-500 shadow-sm"
+	>
+		<svg viewBox="0 0 24 24" class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="2">
+			<path d="M15 6l-6 6 6 6" stroke-linecap="round" stroke-linejoin="round" />
+		</svg>
+	</button>
+	<h1 class="text-2xl font-bold">{m.create_food()}</h1>
+</div>
+
+<input
+	bind:value={name}
+	placeholder={m.food_name_placeholder()}
+	class="h-14 w-full rounded-2xl border-2 border-slate-200 bg-white px-4 text-base font-semibold outline-none focus:border-emerald-600"
+/>
+
+<div class="mt-3 rounded-2xl bg-white p-4 shadow-sm">
+	<p class="mb-2 text-sm font-semibold text-slate-600">{m.category_label()}</p>
+	<ChoiceChips
+		columns={3}
+		bind:value={category}
+		options={[
+			{ value: 'protein', label: m.cat_protein() },
+			{ value: 'carb', label: m.cat_carb() },
+			{ value: 'fat', label: m.cat_fat() },
+			{ value: 'fruit', label: m.cat_fruit() },
+			{ value: 'vegetable', label: m.cat_vegetable() },
+			{ value: 'dairy', label: m.cat_dairy() },
+			{ value: 'legume', label: m.cat_legume() },
+			{ value: 'sweet', label: m.cat_sweet() },
+			{ value: 'other', label: m.cat_other() }
+		]}
+	/>
+</div>
+
+<div class="mt-3 rounded-2xl bg-white p-4 shadow-sm">
+	<p class="mb-3 text-sm font-semibold text-slate-600">{m.per_100g()}</p>
+	<div class="space-y-4">
+		<div>
+			<p class="mb-1 text-xs font-semibold text-slate-500">{m.calories_label()} (kcal)</p>
+			<Stepper bind:value={kcal} min={0} max={1000} step={5} />
+		</div>
+		<div class="grid grid-cols-3 gap-2">
+			<div>
+				<p class="mb-1 text-xs font-semibold text-slate-500">{m.protein()} (g)</p>
+				<Stepper bind:value={protein} min={0} max={100} step={0.5} decimals={1} />
+			</div>
+			<div>
+				<p class="mb-1 text-xs font-semibold text-slate-500">{m.carbs()} (g)</p>
+				<Stepper bind:value={carbs} min={0} max={100} step={0.5} decimals={1} />
+			</div>
+			<div>
+				<p class="mb-1 text-xs font-semibold text-slate-500">{m.fat()} (g)</p>
+				<Stepper bind:value={fat} min={0} max={100} step={0.5} decimals={1} />
+			</div>
+		</div>
+		<div>
+			<p class="mb-1 text-xs font-semibold text-slate-500">{m.default_portion()} (g)</p>
+			<Stepper bind:value={portion} min={1} max={2000} step={5} unit="g" />
+		</div>
+	</div>
+</div>
+
+<button
+	type="button"
+	disabled={!canSave || busy}
+	onclick={save}
+	class="mt-3 h-14 w-full rounded-2xl bg-emerald-600 text-lg font-bold text-white active:bg-emerald-700 disabled:opacity-40"
+>
+	{m.save()}
+</button>

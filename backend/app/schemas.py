@@ -5,8 +5,11 @@ from pydantic import BaseModel, ConfigDict, EmailStr, Field
 from .models import (
     ActivityLevel,
     Equipment,
+    EntrySource,
     ExerciseKind,
     ExerciseLevel,
+    FoodCategory,
+    MealType,
     MuscleGroup,
     Objective,
     Plan,
@@ -212,3 +215,102 @@ class SessionSummaryOut(BaseModel):
     finished_at: datetime | None
     total_sets: int
     total_volume_kg: float
+
+
+# --- Dieta ----------------------------------------------------------------
+
+
+class MacrosOut(BaseModel):
+    kcal: float
+    protein_g: float
+    carbs_g: float
+    fat_g: float
+
+
+class FoodPortionOut(BaseModel):
+    label_key: str
+    grams: float
+
+
+class FoodOut(BaseModel):
+    id: int
+    slug: str
+    name: str
+    category: FoodCategory
+    kcal: float
+    protein_g: float
+    carbs_g: float
+    fat_g: float
+    default_portion_g: float
+    portions: list[FoodPortionOut]
+    is_custom: bool
+
+
+class FoodIn(BaseModel):
+    name: str = Field(min_length=1, max_length=80)
+    category: FoodCategory = FoodCategory.other
+    kcal: float = Field(ge=0, le=1000)
+    protein_g: float = Field(ge=0, le=100)
+    carbs_g: float = Field(ge=0, le=100)
+    fat_g: float = Field(ge=0, le=100)
+    default_portion_g: float = Field(default=100, gt=0, le=2000)
+
+
+class RecipeIngredientIn(BaseModel):
+    food_id: int
+    grams: float = Field(gt=0, le=5000)
+
+
+class RecipeIn(BaseModel):
+    name: str = Field(min_length=1, max_length=80)
+    servings: int = Field(default=1, ge=1, le=50)
+    ingredients: list[RecipeIngredientIn]
+
+
+class RecipeIngredientOut(BaseModel):
+    id: int
+    food: FoodOut
+    grams: float
+    macros: MacrosOut
+
+
+class RecipeOut(BaseModel):
+    id: int
+    name: str
+    servings: int
+    ingredients: list[RecipeIngredientOut]
+    total: MacrosOut
+    per_serving: MacrosOut
+
+
+class DiaryEntryIn(BaseModel):
+    entry_date: date
+    meal_type: MealType
+    source: EntrySource
+    food_id: int | None = None
+    recipe_id: int | None = None
+    quantity: float = Field(gt=0, le=5000)
+
+
+class DiaryEntryOut(BaseModel):
+    id: int
+    meal_type: MealType
+    source: EntrySource
+    food_id: int | None
+    recipe_id: int | None
+    name: str
+    quantity: float
+    macros: MacrosOut
+
+
+class MealGroupOut(BaseModel):
+    meal_type: MealType
+    entries: list[DiaryEntryOut]
+    subtotal: MacrosOut
+
+
+class DiaryDayOut(BaseModel):
+    date: date
+    meals: list[MealGroupOut]
+    totals: MacrosOut
+    goals: MacrosOut | None

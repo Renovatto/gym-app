@@ -172,6 +172,113 @@ export interface SessionSummary {
 	total_volume_kg: number;
 }
 
+// --- Dieta ---
+export type FoodCategory =
+	| 'protein'
+	| 'carb'
+	| 'fruit'
+	| 'vegetable'
+	| 'dairy'
+	| 'legume'
+	| 'fat'
+	| 'beverage'
+	| 'sweet'
+	| 'other';
+
+export type MealType = 'breakfast' | 'lunch' | 'snack' | 'dinner' | 'other';
+export type EntrySource = 'food' | 'recipe';
+
+export interface Macros {
+	kcal: number;
+	protein_g: number;
+	carbs_g: number;
+	fat_g: number;
+}
+
+export interface FoodPortion {
+	label_key: string;
+	grams: number;
+}
+
+export interface Food {
+	id: number;
+	slug: string;
+	name: string;
+	category: FoodCategory;
+	kcal: number;
+	protein_g: number;
+	carbs_g: number;
+	fat_g: number;
+	default_portion_g: number;
+	portions: FoodPortion[];
+	is_custom: boolean;
+}
+
+export interface RecipeIngredient {
+	id: number;
+	food: Food;
+	grams: number;
+	macros: Macros;
+}
+
+export interface Recipe {
+	id: number;
+	name: string;
+	servings: number;
+	ingredients: RecipeIngredient[];
+	total: Macros;
+	per_serving: Macros;
+}
+
+export interface DiaryEntry {
+	id: number;
+	meal_type: MealType;
+	source: EntrySource;
+	food_id: number | null;
+	recipe_id: number | null;
+	name: string;
+	quantity: number;
+	macros: Macros;
+}
+
+export interface MealGroup {
+	meal_type: MealType;
+	entries: DiaryEntry[];
+	subtotal: Macros;
+}
+
+export interface DiaryDay {
+	date: string;
+	meals: MealGroup[];
+	totals: Macros;
+	goals: Macros | null;
+}
+
+export interface FoodInput {
+	name: string;
+	category: FoodCategory;
+	kcal: number;
+	protein_g: number;
+	carbs_g: number;
+	fat_g: number;
+	default_portion_g: number;
+}
+
+export interface RecipeInput {
+	name: string;
+	servings: number;
+	ingredients: { food_id: number; grams: number }[];
+}
+
+export interface DiaryEntryInput {
+	entry_date: string;
+	meal_type: MealType;
+	source: EntrySource;
+	food_id?: number | null;
+	recipe_id?: number | null;
+	quantity: number;
+}
+
 export function getTokens(): { access: string | null; refresh: string | null } {
 	return {
 		access: localStorage.getItem(ACCESS_KEY),
@@ -315,9 +422,40 @@ export const api = {
 	finishSession: (sessionId: number) =>
 		request<WorkoutSession>(`/me/sessions/${sessionId}/finish`, { method: 'POST' }),
 	getSessions: () => request<SessionSummary[]>('/me/sessions'),
+	// dieta
+	getFoods: (q = '', category?: FoodCategory) => {
+		const params = new URLSearchParams();
+		if (q) params.set('q', q);
+		if (category) params.set('category', category);
+		const qs = params.toString();
+		return request<Food[]>(`/foods${qs ? `?${qs}` : ''}`);
+	},
+	createFood: (food: FoodInput) => request<Food>('/me/foods', { method: 'POST', body: food }),
+	getRecipes: () => request<Recipe[]>('/me/recipes'),
+	createRecipe: (recipe: RecipeInput) =>
+		request<Recipe>('/me/recipes', { method: 'POST', body: recipe }),
+	updateRecipe: (id: number, recipe: RecipeInput) =>
+		request<Recipe>(`/me/recipes/${id}`, { method: 'PUT', body: recipe }),
+	deleteRecipe: (id: number) => request<void>(`/me/recipes/${id}`, { method: 'DELETE' }),
+	getDiary: (day: string) => request<DiaryDay>(`/me/diary?day=${day}`),
+	addDiaryEntry: (entry: DiaryEntryInput) =>
+		request<DiaryEntry>('/me/diary', { method: 'POST', body: entry }),
+	deleteDiaryEntry: (id: number) => request<void>(`/me/diary/${id}`, { method: 'DELETE' }),
+	copyPreviousDay: (day: string, fromDay: string, mealType?: MealType) => {
+		const params = new URLSearchParams({ day, from_day: fromDay });
+		if (mealType) params.set('meal_type', mealType);
+		return request<DiaryDay>(`/me/diary/copy-previous?${params.toString()}`, { method: 'POST' });
+	},
 	exportData: () => request<unknown>('/me/account/export'),
 	deleteAccount: () => request<void>('/me/account', { method: 'DELETE' })
 };
+
+export function localDay(): string {
+	const now = new Date();
+	return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(
+		now.getDate()
+	).padStart(2, '0')}`;
+}
 
 export function localDayParams(): { day: string; tzOffset: number } {
 	const now = new Date();

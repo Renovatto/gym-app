@@ -1,5 +1,35 @@
-import type { Equipment, ExerciseLevel, MuscleGroup } from '$lib/api';
+import type { Equipment, ExerciseLevel, MealType, MuscleGroup } from '$lib/api';
 import { m } from '$lib/paraglide/messages';
+
+export const MEAL_TYPES: MealType[] = ['breakfast', 'lunch', 'snack', 'dinner', 'other'];
+
+export function mealTypeLabel(meal: MealType): string {
+	return {
+		breakfast: m.meal_breakfast(),
+		lunch: m.meal_lunch(),
+		snack: m.meal_snack(),
+		dinner: m.meal_dinner(),
+		other: m.meal_other()
+	}[meal];
+}
+
+// Rótulo de porção: label_key + gramas, ex. "1 fatia (25 g)"
+export function portionLabel(labelKey: string, grams: number): string {
+	const word =
+		{
+			unit: m.portion_unit(),
+			slice: m.portion_slice(),
+			tbsp: m.portion_tbsp(),
+			tsp: m.portion_tsp(),
+			cup: m.portion_cup(),
+			glass: m.portion_glass(),
+			scoop: m.portion_scoop(),
+			filet: m.portion_filet(),
+			handful: m.portion_handful(),
+			portion: m.portion_portion()
+		}[labelKey] ?? labelKey;
+	return `${word} (${grams} g)`;
+}
 
 export function muscleGroupLabel(group: MuscleGroup): string {
 	return {

@@ -212,3 +212,118 @@ class SetLog(SQLModel, table=True):
     logged_at: datetime = Field(default_factory=utcnow)
 
     session: WorkoutSession = Relationship(back_populates="sets")
+
+
+class FoodCategory(str, Enum):
+    protein = "protein"
+    carb = "carb"
+    fruit = "fruit"
+    vegetable = "vegetable"
+    dairy = "dairy"
+    legume = "legume"
+    fat = "fat"
+    beverage = "beverage"
+    sweet = "sweet"
+    other = "other"
+
+
+class MealType(str, Enum):
+    breakfast = "breakfast"
+    lunch = "lunch"
+    snack = "snack"
+    dinner = "dinner"
+    other = "other"
+
+
+class EntrySource(str, Enum):
+    food = "food"
+    recipe = "recipe"
+
+
+class Food(SQLModel, table=True):
+    __tablename__ = "foods"
+
+    id: int | None = Field(default=None, primary_key=True)
+    slug: str = Field(index=True)
+    category: FoodCategory = Field(index=True)
+    # Valores nutricionais por 100 g (ou 100 ml para líquidos).
+    kcal: float
+    protein_g: float
+    carbs_g: float
+    fat_g: float
+    default_portion_g: float = Field(default=100)
+    # None = alimento global (catálogo); preenchido = criado pelo usuário.
+    user_id: int | None = Field(default=None, foreign_key="users.id", ondelete="CASCADE")
+
+    translations: list["FoodTranslation"] = Relationship(
+        back_populates="food", cascade_delete=True
+    )
+    portions: list["FoodPortion"] = Relationship(back_populates="food", cascade_delete=True)
+
+
+class FoodTranslation(SQLModel, table=True):
+    __tablename__ = "food_translations"
+
+    id: int | None = Field(default=None, primary_key=True)
+    food_id: int = Field(foreign_key="foods.id", index=True, ondelete="CASCADE")
+    locale: str = Field(index=True)
+    name: str = Field(index=True)
+
+    food: Food = Relationship(back_populates="translations")
+
+
+class FoodPortion(SQLModel, table=True):
+    __tablename__ = "food_portions"
+
+    id: int | None = Field(default=None, primary_key=True)
+    food_id: int = Field(foreign_key="foods.id", index=True, ondelete="CASCADE")
+    # chave traduzível: unit, slice, tbsp, tsp, cup, glass, scoop, filet, handful, portion
+    label_key: str
+    grams: float
+
+    food: Food = Relationship(back_populates="portions")
+
+
+class Recipe(SQLModel, table=True):
+    __tablename__ = "recipes"
+
+    id: int | None = Field(default=None, primary_key=True)
+    user_id: int = Field(foreign_key="users.id", index=True, ondelete="CASCADE")
+    name: str
+    servings: int = Field(default=1)  # quantas porções a receita rende
+    created_at: datetime = Field(default_factory=utcnow)
+
+    ingredients: list["RecipeIngredient"] = Relationship(
+        back_populates="recipe", cascade_delete=True
+    )
+
+
+class RecipeIngredient(SQLModel, table=True):
+    __tablename__ = "recipe_ingredients"
+
+    id: int | None = Field(default=None, primary_key=True)
+    recipe_id: int = Field(foreign_key="recipes.id", index=True, ondelete="CASCADE")
+    food_id: int = Field(foreign_key="foods.id")
+    grams: float
+
+    recipe: Recipe = Relationship(back_populates="ingredients")
+
+
+class DiaryEntry(SQLModel, table=True):
+    __tablename__ = "diary_entries"
+
+    id: int | None = Field(default=None, primary_key=True)
+    user_id: int = Field(foreign_key="users.id", index=True, ondelete="CASCADE")
+    entry_date: date = Field(index=True)  # dia local do usuário
+    meal_type: MealType
+    source: EntrySource
+    food_id: int | None = Field(default=None, foreign_key="foods.id")
+    recipe_id: int | None = Field(default=None, foreign_key="recipes.id")
+    quantity: float  # gramas (alimento) ou porções (receita)
+    # snapshot para preservar o histórico mesmo se o alimento/receita mudar
+    name_snapshot: str
+    kcal: float
+    protein_g: float
+    carbs_g: float
+    fat_g: float
+    logged_at: datetime = Field(default_factory=utcnow)
