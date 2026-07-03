@@ -9,24 +9,19 @@ App de treino, dieta, peso, água e objetivos. Touch-first, multi-idioma (pt-BR,
 
 ## Rodando em desenvolvimento
 
-Backend (porta 8000):
-
 ```bash
-cd backend
-python3 -m venv .venv && .venv/bin/pip install -r requirements.txt   # primeira vez
-.venv/bin/uvicorn app.main:app --reload --port 8000
+./start.sh
 ```
 
-Frontend (porta 5173, ou a próxima livre):
+Instala as dependências na primeira execução e sobe os dois servidores
+(portas fora do padrão para não conflitar com outros projetos):
 
-```bash
-cd frontend
-npm install          # primeira vez
-npm run dev
-```
+- **App**: http://localhost:5175
+- **API**: http://localhost:8765 (docs interativas em `/docs`)
 
-A URL da API pode ser sobrescrita com `VITE_API_URL` (padrão `http://localhost:8000`).
-Docs interativas da API: http://localhost:8000/docs
+Para rodar separado: `backend/.venv/bin/uvicorn app.main:app --reload --port 8765`
+e `cd frontend && npm run dev -- --port 5175`. A URL da API pode ser sobrescrita
+com `VITE_API_URL` (padrão `http://localhost:8765`).
 
 ## Configuração do backend
 

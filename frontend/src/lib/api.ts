@@ -1,4 +1,4 @@
-const API_URL: string = import.meta.env.VITE_API_URL ?? 'http://localhost:8000';
+const API_URL: string = import.meta.env.VITE_API_URL ?? 'http://localhost:8765';
 
 const ACCESS_KEY = 'gymapp.access';
 const REFRESH_KEY = 'gymapp.refresh';
