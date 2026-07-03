@@ -1,4 +1,15 @@
-const API_URL: string = import.meta.env.VITE_API_URL ?? 'http://localhost:8765';
+const API_PORT = 8765;
+
+// Sem VITE_API_URL, deriva a base da API do host acessado: assim funciona em
+// localhost, no IP da rede local (celular via --host) e via túnel, sem rebuild.
+function defaultApiUrl(): string {
+	if (typeof window !== 'undefined') {
+		return `${window.location.protocol}//${window.location.hostname}:${API_PORT}`;
+	}
+	return `http://localhost:${API_PORT}`;
+}
+
+const API_URL: string = import.meta.env.VITE_API_URL ?? defaultApiUrl();
 
 const ACCESS_KEY = 'gymapp.access';
 const REFRESH_KEY = 'gymapp.refresh';
