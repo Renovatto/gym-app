@@ -378,6 +378,11 @@ export const api = {
 	me: () => request<UserOut>('/me'),
 	updateLocale: (locale: string) =>
 		request<UserOut>('/me/locale', { method: 'PUT', body: { locale } }),
+	changePassword: (currentPassword: string, newPassword: string) =>
+		request<void>('/me/password', {
+			method: 'PUT',
+			body: { current_password: currentPassword, new_password: newPassword }
+		}),
 	getProfile: () => request<ProfileData>('/me/profile'),
 	saveProfile: (profile: Omit<ProfileData, 'weight_kg'> & { weight_kg: number }) =>
 		request<ProfileData>('/me/profile', { method: 'PUT', body: profile }),

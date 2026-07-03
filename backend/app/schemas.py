@@ -126,6 +126,11 @@ class LocaleUpdate(BaseModel):
     locale: str = Field(pattern=r"^(pt-BR|en|es)$")
 
 
+class PasswordChange(BaseModel):
+    current_password: str
+    new_password: str = Field(min_length=8, max_length=128)
+
+
 # --- Treino ---------------------------------------------------------------
 
 

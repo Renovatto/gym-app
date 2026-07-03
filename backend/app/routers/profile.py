@@ -3,7 +3,8 @@ from sqlmodel import desc, select
 
 from ..deps import CurrentUser, SessionDep
 from ..models import Profile, WeightLog, WeightSource
-from ..schemas import GoalsOut, LocaleUpdate, ProfileIn, ProfileOut, UserOut
+from ..schemas import GoalsOut, LocaleUpdate, PasswordChange, ProfileIn, ProfileOut, UserOut
+from ..security import hash_password, verify_password
 from ..services.goals import compute_goals
 
 router = APIRouter(prefix="/me", tags=["me"])
@@ -42,6 +43,15 @@ def update_locale(data: LocaleUpdate, user: CurrentUser, session: SessionDep) ->
     session.add(user)
     session.commit()
     return get_me(user, session)
+
+
+@router.put("/password", status_code=status.HTTP_204_NO_CONTENT)
+def change_password(data: PasswordChange, user: CurrentUser, session: SessionDep) -> None:
+    if not verify_password(data.current_password, user.password_hash):
+        raise HTTPException(status.HTTP_400_BAD_REQUEST, detail="WRONG_PASSWORD")
+    user.password_hash = hash_password(data.new_password)
+    session.add(user)
+    session.commit()
 
 
 @router.get("/profile", response_model=ProfileOut)

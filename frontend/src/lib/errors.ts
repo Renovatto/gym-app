@@ -5,7 +5,8 @@ const ERROR_MESSAGES: Record<string, () => string> = {
 	EMAIL_ALREADY_REGISTERED: () => m.error_email_taken(),
 	INVALID_CREDENTIALS: () => m.error_invalid_credentials(),
 	NETWORK_ERROR: () => m.error_network(),
-	PASSWORD_TOO_SHORT: () => m.error_password_short()
+	PASSWORD_TOO_SHORT: () => m.error_password_short(),
+	WRONG_PASSWORD: () => m.error_wrong_password()
 };
 
 export function errorMessage(code: string): string {

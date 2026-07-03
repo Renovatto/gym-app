@@ -1,13 +1,14 @@
 <script lang="ts">
 	import { goto } from '$app/navigation';
-	import { api, type ActivityLevel, type Objective } from '$lib/api';
+	import { api, ApiError, type ActivityLevel, type Objective } from '$lib/api';
 	import ChoiceChips from '$lib/components/ChoiceChips.svelte';
 	import Stepper from '$lib/components/Stepper.svelte';
 	import { bootstrap, session, signOut } from '$lib/session.svelte';
+	import { showToast } from '$lib/toast.svelte';
 	import { m } from '$lib/paraglide/messages';
 	import { getLocale, setLocale, type Locale } from '$lib/paraglide/runtime';
 	import { setTheme, theme, type ThemePref } from '$lib/theme.svelte';
-	import { toBackendLocale } from '$lib/errors';
+	import { errorMessage, toBackendLocale } from '$lib/errors';
 
 	let height = $state(session.profile?.height_cm ?? 170);
 	let weight = $state(session.profile?.weight_kg ?? 75);
@@ -19,6 +20,31 @@
 	let confirmingDelete = $state(false);
 
 	let language = $state<Locale>(getLocale());
+
+	// troca de senha
+	let currentPassword = $state('');
+	let newPassword = $state('');
+	let passwordError = $state('');
+	let passwordBusy = $state(false);
+
+	async function changePassword(): Promise<void> {
+		passwordError = '';
+		if (newPassword.length < 8) {
+			passwordError = errorMessage('PASSWORD_TOO_SHORT');
+			return;
+		}
+		passwordBusy = true;
+		try {
+			await api.changePassword(currentPassword, newPassword);
+			currentPassword = '';
+			newPassword = '';
+			showToast(m.password_changed());
+		} catch (e) {
+			passwordError = errorMessage(e instanceof ApiError ? e.code : 'GENERIC_ERROR');
+		} finally {
+			passwordBusy = false;
+		}
+	}
 
 	async function changeLanguage(locale: Locale): Promise<void> {
 		language = locale;
@@ -160,6 +186,37 @@
 			{ value: 'system', label: m.theme_system() }
 		]}
 	/>
+</section>
+
+<section class="mt-4 rounded-3xl bg-white p-5 shadow-sm">
+	<p class="mb-3 font-semibold text-slate-600">{m.security_label()}</p>
+	<div class="space-y-3">
+		<input
+			type="password"
+			bind:value={currentPassword}
+			placeholder={m.current_password()}
+			autocomplete="current-password"
+			class="h-12 w-full rounded-2xl border-2 border-slate-200 bg-white px-4 outline-none focus:border-emerald-600"
+		/>
+		<input
+			type="password"
+			bind:value={newPassword}
+			placeholder={m.new_password()}
+			autocomplete="new-password"
+			class="h-12 w-full rounded-2xl border-2 border-slate-200 bg-white px-4 outline-none focus:border-emerald-600"
+		/>
+		{#if passwordError}
+			<p class="rounded-xl bg-red-50 px-4 py-3 text-sm font-medium text-red-700">{passwordError}</p>
+		{/if}
+		<button
+			type="button"
+			disabled={passwordBusy || !currentPassword || !newPassword}
+			onclick={changePassword}
+			class="h-12 w-full rounded-2xl border-2 border-slate-200 font-semibold text-slate-700 active:bg-slate-100 disabled:opacity-40"
+		>
+			{m.change_password()}
+		</button>
+	</div>
 </section>
 
 <section class="mt-4 space-y-3 rounded-3xl bg-white p-5 shadow-sm">
