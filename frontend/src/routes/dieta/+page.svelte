@@ -75,6 +75,12 @@
 		showToast(m.day_copied());
 	}
 
+	async function repeatMeal(meal: MealType): Promise<void> {
+		await api.copyPreviousDay(day, shiftDay(day, -1), meal);
+		await load();
+		showToast(m.day_copied());
+	}
+
 	function mealGroup(meal: MealType) {
 		return diary?.meals.find((g) => g.meal_type === meal);
 	}
@@ -155,12 +161,25 @@
 					</div>
 				{/if}
 
-				<a
-					href="/dieta/adicionar?meal={meal}&day={day}"
-					class="mt-2 flex h-11 items-center justify-center rounded-2xl border-2 border-dashed border-emerald-200 text-sm font-bold text-emerald-700 active:bg-emerald-50"
-				>
-					+ {m.add_food()}
-				</a>
+				<div class="mt-2 flex gap-2">
+					<a
+						href="/dieta/adicionar?meal={meal}&day={day}"
+						class="flex h-11 flex-1 items-center justify-center rounded-2xl border-2 border-dashed border-emerald-200 text-sm font-bold text-emerald-700 active:bg-emerald-50"
+					>
+						+ {m.add_food()}
+					</a>
+					{#if !group || group.entries.length === 0}
+						<button
+							type="button"
+							aria-label={m.repeat_meal()}
+							title={m.repeat_meal()}
+							onclick={() => repeatMeal(meal)}
+							class="grid h-11 w-11 shrink-0 place-items-center rounded-2xl border-2 border-slate-200 text-slate-500 active:bg-slate-100"
+						>
+							<svg viewBox="0 0 24 24" class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4v6h6M20 20v-6h-6M20 8a8 8 0 00-14-3M4 16a8 8 0 0014 3" stroke-linecap="round" stroke-linejoin="round" /></svg>
+						</button>
+					{/if}
+				</div>
 			</section>
 		{/each}
 	</div>

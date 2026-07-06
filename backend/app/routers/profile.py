@@ -2,8 +2,16 @@ from fastapi import APIRouter, HTTPException, status
 from sqlmodel import desc, select
 
 from ..deps import CurrentUser, SessionDep
-from ..models import Profile, WeightLog, WeightSource
-from ..schemas import GoalsOut, LocaleUpdate, PasswordChange, ProfileIn, ProfileOut, UserOut
+from ..models import Profile, User, WeightLog, WeightSource
+from ..schemas import (
+    EmailChange,
+    GoalsOut,
+    LocaleUpdate,
+    PasswordChange,
+    ProfileIn,
+    ProfileOut,
+    UserOut,
+)
 from ..security import hash_password, verify_password
 from ..services.goals import compute_goals
 
@@ -52,6 +60,21 @@ def change_password(data: PasswordChange, user: CurrentUser, session: SessionDep
     user.password_hash = hash_password(data.new_password)
     session.add(user)
     session.commit()
+
+
+@router.put("/email", response_model=UserOut)
+def change_email(data: EmailChange, user: CurrentUser, session: SessionDep) -> UserOut:
+    if not verify_password(data.current_password, user.password_hash):
+        raise HTTPException(status.HTTP_400_BAD_REQUEST, detail="WRONG_PASSWORD")
+    new_email = data.new_email.lower()
+    if new_email != user.email:
+        taken = session.exec(select(User).where(User.email == new_email)).first()
+        if taken is not None:
+            raise HTTPException(status.HTTP_409_CONFLICT, detail="EMAIL_ALREADY_REGISTERED")
+        user.email = new_email
+        session.add(user)
+        session.commit()
+    return get_me(user, session)
 
 
 @router.get("/profile", response_model=ProfileOut)

@@ -21,6 +21,28 @@
 
 	let language = $state<Locale>(getLocale());
 
+	// troca de e-mail
+	let newEmail = $state('');
+	let emailPassword = $state('');
+	let emailError = $state('');
+	let emailBusy = $state(false);
+
+	async function changeEmail(): Promise<void> {
+		emailError = '';
+		emailBusy = true;
+		try {
+			await api.changeEmail(newEmail.trim(), emailPassword);
+			await bootstrap();
+			newEmail = '';
+			emailPassword = '';
+			showToast(m.email_changed());
+		} catch (e) {
+			emailError = errorMessage(e instanceof ApiError ? e.code : 'GENERIC_ERROR');
+		} finally {
+			emailBusy = false;
+		}
+	}
+
 	// troca de senha
 	let currentPassword = $state('');
 	let newPassword = $state('');
@@ -186,6 +208,37 @@
 			{ value: 'system', label: m.theme_system() }
 		]}
 	/>
+</section>
+
+<section class="mt-4 rounded-3xl bg-white p-5 shadow-sm">
+	<p class="mb-3 font-semibold text-slate-600">{m.email_label()}</p>
+	<div class="space-y-3">
+		<input
+			type="email"
+			bind:value={newEmail}
+			placeholder={m.new_email()}
+			autocomplete="email"
+			class="h-12 w-full rounded-2xl border-2 border-slate-200 bg-white px-4 outline-none focus:border-emerald-600"
+		/>
+		<input
+			type="password"
+			bind:value={emailPassword}
+			placeholder={m.current_password()}
+			autocomplete="current-password"
+			class="h-12 w-full rounded-2xl border-2 border-slate-200 bg-white px-4 outline-none focus:border-emerald-600"
+		/>
+		{#if emailError}
+			<p class="rounded-xl bg-red-50 px-4 py-3 text-sm font-medium text-red-700">{emailError}</p>
+		{/if}
+		<button
+			type="button"
+			disabled={emailBusy || !newEmail || !emailPassword}
+			onclick={changeEmail}
+			class="h-12 w-full rounded-2xl border-2 border-slate-200 font-semibold text-slate-700 active:bg-slate-100 disabled:opacity-40"
+		>
+			{m.change_email()}
+		</button>
+	</div>
 </section>
 
 <section class="mt-4 rounded-3xl bg-white p-5 shadow-sm">
