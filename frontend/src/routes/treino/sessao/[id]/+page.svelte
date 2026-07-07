@@ -206,6 +206,39 @@
 	const totalCount = $derived(blocks.reduce((acc, b) => acc + b.sets.length, 0));
 	// exercício "atual": primeiro com série pendente
 	const currentIndex = $derived(blocks.findIndex((b) => b.sets.some((s) => !s.done)));
+
+	// Modo foco: mostra um exercicio por vez, grande, sem perder a lista rolavel por tras.
+	// E aditivo (nao substitui a lista): abre sobre ela e fecha voltando ao mesmo lugar.
+	let focusMode = $state(false);
+	let focusIndex = $state(0);
+
+	function openFocus(): void {
+		// abre no exercicio atual (primeiro pendente); se tudo feito, no primeiro
+		focusIndex = currentIndex === -1 ? 0 : currentIndex;
+		focusMode = true;
+	}
+
+	const focusBlock = $derived(blocks[focusIndex] ?? null);
+	// serie pendente atual do exercicio em foco (null quando todas ja concluidas)
+	const focusRow = $derived(focusBlock ? (focusBlock.sets.find((s) => !s.done) ?? null) : null);
+	const focusAllDone = $derived(focusBlock ? focusBlock.sets.every((s) => s.done) : false);
+
+	async function completeFocusSet(): Promise<void> {
+		if (!focusBlock || !focusRow) return;
+		await toggleSet(focusBlock, focusRow);
+		// exercicio terminou: avanca sozinho para o proximo com serie pendente
+		if (focusBlock.sets.every((s) => s.done)) {
+			const next = blocks.findIndex((b, i) => i > focusIndex && b.sets.some((s) => !s.done));
+			if (next !== -1) focusIndex = next;
+		}
+	}
+
+	function focusPrev(): void {
+		if (focusIndex > 0) focusIndex -= 1;
+	}
+	function focusNext(): void {
+		if (focusIndex < blocks.length - 1) focusIndex += 1;
+	}
 </script>
 
 {#if loading}
@@ -241,7 +274,21 @@
 				style="width: {totalCount ? (doneCount / totalCount) * 100 : 0}%"
 			></div>
 		</div>
-		<p class="mt-1 text-sm text-slate-500">{doneCount} / {totalCount} {m.sets_label()}</p>
+		<div class="mt-1 flex items-center justify-between gap-2">
+			<p class="text-sm text-slate-500">{doneCount} / {totalCount} {m.sets_label()}</p>
+			{#if blocks.length > 0 && currentIndex !== -1}
+				<button
+					type="button"
+					onclick={openFocus}
+					class="flex shrink-0 items-center gap-1.5 rounded-full bg-ink px-3 py-1.5 text-xs font-bold text-white active:bg-ink-2"
+				>
+					<svg viewBox="0 0 24 24" class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2">
+						<circle cx="12" cy="12" r="7" /><circle cx="12" cy="12" r="2.5" />
+					</svg>
+					{m.focus_mode()}
+				</button>
+			{/if}
+		</div>
 	</header>
 
 	<div class="space-y-3">
@@ -384,8 +431,159 @@
 	</button>
 {/if}
 
+{#if focusMode && focusBlock}
+	<!-- Modo foco: overlay de um exercicio por vez, por cima da lista (z-30) -->
+	<div
+		class="fixed inset-0 z-30 flex flex-col bg-slate-50"
+		style="padding-bottom: {restActive ? '92px' : '0'}"
+	>
+		<header class="flex items-center gap-2 px-4 pt-3 pb-2">
+			<button
+				type="button"
+				aria-label={m.back()}
+				onclick={() => (focusMode = false)}
+				class="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-white text-slate-500 shadow-sm"
+			>
+				<svg viewBox="0 0 24 24" class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="2">
+					<path d="M6 6l12 12M18 6L6 18" stroke-linecap="round" />
+				</svg>
+			</button>
+			<p class="min-w-0 flex-1 text-center text-sm font-bold text-slate-500">
+				{m.exercise_n_of_total({ current: focusIndex + 1, total: blocks.length })}
+			</p>
+			<div class="shrink-0 rounded-2xl bg-ink px-3 py-1.5 text-center">
+				<p class="font-mono text-base leading-none font-bold text-white tabular-nums">
+					{formatTime(elapsed)}
+				</p>
+			</div>
+		</header>
+
+		<!-- pontinhos de progresso entre exercicios -->
+		<div class="flex justify-center gap-1.5 px-4 pb-1">
+			{#each blocks as b, i (b.item.id)}
+				{@const bd = b.sets.every((s) => s.done)}
+				<span
+					class="h-1.5 rounded-full transition-all
+						{i === focusIndex ? 'w-6 bg-emerald-600' : bd ? 'w-1.5 bg-emerald-400' : 'w-1.5 bg-slate-300'}"
+				></span>
+			{/each}
+		</div>
+
+		<div class="flex-1 overflow-y-auto px-4 pt-2 pb-4">
+			<button
+				type="button"
+				aria-label={m.view_photo()}
+				onclick={() => (photoOf = focusBlock.item.exercise)}
+				class="grid h-44 w-full place-items-center overflow-hidden rounded-3xl bg-slate-100"
+			>
+				{#if focusBlock.item.exercise.media_urls.length > 0}
+					<img src={focusBlock.item.exercise.media_urls[0]} alt="" class="h-full w-full object-cover" />
+				{:else}
+					<svg viewBox="0 0 24 24" class="h-12 w-12 text-slate-300" fill="none" stroke="currentColor" stroke-width="1.5">
+						<path d="M6 8v8M18 8v8M3 10v4M21 10v4M8 12h8" stroke-linecap="round" />
+					</svg>
+				{/if}
+			</button>
+
+			<h2 class="mt-4 text-center text-2xl font-bold text-slate-900">{focusBlock.item.exercise.name}</h2>
+			<p class="mt-1 text-center text-sm font-semibold text-slate-500">
+				{#if focusAllDone}
+					{m.exercise_completed()}
+				{:else if focusBlock.isCardio}
+					{m.cardio_label()}
+				{:else}
+					{m.set_n_of_total({
+						current: focusRow?.setNumber ?? focusBlock.sets.length,
+						total: focusBlock.sets.length
+					})}
+					{#if focusBlock.item.last_weight_kg !== null}
+						· {m.last_time()}: {focusBlock.item.last_weight_kg} kg
+					{/if}
+				{/if}
+			</p>
+
+			{#if focusRow}
+				<div class="mx-auto mt-5 max-w-sm space-y-4">
+					{#if focusBlock.isCardio}
+						<div>
+							<p class="mb-1.5 text-center text-xs font-bold text-slate-500 uppercase">{m.duration_label()}</p>
+							<Stepper bind:value={focusRow.duration} min={1} max={300} step={1} unit={m.minutes_short()} />
+						</div>
+					{:else}
+						<div>
+							<p class="mb-1.5 text-center text-xs font-bold text-slate-500 uppercase">{m.weight()} (kg)</p>
+							<Stepper bind:value={focusRow.weight} min={0} max={1000} step={2.5} decimals={1} />
+						</div>
+						<div>
+							<p class="mb-1.5 text-center text-xs font-bold text-slate-500 uppercase">{m.reps_label()}</p>
+							<Stepper bind:value={focusRow.reps} min={0} max={100} />
+						</div>
+					{/if}
+				</div>
+			{/if}
+
+			{#if focusBlock.sets.some((s) => s.done)}
+				<div class="mx-auto mt-5 max-w-sm space-y-1.5">
+					{#each focusBlock.sets.filter((s) => s.done) as doneRow (doneRow.setNumber)}
+						<div class="flex items-center gap-2 rounded-xl bg-emerald-50 px-3 py-1.5 text-sm font-bold text-emerald-900">
+							<span class="text-emerald-600">✓</span>
+							{#if focusBlock.isCardio}
+								{doneRow.duration} {m.minutes_short()}
+							{:else}
+								{m.set_word()} {doneRow.setNumber} · {doneRow.weight} kg × {doneRow.reps}
+							{/if}
+						</div>
+					{/each}
+				</div>
+			{/if}
+		</div>
+
+		<div class="border-t border-slate-200 bg-slate-50 px-4 pt-3 pb-[calc(env(safe-area-inset-bottom)+12px)]">
+			{#if focusRow}
+				<button
+					type="button"
+					disabled={focusRow.saving}
+					onclick={completeFocusSet}
+					class="h-14 w-full rounded-2xl bg-emerald-600 text-lg font-bold text-white active:bg-emerald-700 disabled:opacity-50"
+				>
+					{m.complete_set()}
+				</button>
+			{:else}
+				<div class="grid h-14 w-full place-items-center rounded-2xl bg-emerald-50 text-lg font-bold text-emerald-700">
+					{m.exercise_completed()} ✓
+				</div>
+			{/if}
+			<div class="mt-2.5 flex gap-2">
+				<button
+					type="button"
+					disabled={focusIndex === 0}
+					onclick={focusPrev}
+					class="flex h-11 flex-1 items-center justify-center gap-1 rounded-2xl border-2 border-slate-200 bg-white font-semibold text-slate-600 active:bg-slate-100 disabled:opacity-40"
+				>
+					<svg viewBox="0 0 24 24" class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2">
+						<path d="M15 6l-6 6 6 6" stroke-linecap="round" stroke-linejoin="round" />
+					</svg>
+					{m.prev_exercise()}
+				</button>
+				<button
+					type="button"
+					disabled={focusIndex >= blocks.length - 1}
+					onclick={focusNext}
+					class="flex h-11 flex-1 items-center justify-center gap-1 rounded-2xl border-2 border-slate-200 bg-white font-semibold text-slate-600 active:bg-slate-100 disabled:opacity-40"
+				>
+					{m.next_exercise()}
+					<svg viewBox="0 0 24 24" class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2">
+						<path d="M9 6l6 6-6 6" stroke-linecap="round" stroke-linejoin="round" />
+					</svg>
+				</button>
+			</div>
+		</div>
+	</div>
+{/if}
+
 {#if restActive}
-	<div class="fixed inset-x-0 bottom-0 z-20 bg-ink pb-[env(safe-area-inset-bottom)] text-white">
+	<!-- z-40: fica acima da lista e tambem do Modo foco (z-30) -->
+	<div class="fixed inset-x-0 bottom-0 z-40 bg-ink pb-[env(safe-area-inset-bottom)] text-white">
 		<div class="h-1 bg-ink-2">
 			<div
 				class="h-full bg-emerald-400 transition-all duration-1000 ease-linear"
