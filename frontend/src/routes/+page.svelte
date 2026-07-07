@@ -1,5 +1,12 @@
 <script lang="ts">
-	import { api, localDay, type DiaryDay, type GoalsOut, type WorkoutSession } from '$lib/api';
+	import {
+		api,
+		localDay,
+		type CoachResult,
+		type DiaryDay,
+		type GoalsOut,
+		type WorkoutSession
+	} from '$lib/api';
 	import { session } from '$lib/session.svelte';
 	import WaterCard from '$lib/components/WaterCard.svelte';
 	import MacroSummary from '$lib/components/MacroSummary.svelte';
@@ -9,6 +16,7 @@
 	let goals = $state<GoalsOut | null>(null);
 	let diary = $state<DiaryDay | null>(null);
 	let activeSession = $state<WorkoutSession | null>(null);
+	let coach = $state<CoachResult | null>(null);
 
 	const dietOn = $derived(session.profile?.diet_enabled ?? false);
 
@@ -16,11 +24,30 @@
 		if (session.user?.has_profile) {
 			api.getGoals().then((g) => (goals = g));
 			api.getActiveSession().then((s) => (activeSession = s));
+			api.getCoach(localDay(), new Date().getTimezoneOffset()).then((c) => (coach = c));
 			if (dietOn) api.getDiary(localDay()).then((d) => (diary = d));
 		}
 	});
 
 	const nf = new Intl.NumberFormat(getLocale());
+
+	// Texto traduzido de cada dica do coach (por codigo).
+	function coachNoteText(code: string): string {
+		return (
+			{
+				LOG_FOOD: m.coach_log_food(),
+				LOW_PROTEIN: m.coach_low_protein(),
+				DRINK_WATER: m.coach_drink_water(),
+				TRAIN: m.coach_train(),
+				VISCERAL_TIP: m.coach_visceral_tip()
+			}[code] ?? ''
+		);
+	}
+
+	// Mostra o lembrete de pesagem se nunca pesou ou nao pesou hoje.
+	const showWeighReminder = $derived(
+		coach !== null && (coach.days_since_weigh_in === null || coach.days_since_weigh_in >= 1)
+	);
 
 	const objectiveLabel = $derived(
 		{
@@ -36,6 +63,39 @@
 	<h1 class="text-2xl font-bold">{m.today_title()}</h1>
 	<p class="text-slate-500">{objectiveLabel}</p>
 </header>
+
+<!-- Lembrete de pesagem (com orientacao de melhor hora) -->
+{#if showWeighReminder}
+	<a href="/progresso" class="mb-3 flex items-start gap-3 rounded-3xl bg-sky-50 p-4 active:bg-sky-100">
+		<span class="grid h-10 w-10 shrink-0 place-items-center rounded-2xl bg-sky-100 text-sky-600">
+			<svg viewBox="0 0 24 24" class="h-6 w-6" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3a9 9 0 100 18 9 9 0 000-18zM12 8v4l3 2" stroke-linecap="round" stroke-linejoin="round" /></svg>
+		</span>
+		<div class="min-w-0 flex-1">
+			<p class="font-bold text-sky-900">{m.weigh_reminder_title()}</p>
+			<p class="text-xs text-sky-700">{m.weigh_reminder_hint()}</p>
+		</div>
+		<span class="shrink-0 self-center text-sm font-bold text-sky-700">{m.weigh_reminder_cta()}</span>
+	</a>
+{/if}
+
+<!-- Dicas do coach (por regras) -->
+{#if coach && coach.notes.length > 0}
+	<section class="mb-3 rounded-3xl bg-white p-4 shadow-sm">
+		<p class="mb-2 text-xs font-bold text-slate-400 uppercase">{m.coach_notes_title()}</p>
+		<ul class="space-y-2">
+			{#each coach.notes as note (note.code)}
+				<li class="flex gap-2 text-sm">
+					<span
+						class="mt-1.5 h-2 w-2 shrink-0 rounded-full {note.severity === 'warn'
+							? 'bg-amber-500'
+							: 'bg-emerald-500'}"
+					></span>
+					<span class="text-slate-700">{coachNoteText(note.code)}</span>
+				</li>
+			{/each}
+		</ul>
+	</section>
+{/if}
 
 {#if goals}
 	{#if dietOn}

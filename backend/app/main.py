@@ -5,7 +5,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from .config import settings
 from .db import init_db
-from .routers import account, auth, diet, profile, stats, water, weight, workout
+from .routers import account, auth, coach, diet, profile, stats, water, weight, workout
 from .seed import seed_exercises, seed_foods
 
 
@@ -41,6 +41,7 @@ app.include_router(water.router)
 app.include_router(workout.router)
 app.include_router(diet.router)
 app.include_router(stats.router)
+app.include_router(coach.router)
 app.include_router(account.router)
 
 

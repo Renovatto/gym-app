@@ -214,6 +214,17 @@ export interface WeekSummary {
 	days_with_water: number;
 }
 
+// Dica do coach por regras (code traduzido no frontend; severity define a cor).
+export interface CoachNote {
+	code: string;
+	severity: 'warn' | 'info';
+}
+
+export interface CoachResult {
+	notes: CoachNote[];
+	days_since_weigh_in: number | null;
+}
+
 // Resultado do TDEE adaptativo (manutencao real estimada a partir dos dados).
 export interface AdaptiveTdee {
 	has_enough_data: boolean;
@@ -495,6 +506,8 @@ export const api = {
 		request<WeekSummary>(`/me/summary/week?day=${day}&tz_offset=${tzOffset}`),
 	getAdaptiveTdee: (day: string, tzOffset: number) =>
 		request<AdaptiveTdee>(`/me/summary/adaptive?day=${day}&tz_offset=${tzOffset}`),
+	getCoach: (day: string, tzOffset: number) =>
+		request<CoachResult>(`/me/coach?day=${day}&tz_offset=${tzOffset}`),
 	// dieta
 	getFoods: (q = '', category?: FoodCategory) => {
 		const params = new URLSearchParams();

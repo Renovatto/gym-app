@@ -156,6 +156,18 @@ class WeekSummaryOut(BaseModel):
     days_with_water: int
 
 
+class CoachNote(BaseModel):
+    # code = mensagem traduzida no frontend; severity controla a cor (warn/info).
+    code: str
+    severity: str  # "warn" | "info"
+
+
+class CoachOut(BaseModel):
+    notes: list[CoachNote]
+    # dias desde a ultima pesagem (None = nunca pesou). Alimenta o lembrete de pesagem.
+    days_since_weigh_in: int | None
+
+
 class AdaptiveTdeeOut(BaseModel):
     # Resultado do TDEE adaptativo: manutencao real estimada pelos dados do usuario.
     has_enough_data: bool
