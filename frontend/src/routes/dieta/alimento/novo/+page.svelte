@@ -87,15 +87,15 @@
 		<div class="grid grid-cols-3 gap-2">
 			<div>
 				<p class="mb-1 text-xs font-semibold text-slate-500">{m.protein()} (g)</p>
-				<Stepper bind:value={protein} min={0} max={100} step={0.5} decimals={1} />
+				<Stepper size="sm" bind:value={protein} min={0} max={100} step={0.5} decimals={1} />
 			</div>
 			<div>
 				<p class="mb-1 text-xs font-semibold text-slate-500">{m.carbs()} (g)</p>
-				<Stepper bind:value={carbs} min={0} max={100} step={0.5} decimals={1} />
+				<Stepper size="sm" bind:value={carbs} min={0} max={100} step={0.5} decimals={1} />
 			</div>
 			<div>
 				<p class="mb-1 text-xs font-semibold text-slate-500">{m.fat()} (g)</p>
-				<Stepper bind:value={fat} min={0} max={100} step={0.5} decimals={1} />
+				<Stepper size="sm" bind:value={fat} min={0} max={100} step={0.5} decimals={1} />
 			</div>
 		</div>
 		<div>
