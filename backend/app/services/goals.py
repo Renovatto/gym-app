@@ -85,6 +85,19 @@ def daily_deficit_for_cut(weight_kg: float, intensity: CutIntensity) -> float:
     return weekly_deficit_kcal / 7
 
 
+def target_calories_from_maintenance(
+    profile: Profile, weight_kg: float, maintenance_kcal: float, bmr: float
+) -> int:
+    """Meta calorica a partir de uma manutencao ja conhecida (ex.: a manutencao REAL
+    estimada pelo TDEE adaptativo), aplicando o mesmo ajuste por objetivo e o piso no BMR.
+    Usar isto em vez do TDEE da formula quando temos a manutencao medida."""
+    if profile.objective == Objective.lose_fat:
+        target = maintenance_kcal - daily_deficit_for_cut(weight_kg, profile.cut_intensity)
+    else:
+        target = maintenance_kcal * KCAL_MULTIPLIER[profile.objective]
+    return round(max(target, bmr))
+
+
 def compute_goals(profile: Profile, weight_kg: float) -> GoalsOut:
     age = age_from_birthdate(profile.birthdate)
     bmr = basal_metabolic_rate(weight_kg, profile.height_cm, age, profile.sex)

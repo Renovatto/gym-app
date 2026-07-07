@@ -156,6 +156,22 @@ class WeekSummaryOut(BaseModel):
     days_with_water: int
 
 
+class AdaptiveTdeeOut(BaseModel):
+    # Resultado do TDEE adaptativo: manutencao real estimada pelos dados do usuario.
+    has_enough_data: bool
+    span_days: int  # dias entre a primeira e a ultima pesagem analisada
+    days_logged: int  # dias com diario alimentar na janela
+    avg_intake_kcal: int  # media diaria consumida
+    weekly_change_kg: float  # variacao de peso por semana (negativo = perdendo)
+    estimated_maintenance_kcal: int | None  # manutencao REAL estimada
+    formula_tdee_kcal: int  # manutencao ESTIMADA pela formula (para comparar)
+    current_target_kcal: int  # meta atual (baseada na formula)
+    suggested_target_kcal: int | None  # meta sugerida com base na manutencao real
+    # codigo traduzido no frontend: NOT_ENOUGH_DATA, ON_TRACK, TOO_SLOW, STALLED,
+    # TOO_FAST, ESTIMATE_READY
+    message_code: str
+
+
 class PasswordChange(BaseModel):
     current_password: str
     new_password: str = Field(min_length=8, max_length=128)
