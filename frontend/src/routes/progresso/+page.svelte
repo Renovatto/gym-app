@@ -12,6 +12,7 @@
 	} from '$lib/api';
 	import Stepper from '$lib/components/Stepper.svelte';
 	import WeightChart from '$lib/components/WeightChart.svelte';
+	import BodyMetricIcon from '$lib/components/BodyMetricIcon.svelte';
 	import { onMount } from 'svelte';
 	import { page } from '$app/state';
 	import { bootstrap, session } from '$lib/session.svelte';
@@ -30,17 +31,22 @@
 	// Campos opcionais da balanca de bioimpedancia. A ordem aqui e a ordem na tela.
 	// O usuario le esses valores na propria balanca e digita; por isso sao inputs de
 	// texto (mais rapido para valor exato) e nao steppers.
-	const bodyCompositionInputs: { key: keyof BodyComposition; label: string; unit: string }[] = [
-		{ key: 'fat_percentage', label: m.bc_fat_pct(), unit: '%' },
-		{ key: 'fat_mass_kg', label: m.bc_fat_mass(), unit: 'kg' },
-		{ key: 'visceral_fat_index', label: m.bc_visceral(), unit: '' },
-		{ key: 'muscle_percentage', label: m.bc_muscle_pct(), unit: '%' },
-		{ key: 'muscle_mass_kg', label: m.bc_muscle_mass(), unit: 'kg' },
-		{ key: 'skeletal_muscle_percentage', label: m.bc_skeletal_pct(), unit: '%' },
-		{ key: 'skeletal_muscle_kg', label: m.bc_skeletal_mass(), unit: 'kg' },
-		{ key: 'water_percentage', label: m.bc_water_pct(), unit: '%' },
-		{ key: 'water_mass_kg', label: m.bc_water_mass(), unit: 'kg' },
-		{ key: 'scale_bmr_kcal', label: m.bc_scale_bmr(), unit: 'kcal' }
+	const bodyCompositionInputs: {
+		key: keyof BodyComposition;
+		label: string;
+		unit: string;
+		icon: string;
+	}[] = [
+		{ key: 'fat_percentage', label: m.bc_fat_pct(), unit: '%', icon: 'fat' },
+		{ key: 'fat_mass_kg', label: m.bc_fat_mass(), unit: 'kg', icon: 'fat' },
+		{ key: 'visceral_fat_index', label: m.bc_visceral(), unit: '', icon: 'visceral' },
+		{ key: 'muscle_percentage', label: m.bc_muscle_pct(), unit: '%', icon: 'muscle' },
+		{ key: 'muscle_mass_kg', label: m.bc_muscle_mass(), unit: 'kg', icon: 'muscle' },
+		{ key: 'skeletal_muscle_percentage', label: m.bc_skeletal_pct(), unit: '%', icon: 'skeletal' },
+		{ key: 'skeletal_muscle_kg', label: m.bc_skeletal_mass(), unit: 'kg', icon: 'skeletal' },
+		{ key: 'water_percentage', label: m.bc_water_pct(), unit: '%', icon: 'water' },
+		{ key: 'water_mass_kg', label: m.bc_water_mass(), unit: 'kg', icon: 'water' },
+		{ key: 'scale_bmr_kcal', label: m.bc_scale_bmr(), unit: 'kcal', icon: 'metabolism' }
 	];
 	// valor digitado (texto) de cada campo da balanca, indexado pela chave
 	let scaleValues = $state<Record<string, string>>({});
@@ -154,7 +160,12 @@
 	const selectedBodyComposition = $derived.by(() => {
 		if (!selectedLog) return [];
 		return bodyCompositionInputs
-			.map((field) => ({ label: field.label, unit: field.unit, value: selectedLog![field.key] }))
+			.map((field) => ({
+				label: field.label,
+				unit: field.unit,
+				icon: field.icon,
+				value: selectedLog![field.key]
+			}))
 			.filter((row) => row.value !== null && row.value !== undefined);
 	});
 </script>
@@ -308,27 +319,39 @@
 			<p class="mb-3 text-sm font-bold text-slate-400 uppercase">{m.body_composition()}</p>
 			<div class="grid grid-cols-2 gap-3">
 				{#if bc.fat_percentage !== null}
-					<div class="rounded-2xl bg-slate-50 p-3">
-						<p class="text-2xl font-black text-slate-900">{nf.format(bc.fat_percentage)}<span class="text-sm font-medium text-slate-400"> %</span></p>
-						<p class="text-xs font-semibold text-slate-500">{m.bc_fat_pct()}</p>
+					<div class="flex items-center gap-2 rounded-2xl bg-slate-50 p-3">
+						<BodyMetricIcon kind="fat" class="h-5 w-5 shrink-0 text-slate-400" />
+						<div class="min-w-0">
+							<p class="text-2xl font-black text-slate-900">{nf.format(bc.fat_percentage)}<span class="text-sm font-medium text-slate-400"> %</span></p>
+							<p class="truncate text-xs font-semibold text-slate-500">{m.bc_fat_pct()}</p>
+						</div>
 					</div>
 				{/if}
 				{#if bc.visceral_fat_index !== null}
-					<div class="rounded-2xl bg-slate-50 p-3">
-						<p class="text-2xl font-black text-slate-900">{nf.format(bc.visceral_fat_index)}</p>
-						<p class="text-xs font-semibold text-slate-500">{m.bc_visceral()}</p>
+					<div class="flex items-center gap-2 rounded-2xl bg-slate-50 p-3">
+						<BodyMetricIcon kind="visceral" class="h-5 w-5 shrink-0 text-slate-400" />
+						<div class="min-w-0">
+							<p class="text-2xl font-black text-slate-900">{nf.format(bc.visceral_fat_index)}</p>
+							<p class="truncate text-xs font-semibold text-slate-500">{m.bc_visceral()}</p>
+						</div>
 					</div>
 				{/if}
 				{#if bc.muscle_mass_kg !== null}
-					<div class="rounded-2xl bg-slate-50 p-3">
-						<p class="text-2xl font-black text-slate-900">{nf.format(bc.muscle_mass_kg)}<span class="text-sm font-medium text-slate-400"> kg</span></p>
-						<p class="text-xs font-semibold text-slate-500">{m.bc_muscle_mass()}</p>
+					<div class="flex items-center gap-2 rounded-2xl bg-slate-50 p-3">
+						<BodyMetricIcon kind="muscle" class="h-5 w-5 shrink-0 text-slate-400" />
+						<div class="min-w-0">
+							<p class="text-2xl font-black text-slate-900">{nf.format(bc.muscle_mass_kg)}<span class="text-sm font-medium text-slate-400"> kg</span></p>
+							<p class="truncate text-xs font-semibold text-slate-500">{m.bc_muscle_mass()}</p>
+						</div>
 					</div>
 				{/if}
 				{#if bc.water_percentage !== null}
-					<div class="rounded-2xl bg-slate-50 p-3">
-						<p class="text-2xl font-black text-slate-900">{nf.format(bc.water_percentage)}<span class="text-sm font-medium text-slate-400"> %</span></p>
-						<p class="text-xs font-semibold text-slate-500">{m.bc_water_pct()}</p>
+					<div class="flex items-center gap-2 rounded-2xl bg-slate-50 p-3">
+						<BodyMetricIcon kind="water" class="h-5 w-5 shrink-0 text-slate-400" />
+						<div class="min-w-0">
+							<p class="text-2xl font-black text-slate-900">{nf.format(bc.water_percentage)}<span class="text-sm font-medium text-slate-400"> %</span></p>
+							<p class="truncate text-xs font-semibold text-slate-500">{m.bc_water_pct()}</p>
+						</div>
 					</div>
 				{/if}
 			</div>
@@ -446,7 +469,10 @@
 				<div class="grid grid-cols-2 gap-3">
 					{#each bodyCompositionInputs as field (field.key)}
 						<label class="block">
-							<span class="mb-1 block text-xs font-semibold text-slate-500">{field.label}</span>
+							<span class="mb-1 flex items-center gap-1 text-xs font-semibold text-slate-500">
+								<BodyMetricIcon kind={field.icon} class="h-3.5 w-3.5 shrink-0 text-slate-400" />
+								{field.label}
+							</span>
 							<div class="flex items-center gap-1 rounded-2xl border-2 border-slate-200 bg-white px-3">
 								<input
 									inputmode="decimal"
@@ -524,11 +550,16 @@
 			{#if selectedBodyComposition.length > 0}
 				<div class="mt-4 grid grid-cols-2 gap-3">
 					{#each selectedBodyComposition as row (row.label)}
-						<div class="rounded-2xl bg-slate-50 p-3">
-							<p class="text-lg font-bold text-slate-900">
-								{nf.format(row.value ?? 0)}{row.unit ? ` ${row.unit}` : ''}
-							</p>
-							<p class="text-xs font-semibold text-slate-500">{row.label}</p>
+						<div class="flex items-center gap-3 rounded-2xl bg-slate-50 p-3">
+							<span class="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-white text-slate-500">
+								<BodyMetricIcon kind={row.icon} />
+							</span>
+							<div class="min-w-0">
+								<p class="text-lg leading-tight font-bold text-slate-900">
+									{nf.format(row.value ?? 0)}{row.unit ? ` ${row.unit}` : ''}
+								</p>
+								<p class="truncate text-xs font-semibold text-slate-500">{row.label}</p>
+							</div>
 						</div>
 					{/each}
 				</div>
