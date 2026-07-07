@@ -261,12 +261,6 @@
 				<p class="text-sm font-semibold text-emerald-600">{m.workout_in_progress()}</p>
 				<h1 class="truncate text-2xl font-bold">{routineName}</h1>
 			</div>
-			<div class="shrink-0 rounded-2xl bg-ink px-3 py-2 text-center">
-				<p class="font-mono text-lg leading-none font-bold text-white tabular-nums">
-					{formatTime(elapsed)}
-				</p>
-				<p class="mt-0.5 text-[10px] font-semibold text-slate-400 uppercase">{m.total_time()}</p>
-			</div>
 		</div>
 		<div class="mt-3 h-2 overflow-hidden rounded-full bg-slate-200">
 			<div
@@ -280,7 +274,7 @@
 				<button
 					type="button"
 					onclick={openFocus}
-					class="flex shrink-0 items-center gap-1.5 rounded-full bg-ink px-3 py-1.5 text-xs font-bold text-white active:bg-ink-2"
+					class="flex shrink-0 items-center gap-1.5 rounded-full bg-ink-2 px-3 py-1.5 text-xs font-bold text-white active:bg-slate-500"
 				>
 					<svg viewBox="0 0 24 24" class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2">
 						<circle cx="12" cy="12" r="7" /><circle cx="12" cy="12" r="2.5" />
@@ -425,7 +419,7 @@
 		disabled={finishing}
 		onclick={finish}
 		class="mt-5 h-14 w-full rounded-2xl bg-ink text-lg font-bold text-white active:bg-ink-2 disabled:opacity-50
-			{restActive ? 'mb-24' : ''}"
+			{restActive ? 'mb-28' : 'mb-20'}"
 	>
 		{m.finish_workout()}
 	</button>
@@ -451,7 +445,7 @@
 			<p class="min-w-0 flex-1 text-center text-sm font-bold text-slate-500">
 				{m.exercise_n_of_total({ current: focusIndex + 1, total: blocks.length })}
 			</p>
-			<div class="shrink-0 rounded-2xl bg-ink px-3 py-1.5 text-center">
+			<div class="shrink-0 rounded-2xl bg-ink-2 px-3 py-1.5 text-center">
 				<p class="font-mono text-base leading-none font-bold text-white tabular-nums">
 					{formatTime(elapsed)}
 				</p>
@@ -486,21 +480,36 @@
 			</button>
 
 			<h2 class="mt-4 text-center text-2xl font-bold text-slate-900">{focusBlock.item.exercise.name}</h2>
-			<p class="mt-1 text-center text-sm font-semibold text-slate-500">
-				{#if focusAllDone}
-					{m.exercise_completed()}
-				{:else if focusBlock.isCardio}
-					{m.cardio_label()}
-				{:else}
-					{m.set_n_of_total({
-						current: focusRow?.setNumber ?? focusBlock.sets.length,
-						total: focusBlock.sets.length
-					})}
-					{#if focusBlock.item.last_weight_kg !== null}
-						· {m.last_time()}: {focusBlock.item.last_weight_kg} kg
-					{/if}
-				{/if}
-			</p>
+
+			{#if focusAllDone}
+				<p class="mt-1 text-center text-sm font-semibold text-emerald-600">{m.exercise_completed()}</p>
+			{:else if focusBlock.isCardio}
+				<p class="mt-1 text-center text-sm font-semibold text-slate-500">{m.cardio_label()}</p>
+			{:else}
+				<!-- progresso das series deste exercicio: uma barrinha por serie
+				     (feita = verde cheio, atual = verde suave, pendente = cinza) -->
+				<div class="mx-auto mt-2 max-w-sm">
+					<div class="mb-1.5 flex items-center justify-between text-xs font-semibold text-slate-500">
+						<span>
+							{m.set_n_of_total({
+								current: focusRow?.setNumber ?? focusBlock.sets.length,
+								total: focusBlock.sets.length
+							})}
+						</span>
+						{#if focusBlock.item.last_weight_kg !== null}
+							<span>{m.last_time()}: {focusBlock.item.last_weight_kg} kg</span>
+						{/if}
+					</div>
+					<div class="flex gap-1.5">
+						{#each focusBlock.sets as s (s.setNumber)}
+							<span
+								class="h-2 flex-1 rounded-full transition-colors
+									{s.done ? 'bg-emerald-500' : s === focusRow ? 'bg-emerald-500/45' : 'bg-slate-200'}"
+							></span>
+						{/each}
+					</div>
+				</div>
+			{/if}
 
 			{#if focusRow}
 				<div class="mx-auto mt-5 max-w-sm space-y-4">
@@ -582,9 +591,10 @@
 {/if}
 
 {#if restActive}
-	<!-- z-40: fica acima da lista e tambem do Modo foco (z-30) -->
-	<div class="fixed inset-x-0 bottom-0 z-40 bg-ink pb-[env(safe-area-inset-bottom)] text-white">
-		<div class="h-1 bg-ink-2">
+	<!-- Barra inferior no estado DESCANSO: assume o mesmo lugar do tempo total.
+	     z-40 (acima da lista e do Modo foco z-30). bg-ink-2 para aparecer tambem no escuro. -->
+	<div class="fixed inset-x-0 bottom-0 z-40 border-t border-black/10 bg-ink-2 pb-[env(safe-area-inset-bottom)] text-white">
+		<div class="h-1 bg-black/20">
 			<div
 				class="h-full bg-emerald-400 transition-all duration-1000 ease-linear"
 				style="width: {restTotal > 0 ? (restRemaining / restTotal) * 100 : 0}%"
@@ -607,7 +617,7 @@
 						restRemaining += 30;
 						restTotal += 30;
 					}}
-					class="h-12 rounded-2xl bg-ink-2 px-4 font-bold active:bg-slate-500"
+					class="h-12 rounded-2xl bg-[#ffffff1f] px-4 font-bold active:bg-[#ffffff38]"
 				>
 					{m.plus_30s()}
 				</button>
@@ -619,6 +629,17 @@
 					{m.skip()}
 				</button>
 			</div>
+		</div>
+	</div>
+{:else if !focusMode}
+	<!-- Barra inferior no estado TEMPO TOTAL: slim, so na lista (no Modo foco o tempo fica no cabecalho do overlay) -->
+	<div class="fixed inset-x-0 bottom-0 z-30 border-t border-black/10 bg-ink-2 pb-[env(safe-area-inset-bottom)] text-white">
+		<div class="mx-auto flex max-w-md items-center justify-center gap-2.5 px-4 py-3">
+			<svg viewBox="0 0 24 24" class="h-4 w-4 text-slate-400" fill="none" stroke="currentColor" stroke-width="2">
+				<circle cx="12" cy="12" r="9" /><path d="M12 8v4l2.5 2" stroke-linecap="round" stroke-linejoin="round" />
+			</svg>
+			<span class="text-[10px] font-semibold text-slate-400 uppercase">{m.total_time()}</span>
+			<span class="font-mono text-xl font-bold text-white tabular-nums">{formatTime(elapsed)}</span>
 		</div>
 	</div>
 {/if}
