@@ -235,6 +235,8 @@
 	"bc_water_pct": "Agua (%)",
 	"bc_water_mass": "Agua (kg)",
 	"bc_scale_bmr": "Metabolismo de la báscula (kcal)",
+	"guide_title": "Guía de salud y fórmulas",
+	"guide_link": "Guía: fórmulas, siglas y consejos",
 	"adaptive_title": "Ajuste inteligente de la meta",
 	"adaptive_need_data": "Registra peso y comida durante unas 3 semanas para que la app calcule tu gasto real y ajuste la meta.",
 	"adaptive_progress_label": "Progreso",

@@ -127,7 +127,20 @@
 </script>
 
 <h1 class="mb-1 text-2xl font-bold">{m.tab_profile()}</h1>
-<p class="mb-6 text-slate-500">{session.user?.email}</p>
+<p class="mb-4 text-slate-500">{session.user?.email}</p>
+
+<a
+	href="/guia"
+	class="mb-4 flex items-center justify-between rounded-3xl bg-white p-4 shadow-sm active:bg-slate-50"
+>
+	<div class="flex items-center gap-3">
+		<span class="grid h-10 w-10 place-items-center rounded-2xl bg-emerald-50 text-emerald-600">
+			<svg viewBox="0 0 24 24" class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 6.5A5.5 5.5 0 0117.5 12M4 19.5V6a2 2 0 012-2h11a1 1 0 011 1v11H6a2 2 0 00-2 2zm2 0a2 2 0 002 2h11" stroke-linecap="round" stroke-linejoin="round" /></svg>
+		</span>
+		<span class="font-semibold text-slate-800">{m.guide_link()}</span>
+	</div>
+	<svg viewBox="0 0 24 24" class="h-5 w-5 text-slate-300" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 6l6 6-6 6" stroke-linecap="round" stroke-linejoin="round" /></svg>
+</a>
 
 <section class="space-y-6 rounded-3xl bg-white p-5 shadow-sm">
 	<div>

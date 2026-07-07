@@ -235,6 +235,8 @@
 	"bc_water_pct": "Water (%)",
 	"bc_water_mass": "Water (kg)",
 	"bc_scale_bmr": "Scale metabolism (kcal)",
+	"guide_title": "Health guide & formulas",
+	"guide_link": "Guide: formulas, acronyms and tips",
 	"adaptive_title": "Smart goal adjustment",
 	"adaptive_need_data": "Log weight and food for about 3 weeks so the app can compute your real expenditure and adjust the goal.",
 	"adaptive_progress_label": "Progress",
