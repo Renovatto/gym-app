@@ -244,13 +244,13 @@
 		<p class="mt-1 text-sm text-slate-500">{doneCount} / {totalCount} {m.sets_label()}</p>
 	</header>
 
-	<div class="space-y-4">
+	<div class="space-y-3">
 		{#each blocks as block, blockIndex (block.item.id)}
 			{@const doneSets = block.sets.filter((s) => s.done).length}
 			{@const allDone = doneSets === block.sets.length}
 			{@const isCurrent = blockIndex === currentIndex}
 			<section
-				class="rounded-3xl bg-white p-4 shadow-sm transition-all
+				class="rounded-2xl bg-white p-3 shadow-sm transition-all
 					{isCurrent ? 'ring-2 ring-emerald-500' : ''}
 					{allDone ? 'opacity-60' : ''}"
 			>
@@ -306,12 +306,15 @@
 						{#each block.sets as row (row.setNumber)}
 							{#if row.done}
 								<!-- série concluída: linha compacta; tocar no ✓ desfaz -->
-								<div class="flex items-center justify-between rounded-2xl bg-emerald-50 px-3 py-2">
-									<span class="text-sm font-bold text-emerald-900">
+								<div class="flex items-center gap-2 rounded-2xl bg-emerald-50 px-2 py-1.5">
+									<span class="grid h-8 w-8 shrink-0 place-items-center rounded-lg bg-white/60 text-xs font-bold text-emerald-700">
+										{block.isCardio ? '♥' : row.setNumber}
+									</span>
+									<span class="min-w-0 flex-1 truncate text-sm font-bold text-emerald-900">
 										{#if block.isCardio}
-											{m.cardio_label()} · {row.duration} {m.minutes_short()}
+											{row.duration} {m.minutes_short()}
 										{:else}
-											{m.set_word()} {row.setNumber} · {row.weight} kg × {row.reps}
+											{row.weight} kg × {row.reps}
 										{/if}
 									</span>
 									<button
@@ -319,44 +322,39 @@
 										aria-label={m.done()}
 										disabled={row.saving}
 										onclick={() => toggleSet(block, row)}
-										class="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-emerald-600 text-lg font-bold text-white"
+										class="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-emerald-600 text-base font-bold text-white"
 									>
 										✓
 									</button>
 								</div>
 							{:else}
-								<div class="rounded-2xl bg-slate-50 p-3">
-									<div class="mb-2 flex items-center justify-between">
-										<span class="text-sm font-bold text-slate-500">
-											{block.isCardio ? m.cardio_label() : `${m.set_word()} ${row.setNumber}`}
-										</span>
-										<button
-											type="button"
-											aria-label={m.done()}
-											disabled={row.saving}
-											onclick={() => toggleSet(block, row)}
-											class="grid h-10 w-10 shrink-0 place-items-center rounded-xl border-2 border-slate-200 bg-white text-xl font-bold text-slate-300 transition-colors"
-										>
-											✓
-										</button>
-									</div>
+								<!-- série pendente: uma linha com os steppers compactos e o ✓ para concluir -->
+								<div class="flex items-center gap-2 rounded-2xl bg-slate-50 px-2 py-1.5">
 									{#if block.isCardio}
-										<div>
-											<p class="mb-1 text-xs font-semibold text-slate-500">{m.duration_label()}</p>
-											<Stepper bind:value={row.duration} min={1} max={300} step={1} unit={m.minutes_short()} />
+										<span class="shrink-0 pl-1 text-xs font-bold text-slate-400">{m.duration_label()}</span>
+										<div class="min-w-0 flex-1">
+											<Stepper size="sm" bind:value={row.duration} min={1} max={300} step={1} unit={m.minutes_short()} />
 										</div>
 									{:else}
-										<div class="grid grid-cols-2 gap-3">
-											<div>
-												<p class="mb-1 text-xs font-semibold text-slate-500">{m.weight()} (kg)</p>
-												<Stepper bind:value={row.weight} min={0} max={1000} step={2.5} decimals={1} />
-											</div>
-											<div>
-												<p class="mb-1 text-xs font-semibold text-slate-500">{m.reps_label()}</p>
-												<Stepper bind:value={row.reps} min={0} max={100} />
-											</div>
+										<span class="grid h-8 w-8 shrink-0 place-items-center rounded-lg bg-white text-xs font-bold text-slate-500">
+											{row.setNumber}
+										</span>
+										<div class="min-w-0 flex-1">
+											<Stepper size="sm" bind:value={row.weight} min={0} max={1000} step={2.5} decimals={1} unit="kg" />
+										</div>
+										<div class="min-w-0 flex-1">
+											<Stepper size="sm" bind:value={row.reps} min={0} max={100} unit={m.reps_short()} />
 										</div>
 									{/if}
+									<button
+										type="button"
+										aria-label={m.done()}
+										disabled={row.saving}
+										onclick={() => toggleSet(block, row)}
+										class="grid h-9 w-9 shrink-0 place-items-center rounded-xl border-2 border-slate-200 bg-white text-base font-bold text-slate-300 transition-colors"
+									>
+										✓
+									</button>
 								</div>
 							{/if}
 						{/each}
@@ -364,7 +362,7 @@
 							<button
 								type="button"
 								onclick={() => addSet(block)}
-								class="h-11 w-full rounded-2xl border-2 border-dashed border-slate-200 text-sm font-bold text-slate-500 active:bg-slate-50"
+								class="h-10 w-full rounded-2xl border-2 border-dashed border-slate-200 text-sm font-bold text-slate-500 active:bg-slate-50"
 							>
 								+ {m.add_set()}
 							</button>
