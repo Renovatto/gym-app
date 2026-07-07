@@ -143,6 +143,7 @@
 	"new_routine": "New routine",
 	"workout_history": "History",
 	"workout_calendar": "Workout calendar",
+	"no_workout_that_day": "No workout logged on this day.",
 	"free_workout": "Free workout",
 	"sets_label": "sets",
 	"add_exercises": "Add exercises",

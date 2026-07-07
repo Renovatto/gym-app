@@ -5,6 +5,7 @@
 		localDay,
 		type Routine,
 		type SessionSummary,
+		type WorkoutDayDetail,
 		type WorkoutSession
 	} from '$lib/api';
 	import CalendarModal from '$lib/components/CalendarModal.svelte';
@@ -13,6 +14,15 @@
 	import { getLocale } from '$lib/paraglide/runtime';
 
 	let showCalendar = $state(false);
+	// visualizacao (somente leitura) do treino de um dia selecionado no calendario
+	let dayWorkouts = $state<WorkoutDayDetail[] | null>(null);
+	let dayWorkoutDate = $state('');
+
+	async function openDayWorkout(date: string): Promise<void> {
+		dayWorkoutDate = date;
+		dayWorkouts = await api.getWorkoutsByDay(date, new Date().getTimezoneOffset());
+	}
+
 	let routines = $state<Routine[]>([]);
 	let sessions = $state<SessionSummary[]>([]);
 	let activeSession = $state<WorkoutSession | null>(null);
@@ -116,9 +126,76 @@
 		value={localDay()}
 		marked={trainedDays}
 		max={localDay()}
-		onselect={() => {}}
+		onselect={openDayWorkout}
 		onclose={() => (showCalendar = false)}
 	/>
+{/if}
+
+<!-- Treino do dia selecionado (somente visualizacao) -->
+{#if dayWorkouts !== null}
+	<div
+		class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
+		role="button"
+		tabindex="-1"
+		onclick={() => (dayWorkouts = null)}
+		onkeydown={(e) => e.key === 'Escape' && (dayWorkouts = null)}
+	>
+		<div
+			class="max-h-[90dvh] w-full max-w-md overflow-y-auto rounded-3xl bg-white p-6"
+			role="dialog"
+			tabindex="-1"
+			onclick={(e) => e.stopPropagation()}
+			onkeydown={() => {}}
+		>
+			<div class="mb-3 flex items-start justify-between">
+				<h2 class="text-lg font-bold text-slate-900">
+					{df.format(new Date(dayWorkoutDate + 'T12:00:00'))}
+				</h2>
+				<button
+					type="button"
+					aria-label={m.close()}
+					onclick={() => (dayWorkouts = null)}
+					class="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-slate-100 text-slate-500 active:bg-slate-200"
+				>
+					<svg viewBox="0 0 24 24" class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 6l12 12M18 6L6 18" stroke-linecap="round" /></svg>
+				</button>
+			</div>
+
+			{#if dayWorkouts.length === 0}
+				<p class="py-6 text-center text-sm text-slate-400">{m.no_workout_that_day()}</p>
+			{:else}
+				<div class="space-y-4">
+					{#each dayWorkouts as workout (workout.session_id)}
+						<div>
+							<p class="font-bold text-emerald-700">{workout.routine_name ?? m.free_workout()}</p>
+							<p class="mb-2 text-xs text-slate-400">
+								{workout.total_sets}
+								{m.sets_label()} · {nf.format(workout.total_volume_kg)} kg
+							</p>
+							<div class="space-y-2">
+								{#each workout.exercises as ex (ex.exercise_name)}
+									<div class="rounded-2xl bg-slate-50 p-3">
+										<p class="text-sm font-bold text-slate-800">{ex.exercise_name}</p>
+										<div class="mt-1 flex flex-wrap gap-1.5">
+											{#each ex.sets as set (set.set_number)}
+												<span class="rounded-lg bg-white px-2 py-1 text-xs font-semibold text-slate-600">
+													{#if ex.is_cardio}
+														{set.duration_min} {m.minutes_short()}
+													{:else}
+														{nf.format(set.weight_kg)}kg × {set.reps}
+													{/if}
+												</span>
+											{/each}
+										</div>
+									</div>
+								{/each}
+							</div>
+						</div>
+					{/each}
+				</div>
+			{/if}
+		</div>
+	</div>
 {/if}
 
 {#snippet templatePicker()}

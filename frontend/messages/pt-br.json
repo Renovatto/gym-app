@@ -143,6 +143,7 @@
 	"new_routine": "Nova rotina",
 	"workout_history": "Histórico",
 	"workout_calendar": "Calendário de treinos",
+	"no_workout_that_day": "Nenhum treino registrado neste dia.",
 	"free_workout": "Treino livre",
 	"sets_label": "séries",
 	"add_exercises": "Adicionar exercícios",

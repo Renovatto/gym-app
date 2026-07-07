@@ -1,4 +1,4 @@
-from datetime import datetime, timezone
+from datetime import date, datetime, time, timedelta, timezone
 
 from fastapi import APIRouter, HTTPException, Query, status
 from sqlmodel import Session, asc, desc, select
@@ -24,11 +24,14 @@ from ..schemas import (
     SessionSummaryOut,
     SetLogIn,
     SetLogOut,
+    WorkoutDayDetailOut,
+    WorkoutDayExerciseOut,
 )
 from ..services.exercises import (
     TEMPLATES,
     exercise_by_slug,
     has_locale_translation,
+    localized_name,
     to_exercise_out,
 )
 from ..services.text import normalize_search
@@ -295,6 +298,70 @@ def _find_active_session(session: Session, user_id: int) -> WorkoutSession | Non
 def active_session(user: CurrentUser, session: SessionDep) -> SessionOut | None:
     ws = _find_active_session(session, user.id)
     return _session_out(ws) if ws else None
+
+
+def _workout_day_detail(session: Session, ws: WorkoutSession, locale: str) -> WorkoutDayDetailOut:
+    """Monta a visualizacao (somente leitura) de um treino concluido: series
+    agrupadas por exercicio, na ordem em que aparecem, com nome traduzido."""
+    order: list[int] = []
+    sets_by_exercise: dict[int, list[SetLog]] = {}
+    for s in sorted(ws.sets, key=lambda x: (x.exercise_id, x.set_number)):
+        if s.exercise_id not in sets_by_exercise:
+            sets_by_exercise[s.exercise_id] = []
+            order.append(s.exercise_id)
+        sets_by_exercise[s.exercise_id].append(s)
+
+    exercises: list[WorkoutDayExerciseOut] = []
+    total_volume = 0.0
+    total_sets = 0
+    for exercise_id in order:
+        exercise = session.get(Exercise, exercise_id)
+        name = localized_name(session, exercise, locale) if exercise else str(exercise_id)
+        is_cardio = bool(exercise and exercise.kind.value == "cardio")
+        exercise_sets = sets_by_exercise[exercise_id]
+        exercises.append(
+            WorkoutDayExerciseOut(
+                exercise_name=name,
+                is_cardio=is_cardio,
+                sets=[SetLogOut.model_validate(s) for s in exercise_sets],
+            )
+        )
+        for s in exercise_sets:
+            if s.done:
+                total_volume += s.reps * s.weight_kg
+                total_sets += 1
+
+    return WorkoutDayDetailOut(
+        session_id=ws.id,
+        routine_name=ws.routine_name,
+        started_at=ws.started_at,
+        finished_at=ws.finished_at,
+        total_volume_kg=round(total_volume, 1),
+        total_sets=total_sets,
+        exercises=exercises,
+    )
+
+
+@router.get("/me/sessions/by-day", response_model=list[WorkoutDayDetailOut])
+def sessions_by_day(
+    user: CurrentUser,
+    session: SessionDep,
+    day: date = Query(..., description="Dia local do cliente (YYYY-MM-DD)"),
+    tz_offset: int = Query(0, description="Date.getTimezoneOffset() do cliente"),
+) -> list[WorkoutDayDetailOut]:
+    """Treinos concluidos em um dia local (para a visualizacao do calendario)."""
+    local_midnight = datetime.combine(day, time.min)
+    start = (local_midnight + timedelta(minutes=tz_offset)).replace(tzinfo=timezone.utc)
+    end = start + timedelta(days=1)
+    sessions = session.exec(
+        select(WorkoutSession)
+        .where(WorkoutSession.user_id == user.id)
+        .where(WorkoutSession.finished_at.is_not(None))
+        .where(WorkoutSession.started_at >= start)
+        .where(WorkoutSession.started_at < end)
+        .order_by(asc(WorkoutSession.started_at))
+    ).all()
+    return [_workout_day_detail(session, ws, user.locale) for ws in sessions]
 
 
 @router.post("/me/sessions", response_model=SessionOut, status_code=status.HTTP_201_CREATED)

@@ -206,6 +206,23 @@ export interface SessionSummary {
 	total_volume_kg: number;
 }
 
+// Visualizacao (somente leitura) de um treino concluido de um dia.
+export interface WorkoutDayExercise {
+	exercise_name: string;
+	is_cardio: boolean;
+	sets: SetLog[];
+}
+
+export interface WorkoutDayDetail {
+	session_id: number;
+	routine_name: string | null;
+	started_at: string;
+	finished_at: string | null;
+	total_volume_kg: number;
+	total_sets: number;
+	exercises: WorkoutDayExercise[];
+}
+
 export interface WeekSummary {
 	workouts: number;
 	total_volume_kg: number;
@@ -527,6 +544,8 @@ export const api = {
 	finishSession: (sessionId: number) =>
 		request<WorkoutSession>(`/me/sessions/${sessionId}/finish`, { method: 'POST' }),
 	getSessions: () => request<SessionSummary[]>('/me/sessions'),
+	getWorkoutsByDay: (day: string, tzOffset: number) =>
+		request<WorkoutDayDetail[]>(`/me/sessions/by-day?day=${day}&tz_offset=${tzOffset}`),
 	getWeekSummary: (day: string, tzOffset: number) =>
 		request<WeekSummary>(`/me/summary/week?day=${day}&tz_offset=${tzOffset}`),
 	getAdaptiveTdee: (day: string, tzOffset: number) =>

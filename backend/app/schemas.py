@@ -315,6 +315,24 @@ class SessionSummaryOut(BaseModel):
     total_volume_kg: float
 
 
+class WorkoutDayExerciseOut(BaseModel):
+    # exercicio de um treino ja concluido, com suas series (somente leitura).
+    exercise_name: str
+    is_cardio: bool
+    sets: list[SetLogOut]
+
+
+class WorkoutDayDetailOut(BaseModel):
+    # treino concluido de um dia, agrupado por exercicio (visualizacao).
+    session_id: int
+    routine_name: str | None
+    started_at: datetime
+    finished_at: datetime | None
+    total_volume_kg: float
+    total_sets: int
+    exercises: list[WorkoutDayExerciseOut]
+
+
 # --- Dieta ----------------------------------------------------------------
 
 
