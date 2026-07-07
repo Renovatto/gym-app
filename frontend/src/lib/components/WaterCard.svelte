@@ -58,6 +58,11 @@
 	function label(ml: number): string {
 		return ml >= 1000 ? `${nf.format(ml / 1000)} L` : `${ml} ml`;
 	}
+
+	// carrega o consumo do dia ao montar o card
+	$effect(() => {
+		load();
+	});
 </script>
 
 <section class="rounded-3xl bg-white p-6 shadow-sm">
