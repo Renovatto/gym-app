@@ -7,13 +7,15 @@
 		type BodyComposition,
 		type WeekSummary,
 		type WeighInInput,
-		type WeightHistory
+		type WeightHistory,
+		type WeightLog
 	} from '$lib/api';
 	import Stepper from '$lib/components/Stepper.svelte';
 	import WeightChart from '$lib/components/WeightChart.svelte';
 	import { onMount } from 'svelte';
 	import { page } from '$app/state';
 	import { bootstrap, session } from '$lib/session.svelte';
+	import { showToast } from '$lib/toast.svelte';
 	import { m } from '$lib/paraglide/messages';
 	import { getLocale } from '$lib/paraglide/runtime';
 
@@ -93,15 +95,29 @@
 			await load();
 			await bootstrap(); // metas dependem do peso mais recente
 			adding = false;
+			showToast(m.weigh_in_saved());
 		} finally {
 			busy = false;
 		}
 	}
 
-	async function remove(id: number): Promise<void> {
-		await api.deleteWeight(id);
+	// Detalhes de uma pesagem (modal ao clicar no item do historico).
+	let selectedLog = $state<WeightLog | null>(null);
+	let confirmingDeleteWeight = $state(false);
+
+	function openWeightDetail(log: WeightLog): void {
+		selectedLog = log;
+		confirmingDeleteWeight = false;
+	}
+
+	async function deleteSelectedWeight(): Promise<void> {
+		if (!selectedLog) return;
+		await api.deleteWeight(selectedLog.id);
+		selectedLog = null;
+		confirmingDeleteWeight = false;
 		await load();
 		await bootstrap();
+		showToast(m.weigh_in_deleted());
 	}
 
 	$effect(() => {
@@ -113,7 +129,24 @@
 		if (page.url.searchParams.get('novo')) adding = true;
 	});
 
-	const reversedLogs = $derived(history ? [...history.logs].reverse() : []);
+	// Historico do mais recente para o mais antigo, com a variacao vs a pesagem anterior.
+	const reversedLogs = $derived.by(() => {
+		if (!history) return [];
+		const desc = [...history.logs].reverse();
+		return desc.map((log, i) => {
+			const previous = desc[i + 1]; // proxima na lista = anterior no tempo
+			const delta = previous ? Math.round((log.weight_kg - previous.weight_kg) * 10) / 10 : null;
+			return { log, delta };
+		});
+	});
+
+	// Campos de composicao presentes na pesagem selecionada (para o modal de detalhes).
+	const selectedBodyComposition = $derived.by(() => {
+		if (!selectedLog) return [];
+		return bodyCompositionInputs
+			.map((field) => ({ label: field.label, unit: field.unit, value: selectedLog![field.key] }))
+			.filter((row) => row.value !== null && row.value !== undefined);
+	});
 </script>
 
 <h1 class="mb-4 text-2xl font-bold">{m.tab_progress()}</h1>
@@ -303,34 +336,35 @@
 
 	{#if reversedLogs.length > 0}
 		<section class="mt-3 overflow-hidden rounded-3xl bg-white shadow-sm">
-			{#each reversedLogs as log, i (log.id)}
-				<div
-					class="flex items-center justify-between px-5 py-3.5 {i > 0
+			{#each reversedLogs as { log, delta }, i (log.id)}
+				<button
+					type="button"
+					onclick={() => openWeightDetail(log)}
+					class="flex w-full items-center justify-between px-5 py-3.5 text-left active:bg-slate-50 {i >
+					0
 						? 'border-t border-slate-100'
 						: ''}"
 				>
-					<div>
+					<div class="flex items-center gap-2">
 						<span class="font-bold text-slate-900">{nf.format(log.weight_kg)} kg</span>
-						{#if log.source === 'ble'}
-							<span class="ml-2 rounded bg-sky-50 px-1.5 py-0.5 text-xs font-semibold text-sky-600"
-								>Bluetooth</span
+						{#if delta !== null && delta !== 0}
+							<span
+								class="rounded-full px-2 py-0.5 text-xs font-bold {delta < 0
+									? 'bg-emerald-50 text-emerald-700'
+									: 'bg-amber-50 text-amber-700'}"
 							>
+								{delta < 0 ? '▼' : '▲'} {nf.format(Math.abs(delta))}
+							</span>
+						{/if}
+						{#if log.fat_percentage !== null || log.visceral_fat_index !== null}
+							<span class="rounded bg-sky-50 px-1.5 py-0.5 text-xs font-semibold text-sky-600">BIA</span>
 						{/if}
 					</div>
-					<div class="flex items-center gap-3">
+					<div class="flex items-center gap-2">
 						<span class="text-sm text-slate-400">{df.format(new Date(log.logged_at))}</span>
-						<button
-							type="button"
-							aria-label={m.delete_account()}
-							onclick={() => remove(log.id)}
-							class="text-slate-300 active:text-red-500"
-						>
-							<svg viewBox="0 0 24 24" class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="2">
-								<path d="M4 7h16M9 7V5h6v2M6 7l1 13h10l1-13" stroke-linecap="round" stroke-linejoin="round" />
-							</svg>
-						</button>
+						<svg viewBox="0 0 24 24" class="h-4 w-4 text-slate-300" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 6l6 6-6 6" stroke-linecap="round" stroke-linejoin="round" /></svg>
 					</div>
-				</div>
+				</button>
 			{/each}
 		</section>
 	{/if}
@@ -410,6 +444,92 @@
 					{m.save()}
 				</button>
 			</div>
+		</div>
+	</div>
+{/if}
+
+<!-- Modal de detalhes de uma pesagem -->
+{#if selectedLog}
+	<div
+		class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
+		role="button"
+		tabindex="-1"
+		onclick={() => (selectedLog = null)}
+		onkeydown={(e) => e.key === 'Escape' && (selectedLog = null)}
+	>
+		<div
+			class="max-h-[90dvh] w-full max-w-md overflow-y-auto rounded-3xl bg-white p-6"
+			role="dialog"
+			tabindex="-1"
+			onclick={(e) => e.stopPropagation()}
+			onkeydown={() => {}}
+		>
+			<div class="flex items-start justify-between">
+				<div>
+					<p class="text-3xl font-black text-slate-900">{nf.format(selectedLog.weight_kg)} kg</p>
+					<p class="text-sm text-slate-500">
+						{df.format(new Date(selectedLog.logged_at))} ·
+						{new Date(selectedLog.logged_at).toLocaleTimeString(getLocale(), {
+							hour: '2-digit',
+							minute: '2-digit'
+						})}
+					</p>
+				</div>
+				<button
+					type="button"
+					aria-label={m.close()}
+					onclick={() => (selectedLog = null)}
+					class="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-slate-100 text-slate-500 active:bg-slate-200"
+				>
+					<svg viewBox="0 0 24 24" class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 6l12 12M18 6L6 18" stroke-linecap="round" /></svg>
+				</button>
+			</div>
+
+			{#if selectedBodyComposition.length > 0}
+				<div class="mt-4 grid grid-cols-2 gap-3">
+					{#each selectedBodyComposition as row (row.label)}
+						<div class="rounded-2xl bg-slate-50 p-3">
+							<p class="text-lg font-bold text-slate-900">
+								{nf.format(row.value ?? 0)}{row.unit ? ` ${row.unit}` : ''}
+							</p>
+							<p class="text-xs font-semibold text-slate-500">{row.label}</p>
+						</div>
+					{/each}
+				</div>
+			{:else}
+				<p class="mt-4 text-sm text-slate-400">{m.no_body_composition()}</p>
+			{/if}
+
+			<!-- Exclusao sempre com confirmacao -->
+			{#if confirmingDeleteWeight}
+				<p class="mt-5 rounded-xl bg-red-50 px-4 py-3 text-sm font-medium text-red-700">
+					{m.delete_weigh_in_confirm()}
+				</p>
+				<div class="mt-2 flex gap-2">
+					<button
+						type="button"
+						onclick={() => (confirmingDeleteWeight = false)}
+						class="h-12 flex-1 rounded-2xl border-2 border-slate-200 font-semibold text-slate-700 active:bg-slate-100"
+					>
+						{m.cancel()}
+					</button>
+					<button
+						type="button"
+						onclick={deleteSelectedWeight}
+						class="h-12 flex-1 rounded-2xl bg-red-600 font-semibold text-white active:bg-red-700"
+					>
+						{m.delete_confirm_button()}
+					</button>
+				</div>
+			{:else}
+				<button
+					type="button"
+					onclick={() => (confirmingDeleteWeight = true)}
+					class="mt-5 h-12 w-full rounded-2xl border-2 border-red-200 font-semibold text-red-600 active:bg-red-50"
+				>
+					{m.delete_weigh_in()}
+				</button>
+			{/if}
 		</div>
 	</div>
 {/if}

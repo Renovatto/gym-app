@@ -47,6 +47,14 @@ documentadas para o usuario na area de consulta. Nao espalhe formula por varios 
 - **Macros:** proteina por g/kg do objetivo; gordura como % das calorias; carbo no resto.
 - **Agua:** `peso_kg * 35 ml`.
 
+## Feedback ao usuario (regras obrigatorias)
+
+- **Toda mutacao mostra um toast agradavel.** Qualquer acao de salvar, criar, alterar,
+  excluir ou ajustar deve confirmar o resultado com um toast (via `showToast`). O usuario
+  nunca fica sem retorno visual de que a acao funcionou.
+- **Toda exclusao pede confirmacao antes.** Nenhum delete acontece direto no clique: sempre
+  ha um passo de confirmacao (inline ou modal) antes de executar. Vale para o app inteiro.
+
 ## Padroes ja adotados no projeto (nao reinventar)
 
 - Backend: FastAPI + SQLModel. `session.exec(select(Model.coluna))` retorna escalar, nao tupla.
