@@ -43,6 +43,8 @@ export type Objective = 'lose_fat' | 'maintain' | 'gain_muscle' | 'recomp';
 export type CutIntensity = 'light' | 'moderate' | 'aggressive';
 
 export interface ProfileData {
+	first_name: string | null;
+	last_name: string | null;
 	height_cm: number;
 	weight_kg: number | null;
 	birthdate: string;

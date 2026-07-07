@@ -10,6 +10,9 @@
 	import { setTheme, theme, type ThemePref } from '$lib/theme.svelte';
 	import { errorMessage, toBackendLocale } from '$lib/errors';
 
+	let firstName = $state(session.profile?.first_name ?? '');
+	let lastName = $state(session.profile?.last_name ?? '');
+	let birthdate = $state(session.profile?.birthdate ?? '');
 	let height = $state(session.profile?.height_cm ?? 170);
 	let weight = $state(session.profile?.weight_kg ?? 75);
 	let activity = $state<ActivityLevel | null>(session.profile?.activity_level ?? null);
@@ -19,6 +22,19 @@
 	let saved = $state(false);
 	let busy = $state(false);
 	let confirmingDelete = $state(false);
+
+	// Idade calculada a partir da data de nascimento (mesma regra do backend).
+	const age = $derived.by(() => {
+		if (!birthdate) return null;
+		const d = new Date(birthdate + 'T12:00:00');
+		const today = new Date();
+		let years = today.getFullYear() - d.getFullYear();
+		const monthDayBefore =
+			today.getMonth() < d.getMonth() ||
+			(today.getMonth() === d.getMonth() && today.getDate() < d.getDate());
+		if (monthDayBefore) years -= 1;
+		return years;
+	});
 
 	let language = $state<Locale>(getLocale());
 
@@ -103,9 +119,11 @@
 		saved = false;
 		try {
 			await api.saveProfile({
+				first_name: firstName.trim() || null,
+				last_name: lastName.trim() || null,
 				height_cm: height,
 				weight_kg: weight,
-				birthdate: session.profile.birthdate,
+				birthdate: birthdate || session.profile.birthdate,
 				sex: session.profile.sex,
 				activity_level: activity,
 				objective,
@@ -293,6 +311,40 @@
 		{@render groupHeader('data', m.section_my_data())}
 		{#if openGroups.data}
 			<div class="space-y-6 px-5 pb-5">
+				<div class="grid grid-cols-2 gap-3">
+					<div>
+						<p class="mb-2 text-xs font-semibold text-slate-500">{m.first_name()}</p>
+						<input
+							type="text"
+							bind:value={firstName}
+							autocomplete="given-name"
+							class="h-12 w-full rounded-2xl border-2 border-slate-200 bg-white px-4 outline-none focus:border-emerald-600"
+						/>
+					</div>
+					<div>
+						<p class="mb-2 text-xs font-semibold text-slate-500">{m.last_name()}</p>
+						<input
+							type="text"
+							bind:value={lastName}
+							autocomplete="family-name"
+							class="h-12 w-full rounded-2xl border-2 border-slate-200 bg-white px-4 outline-none focus:border-emerald-600"
+						/>
+					</div>
+				</div>
+				<div>
+					<div class="mb-2 flex items-baseline justify-between">
+						<p class="text-xs font-semibold text-slate-500">{m.birthdate_label()}</p>
+						{#if age !== null}
+							<span class="text-sm font-bold text-emerald-700">{age} {m.years_old()}</span>
+						{/if}
+					</div>
+					<input
+						type="date"
+						bind:value={birthdate}
+						max={new Date().toISOString().slice(0, 10)}
+						class="h-12 w-full rounded-2xl border-2 border-slate-200 bg-white px-4 outline-none focus:border-emerald-600"
+					/>
+				</div>
 				<div>
 					<p class="mb-3 font-semibold text-slate-600">{m.height()}</p>
 					<Stepper bind:value={height} min={100} max={230} unit="cm" />

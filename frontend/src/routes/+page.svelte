@@ -57,12 +57,38 @@
 			maintain: m.objective_maintain()
 		}[session.profile?.objective ?? 'maintain']
 	);
+
+	const firstName = $derived(session.profile?.first_name?.trim() ?? '');
+
+	// Aniversario: hoje bate com o dia e mes da data de nascimento.
+	const isBirthday = $derived.by(() => {
+		const birthdate = session.profile?.birthdate;
+		if (!birthdate) return false;
+		const d = new Date(birthdate + 'T12:00:00');
+		const today = new Date();
+		return d.getMonth() === today.getMonth() && d.getDate() === today.getDate();
+	});
 </script>
 
 <header class="mb-6">
-	<h1 class="text-2xl font-bold">{m.today_title()}</h1>
+	<h1 class="text-2xl font-bold">
+		{firstName ? m.today_greeting({ name: firstName }) : m.today_title()}
+	</h1>
 	<p class="text-slate-500">{objectiveLabel}</p>
 </header>
+
+<!-- Surpresa de aniversario -->
+{#if isBirthday}
+	<section
+		class="relative mb-3 overflow-hidden rounded-3xl bg-gradient-to-br from-emerald-500 to-sky-500 p-5 text-white"
+	>
+		<p class="text-3xl">🎉🎂🎈</p>
+		<p class="mt-1 text-lg font-black">
+			{firstName ? m.birthday_title_named({ name: firstName }) : m.birthday_title()}
+		</p>
+		<p class="mt-1 text-sm text-emerald-50">{m.birthday_message()}</p>
+	</section>
+{/if}
 
 <!-- Lembrete de pesagem (com orientacao de melhor hora) -->
 {#if showWeighReminder}

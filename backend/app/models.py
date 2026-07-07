@@ -102,6 +102,8 @@ class Profile(SQLModel, table=True):
 
     id: int | None = Field(default=None, primary_key=True)
     user_id: int = Field(foreign_key="users.id", unique=True, ondelete="CASCADE")
+    first_name: str | None = Field(default=None)  # nome
+    last_name: str | None = Field(default=None)  # sobrenome
     height_cm: float
     birthdate: date
     sex: Sex

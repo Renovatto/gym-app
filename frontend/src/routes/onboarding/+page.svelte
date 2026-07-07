@@ -7,6 +7,8 @@
 	import { m } from '$lib/paraglide/messages';
 
 	let step = $state(0);
+	let firstName = $state('');
+	let lastName = $state('');
 	let sex = $state<Sex | null>(null);
 	let birthdate = $state('');
 	let height = $state(170);
@@ -17,10 +19,11 @@
 	let busy = $state(false);
 	let error = $state('');
 
-	const TOTAL_STEPS = 6;
+	const TOTAL_STEPS = 7;
 
 	const canAdvance = $derived(
 		[
+			firstName.trim() !== '',
 			sex !== null,
 			birthdate !== '',
 			height > 0 && weight > 0,
@@ -39,6 +42,8 @@
 		error = '';
 		try {
 			await api.saveProfile({
+				first_name: firstName.trim() || null,
+				last_name: lastName.trim() || null,
 				height_cm: height,
 				weight_kg: weight,
 				birthdate,
@@ -68,6 +73,24 @@
 
 	<div class="flex-1">
 		{#if step === 0}
+			<h1 class="mb-6 text-2xl font-bold">{m.ob_name_title()}</h1>
+			<div class="space-y-3">
+				<input
+					type="text"
+					bind:value={firstName}
+					placeholder={m.first_name()}
+					autocomplete="given-name"
+					class="h-14 w-full rounded-2xl border-2 border-slate-200 bg-white px-4 text-lg outline-none focus:border-emerald-600"
+				/>
+				<input
+					type="text"
+					bind:value={lastName}
+					placeholder={m.last_name()}
+					autocomplete="family-name"
+					class="h-14 w-full rounded-2xl border-2 border-slate-200 bg-white px-4 text-lg outline-none focus:border-emerald-600"
+				/>
+			</div>
+		{:else if step === 1}
 			<h1 class="mb-6 text-2xl font-bold">{m.ob_sex_title()}</h1>
 			<ChoiceChips
 				columns={2}
@@ -77,7 +100,7 @@
 					{ value: 'female', label: m.sex_female() }
 				]}
 			/>
-		{:else if step === 1}
+		{:else if step === 2}
 			<h1 class="mb-6 text-2xl font-bold">{m.ob_birthdate_title()}</h1>
 			<input
 				type="date"
@@ -85,7 +108,7 @@
 				max={new Date().toISOString().slice(0, 10)}
 				class="h-14 w-full rounded-2xl border-2 border-slate-200 bg-white px-4 text-lg outline-none focus:border-emerald-600"
 			/>
-		{:else if step === 2}
+		{:else if step === 3}
 			<h1 class="mb-6 text-2xl font-bold">{m.ob_measures_title()}</h1>
 			<div class="space-y-8">
 				<div>
@@ -97,7 +120,7 @@
 					<Stepper bind:value={weight} min={30} max={300} step={0.5} decimals={1} unit="kg" />
 				</div>
 			</div>
-		{:else if step === 3}
+		{:else if step === 4}
 			<h1 class="mb-6 text-2xl font-bold">{m.ob_activity_title()}</h1>
 			<ChoiceChips
 				bind:value={activity}
@@ -113,7 +136,7 @@
 					}
 				]}
 			/>
-		{:else if step === 4}
+		{:else if step === 5}
 			<h1 class="mb-6 text-2xl font-bold">{m.ob_objective_title()}</h1>
 			<ChoiceChips
 				bind:value={objective}

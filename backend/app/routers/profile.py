@@ -84,6 +84,8 @@ def get_profile(user: CurrentUser, session: SessionDep) -> ProfileOut:
     profile = _get_profile(session, user.id)
     latest = _latest_weight(session, user.id)
     return ProfileOut(
+        first_name=profile.first_name,
+        last_name=profile.last_name,
         height_cm=profile.height_cm,
         weight_kg=latest.weight_kg if latest else None,
         birthdate=profile.birthdate,

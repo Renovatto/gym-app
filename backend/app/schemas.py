@@ -49,6 +49,8 @@ class UserOut(BaseModel):
 
 
 class ProfileIn(BaseModel):
+    first_name: str | None = Field(default=None, max_length=60)
+    last_name: str | None = Field(default=None, max_length=60)
     height_cm: float = Field(gt=50, lt=280)
     weight_kg: float = Field(gt=20, lt=400)
     birthdate: date
@@ -61,6 +63,8 @@ class ProfileIn(BaseModel):
 
 
 class ProfileOut(BaseModel):
+    first_name: str | None
+    last_name: str | None
     height_cm: float
     weight_kg: float | None
     birthdate: date

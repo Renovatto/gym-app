@@ -26,7 +26,11 @@ _COLUMN_MIGRATIONS: dict[str, dict[str, str]] = {
     },
     "routine_exercises": {"target_duration_min": "INTEGER"},
     "set_logs": {"duration_min": "FLOAT"},
-    "profiles": {"cut_intensity": "VARCHAR DEFAULT 'moderate'"},
+    "profiles": {
+        "cut_intensity": "VARCHAR DEFAULT 'moderate'",
+        "first_name": "VARCHAR",
+        "last_name": "VARCHAR",
+    },
     # Composicao corporal no registro de pesagem (vem da balanca de bioimpedancia).
     "weight_logs": {
         "fat_percentage": "FLOAT",
