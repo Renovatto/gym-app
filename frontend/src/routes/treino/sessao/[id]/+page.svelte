@@ -274,7 +274,7 @@
 				<button
 					type="button"
 					onclick={openFocus}
-					class="flex shrink-0 items-center gap-1.5 rounded-full bg-ink-2 px-3 py-1.5 text-xs font-bold text-white active:bg-slate-500"
+					class="flex shrink-0 items-center gap-1.5 rounded-full border border-[#ffffff24] bg-ink-2 px-3 py-1.5 text-xs font-bold text-[#fff] active:bg-slate-500"
 				>
 					<svg viewBox="0 0 24 24" class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2">
 						<circle cx="12" cy="12" r="7" /><circle cx="12" cy="12" r="2.5" />
@@ -328,7 +328,7 @@
 						</p>
 					</button>
 					{#if allDone}
-						<span class="grid h-8 w-8 shrink-0 place-items-center rounded-full bg-emerald-600 text-sm font-bold text-white">✓</span>
+						<span class="grid h-8 w-8 shrink-0 place-items-center rounded-full bg-emerald-600 text-sm font-bold text-[#fff]">✓</span>
 					{/if}
 					<button
 						type="button"
@@ -363,7 +363,7 @@
 										aria-label={m.done()}
 										disabled={row.saving}
 										onclick={() => toggleSet(block, row)}
-										class="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-emerald-600 text-base font-bold text-white"
+										class="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-emerald-600 text-base font-bold text-[#fff]"
 									>
 										✓
 									</button>
@@ -418,7 +418,7 @@
 		type="button"
 		disabled={finishing}
 		onclick={finish}
-		class="mt-5 h-14 w-full rounded-2xl bg-ink text-lg font-bold text-white active:bg-ink-2 disabled:opacity-50
+		class="mt-5 h-14 w-full rounded-2xl bg-ink text-lg font-bold text-[#fff] active:bg-ink-2 disabled:opacity-50
 			{restActive ? 'mb-28' : 'mb-20'}"
 	>
 		{m.finish_workout()}
@@ -446,7 +446,7 @@
 				{m.exercise_n_of_total({ current: focusIndex + 1, total: blocks.length })}
 			</p>
 			<div class="shrink-0 rounded-2xl bg-ink-2 px-3 py-1.5 text-center">
-				<p class="font-mono text-base leading-none font-bold text-white tabular-nums">
+				<p class="font-mono text-base leading-none font-bold text-[#fff] tabular-nums">
 					{formatTime(elapsed)}
 				</p>
 			</div>
@@ -553,7 +553,7 @@
 					type="button"
 					disabled={focusRow.saving}
 					onclick={completeFocusSet}
-					class="h-14 w-full rounded-2xl bg-emerald-600 text-lg font-bold text-white active:bg-emerald-700 disabled:opacity-50"
+					class="h-14 w-full rounded-2xl bg-emerald-600 text-lg font-bold text-[#fff] active:bg-emerald-700 disabled:opacity-50"
 				>
 					{m.complete_set()}
 				</button>
@@ -593,7 +593,7 @@
 {#if restActive}
 	<!-- Barra inferior no estado DESCANSO: assume o mesmo lugar do tempo total.
 	     z-40 (acima da lista e do Modo foco z-30). bg-ink-2 para aparecer tambem no escuro. -->
-	<div class="fixed inset-x-0 bottom-0 z-40 border-t border-black/10 bg-ink-2 pb-[env(safe-area-inset-bottom)] text-white">
+	<div class="fixed inset-x-0 bottom-0 z-40 border-t border-black/10 bg-ink-2 pb-[env(safe-area-inset-bottom)] text-[#fff]">
 		<div class="h-1 bg-black/20">
 			<div
 				class="h-full bg-emerald-400 transition-all duration-1000 ease-linear"
@@ -633,13 +633,13 @@
 	</div>
 {:else if !focusMode}
 	<!-- Barra inferior no estado TEMPO TOTAL: slim, so na lista (no Modo foco o tempo fica no cabecalho do overlay) -->
-	<div class="fixed inset-x-0 bottom-0 z-30 border-t border-black/10 bg-ink-2 pb-[env(safe-area-inset-bottom)] text-white">
+	<div class="fixed inset-x-0 bottom-0 z-30 border-t border-black/10 bg-ink-2 pb-[env(safe-area-inset-bottom)] text-[#fff]">
 		<div class="mx-auto flex max-w-md items-center justify-center gap-2.5 px-4 py-3">
 			<svg viewBox="0 0 24 24" class="h-4 w-4 text-slate-400" fill="none" stroke="currentColor" stroke-width="2">
 				<circle cx="12" cy="12" r="9" /><path d="M12 8v4l2.5 2" stroke-linecap="round" stroke-linejoin="round" />
 			</svg>
 			<span class="text-[10px] font-semibold text-slate-400 uppercase">{m.total_time()}</span>
-			<span class="font-mono text-xl font-bold text-white tabular-nums">{formatTime(elapsed)}</span>
+			<span class="font-mono text-xl font-bold text-[#fff] tabular-nums">{formatTime(elapsed)}</span>
 		</div>
 	</div>
 {/if}
