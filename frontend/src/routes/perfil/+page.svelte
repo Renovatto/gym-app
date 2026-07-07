@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { goto } from '$app/navigation';
-	import { api, ApiError, type ActivityLevel, type Objective } from '$lib/api';
+	import { api, ApiError, type ActivityLevel, type CutIntensity, type Objective } from '$lib/api';
 	import ChoiceChips from '$lib/components/ChoiceChips.svelte';
 	import Stepper from '$lib/components/Stepper.svelte';
 	import { bootstrap, session, signOut } from '$lib/session.svelte';
@@ -14,6 +14,7 @@
 	let weight = $state(session.profile?.weight_kg ?? 75);
 	let activity = $state<ActivityLevel | null>(session.profile?.activity_level ?? null);
 	let objective = $state<Objective | null>(session.profile?.objective ?? null);
+	let cutIntensity = $state<CutIntensity>(session.profile?.cut_intensity ?? 'moderate');
 	let dietEnabled = $state<'yes' | 'no' | null>(session.profile?.diet_enabled ? 'yes' : 'no');
 	let saved = $state(false);
 	let busy = $state(false);
@@ -90,6 +91,7 @@
 				sex: session.profile.sex,
 				activity_level: activity,
 				objective,
+				cut_intensity: cutIntensity,
 				diet_enabled: dietEnabled === 'yes',
 				scale_mac: session.profile.scale_mac
 			});
@@ -161,6 +163,20 @@
 			]}
 		/>
 	</div>
+	{#if objective === 'lose_fat'}
+		<div>
+			<p class="mb-1 font-semibold text-slate-600">{m.cut_intensity_title()}</p>
+			<p class="mb-3 text-xs text-slate-400">{m.cut_intensity_hint()}</p>
+			<ChoiceChips
+				bind:value={cutIntensity}
+				options={[
+					{ value: 'light', label: m.cut_light(), hint: m.cut_light_hint() },
+					{ value: 'moderate', label: m.cut_moderate(), hint: m.cut_moderate_hint() },
+					{ value: 'aggressive', label: m.cut_aggressive(), hint: m.cut_aggressive_hint() }
+				]}
+			/>
+		</div>
+	{/if}
 	<div>
 		<p class="mb-3 font-semibold text-slate-600">{m.ob_diet_title()}</p>
 		<ChoiceChips

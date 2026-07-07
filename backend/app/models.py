@@ -25,7 +25,16 @@ class Objective(str, Enum):
     lose_fat = "lose_fat"
     maintain = "maintain"
     gain_muscle = "gain_muscle"
-    recomp = "recomp"  # ganhar músculo e perder gordura ao mesmo tempo
+    recomp = "recomp"  # ganhar musculo e perder gordura ao mesmo tempo
+
+
+class CutIntensity(str, Enum):
+    """Intensidade do deficit no objetivo de perder gordura. Cada nivel e uma taxa
+    alvo de perda por semana, em % do peso corporal (ver goals.py)."""
+
+    light = "light"  # perda lenta, mais confortavel e melhor para preservar musculo
+    moderate = "moderate"  # equilibrio padrao
+    aggressive = "aggressive"  # perda rapida, exige disciplina e mais risco de perder musculo
 
 
 class Plan(str, Enum):
@@ -98,6 +107,8 @@ class Profile(SQLModel, table=True):
     sex: Sex
     activity_level: ActivityLevel
     objective: Objective
+    # Intensidade do deficit; so tem efeito quando objective == lose_fat.
+    cut_intensity: CutIntensity = Field(default=CutIntensity.moderate)
     diet_enabled: bool = Field(default=False)
     scale_mac: str | None = Field(default=None)
 

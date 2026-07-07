@@ -4,6 +4,7 @@ from pydantic import BaseModel, ConfigDict, EmailStr, Field
 
 from .models import (
     ActivityLevel,
+    CutIntensity,
     Equipment,
     EntrySource,
     ExerciseKind,
@@ -54,6 +55,7 @@ class ProfileIn(BaseModel):
     sex: Sex
     activity_level: ActivityLevel
     objective: Objective
+    cut_intensity: CutIntensity = CutIntensity.moderate
     diet_enabled: bool = False
     scale_mac: str | None = None
 
@@ -65,6 +67,7 @@ class ProfileOut(BaseModel):
     sex: Sex
     activity_level: ActivityLevel
     objective: Objective
+    cut_intensity: CutIntensity
     diet_enabled: bool
     scale_mac: str | None
 

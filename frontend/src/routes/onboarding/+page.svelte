@@ -45,6 +45,7 @@
 				sex: sex!,
 				activity_level: activity!,
 				objective: objective!,
+				cut_intensity: 'moderate', // padrao; ajustavel depois no perfil
 				diet_enabled: dietEnabled === 'yes',
 				scale_mac: null
 			});

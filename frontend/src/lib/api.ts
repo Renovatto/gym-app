@@ -39,6 +39,8 @@ export interface UserOut {
 export type Sex = 'male' | 'female';
 export type ActivityLevel = 'sedentary' | 'light' | 'moderate' | 'active' | 'very_active';
 export type Objective = 'lose_fat' | 'maintain' | 'gain_muscle' | 'recomp';
+// Intensidade do deficit (taxa de perda por semana). So tem efeito em lose_fat.
+export type CutIntensity = 'light' | 'moderate' | 'aggressive';
 
 export interface ProfileData {
 	height_cm: number;
@@ -47,6 +49,7 @@ export interface ProfileData {
 	sex: Sex;
 	activity_level: ActivityLevel;
 	objective: Objective;
+	cut_intensity: CutIntensity;
 	diet_enabled: boolean;
 	scale_mac: string | null;
 }

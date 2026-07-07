@@ -88,6 +88,7 @@ def get_profile(user: CurrentUser, session: SessionDep) -> ProfileOut:
         sex=profile.sex,
         activity_level=profile.activity_level,
         objective=profile.objective,
+        cut_intensity=profile.cut_intensity,
         diet_enabled=profile.diet_enabled,
         scale_mac=profile.scale_mac,
     )
