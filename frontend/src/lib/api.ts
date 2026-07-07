@@ -216,6 +216,24 @@ export interface WeekSummary {
 	days_with_water: number;
 }
 
+// Conquista (gamificacao). Nome/descricao sao traduzidos no frontend pelo code.
+export interface AchievementItem {
+	code: string;
+	icon: string;
+	category: string;
+	unlocked: boolean;
+	unlocked_at: string | null;
+	progress_current: number;
+	progress_goal: number;
+}
+
+export interface AchievementsResult {
+	achievements: AchievementItem[];
+	weekly_streak: number;
+	workouts_this_week: number;
+	newly_unlocked: string[];
+}
+
 // Dica do coach por regras (code traduzido no frontend; severity define a cor).
 export interface CoachNote {
 	code: string;
@@ -507,6 +525,8 @@ export const api = {
 		request<AdaptiveTdee>(`/me/summary/adaptive?day=${day}&tz_offset=${tzOffset}`),
 	getCoach: (day: string, tzOffset: number) =>
 		request<CoachResult>(`/me/coach?day=${day}&tz_offset=${tzOffset}`),
+	getAchievements: (day: string, tzOffset: number) =>
+		request<AchievementsResult>(`/me/achievements?day=${day}&tz_offset=${tzOffset}`),
 	// dieta
 	getFoods: (q = '', category?: FoodCategory) => {
 		const params = new URLSearchParams();

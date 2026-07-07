@@ -2,7 +2,7 @@
 	import { goto } from '$app/navigation';
 	import { page } from '$app/state';
 	import { slide } from 'svelte/transition';
-	import { api, type Exercise, type RoutineItem } from '$lib/api';
+	import { api, localDay, type Exercise, type RoutineItem } from '$lib/api';
 	import ExercisePhotoModal from '$lib/components/ExercisePhotoModal.svelte';
 	import Stepper from '$lib/components/Stepper.svelte';
 	import { showToast } from '$lib/toast.svelte';
@@ -181,6 +181,15 @@
 		try {
 			await api.finishSession(sessionId);
 			showToast(m.workout_finished_in({ time: formatTime(elapsed) }));
+			// avalia conquistas: se desbloqueou algo novo com este treino, celebra
+			try {
+				const result = await api.getAchievements(localDay(), new Date().getTimezoneOffset());
+				if (result.newly_unlocked.length > 0) {
+					setTimeout(() => showToast(m.achievement_unlocked()), 2600);
+				}
+			} catch {
+				// conquistas sao um extra: nunca bloqueiam o fim do treino
+			}
 			await goto('/treino');
 		} finally {
 			finishing = false;

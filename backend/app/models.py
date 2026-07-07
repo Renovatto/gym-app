@@ -356,3 +356,27 @@ class DiaryEntry(SQLModel, table=True):
     carbs_g: float
     fat_g: float
     logged_at: datetime = Field(default_factory=utcnow)
+
+
+class UserAchievement(SQLModel, table=True):
+    """Conquista desbloqueada por um usuario. As definicoes das conquistas ficam em
+    codigo (services/achievements.py); aqui guardamos so o que cada um ja desbloqueou."""
+
+    __tablename__ = "user_achievements"
+
+    id: int | None = Field(default=None, primary_key=True)
+    user_id: int = Field(foreign_key="users.id", index=True, ondelete="CASCADE")
+    code: str = Field(index=True)  # codigo da conquista (ex.: "workouts_10")
+    unlocked_at: datetime = Field(default_factory=utcnow)
+
+
+class PasswordResetToken(SQLModel, table=True):
+    """Token de uso unico para redefinir a senha (enviado por e-mail no deploy)."""
+
+    __tablename__ = "password_reset_tokens"
+
+    id: int | None = Field(default=None, primary_key=True)
+    user_id: int = Field(foreign_key="users.id", index=True, ondelete="CASCADE")
+    token: str = Field(index=True)
+    expires_at: datetime
+    used: bool = Field(default=False)

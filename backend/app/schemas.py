@@ -160,6 +160,23 @@ class WeekSummaryOut(BaseModel):
     days_with_water: int
 
 
+class AchievementOut(BaseModel):
+    code: str
+    icon: str
+    category: str  # workout | streak | weight | diet
+    unlocked: bool
+    unlocked_at: datetime | None
+    progress_current: float  # valor atual da metrica
+    progress_goal: float  # meta para desbloquear
+
+
+class AchievementsOut(BaseModel):
+    achievements: list[AchievementOut]
+    weekly_streak: int
+    workouts_this_week: int
+    newly_unlocked: list[str]  # desbloqueadas nesta consulta (para celebrar na tela)
+
+
 class CoachNote(BaseModel):
     # code = mensagem traduzida no frontend; severity controla a cor (warn/info).
     code: str

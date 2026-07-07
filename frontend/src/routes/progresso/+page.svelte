@@ -2,6 +2,7 @@
 	import {
 		api,
 		localDay,
+		type AchievementsResult,
 		type AdaptiveTdee,
 		type BodyComposition,
 		type WeekSummary,
@@ -19,6 +20,7 @@
 	let history = $state<WeightHistory | null>(null);
 	let week = $state<WeekSummary | null>(null);
 	let adaptive = $state<AdaptiveTdee | null>(null);
+	let achievements = $state<AchievementsResult | null>(null);
 	let newWeight = $state(session.profile?.weight_kg ?? 75);
 	let busy = $state(false);
 	let adding = $state(false);
@@ -51,6 +53,7 @@
 		history = await api.getWeightHistory();
 		if (history.current_kg !== null) newWeight = history.current_kg;
 		week = await api.getWeekSummary(localDay(), tzOffset);
+		achievements = await api.getAchievements(localDay(), tzOffset);
 		// TDEE adaptativo so faz sentido com o modulo de dieta (precisa da ingestao)
 		if (dietOn) adaptive = await api.getAdaptiveTdee(localDay(), tzOffset);
 	}
@@ -114,6 +117,25 @@
 </script>
 
 <h1 class="mb-4 text-2xl font-bold">{m.tab_progress()}</h1>
+
+{#if achievements}
+	<a
+		href="/conquistas"
+		class="mb-4 flex items-center justify-between rounded-3xl bg-white p-4 shadow-sm active:bg-slate-50"
+	>
+		<div class="flex items-center gap-3">
+			<span class="text-3xl">🔥</span>
+			<div>
+				<p class="text-lg font-black text-slate-900">
+					{achievements.weekly_streak}
+					<span class="text-sm font-semibold text-slate-500">{m.weeks_streak()}</span>
+				</p>
+				<p class="text-xs text-slate-500">{m.see_achievements()}</p>
+			</div>
+		</div>
+		<svg viewBox="0 0 24 24" class="h-5 w-5 text-slate-300" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 6l6 6-6 6" stroke-linecap="round" stroke-linejoin="round" /></svg>
+	</a>
+{/if}
 
 {#if week}
 	<section class="mb-4 rounded-3xl bg-white p-5 shadow-sm">
