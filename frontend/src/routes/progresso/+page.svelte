@@ -346,13 +346,24 @@
 
 	{#if reversedLogs.length > 0}
 		<section class="mt-3 overflow-hidden rounded-3xl bg-white shadow-sm">
-			{#each reversedLogs as { log, delta, fatDelta }, i (log.id)}
+			<!-- cabecalho de colunas -->
+			<div class="flex items-center gap-3 border-b border-slate-100 px-5 py-2.5">
+				<span class="w-20 shrink-0 text-xs font-bold tracking-wide text-slate-400 uppercase">{m.col_date()}</span>
+				<span class="flex-1 text-xs font-bold tracking-wide text-slate-400 uppercase">{m.col_weight()}</span>
+				<span class="w-16 text-right text-xs font-bold tracking-wide text-slate-400 uppercase">{m.col_fat()}</span>
+				<span class="w-4 shrink-0"></span>
+			</div>
+
+			{#each reversedLogs as { log, delta, fatDelta } (log.id)}
 				<button
 					type="button"
 					onclick={() => openWeightDetail(log)}
-					class="flex w-full items-center gap-3 px-5 py-3 text-left active:bg-slate-50 {i > 0
-						? 'border-t border-slate-100'
-						: ''}"
+					class="flex w-full items-center gap-3 border-l-4 border-t border-slate-100 px-5 py-3 text-left active:bg-slate-50
+						{delta === null || delta === 0
+						? 'border-l-transparent'
+						: delta < 0
+							? 'border-l-emerald-400'
+							: 'border-l-amber-400'}"
 				>
 					<!-- data + hora -->
 					<div class="w-20 shrink-0">
@@ -362,25 +373,31 @@
 
 					<!-- peso + variacao -->
 					<div class="flex-1">
-						<p class="font-bold text-slate-900">{nf.format(log.weight_kg)} <span class="text-xs font-medium text-slate-400">kg</span></p>
+						<p class="font-bold text-slate-900">
+							{nf.format(log.weight_kg)}<span class="ml-0.5 text-xs font-medium text-slate-400">kg</span>
+						</p>
 						{#if delta !== null && delta !== 0}
 							<p class="text-xs font-semibold {delta < 0 ? 'text-emerald-600' : 'text-amber-600'}">
-								{delta < 0 ? '▼' : '▲'} {nf.format(Math.abs(delta))} kg
+								{delta < 0 ? '▼' : '▲'} {nf.format(Math.abs(delta))}
 							</p>
 						{/if}
 					</div>
 
 					<!-- gordura % + variacao (quando ha dado da balanca) -->
-					{#if log.fat_percentage !== null}
-						<div class="text-right">
-							<p class="font-bold text-slate-900">{nf.format(log.fat_percentage)} <span class="text-xs font-medium text-slate-400">%</span></p>
+					<div class="w-16 text-right">
+						{#if log.fat_percentage !== null}
+							<p class="font-bold text-slate-900">
+								{nf.format(log.fat_percentage)}<span class="ml-0.5 text-xs font-medium text-slate-400">%</span>
+							</p>
 							{#if fatDelta !== null && fatDelta !== 0}
 								<p class="text-xs font-semibold {fatDelta < 0 ? 'text-emerald-600' : 'text-amber-600'}">
 									{fatDelta < 0 ? '▼' : '▲'} {nf.format(Math.abs(fatDelta))}
 								</p>
 							{/if}
-						</div>
-					{/if}
+						{:else}
+							<span class="text-slate-300">—</span>
+						{/if}
+					</div>
 
 					<svg viewBox="0 0 24 24" class="h-4 w-4 shrink-0 text-slate-300" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 6l6 6-6 6" stroke-linecap="round" stroke-linejoin="round" /></svg>
 				</button>

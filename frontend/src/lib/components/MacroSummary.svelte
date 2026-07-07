@@ -3,7 +3,13 @@
 	import { m } from '$lib/paraglide/messages';
 	import { getLocale } from '$lib/paraglide/runtime';
 
-	let { totals, goals }: { totals: Macros; goals: Macros | null } = $props();
+	// addHref: quando informado, mostra um botao "+" no canto superior direito
+	// (usado na tela Hoje para levar a adicionar alimento).
+	let {
+		totals,
+		goals,
+		addHref
+	}: { totals: Macros; goals: Macros | null; addHref?: string } = $props();
 
 	const nf = new Intl.NumberFormat(getLocale());
 
@@ -28,7 +34,17 @@
 	}
 </script>
 
-<section class="rounded-3xl bg-white p-6 shadow-sm">
+<section class="relative rounded-3xl bg-white p-6 shadow-sm">
+	{#if addHref}
+		<a
+			href={addHref}
+			aria-label={m.add_food()}
+			title={m.add_food()}
+			class="absolute top-4 right-4 grid h-11 w-11 place-items-center rounded-2xl bg-emerald-600 text-white shadow-sm active:bg-emerald-700"
+		>
+			<svg viewBox="0 0 24 24" class="h-6 w-6" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 5v14M5 12h14" stroke-linecap="round" /></svg>
+		</a>
+	{/if}
 	<div class="flex items-center gap-5">
 		<div class="relative shrink-0">
 			<svg viewBox="0 0 128 128" class="h-32 w-32 -rotate-90">

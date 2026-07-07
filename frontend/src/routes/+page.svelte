@@ -126,13 +126,7 @@
 {#if goals}
 	{#if dietOn}
 		{#if diary}
-			<MacroSummary totals={diary.totals} goals={diary.goals} />
-			<a
-				href="/dieta"
-				class="mt-3 flex h-12 w-full items-center justify-center rounded-2xl bg-emerald-600 font-bold text-white active:bg-emerald-700"
-			>
-				+ {m.add_food()}
-			</a>
+			<MacroSummary totals={diary.totals} goals={diary.goals} addHref="/dieta/adicionar?meal=snack" />
 		{/if}
 	{:else}
 		<section class="rounded-3xl bg-white p-6 shadow-sm">
