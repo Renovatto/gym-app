@@ -105,6 +105,9 @@ class Profile(SQLModel, table=True):
 
 
 class WeightLog(SQLModel, table=True):
+    """Um registro de pesagem (weigh-in). Alem do peso, guarda opcionalmente a
+    composicao corporal informada pela balanca de bioimpedancia (BIA)."""
+
     __tablename__ = "weight_logs"
 
     id: int | None = Field(default=None, primary_key=True)
@@ -112,6 +115,19 @@ class WeightLog(SQLModel, table=True):
     weight_kg: float
     source: WeightSource = Field(default=WeightSource.manual)
     logged_at: datetime = Field(default_factory=utcnow, index=True)
+
+    # Composicao corporal (opcional). Todos vem da balanca; ficam nulos quando o
+    # usuario informa so o peso. BIA = bioimpedancia (impreciso no absoluto, bom na tendencia).
+    fat_percentage: float | None = Field(default=None)  # gordura corporal em %
+    fat_mass_kg: float | None = Field(default=None)  # peso da gordura em kg
+    skeletal_muscle_percentage: float | None = Field(default=None)  # massa muscular esqueletica em %
+    skeletal_muscle_kg: float | None = Field(default=None)  # massa muscular esqueletica em kg
+    muscle_percentage: float | None = Field(default=None)  # musculo total em %
+    muscle_mass_kg: float | None = Field(default=None)  # musculo total em kg
+    water_percentage: float | None = Field(default=None)  # agua corporal em %
+    water_mass_kg: float | None = Field(default=None)  # peso da agua em kg
+    visceral_fat_index: float | None = Field(default=None)  # V-fat = gordura visceral (indice da balanca)
+    scale_bmr_kcal: int | None = Field(default=None)  # BMR estimado pela balanca (kcal/dia)
 
     user: User = Relationship(back_populates="weight_logs")
 

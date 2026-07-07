@@ -81,13 +81,28 @@ class GoalsOut(BaseModel):
     water_ml: int
 
 
-class WeightLogIn(BaseModel):
+# Campos de composicao corporal informados pela balanca (todos opcionais).
+# Reutilizados na entrada (WeightLogIn) e na saida (WeightLogOut).
+class BodyCompositionFields(BaseModel):
+    fat_percentage: float | None = Field(default=None, ge=0, le=80)  # gordura em %
+    fat_mass_kg: float | None = Field(default=None, ge=0, le=300)  # gordura em kg
+    skeletal_muscle_percentage: float | None = Field(default=None, ge=0, le=100)  # musculo esqueletico %
+    skeletal_muscle_kg: float | None = Field(default=None, ge=0, le=200)  # musculo esqueletico kg
+    muscle_percentage: float | None = Field(default=None, ge=0, le=100)  # musculo total %
+    muscle_mass_kg: float | None = Field(default=None, ge=0, le=200)  # musculo total kg
+    water_percentage: float | None = Field(default=None, ge=0, le=100)  # agua corporal %
+    water_mass_kg: float | None = Field(default=None, ge=0, le=200)  # agua em kg
+    visceral_fat_index: float | None = Field(default=None, ge=0, le=60)  # V-fat = gordura visceral
+    scale_bmr_kcal: int | None = Field(default=None, ge=0, le=5000)  # BMR estimado pela balanca
+
+
+class WeightLogIn(BodyCompositionFields):
     weight_kg: float = Field(gt=20, lt=400)
     source: WeightSource = WeightSource.manual
     logged_at: datetime | None = None
 
 
-class WeightLogOut(BaseModel):
+class WeightLogOut(BodyCompositionFields):
     model_config = ConfigDict(from_attributes=True)
 
     id: int
@@ -101,6 +116,8 @@ class WeightHistoryOut(BaseModel):
     current_kg: float | None
     start_kg: float | None
     delta_kg: float | None
+    # ultimo weigh-in que trouxe composicao corporal (para o painel de composicao)
+    latest_body_composition: WeightLogOut | None = None
 
 
 class WaterLogIn(BaseModel):

@@ -26,6 +26,19 @@ _COLUMN_MIGRATIONS: dict[str, dict[str, str]] = {
     },
     "routine_exercises": {"target_duration_min": "INTEGER"},
     "set_logs": {"duration_min": "FLOAT"},
+    # Composicao corporal no registro de pesagem (vem da balanca de bioimpedancia).
+    "weight_logs": {
+        "fat_percentage": "FLOAT",
+        "fat_mass_kg": "FLOAT",
+        "skeletal_muscle_percentage": "FLOAT",
+        "skeletal_muscle_kg": "FLOAT",
+        "muscle_percentage": "FLOAT",
+        "muscle_mass_kg": "FLOAT",
+        "water_percentage": "FLOAT",
+        "water_mass_kg": "FLOAT",
+        "visceral_fat_index": "FLOAT",
+        "scale_bmr_kcal": "INTEGER",
+    },
 }
 
 

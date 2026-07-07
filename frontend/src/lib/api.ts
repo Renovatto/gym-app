@@ -63,7 +63,21 @@ export interface GoalsOut {
 	water_ml: number;
 }
 
-export interface WeightLog {
+// Composicao corporal vinda da balanca de bioimpedancia (BIA). Todos opcionais.
+export interface BodyComposition {
+	fat_percentage: number | null; // gordura corporal em %
+	fat_mass_kg: number | null; // peso da gordura em kg
+	skeletal_muscle_percentage: number | null; // musculo esqueletico em %
+	skeletal_muscle_kg: number | null; // musculo esqueletico em kg
+	muscle_percentage: number | null; // musculo total em %
+	muscle_mass_kg: number | null; // musculo total em kg
+	water_percentage: number | null; // agua corporal em %
+	water_mass_kg: number | null; // peso da agua em kg
+	visceral_fat_index: number | null; // V-fat = gordura visceral (indice da balanca)
+	scale_bmr_kcal: number | null; // BMR estimado pela balanca (kcal/dia)
+}
+
+export interface WeightLog extends BodyComposition {
 	id: number;
 	weight_kg: number;
 	source: 'manual' | 'ble';
@@ -75,7 +89,11 @@ export interface WeightHistory {
 	current_kg: number | null;
 	start_kg: number | null;
 	delta_kg: number | null;
+	latest_body_composition: WeightLog | null;
 }
+
+// Entrada da pesagem: peso obrigatorio + composicao corporal opcional.
+export type WeighInInput = { weight_kg: number } & Partial<BodyComposition>;
 
 export interface WaterLog {
 	id: number;
@@ -403,8 +421,8 @@ export const api = {
 		request<ProfileData>('/me/profile', { method: 'PUT', body: profile }),
 	getGoals: () => request<GoalsOut>('/me/goals'),
 	getWeightHistory: () => request<WeightHistory>('/me/weight'),
-	addWeight: (weight_kg: number) =>
-		request<WeightLog>('/me/weight', { method: 'POST', body: { weight_kg } }),
+	addWeight: (weighIn: WeighInInput) =>
+		request<WeightLog>('/me/weight', { method: 'POST', body: weighIn }),
 	deleteWeight: (id: number) => request<void>(`/me/weight/${id}`, { method: 'DELETE' }),
 	getWaterDay: (day: string, tzOffset: number) =>
 		request<WaterDay>(`/me/water?day=${day}&tz_offset=${tzOffset}`),
