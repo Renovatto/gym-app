@@ -32,7 +32,9 @@ app = FastAPI(title="Gym App API", version="0.1.0", lifespan=lifespan)
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=settings.cors_origins,
+    # cors_origins cobre o dev (localhost); frontend_url cobre o dominio de producao
+    # (definido por GYMAPP_FRONTEND_URL, ex.: https://gymapp-web.onrender.com).
+    allow_origins=[*settings.cors_origins, settings.frontend_url],
     # Libera também IPs da rede local (celular acessando via --host), em qualquer porta.
     allow_origin_regex=(
         r"http://(localhost|127\.0\.0\.1|"

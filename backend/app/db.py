@@ -5,15 +5,34 @@ from sqlmodel import Session, SQLModel, create_engine
 
 from .config import settings
 
-engine = create_engine(settings.database_url, connect_args={"check_same_thread": False})
+
+def _normalize_db_url(url: str) -> str:
+    # O Render entrega o Postgres como "postgres://" ou "postgresql://". O SQLAlchemy 2
+    # nao aceita "postgres://"; aqui forcamos o dialeto com o driver psycopg (v3).
+    for prefix in ("postgres://", "postgresql://"):
+        if url.startswith(prefix):
+            return "postgresql+psycopg://" + url[len(prefix) :]
+    return url
 
 
-@event.listens_for(engine, "connect")
-def _set_sqlite_pragmas(dbapi_connection, _record) -> None:
-    cursor = dbapi_connection.cursor()
-    cursor.execute("PRAGMA journal_mode=WAL")
-    cursor.execute("PRAGMA foreign_keys=ON")
-    cursor.close()
+DATABASE_URL = _normalize_db_url(settings.database_url)
+IS_SQLITE = DATABASE_URL.startswith("sqlite")
+
+# check_same_thread e exclusivo do SQLite; no Postgres nao passamos connect_args.
+engine = create_engine(
+    DATABASE_URL,
+    connect_args={"check_same_thread": False} if IS_SQLITE else {},
+)
+
+
+if IS_SQLITE:
+    # WAL e PRAGMA so existem no SQLite (seriam SQL invalido no Postgres).
+    @event.listens_for(engine, "connect")
+    def _set_sqlite_pragmas(dbapi_connection, _record) -> None:
+        cursor = dbapi_connection.cursor()
+        cursor.execute("PRAGMA journal_mode=WAL")
+        cursor.execute("PRAGMA foreign_keys=ON")
+        cursor.close()
 
 
 # Migrações leves: create_all cria tabelas novas, mas não adiciona colunas a
@@ -48,6 +67,10 @@ _COLUMN_MIGRATIONS: dict[str, dict[str, str]] = {
 
 
 def _run_column_migrations() -> None:
+    # So faz sentido no SQLite (dev): usa sqlite_master e PRAGMA table_info. No Postgres
+    # a base nasce ja com o schema completo via create_all, entao nao ha o que migrar.
+    if not IS_SQLITE:
+        return
     from sqlalchemy import text
 
     with engine.begin() as conn:
