@@ -129,16 +129,26 @@
 		if (page.url.searchParams.get('novo')) adding = true;
 	});
 
-	// Historico do mais recente para o mais antigo, com a variacao vs a pesagem anterior.
+	// Historico do mais recente para o mais antigo, com a variacao (peso e gordura)
+	// em relacao a pesagem anterior.
 	const reversedLogs = $derived.by(() => {
 		if (!history) return [];
 		const desc = [...history.logs].reverse();
 		return desc.map((log, i) => {
 			const previous = desc[i + 1]; // proxima na lista = anterior no tempo
 			const delta = previous ? Math.round((log.weight_kg - previous.weight_kg) * 10) / 10 : null;
-			return { log, delta };
+			const fatDelta =
+				previous && log.fat_percentage !== null && previous.fat_percentage !== null
+					? Math.round((log.fat_percentage - previous.fat_percentage) * 10) / 10
+					: null;
+			return { log, delta, fatDelta };
 		});
 	});
+
+	// Formata hora local (HH:MM) a partir do timestamp da pesagem.
+	function formatClock(iso: string): string {
+		return new Date(iso).toLocaleTimeString(getLocale(), { hour: '2-digit', minute: '2-digit' });
+	}
 
 	// Campos de composicao presentes na pesagem selecionada (para o modal de detalhes).
 	const selectedBodyComposition = $derived.by(() => {
@@ -336,34 +346,43 @@
 
 	{#if reversedLogs.length > 0}
 		<section class="mt-3 overflow-hidden rounded-3xl bg-white shadow-sm">
-			{#each reversedLogs as { log, delta }, i (log.id)}
+			{#each reversedLogs as { log, delta, fatDelta }, i (log.id)}
 				<button
 					type="button"
 					onclick={() => openWeightDetail(log)}
-					class="flex w-full items-center justify-between px-5 py-3.5 text-left active:bg-slate-50 {i >
-					0
+					class="flex w-full items-center gap-3 px-5 py-3 text-left active:bg-slate-50 {i > 0
 						? 'border-t border-slate-100'
 						: ''}"
 				>
-					<div class="flex items-center gap-2">
-						<span class="font-bold text-slate-900">{nf.format(log.weight_kg)} kg</span>
+					<!-- data + hora -->
+					<div class="w-20 shrink-0">
+						<p class="text-sm font-bold text-slate-700">{df.format(new Date(log.logged_at))}</p>
+						<p class="text-xs text-slate-400">{formatClock(log.logged_at)}</p>
+					</div>
+
+					<!-- peso + variacao -->
+					<div class="flex-1">
+						<p class="font-bold text-slate-900">{nf.format(log.weight_kg)} <span class="text-xs font-medium text-slate-400">kg</span></p>
 						{#if delta !== null && delta !== 0}
-							<span
-								class="rounded-full px-2 py-0.5 text-xs font-bold {delta < 0
-									? 'bg-emerald-50 text-emerald-700'
-									: 'bg-amber-50 text-amber-700'}"
-							>
-								{delta < 0 ? '▼' : '▲'} {nf.format(Math.abs(delta))}
-							</span>
-						{/if}
-						{#if log.fat_percentage !== null || log.visceral_fat_index !== null}
-							<span class="rounded bg-sky-50 px-1.5 py-0.5 text-xs font-semibold text-sky-600">BIA</span>
+							<p class="text-xs font-semibold {delta < 0 ? 'text-emerald-600' : 'text-amber-600'}">
+								{delta < 0 ? '▼' : '▲'} {nf.format(Math.abs(delta))} kg
+							</p>
 						{/if}
 					</div>
-					<div class="flex items-center gap-2">
-						<span class="text-sm text-slate-400">{df.format(new Date(log.logged_at))}</span>
-						<svg viewBox="0 0 24 24" class="h-4 w-4 text-slate-300" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 6l6 6-6 6" stroke-linecap="round" stroke-linejoin="round" /></svg>
-					</div>
+
+					<!-- gordura % + variacao (quando ha dado da balanca) -->
+					{#if log.fat_percentage !== null}
+						<div class="text-right">
+							<p class="font-bold text-slate-900">{nf.format(log.fat_percentage)} <span class="text-xs font-medium text-slate-400">%</span></p>
+							{#if fatDelta !== null && fatDelta !== 0}
+								<p class="text-xs font-semibold {fatDelta < 0 ? 'text-emerald-600' : 'text-amber-600'}">
+									{fatDelta < 0 ? '▼' : '▲'} {nf.format(Math.abs(fatDelta))}
+								</p>
+							{/if}
+						</div>
+					{/if}
+
+					<svg viewBox="0 0 24 24" class="h-4 w-4 shrink-0 text-slate-300" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 6l6 6-6 6" stroke-linecap="round" stroke-linejoin="round" /></svg>
 				</button>
 			{/each}
 		</section>

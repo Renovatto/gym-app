@@ -31,10 +31,14 @@
 		loading = false;
 	}
 
+	let confirmingDiscard = $state(false);
+
 	async function discardActive(): Promise<void> {
 		if (!activeSession) return;
 		await api.deleteSession(activeSession.id);
+		confirmingDiscard = false;
 		await load();
+		showToast(m.toast_deleted());
 	}
 
 	async function useTemplate(frequency: number): Promise<void> {
@@ -43,6 +47,7 @@
 			await api.createFromTemplate(frequency);
 			showTemplates = false;
 			await load();
+			showToast(m.toast_created());
 		} finally {
 			creatingTemplate = false;
 		}
@@ -130,21 +135,41 @@
 		<section class="mb-3 rounded-3xl bg-emerald-600 p-5 text-white shadow-sm">
 			<p class="text-sm font-semibold text-emerald-100">{m.workout_in_progress()}</p>
 			<p class="truncate text-lg font-bold">{activeSession.routine_name ?? m.free_workout()}</p>
-			<div class="mt-3 flex gap-2">
-				<a
-					href="/treino/sessao/{activeSession.id}"
-					class="flex h-11 flex-[2] items-center justify-center rounded-2xl bg-white font-bold text-emerald-700 active:bg-emerald-50"
-				>
-					{m.resume_workout()}
-				</a>
-				<button
-					type="button"
-					onclick={discardActive}
-					class="h-11 flex-1 rounded-2xl border-2 border-emerald-400 font-semibold text-white active:bg-emerald-700"
-				>
-					{m.discard()}
-				</button>
-			</div>
+			{#if confirmingDiscard}
+				<p class="mt-3 text-sm text-emerald-50">{m.confirm_delete()}</p>
+				<div class="mt-2 flex gap-2">
+					<button
+						type="button"
+						onclick={() => (confirmingDiscard = false)}
+						class="h-11 flex-1 rounded-2xl bg-white font-bold text-emerald-700 active:bg-emerald-50"
+					>
+						{m.cancel()}
+					</button>
+					<button
+						type="button"
+						onclick={discardActive}
+						class="h-11 flex-1 rounded-2xl border-2 border-emerald-300 font-semibold text-white active:bg-emerald-700"
+					>
+						{m.delete_confirm_button()}
+					</button>
+				</div>
+			{:else}
+				<div class="mt-3 flex gap-2">
+					<a
+						href="/treino/sessao/{activeSession.id}"
+						class="flex h-11 flex-[2] items-center justify-center rounded-2xl bg-white font-bold text-emerald-700 active:bg-emerald-50"
+					>
+						{m.resume_workout()}
+					</a>
+					<button
+						type="button"
+						onclick={() => (confirmingDiscard = true)}
+						class="h-11 flex-1 rounded-2xl border-2 border-emerald-400 font-semibold text-white active:bg-emerald-700"
+					>
+						{m.discard()}
+					</button>
+				</div>
+			{/if}
 		</section>
 	{/if}
 	{#if routines.length === 0}

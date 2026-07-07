@@ -133,6 +133,7 @@
 			});
 			await bootstrap();
 			saved = true;
+			showToast(m.toast_saved());
 			setTimeout(() => (saved = false), 2500);
 		} finally {
 			busy = false;
@@ -148,10 +149,12 @@
 		link.download = 'gymapp-dados.json';
 		link.click();
 		URL.revokeObjectURL(url);
+		showToast(m.toast_exported());
 	}
 
 	async function deleteAccount(): Promise<void> {
 		await api.deleteAccount();
+		showToast(m.toast_deleted());
 		signOut();
 		await goto('/login');
 	}

@@ -19,7 +19,10 @@
 	function openEdit(entry: DiaryEntry): void {
 		editing = entry;
 		editQty = entry.quantity;
+		confirmingDeleteEntry = false;
 	}
+
+	let confirmingDeleteEntry = $state(false);
 
 	async function saveEdit(): Promise<void> {
 		if (!editing) return;
@@ -28,6 +31,7 @@
 			await api.updateDiaryEntry(editing.id, editQty);
 			editing = null;
 			await load();
+			showToast(m.toast_saved());
 		} finally {
 			editBusy = false;
 		}
@@ -39,7 +43,9 @@
 		try {
 			await api.deleteDiaryEntry(editing.id);
 			editing = null;
+			confirmingDeleteEntry = false;
 			await load();
+			showToast(m.toast_deleted());
 		} finally {
 			editBusy = false;
 		}
@@ -224,24 +230,48 @@
 			{:else}
 				<Stepper bind:value={editQty} min={1} max={2000} step={5} unit="g" />
 			{/if}
-			<div class="mt-5 flex gap-2">
-				<button
-					type="button"
-					disabled={editBusy}
-					onclick={deleteEditing}
-					class="h-12 flex-1 rounded-2xl border-2 border-red-200 font-semibold text-red-600 active:bg-red-50 disabled:opacity-50"
-				>
-					{m.remove()}
-				</button>
-				<button
-					type="button"
-					disabled={editBusy}
-					onclick={saveEdit}
-					class="h-12 flex-[2] rounded-2xl bg-emerald-600 font-bold text-white active:bg-emerald-700 disabled:opacity-50"
-				>
-					{m.save()}
-				</button>
-			</div>
+
+			{#if confirmingDeleteEntry}
+				<p class="mt-5 rounded-xl bg-red-50 px-4 py-3 text-sm font-medium text-red-700">
+					{m.confirm_delete()}
+				</p>
+				<div class="mt-2 flex gap-2">
+					<button
+						type="button"
+						onclick={() => (confirmingDeleteEntry = false)}
+						class="h-12 flex-1 rounded-2xl border-2 border-slate-200 font-semibold text-slate-700 active:bg-slate-100"
+					>
+						{m.cancel()}
+					</button>
+					<button
+						type="button"
+						disabled={editBusy}
+						onclick={deleteEditing}
+						class="h-12 flex-1 rounded-2xl bg-red-600 font-semibold text-white active:bg-red-700 disabled:opacity-50"
+					>
+						{m.delete_confirm_button()}
+					</button>
+				</div>
+			{:else}
+				<div class="mt-5 flex gap-2">
+					<button
+						type="button"
+						disabled={editBusy}
+						onclick={() => (confirmingDeleteEntry = true)}
+						class="h-12 flex-1 rounded-2xl border-2 border-red-200 font-semibold text-red-600 active:bg-red-50 disabled:opacity-50"
+					>
+						{m.remove()}
+					</button>
+					<button
+						type="button"
+						disabled={editBusy}
+						onclick={saveEdit}
+						class="h-12 flex-[2] rounded-2xl bg-emerald-600 font-bold text-white active:bg-emerald-700 disabled:opacity-50"
+					>
+						{m.save()}
+					</button>
+				</div>
+			{/if}
 		</div>
 	</div>
 {/if}

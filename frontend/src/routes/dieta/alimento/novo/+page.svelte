@@ -3,6 +3,7 @@
 	import { api, type FoodCategory } from '$lib/api';
 	import ChoiceChips from '$lib/components/ChoiceChips.svelte';
 	import Stepper from '$lib/components/Stepper.svelte';
+	import { showToast } from '$lib/toast.svelte';
 	import { m } from '$lib/paraglide/messages';
 
 	let name = $state('');
@@ -29,6 +30,7 @@
 				fat_g: fat,
 				default_portion_g: portion
 			});
+			showToast(m.toast_created());
 			history.back();
 		} finally {
 			busy = false;

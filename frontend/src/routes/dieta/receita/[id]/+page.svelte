@@ -4,6 +4,7 @@
 	import { api, type Food } from '$lib/api';
 	import FoodPicker from '$lib/components/FoodPicker.svelte';
 	import Stepper from '$lib/components/Stepper.svelte';
+	import { showToast } from '$lib/toast.svelte';
 	import { m } from '$lib/paraglide/messages';
 	import { getLocale } from '$lib/paraglide/runtime';
 
@@ -82,16 +83,21 @@
 		try {
 			if (isNew) await api.createRecipe(payload);
 			else await api.updateRecipe(Number(recipeId), payload);
+			showToast(isNew ? m.toast_created() : m.toast_saved());
 			await goto('/dieta/receitas');
 		} finally {
 			busy = false;
 		}
 	}
 
+	// exclusao sempre com confirmacao
+	let confirmingDelete = $state(false);
+
 	async function remove(): Promise<void> {
 		busy = true;
 		try {
 			await api.deleteRecipe(Number(recipeId));
+			showToast(m.toast_deleted());
 			await goto('/dieta/receitas');
 		} finally {
 			busy = false;
@@ -191,13 +197,35 @@
 	</button>
 
 	{#if !isNew}
-		<button
-			type="button"
-			disabled={busy}
-			onclick={remove}
-			class="mt-3 h-12 w-full rounded-2xl border-2 border-red-200 font-semibold text-red-600 active:bg-red-50"
-		>
-			{m.delete_recipe()}
-		</button>
+		{#if confirmingDelete}
+			<p class="mt-3 rounded-xl bg-red-50 px-4 py-3 text-sm font-medium text-red-700">
+				{m.confirm_delete()}
+			</p>
+			<div class="mt-2 flex gap-2">
+				<button
+					type="button"
+					onclick={() => (confirmingDelete = false)}
+					class="h-12 flex-1 rounded-2xl border-2 border-slate-200 font-semibold text-slate-700 active:bg-slate-100"
+				>
+					{m.cancel()}
+				</button>
+				<button
+					type="button"
+					disabled={busy}
+					onclick={remove}
+					class="h-12 flex-1 rounded-2xl bg-red-600 font-semibold text-white active:bg-red-700 disabled:opacity-50"
+				>
+					{m.delete_confirm_button()}
+				</button>
+			</div>
+		{:else}
+			<button
+				type="button"
+				onclick={() => (confirmingDelete = true)}
+				class="mt-3 h-12 w-full rounded-2xl border-2 border-red-200 font-semibold text-red-600 active:bg-red-50"
+			>
+				{m.delete_recipe()}
+			</button>
+		{/if}
 	{/if}
 {/if}

@@ -3,6 +3,7 @@
 	import { page } from '$app/state';
 	import { api, localDay, type Food, type MealType, type Recipe } from '$lib/api';
 	import Stepper from '$lib/components/Stepper.svelte';
+	import { showToast } from '$lib/toast.svelte';
 	import { mealTypeLabel, portionLabel } from '$lib/labels';
 	import { m } from '$lib/paraglide/messages';
 	import { getLocale } from '$lib/paraglide/runtime';
@@ -108,6 +109,7 @@
 				food_id: selFood.id,
 				quantity: effectiveGrams
 			});
+			showToast(m.toast_added());
 			await goto('/dieta');
 		} finally {
 			saving = false;
@@ -125,6 +127,7 @@
 				recipe_id: selRecipe.id,
 				quantity: servings
 			});
+			showToast(m.toast_added());
 			await goto('/dieta');
 		} finally {
 			saving = false;
