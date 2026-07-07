@@ -214,6 +214,20 @@ export interface WeekSummary {
 	days_with_water: number;
 }
 
+// Resultado do TDEE adaptativo (manutencao real estimada a partir dos dados).
+export interface AdaptiveTdee {
+	has_enough_data: boolean;
+	span_days: number;
+	days_logged: number;
+	avg_intake_kcal: number;
+	weekly_change_kg: number;
+	estimated_maintenance_kcal: number | null;
+	formula_tdee_kcal: number;
+	current_target_kcal: number;
+	suggested_target_kcal: number | null;
+	message_code: string;
+}
+
 // --- Dieta ---
 export type FoodCategory =
 	| 'protein'
@@ -479,6 +493,8 @@ export const api = {
 	getSessions: () => request<SessionSummary[]>('/me/sessions'),
 	getWeekSummary: (day: string, tzOffset: number) =>
 		request<WeekSummary>(`/me/summary/week?day=${day}&tz_offset=${tzOffset}`),
+	getAdaptiveTdee: (day: string, tzOffset: number) =>
+		request<AdaptiveTdee>(`/me/summary/adaptive?day=${day}&tz_offset=${tzOffset}`),
 	// dieta
 	getFoods: (q = '', category?: FoodCategory) => {
 		const params = new URLSearchParams();

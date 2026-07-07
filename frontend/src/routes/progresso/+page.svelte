@@ -2,6 +2,7 @@
 	import {
 		api,
 		localDay,
+		type AdaptiveTdee,
 		type BodyComposition,
 		type WeekSummary,
 		type WeighInInput,
@@ -15,6 +16,7 @@
 
 	let history = $state<WeightHistory | null>(null);
 	let week = $state<WeekSummary | null>(null);
+	let adaptive = $state<AdaptiveTdee | null>(null);
 	let newWeight = $state(session.profile?.weight_kg ?? 75);
 	let busy = $state(false);
 	let adding = $state(false);
@@ -43,10 +45,26 @@
 	const df = new Intl.DateTimeFormat(getLocale(), { day: '2-digit', month: 'short' });
 
 	async function load(): Promise<void> {
+		const tzOffset = new Date().getTimezoneOffset();
 		history = await api.getWeightHistory();
 		if (history.current_kg !== null) newWeight = history.current_kg;
-		week = await api.getWeekSummary(localDay(), new Date().getTimezoneOffset());
+		week = await api.getWeekSummary(localDay(), tzOffset);
+		// TDEE adaptativo so faz sentido com o modulo de dieta (precisa da ingestao)
+		if (dietOn) adaptive = await api.getAdaptiveTdee(localDay(), tzOffset);
 	}
+
+	// Mensagem do TDEE adaptativo: texto traduzido + tom (cor) conforme o ritmo real.
+	const adaptiveMessage = $derived.by(() => {
+		if (!adaptive || !adaptive.has_enough_data) return null;
+		const byCode: Record<string, { text: string; tone: 'good' | 'warn' | 'info' }> = {
+			ON_TRACK: { text: m.adaptive_on_track(), tone: 'good' },
+			TOO_SLOW: { text: m.adaptive_too_slow(), tone: 'warn' },
+			STALLED: { text: m.adaptive_stalled(), tone: 'warn' },
+			TOO_FAST: { text: m.adaptive_too_fast(), tone: 'info' },
+			ESTIMATE_READY: { text: m.adaptive_estimate_ready(), tone: 'info' }
+		};
+		return byCode[adaptive.message_code] ?? byCode.ESTIMATE_READY;
+	});
 
 	// Monta o payload da pesagem: peso obrigatorio + campos da balanca preenchidos.
 	// Campos vazios ou invalidos sao ignorados (ficam nulos no banco).
@@ -121,6 +139,62 @@
 				<p class="text-xs font-semibold text-slate-500">{m.avg_water()}</p>
 			</div>
 		</div>
+	</section>
+{/if}
+
+{#if dietOn && adaptive}
+	<section class="mb-4 rounded-3xl bg-white p-5 shadow-sm">
+		<p class="mb-1 text-sm font-bold text-slate-400 uppercase">{m.adaptive_title()}</p>
+		{#if !adaptive.has_enough_data}
+			<p class="text-sm text-slate-500">{m.adaptive_need_data()}</p>
+			<p class="mt-2 text-xs text-slate-400">
+				{m.adaptive_progress_label()}: {adaptive.days_logged} {m.adaptive_days_logged()} ·
+				{adaptive.span_days} {m.adaptive_days_span()}
+			</p>
+		{:else}
+			<!-- manutencao real estimada vs estimativa da formula -->
+			<div class="grid grid-cols-2 gap-3">
+				<div class="rounded-2xl bg-slate-50 p-3">
+					<p class="text-2xl font-black text-slate-900">
+						{nf.format(adaptive.estimated_maintenance_kcal ?? 0)}<span class="text-sm font-medium text-slate-400"> kcal</span>
+					</p>
+					<p class="text-xs font-semibold text-slate-500">{m.adaptive_real_maintenance()}</p>
+				</div>
+				<div class="rounded-2xl bg-slate-50 p-3">
+					<p class="text-2xl font-black text-slate-900">
+						{adaptive.weekly_change_kg > 0 ? '+' : ''}{nf.format(adaptive.weekly_change_kg)}<span class="text-sm font-medium text-slate-400"> kg</span>
+					</p>
+					<p class="text-xs font-semibold text-slate-500">{m.adaptive_weekly_change()}</p>
+				</div>
+			</div>
+
+			<!-- comparacao de metas: atual (formula) vs sugerida (dados reais) -->
+			<div class="mt-3 flex items-center justify-between rounded-2xl border-2 border-slate-100 px-4 py-3">
+				<div>
+					<p class="text-xs font-semibold text-slate-400">{m.adaptive_current_target()}</p>
+					<p class="text-lg font-bold text-slate-500">{nf.format(adaptive.current_target_kcal)}</p>
+				</div>
+				<svg viewBox="0 0 24 24" class="h-5 w-5 text-slate-300" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M13 6l6 6-6 6" stroke-linecap="round" stroke-linejoin="round" /></svg>
+				<div class="text-right">
+					<p class="text-xs font-semibold text-emerald-600">{m.adaptive_suggested_target()}</p>
+					<p class="text-lg font-black text-emerald-700">{nf.format(adaptive.suggested_target_kcal ?? 0)}</p>
+				</div>
+			</div>
+
+			{#if adaptiveMessage}
+				<div
+					class="mt-3 rounded-2xl px-4 py-3 text-sm font-semibold
+						{adaptiveMessage.tone === 'good'
+						? 'bg-emerald-50 text-emerald-800'
+						: adaptiveMessage.tone === 'warn'
+							? 'bg-amber-50 text-amber-800'
+							: 'bg-sky-50 text-sky-800'}"
+				>
+					{adaptiveMessage.text}
+				</div>
+			{/if}
+			<p class="mt-2 text-xs text-slate-400">{m.adaptive_footnote()}</p>
+		{/if}
 	</section>
 {/if}
 
