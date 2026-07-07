@@ -1,9 +1,20 @@
+import secrets
+from datetime import datetime, timedelta, timezone
+
 from fastapi import APIRouter, HTTPException, status
 from sqlmodel import select
 
+from ..config import settings
 from ..deps import SessionDep
-from ..models import User
-from ..schemas import LoginRequest, RefreshRequest, RegisterRequest, TokenPair
+from ..models import PasswordResetToken, User
+from ..schemas import (
+    ForgotPasswordRequest,
+    LoginRequest,
+    RefreshRequest,
+    RegisterRequest,
+    ResetPasswordRequest,
+    TokenPair,
+)
 from ..security import (
     create_access_token,
     create_refresh_token,
@@ -11,6 +22,7 @@ from ..security import (
     hash_password,
     verify_password,
 )
+from ..services.email import send_password_reset_email
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 
@@ -49,3 +61,45 @@ def refresh(data: RefreshRequest, session: SessionDep) -> TokenPair:
     if user_id is None or session.get(User, user_id) is None:
         raise HTTPException(status.HTTP_401_UNAUTHORIZED, detail="INVALID_TOKEN")
     return _token_pair(user_id)
+
+
+@router.post("/forgot-password", status_code=status.HTTP_202_ACCEPTED)
+def forgot_password(data: ForgotPasswordRequest, session: SessionDep) -> dict:
+    """Gera um token de redefinicao e envia por e-mail (stub no dev). Responde sempre
+    202, mesmo se o e-mail nao existir, para nao revelar quem tem conta."""
+    user = session.exec(select(User).where(User.email == data.email.lower())).first()
+    if user is not None:
+        token = secrets.token_urlsafe(32)
+        expires_at = datetime.now(timezone.utc) + timedelta(
+            minutes=settings.password_reset_minutes
+        )
+        session.add(
+            PasswordResetToken(user_id=user.id, token=token, expires_at=expires_at)
+        )
+        session.commit()
+        send_password_reset_email(user.email, token)
+    return {"status": "ok"}
+
+
+@router.post("/reset-password", status_code=status.HTTP_204_NO_CONTENT)
+def reset_password(data: ResetPasswordRequest, session: SessionDep) -> None:
+    reset = session.exec(
+        select(PasswordResetToken).where(PasswordResetToken.token == data.token)
+    ).first()
+    if reset is None or reset.used:
+        raise HTTPException(status.HTTP_400_BAD_REQUEST, detail="INVALID_TOKEN")
+    # datetime do SQLite volta sem fuso; tratamos como UTC para comparar.
+    expires_at = reset.expires_at
+    if expires_at.tzinfo is None:
+        expires_at = expires_at.replace(tzinfo=timezone.utc)
+    if expires_at < datetime.now(timezone.utc):
+        raise HTTPException(status.HTTP_400_BAD_REQUEST, detail="TOKEN_EXPIRED")
+
+    user = session.get(User, reset.user_id)
+    if user is None:
+        raise HTTPException(status.HTTP_400_BAD_REQUEST, detail="INVALID_TOKEN")
+    user.password_hash = hash_password(data.new_password)
+    reset.used = True
+    session.add(user)
+    session.add(reset)
+    session.commit()

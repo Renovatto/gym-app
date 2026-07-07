@@ -6,7 +6,9 @@ const ERROR_MESSAGES: Record<string, () => string> = {
 	INVALID_CREDENTIALS: () => m.error_invalid_credentials(),
 	NETWORK_ERROR: () => m.error_network(),
 	PASSWORD_TOO_SHORT: () => m.error_password_short(),
-	WRONG_PASSWORD: () => m.error_wrong_password()
+	WRONG_PASSWORD: () => m.error_wrong_password(),
+	INVALID_TOKEN: () => m.error_invalid_token(),
+	TOKEN_EXPIRED: () => m.error_token_expired()
 };
 
 export function errorMessage(code: string): string {

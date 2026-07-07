@@ -8,6 +8,10 @@ class Settings(BaseSettings):
     access_token_minutes: int = 30
     refresh_token_days: int = 30
     database_url: str = f"sqlite:///{Path(__file__).resolve().parent.parent / 'gymapp.db'}"
+    # URL base do frontend, usada em links de e-mail (ex.: redefinir senha).
+    frontend_url: str = "http://localhost:5175"
+    # Validade do token de redefinicao de senha, em minutos.
+    password_reset_minutes: int = 30
     # Portas do vite em dev (5173+ conforme disponibilidade) e do Capacitor futuro.
     cors_origins: list[str] = [
         f"http://{host}:{port}"

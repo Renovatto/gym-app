@@ -12,7 +12,7 @@
 
 	initTheme();
 
-	const PUBLIC_ROUTES = ['/login', '/registro'];
+	const PUBLIC_ROUTES = ['/login', '/registro', '/recuperar-senha', '/redefinir-senha'];
 	const isPublic = $derived(PUBLIC_ROUTES.includes(page.url.pathname));
 
 	// Telas de foco (sub-rotas de treino/dieta): escondem a barra de abas

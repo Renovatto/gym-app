@@ -451,6 +451,14 @@ export const api = {
 		}),
 	login: (email: string, password: string) =>
 		request<TokenPair>('/auth/login', { method: 'POST', body: { email, password }, auth: false }),
+	forgotPassword: (email: string) =>
+		request<unknown>('/auth/forgot-password', { method: 'POST', body: { email }, auth: false }),
+	resetPassword: (token: string, newPassword: string) =>
+		request<void>('/auth/reset-password', {
+			method: 'POST',
+			body: { token, new_password: newPassword },
+			auth: false
+		}),
 	me: () => request<UserOut>('/me'),
 	updateLocale: (locale: string) =>
 		request<UserOut>('/me/locale', { method: 'PUT', body: { locale } }),

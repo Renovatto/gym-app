@@ -215,6 +215,15 @@ class EmailChange(BaseModel):
     current_password: str | None = None  # opcional: a troca de e-mail nao exige senha
 
 
+class ForgotPasswordRequest(BaseModel):
+    email: EmailStr
+
+
+class ResetPasswordRequest(BaseModel):
+    token: str
+    new_password: str = Field(min_length=8, max_length=128)
+
+
 # --- Treino ---------------------------------------------------------------
 
 

@@ -60,7 +60,10 @@
 		</button>
 	</form>
 
-	<a href="/registro" class="mt-6 block text-center font-semibold text-emerald-700">
+	<a href="/recuperar-senha" class="mt-4 block text-center text-sm font-semibold text-slate-500">
+		{m.forgot_password_link()}
+	</a>
+	<a href="/registro" class="mt-4 block text-center font-semibold text-emerald-700">
 		{m.no_account()}
 	</a>
 </div>
