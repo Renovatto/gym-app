@@ -552,6 +552,8 @@ export const api = {
 		request<Recipe>(`/me/recipes/${id}`, { method: 'PUT', body: recipe }),
 	deleteRecipe: (id: number) => request<void>(`/me/recipes/${id}`, { method: 'DELETE' }),
 	getDiary: (day: string) => request<DiaryDay>(`/me/diary?day=${day}`),
+	getDiaryLoggedDays: (start: string, end: string) =>
+		request<string[]>(`/me/diary/logged-days?start=${start}&end=${end}`),
 	addDiaryEntry: (entry: DiaryEntryInput) =>
 		request<DiaryEntry>('/me/diary', { method: 'POST', body: entry }),
 	updateDiaryEntry: (id: number, quantity: number) =>

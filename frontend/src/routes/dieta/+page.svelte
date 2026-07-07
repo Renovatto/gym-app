@@ -2,6 +2,7 @@
 	import { api, localDay, type DiaryDay, type DiaryEntry, type MealType } from '$lib/api';
 	import MacroSummary from '$lib/components/MacroSummary.svelte';
 	import Stepper from '$lib/components/Stepper.svelte';
+	import CalendarModal from '$lib/components/CalendarModal.svelte';
 	import { showToast } from '$lib/toast.svelte';
 	import { MEAL_TYPES, mealTypeLabel } from '$lib/labels';
 	import { m } from '$lib/paraglide/messages';
@@ -10,6 +11,21 @@
 	let diary = $state<DiaryDay | null>(null);
 	let loading = $state(true);
 	let day = $state(localDay());
+
+	// calendario: dias com lancamentos ficam marcados
+	let showCalendar = $state(false);
+	let loggedDays = $state<Set<string>>(new Set());
+
+	function pad2(n: number): string {
+		return String(n).padStart(2, '0');
+	}
+
+	async function loadMonthMarks(year: number, month: number): Promise<void> {
+		const start = `${year}-${pad2(month)}-01`;
+		const end = `${year}-${pad2(month)}-${new Date(year, month, 0).getDate()}`;
+		const days = await api.getDiaryLoggedDays(start, end);
+		loggedDays = new Set(days);
+	}
 
 	// edição de um lançamento existente
 	let editing = $state<DiaryEntry | null>(null);
@@ -113,7 +129,14 @@
 		>
 			<svg viewBox="0 0 24 24" class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 6l-6 6 6 6" stroke-linecap="round" stroke-linejoin="round" /></svg>
 		</button>
-		<span class="min-w-24 text-center text-sm font-semibold text-slate-600">{dayLabel}</span>
+		<button
+			type="button"
+			onclick={() => (showCalendar = true)}
+			class="flex min-w-24 items-center justify-center gap-1.5 rounded-full bg-white px-3 py-1.5 text-sm font-semibold text-slate-600 shadow-sm active:bg-slate-100"
+		>
+			<svg viewBox="0 0 24 24" class="h-4 w-4 text-slate-400" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="17" rx="2" /><path d="M3 9h18M8 2v4M16 2v4" stroke-linecap="round" /></svg>
+			{dayLabel}
+		</button>
 		<button
 			type="button"
 			aria-label={m.next_day()}
@@ -274,4 +297,16 @@
 			{/if}
 		</div>
 	</div>
+{/if}
+
+<!-- Calendario: navegar dias; dias com lancamento ficam marcados -->
+{#if showCalendar}
+	<CalendarModal
+		value={day}
+		marked={loggedDays}
+		max={today}
+		onmonth={loadMonthMarks}
+		onselect={(d) => (day = d)}
+		onclose={() => (showCalendar = false)}
+	/>
 {/if}

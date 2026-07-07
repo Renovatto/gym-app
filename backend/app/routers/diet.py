@@ -232,6 +232,23 @@ def _entry_out(entry: DiaryEntry) -> DiaryEntryOut:
     )
 
 
+@router.get("/me/diary/logged-days", response_model=list[date])
+def diary_logged_days(
+    user: CurrentUser,
+    session: SessionDep,
+    start: date = Query(..., description="Inicio do intervalo (inclusive)"),
+    end: date = Query(..., description="Fim do intervalo (inclusive)"),
+) -> list[date]:
+    """Dias com pelo menos um lancamento no intervalo (para marcar no calendario)."""
+    rows = session.exec(
+        select(DiaryEntry.entry_date)
+        .where(DiaryEntry.user_id == user.id)
+        .where(DiaryEntry.entry_date >= start)
+        .where(DiaryEntry.entry_date <= end)
+    ).all()
+    return sorted(set(rows))
+
+
 @router.get("/me/diary", response_model=DiaryDayOut)
 def get_diary(
     user: CurrentUser,

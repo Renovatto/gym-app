@@ -7,10 +7,12 @@
 		type SessionSummary,
 		type WorkoutSession
 	} from '$lib/api';
+	import CalendarModal from '$lib/components/CalendarModal.svelte';
 	import { showToast } from '$lib/toast.svelte';
 	import { m } from '$lib/paraglide/messages';
 	import { getLocale } from '$lib/paraglide/runtime';
 
+	let showCalendar = $state(false);
 	let routines = $state<Routine[]>([]);
 	let sessions = $state<SessionSummary[]>([]);
 	let activeSession = $state<WorkoutSession | null>(null);
@@ -83,17 +85,41 @@
 	});
 
 	const finishedSessions = $derived(sessions.filter((s) => s.finished_at));
+
+	// dias com treino concluido, marcados no calendario (visualizacao do historico)
+	const trainedDays = $derived(new Set(finishedSessions.map((s) => s.started_at.slice(0, 10))));
 </script>
 
-<div class="mb-6 flex items-center justify-between">
+<div class="mb-6 flex items-center justify-between gap-2">
 	<h1 class="text-2xl font-bold">{m.tab_workout()}</h1>
-	<a
-		href="/treino/catalogo"
-		class="rounded-full bg-white px-4 py-2 text-sm font-semibold text-emerald-700 shadow-sm"
-	>
-		{m.exercise_catalog()}
-	</a>
+	<div class="flex items-center gap-2">
+		<button
+			type="button"
+			aria-label={m.workout_calendar()}
+			title={m.workout_calendar()}
+			onclick={() => (showCalendar = true)}
+			class="grid h-9 w-9 place-items-center rounded-full bg-white text-slate-500 shadow-sm active:bg-slate-100"
+		>
+			<svg viewBox="0 0 24 24" class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="17" rx="2" /><path d="M3 9h18M8 2v4M16 2v4" stroke-linecap="round" /></svg>
+		</button>
+		<a
+			href="/treino/catalogo"
+			class="rounded-full bg-white px-4 py-2 text-sm font-semibold text-emerald-700 shadow-sm"
+		>
+			{m.exercise_catalog()}
+		</a>
+	</div>
 </div>
+
+{#if showCalendar}
+	<CalendarModal
+		value={localDay()}
+		marked={trainedDays}
+		max={localDay()}
+		onselect={() => {}}
+		onclose={() => (showCalendar = false)}
+	/>
+{/if}
 
 {#snippet templatePicker()}
 	<section class="rounded-3xl bg-white p-6 shadow-sm">
