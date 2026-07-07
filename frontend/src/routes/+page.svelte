@@ -66,7 +66,7 @@
 
 <!-- Lembrete de pesagem (com orientacao de melhor hora) -->
 {#if showWeighReminder}
-	<a href="/progresso" class="mb-3 flex items-start gap-3 rounded-3xl bg-sky-50 p-4 active:bg-sky-100">
+	<a href="/progresso?novo=1" class="mb-3 flex items-start gap-3 rounded-3xl bg-sky-50 p-4 active:bg-sky-100">
 		<span class="grid h-10 w-10 shrink-0 place-items-center rounded-2xl bg-sky-100 text-sky-600">
 			<svg viewBox="0 0 24 24" class="h-6 w-6" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3a9 9 0 100 18 9 9 0 000-18zM12 8v4l3 2" stroke-linecap="round" stroke-linejoin="round" /></svg>
 		</span>

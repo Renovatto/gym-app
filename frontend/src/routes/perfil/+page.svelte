@@ -142,6 +142,9 @@
 	<svg viewBox="0 0 24 24" class="h-5 w-5 text-slate-300" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 6l6 6-6 6" stroke-linecap="round" stroke-linejoin="round" /></svg>
 </a>
 
+<p class="mt-6 mb-2 px-1 text-xs font-bold tracking-wide text-slate-400 uppercase">
+	{m.section_my_data()}
+</p>
 <section class="space-y-6 rounded-3xl bg-white p-5 shadow-sm">
 	<div>
 		<p class="mb-3 font-semibold text-slate-600">{m.height()}</p>
@@ -211,98 +214,109 @@
 	</button>
 </section>
 
-<section class="mt-4 rounded-3xl bg-white p-5 shadow-sm">
-	<p class="mb-3 font-semibold text-slate-600">{m.language()}</p>
-	<ChoiceChips
-		columns={3}
-		bind:value={language}
-		onselect={changeLanguage}
-		options={[
-			{ value: 'pt-br', label: 'Português' },
-			{ value: 'en', label: 'English' },
-			{ value: 'es', label: 'Español' }
-		]}
-	/>
-</section>
-
-<section class="mt-4 rounded-3xl bg-white p-5 shadow-sm">
-	<p class="mb-3 font-semibold text-slate-600">{m.theme_label()}</p>
-	<ChoiceChips
-		columns={3}
-		value={theme.pref}
-		onselect={(v: ThemePref) => setTheme(v)}
-		options={[
-			{ value: 'light', label: m.theme_light() },
-			{ value: 'dark', label: m.theme_dark() },
-			{ value: 'system', label: m.theme_system() }
-		]}
-	/>
-</section>
-
-<section class="mt-4 rounded-3xl bg-white p-5 shadow-sm">
-	<p class="mb-3 font-semibold text-slate-600">{m.email_label()}</p>
-	<div class="space-y-3">
-		<input
-			type="email"
-			bind:value={newEmail}
-			placeholder={m.new_email()}
-			autocomplete="email"
-			class="h-12 w-full rounded-2xl border-2 border-slate-200 bg-white px-4 outline-none focus:border-emerald-600"
+<p class="mt-6 mb-2 px-1 text-xs font-bold tracking-wide text-slate-400 uppercase">
+	{m.section_preferences()}
+</p>
+<section class="space-y-5 rounded-3xl bg-white p-5 shadow-sm">
+	<div>
+		<p class="mb-3 font-semibold text-slate-600">{m.language()}</p>
+		<ChoiceChips
+			columns={3}
+			bind:value={language}
+			onselect={changeLanguage}
+			options={[
+				{ value: 'pt-br', label: 'Português' },
+				{ value: 'en', label: 'English' },
+				{ value: 'es', label: 'Español' }
+			]}
 		/>
-		<input
-			type="password"
-			bind:value={emailPassword}
-			placeholder={m.current_password()}
-			autocomplete="current-password"
-			class="h-12 w-full rounded-2xl border-2 border-slate-200 bg-white px-4 outline-none focus:border-emerald-600"
+	</div>
+	<div class="border-t border-slate-100 pt-5">
+		<p class="mb-3 font-semibold text-slate-600">{m.theme_label()}</p>
+		<ChoiceChips
+			columns={3}
+			value={theme.pref}
+			onselect={(v: ThemePref) => setTheme(v)}
+			options={[
+				{ value: 'light', label: m.theme_light() },
+				{ value: 'dark', label: m.theme_dark() },
+				{ value: 'system', label: m.theme_system() }
+			]}
 		/>
-		{#if emailError}
-			<p class="rounded-xl bg-red-50 px-4 py-3 text-sm font-medium text-red-700">{emailError}</p>
-		{/if}
-		<button
-			type="button"
-			disabled={emailBusy || !newEmail || !emailPassword}
-			onclick={changeEmail}
-			class="h-12 w-full rounded-2xl border-2 border-slate-200 font-semibold text-slate-700 active:bg-slate-100 disabled:opacity-40"
-		>
-			{m.change_email()}
-		</button>
 	</div>
 </section>
 
-<section class="mt-4 rounded-3xl bg-white p-5 shadow-sm">
-	<p class="mb-3 font-semibold text-slate-600">{m.security_label()}</p>
-	<div class="space-y-3">
-		<input
-			type="password"
-			bind:value={currentPassword}
-			placeholder={m.current_password()}
-			autocomplete="current-password"
-			class="h-12 w-full rounded-2xl border-2 border-slate-200 bg-white px-4 outline-none focus:border-emerald-600"
-		/>
-		<input
-			type="password"
-			bind:value={newPassword}
-			placeholder={m.new_password()}
-			autocomplete="new-password"
-			class="h-12 w-full rounded-2xl border-2 border-slate-200 bg-white px-4 outline-none focus:border-emerald-600"
-		/>
-		{#if passwordError}
-			<p class="rounded-xl bg-red-50 px-4 py-3 text-sm font-medium text-red-700">{passwordError}</p>
-		{/if}
-		<button
-			type="button"
-			disabled={passwordBusy || !currentPassword || !newPassword}
-			onclick={changePassword}
-			class="h-12 w-full rounded-2xl border-2 border-slate-200 font-semibold text-slate-700 active:bg-slate-100 disabled:opacity-40"
-		>
-			{m.change_password()}
-		</button>
+<p class="mt-6 mb-2 px-1 text-xs font-bold tracking-wide text-slate-400 uppercase">
+	{m.section_account()}
+</p>
+<section class="space-y-5 rounded-3xl bg-white p-5 shadow-sm">
+	<div>
+		<p class="mb-3 font-semibold text-slate-600">{m.change_email()}</p>
+		<div class="space-y-3">
+			<input
+				type="email"
+				bind:value={newEmail}
+				placeholder={m.new_email()}
+				autocomplete="email"
+				class="h-12 w-full rounded-2xl border-2 border-slate-200 bg-white px-4 outline-none focus:border-emerald-600"
+			/>
+			<input
+				type="password"
+				bind:value={emailPassword}
+				placeholder={m.current_password()}
+				autocomplete="current-password"
+				class="h-12 w-full rounded-2xl border-2 border-slate-200 bg-white px-4 outline-none focus:border-emerald-600"
+			/>
+			{#if emailError}
+				<p class="rounded-xl bg-red-50 px-4 py-3 text-sm font-medium text-red-700">{emailError}</p>
+			{/if}
+			<button
+				type="button"
+				disabled={emailBusy || !newEmail || !emailPassword}
+				onclick={changeEmail}
+				class="h-12 w-full rounded-2xl border-2 border-slate-200 font-semibold text-slate-700 active:bg-slate-100 disabled:opacity-40"
+			>
+				{m.change_email()}
+			</button>
+		</div>
+	</div>
+
+	<div class="border-t border-slate-100 pt-5">
+		<p class="mb-3 font-semibold text-slate-600">{m.change_password()}</p>
+		<div class="space-y-3">
+			<input
+				type="password"
+				bind:value={currentPassword}
+				placeholder={m.current_password()}
+				autocomplete="current-password"
+				class="h-12 w-full rounded-2xl border-2 border-slate-200 bg-white px-4 outline-none focus:border-emerald-600"
+			/>
+			<input
+				type="password"
+				bind:value={newPassword}
+				placeholder={m.new_password()}
+				autocomplete="new-password"
+				class="h-12 w-full rounded-2xl border-2 border-slate-200 bg-white px-4 outline-none focus:border-emerald-600"
+			/>
+			{#if passwordError}
+				<p class="rounded-xl bg-red-50 px-4 py-3 text-sm font-medium text-red-700">{passwordError}</p>
+			{/if}
+			<button
+				type="button"
+				disabled={passwordBusy || !currentPassword || !newPassword}
+				onclick={changePassword}
+				class="h-12 w-full rounded-2xl border-2 border-slate-200 font-semibold text-slate-700 active:bg-slate-100 disabled:opacity-40"
+			>
+				{m.change_password()}
+			</button>
+		</div>
 	</div>
 </section>
 
-<section class="mt-4 space-y-3 rounded-3xl bg-white p-5 shadow-sm">
-	<p class="font-semibold text-slate-600">{m.data_privacy()}</p>
+<p class="mt-6 mb-2 px-1 text-xs font-bold tracking-wide text-slate-400 uppercase">
+	{m.data_privacy()}
+</p>
+<section class="space-y-3 rounded-3xl bg-white p-5 shadow-sm">
 	<button
 		type="button"
 		onclick={exportData}

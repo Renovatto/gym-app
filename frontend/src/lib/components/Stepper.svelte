@@ -35,6 +35,14 @@
 		const parsed = Number(raw);
 		if (!Number.isNaN(parsed)) set(clamp(parsed));
 	}
+
+	// Enquanto digita, remove tudo que nao seja numero, virgula, ponto ou sinal.
+	// Bloqueia letras direto no campo (o teclado do celular ja e numerico via inputmode).
+	function stripNonNumeric(event: Event): void {
+		const input = event.currentTarget as HTMLInputElement;
+		const cleaned = input.value.replace(/[^0-9.,-]/g, '');
+		if (cleaned !== input.value) input.value = cleaned;
+	}
 </script>
 
 <div class="flex items-center gap-1.5">
@@ -49,6 +57,7 @@
 			inputmode="decimal"
 			class="w-full min-w-0 border-none bg-transparent text-center text-2xl font-bold text-slate-900 outline-none"
 			value={value.toFixed(decimals)}
+			oninput={stripNonNumeric}
 			onchange={onInput}
 		/>
 		{#if unit}<span class="shrink-0 text-xs text-slate-400">{unit}</span>{/if}

@@ -10,6 +10,8 @@
 	} from '$lib/api';
 	import Stepper from '$lib/components/Stepper.svelte';
 	import WeightChart from '$lib/components/WeightChart.svelte';
+	import { onMount } from 'svelte';
+	import { page } from '$app/state';
 	import { bootstrap, session } from '$lib/session.svelte';
 	import { m } from '$lib/paraglide/messages';
 	import { getLocale } from '$lib/paraglide/runtime';
@@ -101,6 +103,11 @@
 
 	$effect(() => {
 		load();
+	});
+
+	// Vindo do atalho "Pesar" da tela inicial (/progresso?novo=1): ja abre o formulario.
+	onMount(() => {
+		if (page.url.searchParams.get('novo')) adding = true;
 	});
 
 	const reversedLogs = $derived(history ? [...history.logs].reverse() : []);
@@ -290,7 +297,9 @@
 							<div class="flex items-center gap-1 rounded-2xl border-2 border-slate-200 bg-white px-3">
 								<input
 									inputmode="decimal"
-									bind:value={scaleValues[field.key]}
+									value={scaleValues[field.key] ?? ''}
+									oninput={(e) =>
+										(scaleValues[field.key] = e.currentTarget.value.replace(/[^0-9.,]/g, ''))}
 									placeholder="—"
 									class="h-11 w-full min-w-0 bg-transparent text-base outline-none"
 								/>
