@@ -271,8 +271,69 @@
 		</section>
 	{/if}
 
-	{#if adding}
-		<section class="mt-3 rounded-3xl bg-white p-6 shadow-sm">
+	<button
+		type="button"
+		onclick={() => (adding = true)}
+		class="mt-3 h-14 w-full rounded-2xl bg-emerald-600 text-lg font-bold text-white active:bg-emerald-700"
+	>
+		{m.register_weight()}
+	</button>
+
+	{#if reversedLogs.length > 0}
+		<section class="mt-3 overflow-hidden rounded-3xl bg-white shadow-sm">
+			{#each reversedLogs as log, i (log.id)}
+				<div
+					class="flex items-center justify-between px-5 py-3.5 {i > 0
+						? 'border-t border-slate-100'
+						: ''}"
+				>
+					<div>
+						<span class="font-bold text-slate-900">{nf.format(log.weight_kg)} kg</span>
+						{#if log.source === 'ble'}
+							<span class="ml-2 rounded bg-sky-50 px-1.5 py-0.5 text-xs font-semibold text-sky-600"
+								>Bluetooth</span
+							>
+						{/if}
+					</div>
+					<div class="flex items-center gap-3">
+						<span class="text-sm text-slate-400">{df.format(new Date(log.logged_at))}</span>
+						<button
+							type="button"
+							aria-label={m.delete_account()}
+							onclick={() => remove(log.id)}
+							class="text-slate-300 active:text-red-500"
+						>
+							<svg viewBox="0 0 24 24" class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="2">
+								<path d="M4 7h16M9 7V5h6v2M6 7l1 13h10l1-13" stroke-linecap="round" stroke-linejoin="round" />
+							</svg>
+						</button>
+					</div>
+				</div>
+			{/each}
+		</section>
+	{/if}
+{:else}
+	<div class="flex justify-center py-16">
+		<div class="h-8 w-8 animate-spin rounded-full border-4 border-emerald-600 border-t-transparent"></div>
+	</div>
+{/if}
+
+<!-- Modal de registro de pesagem -->
+{#if adding}
+	<div
+		class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
+		role="button"
+		tabindex="-1"
+		onclick={() => (adding = false)}
+		onkeydown={(e) => e.key === 'Escape' && (adding = false)}
+	>
+		<div
+			class="max-h-[90dvh] w-full max-w-md overflow-y-auto rounded-3xl bg-white p-6"
+			role="dialog"
+			tabindex="-1"
+			onclick={(e) => e.stopPropagation()}
+			onkeydown={() => {}}
+		>
 			<p class="mb-3 font-semibold text-slate-600">{m.new_weight()}</p>
 			<Stepper bind:value={newWeight} min={30} max={300} step={0.1} decimals={1} unit="kg" />
 
@@ -327,52 +388,6 @@
 					{m.save()}
 				</button>
 			</div>
-		</section>
-	{:else}
-		<button
-			type="button"
-			onclick={() => (adding = true)}
-			class="mt-3 h-14 w-full rounded-2xl bg-emerald-600 text-lg font-bold text-white active:bg-emerald-700"
-		>
-			{m.register_weight()}
-		</button>
-	{/if}
-
-	{#if reversedLogs.length > 0}
-		<section class="mt-3 overflow-hidden rounded-3xl bg-white shadow-sm">
-			{#each reversedLogs as log, i (log.id)}
-				<div
-					class="flex items-center justify-between px-5 py-3.5 {i > 0
-						? 'border-t border-slate-100'
-						: ''}"
-				>
-					<div>
-						<span class="font-bold text-slate-900">{nf.format(log.weight_kg)} kg</span>
-						{#if log.source === 'ble'}
-							<span class="ml-2 rounded bg-sky-50 px-1.5 py-0.5 text-xs font-semibold text-sky-600"
-								>Bluetooth</span
-							>
-						{/if}
-					</div>
-					<div class="flex items-center gap-3">
-						<span class="text-sm text-slate-400">{df.format(new Date(log.logged_at))}</span>
-						<button
-							type="button"
-							aria-label={m.delete_account()}
-							onclick={() => remove(log.id)}
-							class="text-slate-300 active:text-red-500"
-						>
-							<svg viewBox="0 0 24 24" class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="2">
-								<path d="M4 7h16M9 7V5h6v2M6 7l1 13h10l1-13" stroke-linecap="round" stroke-linejoin="round" />
-							</svg>
-						</button>
-					</div>
-				</div>
-			{/each}
-		</section>
-	{/if}
-{:else}
-	<div class="flex justify-center py-16">
-		<div class="h-8 w-8 animate-spin rounded-full border-4 border-emerald-600 border-t-transparent"></div>
+		</div>
 	</div>
 {/if}

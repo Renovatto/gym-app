@@ -64,7 +64,9 @@ def change_password(data: PasswordChange, user: CurrentUser, session: SessionDep
 
 @router.put("/email", response_model=UserOut)
 def change_email(data: EmailChange, user: CurrentUser, session: SessionDep) -> UserOut:
-    if not verify_password(data.current_password, user.password_hash):
+    # A troca de e-mail nao pede senha (o usuario ja esta autenticado por JWT). Se uma
+    # senha for enviada, ela e verificada; caso contrario, seguimos direto.
+    if data.current_password and not verify_password(data.current_password, user.password_hash):
         raise HTTPException(status.HTTP_400_BAD_REQUEST, detail="WRONG_PASSWORD")
     new_email = data.new_email.lower()
     if new_email != user.email:

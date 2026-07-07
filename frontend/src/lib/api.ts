@@ -439,11 +439,8 @@ export const api = {
 			method: 'PUT',
 			body: { current_password: currentPassword, new_password: newPassword }
 		}),
-	changeEmail: (newEmail: string, currentPassword: string) =>
-		request<UserOut>('/me/email', {
-			method: 'PUT',
-			body: { new_email: newEmail, current_password: currentPassword }
-		}),
+	changeEmail: (newEmail: string) =>
+		request<UserOut>('/me/email', { method: 'PUT', body: { new_email: newEmail } }),
 	getProfile: () => request<ProfileData>('/me/profile'),
 	saveProfile: (profile: Omit<ProfileData, 'weight_kg'> & { weight_kg: number }) =>
 		request<ProfileData>('/me/profile', { method: 'PUT', body: profile }),

@@ -191,7 +191,7 @@ class PasswordChange(BaseModel):
 
 class EmailChange(BaseModel):
     new_email: EmailStr
-    current_password: str
+    current_password: str | None = None  # opcional: a troca de e-mail nao exige senha
 
 
 # --- Treino ---------------------------------------------------------------
