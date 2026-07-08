@@ -17,7 +17,9 @@
 	let diary = $state<DiaryDay | null>(null);
 	let activeSession = $state<WorkoutSession | null>(null);
 	let coach = $state<CoachResult | null>(null);
-	let showBmiInfo = $state(false);
+	// Modal de info: mesmo componente para IMC (detalhado, com tabela) e TDEE/BMR
+	// (rapido, 1-2 frases) - consistencia de interacao entre os 3 cards.
+	let infoModal = $state<'bmi' | 'tdee' | 'bmr' | null>(null);
 
 	const dietOn = $derived(session.profile?.diet_enabled ?? false);
 
@@ -50,6 +52,14 @@
 			: bmiInfo?.tone === 'warn'
 				? 'bg-amber-50 text-amber-800'
 				: 'bg-red-50 text-red-700'
+	);
+	// Borda sutil (tom 200, nao saturado) no card do IMC, na mesma cor do selo.
+	const bmiBorderClass = $derived(
+		bmiInfo?.tone === 'good'
+			? 'border-emerald-200'
+			: bmiInfo?.tone === 'warn'
+				? 'border-amber-200'
+				: 'border-red-200'
 	);
 
 	// Texto traduzido de cada dica do coach (por codigo).
@@ -204,14 +214,14 @@
 		<svg viewBox="0 0 24 24" class="h-5 w-5 {activeSession ? 'text-emerald-200' : 'text-slate-300'}" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 6l6 6-6 6" stroke-linecap="round" stroke-linejoin="round" /></svg>
 	</a>
 
-	<section class="mt-3 rounded-3xl bg-white p-4 shadow-sm">
+	<section class="mt-3 rounded-3xl border-2 bg-white p-4 shadow-sm {bmiBorderClass}">
 		<div class="flex items-center justify-between">
 			<p class="text-xs font-semibold text-slate-500">{m.bmi()}</p>
 			<button
 				type="button"
 				aria-label={m.bmi_info_title()}
 				title={m.bmi_info_title()}
-				onclick={() => (showBmiInfo = true)}
+				onclick={() => (infoModal = 'bmi')}
 				class="grid h-6 w-6 place-items-center rounded-full bg-slate-100 text-xs font-black text-slate-500 active:bg-slate-200"
 			>
 				?
@@ -232,11 +242,33 @@
 
 	<section class="mt-3 grid grid-cols-2 gap-3">
 		<div class="rounded-3xl bg-white p-4 shadow-sm">
-			<p class="text-xs font-semibold text-slate-500">{m.tdee()}</p>
+			<div class="flex items-center justify-between">
+				<p class="text-xs font-semibold text-slate-500">{m.tdee()}</p>
+				<button
+					type="button"
+					aria-label={m.tdee_info_title()}
+					title={m.tdee_info_title()}
+					onclick={() => (infoModal = 'tdee')}
+					class="grid h-5 w-5 shrink-0 place-items-center rounded-full bg-slate-100 text-[10px] font-black text-slate-500 active:bg-slate-200"
+				>
+					?
+				</button>
+			</div>
 			<p class="mt-1 text-xl font-bold">{nf.format(goals.tdee_kcal)}</p>
 		</div>
 		<div class="rounded-3xl bg-white p-4 shadow-sm">
-			<p class="text-xs font-semibold text-slate-500">{m.bmr()}</p>
+			<div class="flex items-center justify-between">
+				<p class="text-xs font-semibold text-slate-500">{m.bmr()}</p>
+				<button
+					type="button"
+					aria-label={m.bmr_info_title()}
+					title={m.bmr_info_title()}
+					onclick={() => (infoModal = 'bmr')}
+					class="grid h-5 w-5 shrink-0 place-items-center rounded-full bg-slate-100 text-[10px] font-black text-slate-500 active:bg-slate-200"
+				>
+					?
+				</button>
+			</div>
 			<p class="mt-1 text-xl font-bold">{nf.format(goals.bmr_kcal)}</p>
 		</div>
 	</section>
@@ -246,14 +278,15 @@
 	</div>
 {/if}
 
-<!-- IMC: como e classificado (faixas da OMS) + aviso de que nao avalia composicao corporal -->
-{#if showBmiInfo}
+<!-- Info dos cards de metricas: IMC (detalhado, com tabela da OMS) e TDEE/BMR (rapido).
+     Os 3 compartilham o mesmo componente/interacao e terminam apontando para o Guia. -->
+{#if infoModal}
 	<div
 		class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
 		role="button"
 		tabindex="-1"
-		onclick={() => (showBmiInfo = false)}
-		onkeydown={(e) => e.key === 'Escape' && (showBmiInfo = false)}
+		onclick={() => (infoModal = null)}
+		onkeydown={(e) => e.key === 'Escape' && (infoModal = null)}
 	>
 		<div
 			class="w-full max-w-md rounded-3xl bg-white p-5"
@@ -263,47 +296,61 @@
 			onkeydown={() => {}}
 		>
 			<div class="flex items-center justify-between gap-2">
-				<h2 class="text-lg font-bold text-slate-900">{m.bmi_info_title()}</h2>
+				<h2 class="text-lg font-bold text-slate-900">
+					{infoModal === 'bmi' ? m.bmi_info_title() : infoModal === 'tdee' ? m.tdee_info_title() : m.bmr_info_title()}
+				</h2>
 				<button
 					type="button"
 					aria-label={m.close()}
-					onclick={() => (showBmiInfo = false)}
+					onclick={() => (infoModal = null)}
 					class="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-slate-100 text-slate-500 active:bg-slate-200"
 				>
 					<svg viewBox="0 0 24 24" class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 6l12 12M18 6L6 18" stroke-linecap="round" /></svg>
 				</button>
 			</div>
-			<p class="mt-1 font-mono text-sm text-slate-500">{m.bmi_info_formula()}</p>
 
-			<p class="mt-4 text-xs font-bold text-slate-400 uppercase">{m.bmi_info_table_title()}</p>
-			<div class="mt-2 overflow-hidden rounded-2xl border-2 border-slate-100">
-				{#each Object.entries(BMI_CATEGORIES) as [code, cat], i (code)}
-					<div
-						class="flex items-center justify-between gap-2 px-3 py-2.5 text-sm
-							{i > 0 ? 'border-t border-slate-100' : ''}
-							{goals?.bmi_category === code ? 'bg-slate-50' : ''}"
-					>
-						<span class="flex items-center gap-2 font-semibold text-slate-700">
-							<span
-								class="h-2.5 w-2.5 shrink-0 rounded-full
-									{cat.tone === 'good' ? 'bg-emerald-500' : cat.tone === 'warn' ? 'bg-amber-500' : 'bg-red-500'}"
-							></span>
-							{cat.label}
-						</span>
-						<span class="text-slate-400">{cat.range}</span>
-					</div>
-				{/each}
-			</div>
+			{#if infoModal === 'bmi'}
+				<p class="mt-1 font-mono text-sm text-slate-500">{m.bmi_info_formula()}</p>
 
-			<div class="mt-4 rounded-2xl bg-sky-50 p-4">
-				<p class="text-sm font-bold text-sky-900">{m.bmi_caveat_title()}</p>
-				<p class="mt-1 text-sm text-sky-800">{m.bmi_caveat_text()}</p>
-			</div>
+				<p class="mt-4 text-xs font-bold text-slate-400 uppercase">{m.bmi_info_table_title()}</p>
+				<div class="mt-2 overflow-hidden rounded-2xl border-2 border-slate-100">
+					{#each Object.entries(BMI_CATEGORIES) as [code, cat], i (code)}
+						<div
+							class="flex items-center justify-between gap-2 px-3 py-2.5 text-sm
+								{i > 0 ? 'border-t border-slate-100' : ''}
+								{goals?.bmi_category === code ? 'bg-slate-50' : ''}"
+						>
+							<span class="flex items-center gap-2 font-semibold text-slate-700">
+								<span
+									class="h-2.5 w-2.5 shrink-0 rounded-full
+										{cat.tone === 'good' ? 'bg-emerald-500' : cat.tone === 'warn' ? 'bg-amber-500' : 'bg-red-500'}"
+								></span>
+								{cat.label}
+							</span>
+							<span class="text-slate-400">{cat.range}</span>
+						</div>
+					{/each}
+				</div>
+
+				<div class="mt-4 rounded-2xl bg-sky-50 p-4">
+					<p class="text-sm font-bold text-sky-900">{m.bmi_caveat_title()}</p>
+					<p class="mt-1 text-sm text-sky-800">{m.bmi_caveat_text()}</p>
+				</div>
+			{:else}
+				<p class="mt-2 text-sm text-slate-600">
+					{infoModal === 'tdee' ? m.tdee_info_text() : m.bmr_info_text()}
+				</p>
+			{/if}
+
+			<p class="mt-4 text-center text-xs text-slate-400">
+				{m.guide_pointer_text()}
+				<a href="/guia" class="font-bold text-emerald-700">{m.guide_pointer_link()}</a>
+			</p>
 
 			<button
 				type="button"
-				onclick={() => (showBmiInfo = false)}
-				class="mt-4 h-12 w-full rounded-2xl bg-emerald-600 font-bold text-[#fff] active:bg-emerald-700"
+				onclick={() => (infoModal = null)}
+				class="mt-3 h-12 w-full rounded-2xl bg-emerald-600 font-bold text-[#fff] active:bg-emerald-700"
 			>
 				{m.close()}
 			</button>
