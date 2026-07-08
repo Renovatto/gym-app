@@ -11,6 +11,10 @@ function defaultApiUrl(): string {
 
 const API_URL: string = import.meta.env.VITE_API_URL ?? defaultApiUrl();
 
+// Aborta requests pendurados (API dormindo/caindo) para o app sempre dar retorno
+// em vez de travar. 60s cobre com folga o cold start do plano free do Render (~50s).
+const REQUEST_TIMEOUT_MS = 60000;
+
 const ACCESS_KEY = 'gymapp.access';
 const REFRESH_KEY = 'gymapp.refresh';
 
@@ -412,14 +416,21 @@ async function request<T>(
 	}
 
 	let response: Response;
+	// Timeout: aborta se a API nao responder a tempo (evita botao/tela travados).
+	const controller = new AbortController();
+	const timeout = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
 	try {
 		response = await fetch(`${API_URL}${path}`, {
 			method,
 			headers,
-			body: body === undefined ? undefined : JSON.stringify(body)
+			body: body === undefined ? undefined : JSON.stringify(body),
+			signal: controller.signal
 		});
 	} catch {
+		// Inclui o AbortError do timeout: para o usuario, e sempre "sem conexao".
 		throw new ApiError('NETWORK_ERROR', 0);
+	} finally {
+		clearTimeout(timeout);
 	}
 
 	if (response.status === 401 && auth && !retried) {

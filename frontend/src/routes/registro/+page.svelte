@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { goto } from '$app/navigation';
 	import { ApiError } from '$lib/api';
+	import Spinner from '$lib/components/Spinner.svelte';
 	import { signUp } from '$lib/session.svelte';
 	import { m } from '$lib/paraglide/messages';
 	import { getLocale } from '$lib/paraglide/runtime';
@@ -56,9 +57,9 @@
 		<button
 			type="submit"
 			disabled={busy}
-			class="h-14 w-full rounded-2xl bg-emerald-600 text-lg font-bold text-white active:bg-emerald-700 disabled:opacity-50"
+			class="flex h-14 w-full items-center justify-center gap-2 rounded-2xl bg-emerald-600 text-lg font-bold text-white active:bg-emerald-700 disabled:opacity-60"
 		>
-			{m.register()}
+			{#if busy}<Spinner /> {m.creating_account()}{:else}{m.register()}{/if}
 		</button>
 	</form>
 

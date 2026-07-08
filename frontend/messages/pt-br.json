@@ -7,6 +7,8 @@
 	"password_hint": "Senha (mínimo 8 caracteres)",
 	"login": "Entrar",
 	"register": "Criar conta",
+	"creating_account": "Criando conta…",
+	"signing_in": "Entrando…",
 	"create_account": "Criar sua conta",
 	"no_account": "Não tem conta? Cadastre-se",
 	"have_account": "Já tem conta? Entrar",
