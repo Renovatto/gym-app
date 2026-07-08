@@ -23,6 +23,7 @@ from ..schemas import (
     DiaryEntryUpdate,
     DietAdherenceOut,
     DiaryGapOut,
+    ExternalFoodOut,
     FoodIn,
     FoodOut,
     MacrosOut,
@@ -33,6 +34,7 @@ from ..schemas import (
     SubstitutesOut,
 )
 from ..services.coaching import diet_adherence
+from ..services.foodsearch import search_external
 from ..services.diet import (
     food_macros,
     localized_food_name,
@@ -140,6 +142,16 @@ def food_substitutes(
     if food is None:
         raise HTTPException(status.HTTP_404_NOT_FOUND, detail="FOOD_NOT_FOUND")
     return compute_substitutes(session, user, food, grams, limit)
+
+
+@router.get("/me/foods/search-external", response_model=list[ExternalFoodOut])
+def search_external_foods(
+    user: CurrentUser,
+    q: str = Query(..., min_length=2, max_length=80, description="Nome do produto"),
+    limit: int = Query(default=15, ge=1, le=30),
+) -> list[ExternalFoodOut]:
+    """Busca alimentos na base aberta (Open Food Facts) para importar ao catalogo."""
+    return search_external(q, limit)
 
 
 # --- Receitas -------------------------------------------------------------

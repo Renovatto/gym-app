@@ -425,6 +425,15 @@ export interface RoutinePeriodization {
 	due: boolean;
 }
 
+export interface ExternalFood {
+	name: string;
+	brand: string | null;
+	kcal: number;
+	protein_g: number;
+	carbs_g: number;
+	fat_g: number;
+}
+
 export interface FoodInput {
 	name: string;
 	category: FoodCategory;
@@ -655,6 +664,8 @@ export const api = {
 		request<DietAdherence>(`/me/diet/adherence?end=${end}&window=${window}`),
 	getTrainingPeriodization: (today: string) =>
 		request<RoutinePeriodization[]>(`/me/training/periodization?today=${today}`),
+	searchExternalFoods: (q: string, limit = 15) =>
+		request<ExternalFood[]>(`/me/foods/search-external?q=${encodeURIComponent(q)}&limit=${limit}`),
 	getDiaryLoggedDays: (start: string, end: string) =>
 		request<string[]>(`/me/diary/logged-days?start=${start}&end=${end}`),
 	addDiaryEntry: (entry: DiaryEntryInput) =>

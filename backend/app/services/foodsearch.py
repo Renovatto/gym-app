@@ -1,0 +1,61 @@
+"""Busca externa de alimentos (fase 5) via Open Food Facts - base aberta e gratuita.
+
+Retorna candidatos com macros por 100 g; o usuario revisa e salva no catalogo dele
+pelo fluxo normal de criar alimento. Falha de rede/timeout devolve lista vazia (o app
+nunca trava por causa disso)."""
+
+import httpx
+
+from ..schemas import ExternalFoodOut
+
+_OFF_URL = "https://world.openfoodfacts.org/api/v2/search"
+_TIMEOUT = 8.0
+# Open Food Facts pede um User-Agent identificavel nas chamadas de API.
+_HEADERS = {"User-Agent": "GymApp/0.1 (personal fitness app)"}
+
+
+def _num(value: object) -> float:
+    try:
+        return round(float(value), 1)
+    except (TypeError, ValueError):
+        return 0.0
+
+
+def search_external(query: str, limit: int = 15) -> list[ExternalFoodOut]:
+    term = query.strip()
+    if not term:
+        return []
+    params = {
+        "search_terms": term,
+        "fields": "product_name,brands,nutriments",
+        "page_size": limit,
+        "json": 1,
+    }
+    try:
+        resp = httpx.get(_OFF_URL, params=params, headers=_HEADERS, timeout=_TIMEOUT)
+        resp.raise_for_status()
+        products = resp.json().get("products", [])
+    except Exception:
+        # rede/timeout/parsing: devolve vazio, sem quebrar o app
+        return []
+
+    out: list[ExternalFoodOut] = []
+    for product in products:
+        name = (product.get("product_name") or "").strip()
+        nutriments = product.get("nutriments") or {}
+        kcal = nutriments.get("energy-kcal_100g")
+        # sem nome ou sem caloria por 100 g nao serve (dado incompleto)
+        if not name or kcal is None:
+            continue
+        brand = (product.get("brands") or "").split(",")[0].strip() or None
+        out.append(
+            ExternalFoodOut(
+                name=name,
+                brand=brand,
+                kcal=_num(kcal),
+                protein_g=_num(nutriments.get("proteins_100g")),
+                carbs_g=_num(nutriments.get("carbohydrates_100g")),
+                fat_g=_num(nutriments.get("fat_100g")),
+            )
+        )
+    return out

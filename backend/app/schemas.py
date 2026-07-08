@@ -510,3 +510,15 @@ class RoutinePeriodizationOut(BaseModel):
     name: str
     weeks_active: int
     due: bool  # passou da validade sugerida (mesociclo) -> hora de variar
+
+
+# --- Busca externa de alimentos (fase 5) ----------------------------------
+
+
+class ExternalFoodOut(BaseModel):
+    name: str
+    brand: str | None
+    kcal: float  # valores por 100 g
+    protein_g: float
+    carbs_g: float
+    fat_g: float

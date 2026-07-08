@@ -1,8 +1,9 @@
 <script lang="ts">
 	import { goto } from '$app/navigation';
-	import { api, type FoodCategory } from '$lib/api';
+	import { api, type ExternalFood, type FoodCategory } from '$lib/api';
 	import ChoiceChips from '$lib/components/ChoiceChips.svelte';
 	import Stepper from '$lib/components/Stepper.svelte';
+	import Spinner from '$lib/components/Spinner.svelte';
 	import { showToast } from '$lib/toast.svelte';
 	import { m } from '$lib/paraglide/messages';
 
@@ -14,6 +15,35 @@
 	let fat = $state(0);
 	let portion = $state(100);
 	let busy = $state(false);
+
+	// Busca externa (Open Food Facts): preenche os campos com dados reais do produto.
+	let extQuery = $state('');
+	let extResults = $state<ExternalFood[]>([]);
+	let extSearching = $state(false);
+	let extSearched = $state(false);
+
+	async function searchExternal(): Promise<void> {
+		if (extQuery.trim().length < 2) return;
+		extSearching = true;
+		try {
+			extResults = await api.searchExternalFoods(extQuery.trim());
+			extSearched = true;
+		} finally {
+			extSearching = false;
+		}
+	}
+
+	function pickExternal(food: ExternalFood): void {
+		name = food.brand ? `${food.name} (${food.brand})` : food.name;
+		kcal = Math.round(food.kcal);
+		protein = Math.round(food.protein_g * 10) / 10;
+		carbs = Math.round(food.carbs_g * 10) / 10;
+		fat = Math.round(food.fat_g * 10) / 10;
+		extResults = [];
+		extSearched = false;
+		extQuery = '';
+		showToast(m.ext_search_filled());
+	}
 
 	const canSave = $derived(name.trim().length > 0);
 
@@ -57,6 +87,49 @@
 	placeholder={m.food_name_placeholder()}
 	class="h-14 w-full rounded-2xl border-2 border-slate-200 bg-white px-4 text-base font-semibold outline-none focus:border-emerald-600"
 />
+
+<div class="mt-3 rounded-2xl bg-white p-4 shadow-sm">
+	<p class="mb-2 text-sm font-semibold text-slate-600">{m.ext_search_title()}</p>
+	<div class="flex gap-2">
+		<input
+			bind:value={extQuery}
+			onkeydown={(e) => e.key === 'Enter' && searchExternal()}
+			placeholder={m.food_name_placeholder()}
+			class="h-11 min-w-0 flex-1 rounded-2xl border-2 border-slate-200 bg-white px-3 text-sm outline-none focus:border-emerald-600"
+		/>
+		<button
+			type="button"
+			disabled={extSearching || extQuery.trim().length < 2}
+			onclick={searchExternal}
+			class="flex h-11 shrink-0 items-center gap-2 rounded-2xl bg-emerald-600 px-4 text-sm font-bold text-white active:bg-emerald-700 disabled:opacity-50"
+		>
+			{#if extSearching}<Spinner class="h-4 w-4" />{/if}
+			{m.ext_search_action()}
+		</button>
+	</div>
+	{#if extResults.length > 0}
+		<div class="mt-2 space-y-1.5">
+			{#each extResults as f, i (f.name + (f.brand ?? '') + i)}
+				<button
+					type="button"
+					onclick={() => pickExternal(f)}
+					class="flex w-full items-center gap-2 rounded-xl bg-slate-50 px-3 py-2 text-left active:bg-slate-100"
+				>
+					<div class="min-w-0 flex-1">
+						<p class="truncate text-sm font-semibold text-slate-800">{f.name}{f.brand ? ` · ${f.brand}` : ''}</p>
+						<p class="text-xs text-slate-500">
+							{Math.round(f.kcal)} kcal · {f.protein_g}p {f.carbs_g}c {f.fat_g}f · 100 g
+						</p>
+					</div>
+					<svg viewBox="0 0 24 24" class="h-4 w-4 shrink-0 text-emerald-500" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14" stroke-linecap="round" /></svg>
+				</button>
+			{/each}
+		</div>
+	{:else if extSearched && !extSearching}
+		<p class="mt-2 text-xs text-slate-400">{m.ext_search_empty()}</p>
+	{/if}
+	<p class="mt-2 text-[11px] text-slate-400">{m.ext_search_hint()}</p>
+</div>
 
 <div class="mt-3 rounded-2xl bg-white p-4 shadow-sm">
 	<p class="mb-2 text-sm font-semibold text-slate-600">{m.category_label()}</p>
