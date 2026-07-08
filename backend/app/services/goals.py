@@ -55,6 +55,31 @@ KCAL_PER_G_CARB = 4
 KCAL_PER_G_FAT = 9
 
 
+# Faixas de IMC (BMI) da classificacao da OMS (Organizacao Mundial da Saude).
+# Cada valor e o limite SUPERIOR (exclusivo) da faixa correspondente.
+BMI_UNDERWEIGHT_MAX = 18.5
+BMI_NORMAL_MAX = 25.0
+BMI_OVERWEIGHT_MAX = 30.0
+BMI_OBESE_1_MAX = 35.0
+BMI_OBESE_2_MAX = 40.0
+
+
+def bmi_category(bmi: float) -> str:
+    """Classifica o IMC pelas faixas da OMS. O codigo retornado e traduzido e
+    ilustrado (cor/mensagem) no frontend; aqui fica so a fonte unica da classificacao."""
+    if bmi < BMI_UNDERWEIGHT_MAX:
+        return "underweight"
+    if bmi < BMI_NORMAL_MAX:
+        return "normal"
+    if bmi < BMI_OVERWEIGHT_MAX:
+        return "overweight"
+    if bmi < BMI_OBESE_1_MAX:
+        return "obese_1"
+    if bmi < BMI_OBESE_2_MAX:
+        return "obese_2"
+    return "obese_3"
+
+
 def water_goal_ml(weight_kg: float) -> int:
     return round(weight_kg * WATER_ML_PER_KG)
 
@@ -120,9 +145,11 @@ def compute_goals(profile: Profile, weight_kg: float) -> GoalsOut:
     carbs_g = max(carbs_kcal, 0) / KCAL_PER_G_CARB
 
     height_m = profile.height_cm / 100
+    bmi = round(weight_kg / (height_m * height_m), 1)
     return GoalsOut(
         age=age,
-        bmi=round(weight_kg / (height_m * height_m), 1),
+        bmi=bmi,
+        bmi_category=bmi_category(bmi),
         bmr_kcal=round(bmr),
         tdee_kcal=round(tdee),
         target_kcal=round(target_kcal),

@@ -60,9 +60,12 @@ export interface ProfileData {
 	scale_mac: string | null;
 }
 
+export type BmiCategory = 'underweight' | 'normal' | 'overweight' | 'obese_1' | 'obese_2' | 'obese_3';
+
 export interface GoalsOut {
 	age: number;
 	bmi: number;
+	bmi_category: BmiCategory;
 	bmr_kcal: number;
 	tdee_kcal: number;
 	target_kcal: number;

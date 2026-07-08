@@ -79,6 +79,8 @@ class ProfileOut(BaseModel):
 class GoalsOut(BaseModel):
     age: int
     bmi: float
+    # Classificacao da OMS: underweight | normal | overweight | obese_1 | obese_2 | obese_3
+    bmi_category: str
     bmr_kcal: int
     tdee_kcal: int
     target_kcal: int
