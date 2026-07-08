@@ -409,6 +409,21 @@ export interface MealPlan {
 	meals: MealPlanMeal[];
 }
 
+export interface DietAdherence {
+	window: number;
+	logged_days: number;
+	kcal_pct: number;
+	protein_pct: number;
+	has_goal: boolean;
+}
+
+export interface RoutinePeriodization {
+	routine_id: number;
+	name: string;
+	weeks_active: number;
+	due: boolean;
+}
+
 export interface FoodInput {
 	name: string;
 	category: FoodCategory;
@@ -635,6 +650,10 @@ export const api = {
 		request<Substitutes>(`/me/foods/${foodId}/substitutes?grams=${grams}&limit=${limit}`),
 	getMealPlan: (day: string, limit = 3) =>
 		request<MealPlan>(`/me/diary/meal-plan?day=${day}&limit=${limit}`),
+	getDietAdherence: (end: string, window = 7) =>
+		request<DietAdherence>(`/me/diet/adherence?end=${end}&window=${window}`),
+	getTrainingPeriodization: (today: string) =>
+		request<RoutinePeriodization[]>(`/me/training/periodization?today=${today}`),
 	getDiaryLoggedDays: (start: string, end: string) =>
 		request<string[]>(`/me/diary/logged-days?start=${start}&end=${end}`),
 	addDiaryEntry: (entry: DiaryEntryInput) =>

@@ -4,6 +4,7 @@
 		api,
 		localDay,
 		type Routine,
+		type RoutinePeriodization,
 		type SessionSummary,
 		type WorkoutDayDetail,
 		type WorkoutSession
@@ -26,7 +27,11 @@
 	let routines = $state<Routine[]>([]);
 	let sessions = $state<SessionSummary[]>([]);
 	let activeSession = $state<WorkoutSession | null>(null);
+	let periodization = $state<RoutinePeriodization[]>([]);
 	let loading = $state(true);
+
+	// Rotina "vencida" (passou do mesociclo): sinaliza hora de variar o estimulo.
+	const dueRoutine = $derived(periodization.find((p) => p.due));
 	let creatingTemplate = $state(false);
 	let showTemplates = $state(false);
 	let completingId = $state<number | null>(null);
@@ -35,10 +40,11 @@
 	const nf = new Intl.NumberFormat(getLocale());
 
 	async function load(): Promise<void> {
-		[routines, sessions, activeSession] = await Promise.all([
+		[routines, sessions, activeSession, periodization] = await Promise.all([
 			api.getRoutines(),
 			api.getSessions(),
-			api.getActiveSession()
+			api.getActiveSession(),
+			api.getTrainingPeriodization(localDay())
 		]);
 		loading = false;
 	}
@@ -120,6 +126,20 @@
 		</a>
 	</div>
 </div>
+
+{#if dueRoutine}
+	<div class="mb-4 flex items-start gap-3 rounded-3xl border-2 border-amber-200 bg-amber-50 p-4">
+		<span class="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-amber-500 text-white">
+			<svg viewBox="0 0 24 24" class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4v6h6M20 20v-6h-6M20 8a8 8 0 00-14-3M4 16a8 8 0 0014 3" stroke-linecap="round" stroke-linejoin="round" /></svg>
+		</span>
+		<div class="min-w-0">
+			<p class="text-sm font-bold text-amber-700">{m.periodization_title()}</p>
+			<p class="mt-0.5 text-sm text-amber-700">
+				{m.periodization_text({ name: dueRoutine.name, weeks: dueRoutine.weeks_active })}
+			</p>
+		</div>
+	</div>
+{/if}
 
 {#if showCalendar}
 	<CalendarModal

@@ -21,6 +21,7 @@ from ..schemas import (
     DiaryEntryIn,
     DiaryEntryOut,
     DiaryEntryUpdate,
+    DietAdherenceOut,
     DiaryGapOut,
     FoodIn,
     FoodOut,
@@ -31,6 +32,7 @@ from ..schemas import (
     RecipeOut,
     SubstitutesOut,
 )
+from ..services.coaching import diet_adherence
 from ..services.diet import (
     food_macros,
     localized_food_name,
@@ -311,6 +313,17 @@ def diary_meal_plan(
 ) -> MealPlanOut:
     """Cardapio consultivo: por refeicao, o alvo recomendado + sugestoes que fecham."""
     return compute_meal_plan(session, user, day, limit)
+
+
+@router.get("/me/diet/adherence", response_model=DietAdherenceOut)
+def diet_adherence_endpoint(
+    user: CurrentUser,
+    session: SessionDep,
+    end: date = Query(..., description="Ultimo dia da janela (dia local do cliente)"),
+    window: int = Query(default=7, ge=1, le=30),
+) -> DietAdherenceOut:
+    """Aderencia (recomendado x real) das ultimas janelas de dias."""
+    return diet_adherence(session, user, end, window)
 
 
 def _entry_macros_and_name(

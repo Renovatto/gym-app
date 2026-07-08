@@ -5,6 +5,7 @@
 		type AchievementsResult,
 		type AdaptiveTdee,
 		type BodyComposition,
+		type DietAdherence,
 		type WeekSummary,
 		type WeighInInput,
 		type WeightHistory,
@@ -23,6 +24,7 @@
 	let history = $state<WeightHistory | null>(null);
 	let week = $state<WeekSummary | null>(null);
 	let adaptive = $state<AdaptiveTdee | null>(null);
+	let adherence = $state<DietAdherence | null>(null);
 	let achievements = $state<AchievementsResult | null>(null);
 	let newWeight = $state(session.profile?.weight_kg ?? 75);
 	let busy = $state(false);
@@ -62,8 +64,11 @@
 		if (history.current_kg !== null) newWeight = history.current_kg;
 		week = await api.getWeekSummary(localDay(), tzOffset);
 		achievements = await api.getAchievements(localDay(), tzOffset);
-		// TDEE adaptativo so faz sentido com o modulo de dieta (precisa da ingestao)
-		if (dietOn) adaptive = await api.getAdaptiveTdee(localDay(), tzOffset);
+		// TDEE adaptativo e aderencia so fazem sentido com o modulo de dieta ligado
+		if (dietOn) {
+			adaptive = await api.getAdaptiveTdee(localDay(), tzOffset);
+			adherence = await api.getDietAdherence(localDay(), 7);
+		}
 	}
 
 	// Mensagem do TDEE adaptativo: texto traduzido + tom (cor) conforme o ritmo real.
@@ -222,6 +227,33 @@
 				<p class="text-xs font-semibold text-slate-500">{m.avg_water()}</p>
 			</div>
 		</div>
+	</section>
+{/if}
+
+{#if dietOn && adherence && adherence.has_goal}
+	<section class="mb-4 rounded-3xl bg-white p-5 shadow-sm">
+		<p class="mb-3 text-sm font-bold text-slate-400 uppercase">{m.adherence_title()}</p>
+		{#if adherence.logged_days === 0}
+			<p class="text-sm text-slate-500">{m.adherence_no_data()}</p>
+		{:else}
+			<div class="grid grid-cols-2 gap-3">
+				<div class="rounded-2xl bg-slate-50 p-3">
+					<p class="text-2xl font-black text-slate-900">
+						{adherence.kcal_pct}<span class="text-sm font-medium text-slate-400"> %</span>
+					</p>
+					<p class="text-xs font-semibold text-slate-500">{m.adherence_calories()}</p>
+				</div>
+				<div class="rounded-2xl bg-slate-50 p-3">
+					<p class="text-2xl font-black text-slate-900">
+						{adherence.protein_pct}<span class="text-sm font-medium text-slate-400"> %</span>
+					</p>
+					<p class="text-xs font-semibold text-slate-500">{m.protein()}</p>
+				</div>
+			</div>
+			<p class="mt-2 text-xs text-slate-400">
+				{m.adherence_days_logged({ logged: adherence.logged_days, window: adherence.window })}
+			</p>
+		{/if}
 	</section>
 {/if}
 

@@ -19,6 +19,7 @@ from ..schemas import (
     RoutineIn,
     RoutineItemOut,
     RoutineOut,
+    RoutinePeriodizationOut,
     SessionOut,
     SessionStartIn,
     SessionSummaryOut,
@@ -27,6 +28,7 @@ from ..schemas import (
     WorkoutDayDetailOut,
     WorkoutDayExerciseOut,
 )
+from ..services.coaching import routines_periodization
 from ..services.exercises import (
     TEMPLATES,
     exercise_by_slug,
@@ -127,6 +129,16 @@ def list_routines(user: CurrentUser, session: SessionDep) -> list[RoutineOut]:
         select(Routine).where(Routine.user_id == user.id).order_by(asc(Routine.position), asc(Routine.id))
     ).all()
     return [_routine_out(session, r, user) for r in routines]
+
+
+@router.get("/me/training/periodization", response_model=list[RoutinePeriodizationOut])
+def training_periodization(
+    user: CurrentUser,
+    session: SessionDep,
+    today: date = Query(..., description="Dia local do cliente (YYYY-MM-DD)"),
+) -> list[RoutinePeriodizationOut]:
+    """Ha quantas semanas cada rotina esta ativa e se ja passou da validade sugerida."""
+    return routines_periodization(session, user, today)
 
 
 @router.post("/me/routines", response_model=RoutineOut, status_code=status.HTTP_201_CREATED)

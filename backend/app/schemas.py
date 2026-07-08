@@ -492,3 +492,21 @@ class MealPlanOut(BaseModel):
     date: date
     goals: MacrosOut | None
     meals: list[MealPlanMealOut]
+
+
+# --- Acompanhamento & periodizacao (fase 3) -------------------------------
+
+
+class DietAdherenceOut(BaseModel):
+    window: int  # janela em dias (ex.: 7)
+    logged_days: int  # dias com lancamento na janela
+    kcal_pct: int  # aderencia calorica media (0-100)
+    protein_pct: int  # aderencia de proteina media (0-100)
+    has_goal: bool  # False = perfil/pesagem incompletos
+
+
+class RoutinePeriodizationOut(BaseModel):
+    routine_id: int
+    name: str
+    weeks_active: int
+    due: bool  # passou da validade sugerida (mesociclo) -> hora de variar
