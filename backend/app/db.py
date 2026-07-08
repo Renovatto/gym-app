@@ -89,9 +89,38 @@ def _run_column_migrations() -> None:
                     conn.execute(text(f"ALTER TABLE {table} ADD COLUMN {name} {ddl}"))
 
 
+def _run_enum_migrations() -> None:
+    # So Postgres: os enums do SQLModel viram TIPO NATIVO (ex.: foodcategory). Quando
+    # adicionamos um valor novo no enum Python (ex.: 'supplement'), o create_all NAO
+    # altera um tipo ja existente - garantimos aqui via ALTER TYPE ... ADD VALUE.
+    # (No SQLite o enum e VARCHAR, entao nao ha o que migrar.)
+    if IS_SQLITE:
+        return
+    from sqlalchemy import text
+
+    from .models import FoodCategory
+
+    enum_values: dict[str, list[str]] = {
+        "foodcategory": [e.value for e in FoodCategory],
+    }
+    # ADD VALUE precisa rodar fora de transacao: usamos AUTOCOMMIT.
+    with engine.connect() as conn:
+        conn = conn.execution_options(isolation_level="AUTOCOMMIT")
+        for type_name, values in enum_values.items():
+            type_exists = conn.execute(
+                text("SELECT 1 FROM pg_type WHERE typname = :t"), {"t": type_name}
+            ).first()
+            if not type_exists:
+                continue  # base nova: o create_all ja criou o tipo com todos os valores
+            for value in values:
+                # valores vem do nosso proprio enum (confiaveis), entao inline e seguro
+                conn.execute(text(f"ALTER TYPE {type_name} ADD VALUE IF NOT EXISTS '{value}'"))
+
+
 def init_db() -> None:
     _run_column_migrations()
     SQLModel.metadata.create_all(engine)
+    _run_enum_migrations()
 
 
 def get_session() -> Generator[Session, None, None]:
