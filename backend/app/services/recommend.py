@@ -16,11 +16,23 @@ from datetime import date
 from sqlmodel import desc, select
 from sqlmodel import Session
 
-from ..models import DiaryEntry, EntrySource, Food, FoodCategory, Profile, WeightLog, User
+from ..models import (
+    DiaryEntry,
+    EntrySource,
+    Food,
+    FoodCategory,
+    MealType,
+    Objective,
+    Profile,
+    User,
+    WeightLog,
+)
 from ..schemas import (
     DiaryGapOut,
     FoodSuggestionOut,
     MacrosOut,
+    MealPlanMealOut,
+    MealPlanOut,
     SubstituteItemOut,
     SubstitutesOut,
     SubstituteSourceOut,
@@ -110,50 +122,40 @@ def _consumed(session: Session, user_id: int, day: date) -> MacrosOut:
     )
 
 
-def suggest_gap(session: Session, user: User, day: date, limit: int = 4) -> DiaryGapOut:
-    """O que falta hoje + alimentos que fecham a lacuna."""
-    goals = _daily_target(session, user.id)
-    consumed = _consumed(session, user.id, day)
-    if goals is None:
-        # perfil/pesagem incompletos: sem metas nao ha o que recomendar
-        return DiaryGapOut(
-            date=day, goals=None, consumed=consumed, remaining=None,
-            primary="no_goal", suggestions=[],
-        )
-
-    # Falta = meta - consumido, nunca negativo.
-    remaining = MacrosOut(
+def _remaining(goals: MacrosOut, consumed: MacrosOut) -> MacrosOut:
+    """Falta = meta - consumido, nunca negativo."""
+    return MacrosOut(
         kcal=round(max(goals.kcal - consumed.kcal, 0), 1),
         protein_g=round(max(goals.protein_g - consumed.protein_g, 0), 1),
         carbs_g=round(max(goals.carbs_g - consumed.carbs_g, 0), 1),
         fat_g=round(max(goals.fat_g - consumed.fat_g, 0), 1),
     )
 
-    # Macro-alvo: proteina primeiro (prioridade pro objetivo); senao o macro
-    # (carbo/gordura) com maior falta; senao calorias. Se nada relevante falta,
-    # o dia esta praticamente fechado.
+
+def _choose_primary(remaining: MacrosOut) -> tuple[str, str] | None:
+    """Macro-alvo: proteina primeiro (prioridade pro objetivo); senao o macro
+    (carbo/gordura) com maior falta; senao calorias. None = nada relevante falta."""
     if remaining.protein_g >= _MIN_PROTEIN_GAP:
-        primary_attr, primary_code = "protein_g", "protein"
-    elif remaining.carbs_g >= _MIN_MACRO_GAP or remaining.fat_g >= _MIN_MACRO_GAP:
+        return "protein_g", "protein"
+    if remaining.carbs_g >= _MIN_MACRO_GAP or remaining.fat_g >= _MIN_MACRO_GAP:
         if remaining.carbs_g >= remaining.fat_g:
-            primary_attr, primary_code = "carbs_g", "carbs"
-        else:
-            primary_attr, primary_code = "fat_g", "fat"
-    elif remaining.kcal >= _MIN_KCAL_GAP:
-        primary_attr, primary_code = "kcal", "calories"
-    else:
-        return DiaryGapOut(
-            date=day, goals=goals, consumed=consumed, remaining=remaining,
-            primary="complete", suggestions=[],
-        )
+            return "carbs_g", "carbs"
+        return "fat_g", "fat"
+    if remaining.kcal >= _MIN_KCAL_GAP:
+        return "kcal", "calories"
+    return None
 
-    freq = _food_frequency(session, user.id)
-    max_freq = max(freq.values(), default=1)
+
+def _rank_suggestions(
+    session: Session, user: User, remaining: MacrosOut, primary_attr: str,
+    freq: Counter, max_freq: int, limit: int,
+) -> list[FoodSuggestionOut]:
+    """Ranqueia alimentos que fecham a lacuna informada (do dia ou de uma refeicao).
+
+    Cada sugestao usa uma PORCAO NATURAL do alimento (a porcao padrao), nunca uma
+    quantidade absurda pra fechar sozinha - o usuario vai somando itens. Ainda limita
+    pela caloria que cabe (no fim do dia/refeicao, porcoes menores)."""
     need = _attr(remaining, primary_attr)
-
-    # Cada sugestao usa uma PORCAO NATURAL do alimento (a porcao padrao), nunca uma
-    # quantidade absurda pra fechar a lacuna sozinha - o usuario vai somando itens.
-    # Ainda limita pela caloria que cabe no dia (no fim do dia, porcoes menores).
     candidates: list[tuple[Food, float, MacrosOut, float, float]] = []
     for food in _visible_foods(session, user.id):
         if _attr(food, primary_attr) <= 0:
@@ -182,14 +184,139 @@ def suggest_gap(session: Session, user: User, day: date, limit: int = 4) -> Diar
         scored.append((score, food, portion, macros))
 
     scored.sort(key=lambda item: item[0], reverse=True)
-    suggestions = [
+    return [
         FoodSuggestionOut(food=to_food_out(food, user.locale), grams=grams, macros=macros)
         for _, food, grams, macros in scored[:limit]
     ]
+
+
+def suggest_gap(session: Session, user: User, day: date, limit: int = 4) -> DiaryGapOut:
+    """O que falta hoje + alimentos que fecham a lacuna (motor reativo)."""
+    goals = _daily_target(session, user.id)
+    consumed = _consumed(session, user.id, day)
+    if goals is None:
+        # perfil/pesagem incompletos: sem metas nao ha o que recomendar
+        return DiaryGapOut(
+            date=day, goals=None, consumed=consumed, remaining=None,
+            primary="no_goal", suggestions=[],
+        )
+
+    remaining = _remaining(goals, consumed)
+    chosen = _choose_primary(remaining)
+    if chosen is None:
+        return DiaryGapOut(
+            date=day, goals=goals, consumed=consumed, remaining=remaining,
+            primary="complete", suggestions=[],
+        )
+    primary_attr, primary_code = chosen
+    freq = _food_frequency(session, user.id)
+    max_freq = max(freq.values(), default=1)
+    suggestions = _rank_suggestions(session, user, remaining, primary_attr, freq, max_freq, limit)
     return DiaryGapOut(
         date=day, goals=goals, consumed=consumed, remaining=remaining,
         primary=primary_code, suggestions=suggestions,
     )
+
+
+# --- Fase 2: cardapio consultivo (plano por refeicao) ---------------------
+
+# Estrutura de refeicoes recomendada por objetivo: a fatia de cada horario no alvo
+# diario. Ganho: refeicoes mais parelhas (lanche maior); perda: front-load com lanche
+# menor; manutencao/recomp: divisao classica.
+_MEAL_SHARES: dict[Objective, dict[MealType, float]] = {
+    Objective.lose_fat: {
+        MealType.breakfast: 0.30,
+        MealType.lunch: 0.35,
+        MealType.snack: 0.10,
+        MealType.dinner: 0.25,
+    },
+    Objective.gain_muscle: {
+        MealType.breakfast: 0.25,
+        MealType.lunch: 0.30,
+        MealType.snack: 0.20,
+        MealType.dinner: 0.25,
+    },
+}
+_DEFAULT_SHARES: dict[MealType, float] = {
+    MealType.breakfast: 0.25,
+    MealType.lunch: 0.35,
+    MealType.snack: 0.15,
+    MealType.dinner: 0.25,
+}
+
+
+def _sum_entries(entries: list[DiaryEntry]) -> MacrosOut:
+    return MacrosOut(
+        kcal=round(sum(e.kcal for e in entries), 1),
+        protein_g=round(sum(e.protein_g for e in entries), 1),
+        carbs_g=round(sum(e.carbs_g for e in entries), 1),
+        fat_g=round(sum(e.fat_g for e in entries), 1),
+    )
+
+
+def _scale(macros: MacrosOut, factor: float) -> MacrosOut:
+    return MacrosOut(
+        kcal=round(macros.kcal * factor, 1),
+        protein_g=round(macros.protein_g * factor, 1),
+        carbs_g=round(macros.carbs_g * factor, 1),
+        fat_g=round(macros.fat_g * factor, 1),
+    )
+
+
+def _bounded_remaining(target: MacrosOut, consumed: MacrosOut, day_left: MacrosOut) -> MacrosOut:
+    """Lacuna de uma refeicao: nao passa do alvo dela NEM do que ainda falta no dia
+    (por isso, uma vez o dia batido, nenhuma refeicao sugere mais - adaptativo)."""
+    def field(attr: str) -> float:
+        return round(max(0.0, min(_attr(target, attr) - _attr(consumed, attr), _attr(day_left, attr))), 1)
+
+    return MacrosOut(
+        kcal=field("kcal"), protein_g=field("protein_g"),
+        carbs_g=field("carbs_g"), fat_g=field("fat_g"),
+    )
+
+
+def meal_plan(session: Session, user: User, day: date, limit: int = 3) -> MealPlanOut:
+    """Cardapio consultivo: por refeicao, o alvo, o que ja tem e sugestoes que fecham."""
+    goals = _daily_target(session, user.id)
+    if goals is None:
+        return MealPlanOut(date=day, goals=None, meals=[])
+
+    profile = session.exec(select(Profile).where(Profile.user_id == user.id)).first()
+    shares = _MEAL_SHARES.get(profile.objective, _DEFAULT_SHARES) if profile else _DEFAULT_SHARES
+
+    entries = list(
+        session.exec(
+            select(DiaryEntry)
+            .where(DiaryEntry.user_id == user.id)
+            .where(DiaryEntry.entry_date == day)
+        ).all()
+    )
+    remaining_day = _remaining(goals, _sum_entries(entries))
+    freq = _food_frequency(session, user.id)
+    max_freq = max(freq.values(), default=1)
+
+    meals: list[MealPlanMealOut] = []
+    for meal_type, share in shares.items():
+        target = _scale(goals, share)
+        consumed_meal = _sum_entries([e for e in entries if e.meal_type == meal_type])
+        meal_remaining = _bounded_remaining(target, consumed_meal, remaining_day)
+        chosen = _choose_primary(meal_remaining)
+        suggestions = (
+            _rank_suggestions(session, user, meal_remaining, chosen[0], freq, max_freq, limit)
+            if chosen is not None
+            else []
+        )
+        meals.append(
+            MealPlanMealOut(
+                meal_type=meal_type,
+                target=target,
+                consumed=consumed_meal,
+                remaining=meal_remaining,
+                primary=chosen[1] if chosen else "complete",
+                suggestions=suggestions,
+            )
+        )
+    return MealPlanOut(date=day, goals=goals, meals=meals)
 
 
 def substitutes(

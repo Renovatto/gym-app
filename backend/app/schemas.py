@@ -474,3 +474,21 @@ class SubstitutesOut(BaseModel):
     # Macro-ancora igualado na troca: protein | carbs | fat | calories
     anchor: str
     items: list[SubstituteItemOut]
+
+
+# --- Cardapio consultivo (plano por refeicao) -----------------------------
+
+
+class MealPlanMealOut(BaseModel):
+    meal_type: MealType
+    target: MacrosOut  # alvo recomendado desta refeicao (fatia do dia)
+    consumed: MacrosOut  # o que ja foi lancado nela
+    remaining: MacrosOut  # lacuna adaptativa (alvo x consumido x sobra do dia)
+    primary: str  # macro-alvo da refeicao: protein | carbs | fat | calories | complete
+    suggestions: list[FoodSuggestionOut]
+
+
+class MealPlanOut(BaseModel):
+    date: date
+    goals: MacrosOut | None
+    meals: list[MealPlanMealOut]

@@ -26,6 +26,7 @@ from ..schemas import (
     FoodOut,
     MacrosOut,
     MealGroupOut,
+    MealPlanOut,
     RecipeIn,
     RecipeOut,
     SubstitutesOut,
@@ -38,6 +39,7 @@ from ..services.diet import (
     to_food_out,
 )
 from ..services.goals import compute_goals
+from ..services.recommend import meal_plan as compute_meal_plan
 from ..services.recommend import substitutes as compute_substitutes
 from ..services.recommend import suggest_gap
 from ..services.text import normalize_search
@@ -298,6 +300,17 @@ def diary_gap(
 ) -> DiaryGapOut:
     """O que falta pra fechar as metas do dia + alimentos que encaixam na lacuna."""
     return suggest_gap(session, user, day, limit)
+
+
+@router.get("/me/diary/meal-plan", response_model=MealPlanOut)
+def diary_meal_plan(
+    user: CurrentUser,
+    session: SessionDep,
+    day: date = Query(..., description="Dia local do cliente (YYYY-MM-DD)"),
+    limit: int = Query(default=3, ge=1, le=6),
+) -> MealPlanOut:
+    """Cardapio consultivo: por refeicao, o alvo recomendado + sugestoes que fecham."""
+    return compute_meal_plan(session, user, day, limit)
 
 
 def _entry_macros_and_name(

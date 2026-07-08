@@ -394,6 +394,21 @@ export interface Substitutes {
 	items: SubstituteItem[];
 }
 
+export interface MealPlanMeal {
+	meal_type: MealType;
+	target: Macros;
+	consumed: Macros;
+	remaining: Macros;
+	primary: GapPrimary;
+	suggestions: FoodSuggestion[];
+}
+
+export interface MealPlan {
+	date: string;
+	goals: Macros | null;
+	meals: MealPlanMeal[];
+}
+
 export interface FoodInput {
 	name: string;
 	category: FoodCategory;
@@ -618,6 +633,8 @@ export const api = {
 		request<DiaryGap>(`/me/diary/gap?day=${day}&limit=${limit}`),
 	getSubstitutes: (foodId: number, grams: number, limit = 6) =>
 		request<Substitutes>(`/me/foods/${foodId}/substitutes?grams=${grams}&limit=${limit}`),
+	getMealPlan: (day: string, limit = 3) =>
+		request<MealPlan>(`/me/diary/meal-plan?day=${day}&limit=${limit}`),
 	getDiaryLoggedDays: (start: string, end: string) =>
 		request<string[]>(`/me/diary/logged-days?start=${start}&end=${end}`),
 	addDiaryEntry: (entry: DiaryEntryInput) =>

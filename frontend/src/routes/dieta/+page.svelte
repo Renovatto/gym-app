@@ -6,6 +6,8 @@
 		type DiaryEntry,
 		type DiaryGap,
 		type FoodSuggestion,
+		type MealPlan,
+		type MealPlanMeal,
 		type MealType,
 		type SubstituteItem,
 		type Substitutes
@@ -26,6 +28,11 @@
 	// "O que falta hoje": lacuna + sugestoes vindas do motor de recomendacao.
 	let gap = $state<DiaryGap | null>(null);
 	let addBusy = $state(false);
+
+	// Cardapio consultivo (nutri): plano por refeicao, aberto por refeicao ou geral.
+	let mealPlan = $state<MealPlan | null>(null);
+	let expandedMeals = $state<Set<MealType>>(new Set());
+	let showAllPlan = $state(false);
 
 	// calendario: dias com lancamentos ficam marcados
 	let showCalendar = $state(false);
@@ -108,7 +115,11 @@
 
 	async function load(): Promise<void> {
 		loading = true;
-		[diary, gap] = await Promise.all([api.getDiary(day), api.getDiaryGap(day)]);
+		[diary, gap, mealPlan] = await Promise.all([
+			api.getDiary(day),
+			api.getDiaryGap(day),
+			api.getMealPlan(day)
+		]);
 		loading = false;
 	}
 
@@ -142,12 +153,12 @@
 		return 'dinner';
 	}
 
-	async function addSuggestion(s: FoodSuggestion): Promise<void> {
+	async function addSuggestion(s: FoodSuggestion, meal: MealType = mealByTime()): Promise<void> {
 		addBusy = true;
 		try {
 			await api.addDiaryEntry({
 				entry_date: day,
-				meal_type: mealByTime(),
+				meal_type: meal,
 				source: 'food',
 				food_id: s.food.id,
 				quantity: s.grams
@@ -158,6 +169,21 @@
 			addBusy = false;
 		}
 	}
+
+	// Cardapio: recomendacao daquela refeicao e controle de expandir (por refeicao ou geral).
+	function mealPlanFor(meal: MealType): MealPlanMeal | undefined {
+		return mealPlan?.meals.find((mp) => mp.meal_type === meal);
+	}
+	function isMealExpanded(meal: MealType): boolean {
+		return showAllPlan || expandedMeals.has(meal);
+	}
+	function toggleMealPlan(meal: MealType): void {
+		const next = new Set(expandedMeals);
+		if (next.has(meal)) next.delete(meal);
+		else next.add(meal);
+		expandedMeals = next;
+	}
+	const hasPlan = $derived(!!mealPlan && mealPlan.meals.some((mp) => mp.suggestions.length > 0));
 
 	async function openSubstitutes(): Promise<void> {
 		if (!editing || editing.food_id === null) return;
@@ -301,9 +327,22 @@
 		</section>
 	{/if}
 
+	{#if hasPlan}
+		<button
+			type="button"
+			onclick={() => (showAllPlan = !showAllPlan)}
+			class="mt-3 flex w-full items-center justify-center gap-2 rounded-2xl border-2 border-emerald-200 py-2.5 text-sm font-bold text-emerald-700 active:bg-emerald-50"
+		>
+			<svg viewBox="0 0 24 24" class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v6" /><path d="M9 3h6" /><path d="M7 9h10l-1.2 9.2A2 2 0 0 1 13.8 20h-3.6a2 2 0 0 1-2-1.8z" /></svg>
+			{m.nutri_plan()}
+			<svg viewBox="0 0 24 24" class="h-4 w-4 transition-transform {showAllPlan ? 'rotate-180' : ''}" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6" stroke-linecap="round" stroke-linejoin="round" /></svg>
+		</button>
+	{/if}
+
 	<div class="mt-4 space-y-3">
 		{#each MEAL_TYPES as meal (meal)}
 			{@const group = mealGroup(meal)}
+			{@const plan = mealPlanFor(meal)}
 			<section class="rounded-3xl bg-white p-4 shadow-sm">
 				<div class="flex items-center justify-between">
 					<h2 class="font-bold text-slate-900">{mealTypeLabel(meal)}</h2>
@@ -311,6 +350,18 @@
 						{group ? nf.format(Math.round(group.subtotal.kcal)) : 0} kcal
 					</span>
 				</div>
+
+				{#if plan && plan.suggestions.length > 0}
+					<button
+						type="button"
+						onclick={() => toggleMealPlan(meal)}
+						class="mt-1.5 flex w-full items-center gap-1.5 text-left text-xs font-semibold text-emerald-700"
+					>
+						<svg viewBox="0 0 24 24" class="h-3.5 w-3.5 shrink-0" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v6" /><path d="M9 3h6" /><path d="M7 9h10l-1.2 9.2A2 2 0 0 1 13.8 20h-3.6a2 2 0 0 1-2-1.8z" /></svg>
+						<span class="truncate">{m.nutri_suggestion()} · {m.meal_target({ kcal: nf.format(Math.round(plan.target.kcal)) })}</span>
+						<svg viewBox="0 0 24 24" class="ml-auto h-4 w-4 shrink-0 transition-transform {isMealExpanded(meal) ? 'rotate-180' : ''}" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6" stroke-linecap="round" stroke-linejoin="round" /></svg>
+					</button>
+				{/if}
 
 				{#if group && group.entries.length > 0}
 					<div class="mt-2 space-y-1">
@@ -331,6 +382,29 @@
 								</div>
 								<svg viewBox="0 0 24 24" class="h-4 w-4 shrink-0 text-slate-300" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 6l6 6-6 6" stroke-linecap="round" stroke-linejoin="round" /></svg>
 							</button>
+						{/each}
+					</div>
+				{/if}
+
+				{#if plan && isMealExpanded(meal) && plan.suggestions.length > 0}
+					<div class="mt-2 space-y-1.5 rounded-2xl bg-emerald-50 p-2">
+						{#each plan.suggestions as s (s.food.id)}
+							<div class="flex items-center gap-2 rounded-xl bg-white px-3 py-2">
+								<div class="min-w-0 flex-1">
+									<p class="truncate text-sm font-semibold text-slate-800">{s.food.name}</p>
+									<p class="text-xs text-slate-500">
+										{nf.format(s.grams)} g · {nf.format(Math.round(s.macros.protein_g))}g prot · {nf.format(Math.round(s.macros.kcal))} kcal
+									</p>
+								</div>
+								<button
+									type="button"
+									disabled={addBusy}
+									onclick={() => addSuggestion(s, meal)}
+									class="shrink-0 rounded-xl bg-emerald-600 px-3 py-1.5 text-sm font-bold text-white active:bg-emerald-700 disabled:opacity-50"
+								>
+									+ {m.reco_add()}
+								</button>
+							</div>
 						{/each}
 					</div>
 				{/if}
