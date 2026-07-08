@@ -34,6 +34,11 @@
 	let expandedMeals = $state<Set<MealType>>(new Set());
 	let showAllPlan = $state(false);
 
+	// Trocar uma SUGESTAO por um equivalente: abre a lista de opcoes da mesma categoria.
+	let suggSubs = $state<Substitutes | null>(null);
+	let suggSubsMeal = $state<MealType | null>(null);
+	let loadingSuggSubs = $state(false);
+
 	// calendario: dias com lancamentos ficam marcados
 	let showCalendar = $state(false);
 	let loggedDays = $state<Set<string>>(new Set());
@@ -163,6 +168,36 @@
 				food_id: s.food.id,
 				quantity: s.grams
 			});
+			await load();
+			showToast(m.reco_added());
+		} finally {
+			addBusy = false;
+		}
+	}
+
+	// Abre os equivalentes de uma sugestao (guarda a refeicao alvo para adicionar depois).
+	async function openSuggestionSubs(s: FoodSuggestion, meal: MealType): Promise<void> {
+		loadingSuggSubs = true;
+		suggSubsMeal = meal;
+		try {
+			suggSubs = await api.getSubstitutes(s.food.id, s.grams);
+		} finally {
+			loadingSuggSubs = false;
+		}
+	}
+
+	async function addSubstitute(item: SubstituteItem): Promise<void> {
+		if (suggSubsMeal === null) return;
+		addBusy = true;
+		try {
+			await api.addDiaryEntry({
+				entry_date: day,
+				meal_type: suggSubsMeal,
+				source: 'food',
+				food_id: item.food.id,
+				quantity: item.grams
+			});
+			suggSubs = null;
 			await load();
 			showToast(m.reco_added());
 		} finally {
@@ -315,6 +350,15 @@
 						</div>
 						<button
 							type="button"
+							aria-label={m.sub_action()}
+							disabled={loadingSuggSubs}
+							onclick={() => openSuggestionSubs(s, mealByTime())}
+							class="grid h-9 w-9 shrink-0 place-items-center rounded-xl border-2 border-slate-200 text-slate-500 active:bg-slate-100 disabled:opacity-50"
+						>
+							<svg viewBox="0 0 24 24" class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4v6h6M20 20v-6h-6M20 8a8 8 0 00-14-3M4 16a8 8 0 0014 3" stroke-linecap="round" stroke-linejoin="round" /></svg>
+						</button>
+						<button
+							type="button"
 							disabled={addBusy}
 							onclick={() => addSuggestion(s)}
 							class="shrink-0 rounded-xl bg-emerald-600 px-3 py-2 text-sm font-bold text-white active:bg-emerald-700 disabled:opacity-50"
@@ -396,6 +440,15 @@
 										{nf.format(s.grams)} g · {nf.format(Math.round(s.macros.protein_g))}g prot · {nf.format(Math.round(s.macros.kcal))} kcal
 									</p>
 								</div>
+								<button
+									type="button"
+									aria-label={m.sub_action()}
+									disabled={loadingSuggSubs}
+									onclick={() => openSuggestionSubs(s, meal)}
+									class="grid h-9 w-9 shrink-0 place-items-center rounded-xl border-2 border-slate-200 text-slate-500 active:bg-slate-100 disabled:opacity-50"
+								>
+									<svg viewBox="0 0 24 24" class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4v6h6M20 20v-6h-6M20 8a8 8 0 00-14-3M4 16a8 8 0 0014 3" stroke-linecap="round" stroke-linejoin="round" /></svg>
+								</button>
 								<button
 									type="button"
 									disabled={addBusy}
@@ -565,6 +618,62 @@
 					</div>
 				{/if}
 			{/if}
+		</div>
+	</div>
+{/if}
+
+<!-- Equivalentes de uma sugestao da nutri -->
+{#if suggSubs}
+	<div
+		class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
+		role="button"
+		tabindex="-1"
+		onclick={() => (suggSubs = null)}
+		onkeydown={(e) => e.key === 'Escape' && (suggSubs = null)}
+	>
+		<div
+			class="w-full max-w-md rounded-3xl bg-white p-5"
+			role="dialog"
+			tabindex="-1"
+			onclick={(e) => e.stopPropagation()}
+			onkeydown={() => {}}
+		>
+			<h2 class="text-lg font-bold text-slate-900">{m.sub_title()}</h2>
+			<p class="mt-1 mb-3 text-sm text-slate-500">{suggSubs.source.food.name}</p>
+			{#if suggSubs.items.length === 0}
+				<p class="rounded-xl bg-slate-50 px-4 py-3 text-sm text-slate-500">{m.sub_none()}</p>
+			{:else}
+				<div class="space-y-2">
+					{#each suggSubs.items as item (item.food.id)}
+						<div class="flex items-center gap-2 rounded-2xl bg-slate-50 px-3 py-2">
+							<div class="min-w-0 flex-1">
+								<p class="truncate text-sm font-semibold text-slate-800">{item.food.name}</p>
+								<p class="text-xs text-slate-500">
+									{nf.format(item.grams)} g · {nf.format(Math.round(item.macros.kcal))} kcal ·
+									<span class={item.kcal_delta > 0 ? 'text-amber-600' : 'text-emerald-600'}>
+										{deltaLabel(item.kcal_delta)}
+									</span>
+								</p>
+							</div>
+							<button
+								type="button"
+								disabled={addBusy}
+								onclick={() => addSubstitute(item)}
+								class="shrink-0 rounded-xl bg-emerald-600 px-3 py-2 text-sm font-bold text-white active:bg-emerald-700 disabled:opacity-50"
+							>
+								+ {m.reco_add()}
+							</button>
+						</div>
+					{/each}
+				</div>
+			{/if}
+			<button
+				type="button"
+				onclick={() => (suggSubs = null)}
+				class="mt-4 h-12 w-full rounded-2xl border-2 border-slate-200 font-semibold text-slate-700 active:bg-slate-100"
+			>
+				{m.back()}
+			</button>
 		</div>
 	</div>
 {/if}
