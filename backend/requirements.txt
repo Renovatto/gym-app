@@ -2,5 +2,6 @@ fastapi[standard]==0.139.0
 sqlmodel==0.0.39
 pydantic-settings==2.14.2
 psycopg[binary]>=3.2,<4
+httpx>=0.28,<0.29
 pyjwt==2.13.0
 bcrypt==5.0.0
