@@ -5,7 +5,9 @@
 		localDay,
 		type Exercise,
 		type Routine,
+		type RoutineItemInput,
 		type RoutinePeriodization,
+		type RoutineVariation,
 		type SessionSummary,
 		type WorkoutDayDetail,
 		type WorkoutSession
@@ -41,6 +43,66 @@
 		const id = previewRoutine.id;
 		previewRoutine = null;
 		start(id);
+	}
+
+	// Variar o treino: exercicios diferentes do mesmo grupo muscular (previa + escolher).
+	let variation = $state<RoutineVariation | null>(null);
+	let variationSourceId = $state<number | null>(null);
+	let variationLoading = $state<number | null>(null);
+	let variationBusy = $state(false);
+
+	async function openVariation(routineId: number): Promise<void> {
+		variationSourceId = routineId;
+		variationLoading = routineId;
+		try {
+			variation = await api.getRoutineVariation(routineId);
+		} finally {
+			variationLoading = null;
+		}
+	}
+
+	async function anotherVariation(): Promise<void> {
+		if (variationSourceId === null) return;
+		variation = await api.getRoutineVariation(variationSourceId);
+	}
+
+	function variationItems(): RoutineItemInput[] {
+		if (!variation) return [];
+		return variation.items.map((it) => ({
+			exercise_id: it.new_exercise.id,
+			target_sets: it.target_sets,
+			target_reps: it.target_reps,
+			target_weight_kg: it.target_weight_kg,
+			target_duration_min: it.target_duration_min,
+			rest_seconds: it.rest_seconds
+		}));
+	}
+
+	async function saveVariation(): Promise<void> {
+		if (!variation) return;
+		variationBusy = true;
+		try {
+			await api.updateRoutine(variation.routine_id, variation.name, variationItems());
+			variation = null;
+			await load();
+			showToast(m.vary_saved());
+		} finally {
+			variationBusy = false;
+		}
+	}
+
+	async function useVariationToday(): Promise<void> {
+		if (!variation) return;
+		variationBusy = true;
+		try {
+			const label = new Date().toLocaleDateString(getLocale(), { day: '2-digit', month: '2-digit' });
+			const name = `${variation.name} — ${m.variation_word()} ${label}`.slice(0, 80);
+			const created = await api.createRoutine(name, variationItems());
+			variation = null;
+			await start(created.id);
+		} finally {
+			variationBusy = false;
+		}
 	}
 
 	// Rotina "vencida" (passou do mesociclo): sinaliza hora de variar o estimulo.
@@ -353,12 +415,24 @@
 								{routine.items.length === 1 ? m.exercise_singular() : m.exercise_plural()}
 							</p>
 						</div>
-						<a
-							href="/treino/rotina/{routine.id}"
-							class="shrink-0 text-sm font-semibold text-slate-400"
-						>
-							{m.edit()}
-						</a>
+						<div class="flex shrink-0 items-center gap-3">
+							{#if routine.items.length > 0}
+								<button
+									type="button"
+									disabled={variationLoading === routine.id}
+									onclick={() => openVariation(routine.id)}
+									class="text-sm font-semibold text-emerald-700 disabled:opacity-50"
+								>
+									{m.vary_workout()}
+								</button>
+							{/if}
+							<a
+								href="/treino/rotina/{routine.id}"
+								class="text-sm font-semibold text-slate-400"
+							>
+								{m.edit()}
+							</a>
+						</div>
 					</div>
 					{#if routine.items.length > 0}
 						<button
@@ -515,6 +589,72 @@
 			>
 				{m.start_workout()}
 			</button>
+		</div>
+	</div>
+{/if}
+
+<!-- Variar o treino: previa (de -> para) e escolher usar hoje ou salvar -->
+{#if variation}
+	<div
+		class="fixed inset-0 z-40 flex items-center justify-center bg-black/50 p-4"
+		role="button"
+		tabindex="-1"
+		onclick={() => (variation = null)}
+		onkeydown={(e) => e.key === 'Escape' && (variation = null)}
+	>
+		<div
+			class="flex max-h-[85dvh] w-full max-w-md flex-col rounded-3xl bg-white p-5"
+			role="dialog"
+			tabindex="-1"
+			onclick={(e) => e.stopPropagation()}
+			onkeydown={() => {}}
+		>
+			<div class="mb-1 flex items-center justify-between gap-2">
+				<h2 class="truncate text-lg font-bold text-slate-900">{m.vary_title()}</h2>
+				<button
+					type="button"
+					aria-label={m.back()}
+					onclick={() => (variation = null)}
+					class="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-slate-100 text-slate-500 active:bg-slate-200"
+				>
+					<svg viewBox="0 0 24 24" class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 6l12 12M18 6L6 18" stroke-linecap="round" /></svg>
+				</button>
+			</div>
+			<p class="mb-3 text-sm text-slate-500">{variation.name}</p>
+			<div class="space-y-1.5 overflow-y-auto">
+				{#each variation.items as it, i (i)}
+					<div class="rounded-2xl bg-slate-50 px-3 py-2">
+						<p class="truncate text-xs text-slate-400 line-through">{it.original_exercise.name}</p>
+						<p class="truncate text-sm font-bold text-slate-900">{it.new_exercise.name}</p>
+					</div>
+				{/each}
+			</div>
+			<button
+				type="button"
+				onclick={anotherVariation}
+				class="mt-3 flex h-10 w-full shrink-0 items-center justify-center gap-2 rounded-2xl border-2 border-slate-200 text-sm font-bold text-slate-600 active:bg-slate-100"
+			>
+				<svg viewBox="0 0 24 24" class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4v6h6M20 20v-6h-6M20 8a8 8 0 00-14-3M4 16a8 8 0 0014 3" stroke-linecap="round" stroke-linejoin="round" /></svg>
+				{m.vary_another()}
+			</button>
+			<div class="mt-2 flex shrink-0 gap-2">
+				<button
+					type="button"
+					disabled={variationBusy}
+					onclick={useVariationToday}
+					class="h-12 flex-1 rounded-2xl border-2 border-emerald-200 font-bold text-emerald-700 active:bg-emerald-50 disabled:opacity-50"
+				>
+					{m.vary_today()}
+				</button>
+				<button
+					type="button"
+					disabled={variationBusy}
+					onclick={saveVariation}
+					class="h-12 flex-1 rounded-2xl bg-emerald-600 font-bold text-white active:bg-emerald-700 disabled:opacity-50"
+				>
+					{m.vary_save()}
+				</button>
+			</div>
 		</div>
 	</div>
 {/if}

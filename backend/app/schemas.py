@@ -522,3 +522,23 @@ class ExternalFoodOut(BaseModel):
     protein_g: float
     carbs_g: float
     fat_g: float
+
+
+# --- Variar o treino (troca de exercicios, mesmo grupo muscular) -----------
+
+
+class RoutineVariationItemOut(BaseModel):
+    original_exercise: ExerciseOut
+    new_exercise: ExerciseOut
+    # alvos herdados do item original (mantem o esquema de series)
+    target_sets: int
+    target_reps: int
+    target_weight_kg: float | None
+    target_duration_min: int | None
+    rest_seconds: int
+
+
+class RoutineVariationOut(BaseModel):
+    routine_id: int
+    name: str
+    items: list[RoutineVariationItemOut]

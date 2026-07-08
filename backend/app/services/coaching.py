@@ -6,13 +6,20 @@
     da validade sugerida (mesociclo ~6 semanas) - hora de variar o estimulo.
 """
 
+import random
 from collections import defaultdict
 from datetime import date, timedelta
 
 from sqlmodel import Session, desc, select
 
-from ..models import DiaryEntry, Profile, Routine, User, WeightLog
-from ..schemas import DietAdherenceOut, RoutinePeriodizationOut
+from ..models import DiaryEntry, Exercise, Profile, Routine, User, WeightLog
+from ..schemas import (
+    DietAdherenceOut,
+    RoutinePeriodizationOut,
+    RoutineVariationItemOut,
+    RoutineVariationOut,
+)
+from .exercises import to_exercise_out
 from .goals import compute_goals
 
 # Validade sugerida de uma rotina de treino (mesociclo). Passou disso, o corpo ja
@@ -86,3 +93,37 @@ def routines_periodization(
             )
         )
     return out
+
+
+def routine_variation(session: Session, routine: Routine, locale: str) -> RoutineVariationOut:
+    """Propoe uma variacao da rotina: troca cada exercicio por outro do MESMO grupo
+    muscular (e mesmo tipo), mantendo o esquema de series. Sem alternativa no grupo,
+    mantem o exercicio original. Evita repetir exercicio dentro da mesma variacao."""
+    used_ids: set[int] = set()
+    items: list[RoutineVariationItemOut] = []
+    for item in routine.items:
+        original = session.get(Exercise, item.exercise_id)
+        if original is None:
+            continue
+        candidates = session.exec(
+            select(Exercise)
+            .where((Exercise.user_id.is_(None)) | (Exercise.user_id == routine.user_id))
+            .where(Exercise.muscle_group == original.muscle_group)
+            .where(Exercise.kind == original.kind)
+            .where(Exercise.id != original.id)
+        ).all()
+        pool = [c for c in candidates if c.id not in used_ids]
+        chosen = random.choice(pool) if pool else original
+        used_ids.add(chosen.id)
+        items.append(
+            RoutineVariationItemOut(
+                original_exercise=to_exercise_out(session, original, locale),
+                new_exercise=to_exercise_out(session, chosen, locale),
+                target_sets=item.target_sets,
+                target_reps=item.target_reps,
+                target_weight_kg=item.target_weight_kg,
+                target_duration_min=item.target_duration_min,
+                rest_seconds=item.rest_seconds,
+            )
+        )
+    return RoutineVariationOut(routine_id=routine.id, name=routine.name, items=items)

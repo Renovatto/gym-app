@@ -182,6 +182,22 @@ export interface RoutineItemInput {
 	rest_seconds: number;
 }
 
+export interface RoutineVariationItem {
+	original_exercise: Exercise;
+	new_exercise: Exercise;
+	target_sets: number;
+	target_reps: number;
+	target_weight_kg: number | null;
+	target_duration_min: number | null;
+	rest_seconds: number;
+}
+
+export interface RoutineVariation {
+	routine_id: number;
+	name: string;
+	items: RoutineVariationItem[];
+}
+
 export interface SetLog {
 	id: number;
 	exercise_id: number;
@@ -597,6 +613,8 @@ export const api = {
 	},
 	getRoutines: () => request<Routine[]>('/me/routines'),
 	getRoutine: (id: number) => request<Routine>(`/me/routines/${id}`),
+	getRoutineVariation: (id: number) =>
+		request<RoutineVariation>(`/me/routines/${id}/variation`),
 	createRoutine: (name: string, items: RoutineItemInput[]) =>
 		request<Routine>('/me/routines', { method: 'POST', body: { name, items } }),
 	updateRoutine: (id: number, name: string, items: RoutineItemInput[]) =>

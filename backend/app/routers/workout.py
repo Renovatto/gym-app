@@ -20,6 +20,7 @@ from ..schemas import (
     RoutineItemOut,
     RoutineOut,
     RoutinePeriodizationOut,
+    RoutineVariationOut,
     SessionOut,
     SessionStartIn,
     SessionSummaryOut,
@@ -28,7 +29,7 @@ from ..schemas import (
     WorkoutDayDetailOut,
     WorkoutDayExerciseOut,
 )
-from ..services.coaching import routines_periodization
+from ..services.coaching import routine_variation, routines_periodization
 from ..services.exercises import (
     TEMPLATES,
     exercise_by_slug,
@@ -139,6 +140,15 @@ def training_periodization(
 ) -> list[RoutinePeriodizationOut]:
     """Ha quantas semanas cada rotina esta ativa e se ja passou da validade sugerida."""
     return routines_periodization(session, user, today)
+
+
+@router.get("/me/routines/{routine_id}/variation", response_model=RoutineVariationOut)
+def routine_variation_endpoint(
+    routine_id: int, user: CurrentUser, session: SessionDep
+) -> RoutineVariationOut:
+    """Propoe uma variacao da rotina (exercicios diferentes, mesmo grupo muscular)."""
+    routine = _get_owned_routine(session, routine_id, user.id)
+    return routine_variation(session, routine, user.locale)
 
 
 @router.post("/me/routines", response_model=RoutineOut, status_code=status.HTTP_201_CREATED)
