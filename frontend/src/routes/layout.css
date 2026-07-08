@@ -11,6 +11,19 @@ body {
 }
 
 /*
+ * Evita o "zoom por duplo-toque" do navegador ao clicar rapido em botoes (ex.: os
+ * +/- do Stepper durante o treino). manipulation mantem rolagem e toque normais,
+ * so desliga o double-tap-to-zoom nesses elementos interativos.
+ */
+button,
+[role='button'],
+a,
+label,
+input {
+	touch-action: manipulation;
+}
+
+/*
  * Modo escuro por troca de tokens: os componentes usam a paleta neutra
  * (white/slate) e os tons claros de acento (emerald-50 etc.); aqui eles são
  * remapeados quando <html class="dark">. Tons médios (emerald-600, sky-500…)

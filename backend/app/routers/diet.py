@@ -151,7 +151,9 @@ def search_external_foods(
     limit: int = Query(default=15, ge=1, le=30),
 ) -> list[ExternalFoodOut]:
     """Busca alimentos na base aberta (Open Food Facts) para importar ao catalogo."""
-    return search_external(q, limit)
+    # locale do usuario -> codigo de idioma do OFF (pt-BR -> pt, en -> en, es -> es)
+    lang = user.locale.split("-")[0].lower()
+    return search_external(q, limit, lang)
 
 
 # --- Receitas -------------------------------------------------------------

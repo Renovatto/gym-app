@@ -58,6 +58,7 @@
 				inputmode="decimal"
 				class="w-full min-w-0 border-none bg-transparent text-center text-lg font-bold text-slate-900 outline-none"
 				value={value.toFixed(decimals)}
+				onfocus={(e) => e.currentTarget.select()}
 				oninput={stripNonNumeric}
 				onchange={onInput}
 			/>
@@ -91,6 +92,7 @@
 				inputmode="decimal"
 				class="w-full min-w-0 border-none bg-transparent text-center text-2xl font-bold text-slate-900 outline-none"
 				value={value.toFixed(decimals)}
+				onfocus={(e) => e.currentTarget.select()}
 				oninput={stripNonNumeric}
 				onchange={onInput}
 			/>

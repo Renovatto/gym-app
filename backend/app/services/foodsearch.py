@@ -8,7 +8,9 @@ import httpx
 
 from ..schemas import ExternalFoodOut
 
-_OFF_URL = "https://world.openfoodfacts.org/api/v2/search"
+# Busca TEXTUAL (CGI). O /api/v2/search ignora search_terms (devolvia sempre a mesma
+# lista); o cgi/search.pl faz a busca por texto de verdade.
+_OFF_URL = "https://world.openfoodfacts.org/cgi/search.pl"
 _TIMEOUT = 8.0
 # Open Food Facts pede um User-Agent identificavel nas chamadas de API.
 _HEADERS = {"User-Agent": "GymApp/0.1 (personal fitness app)"}
@@ -21,15 +23,21 @@ def _num(value: object) -> float:
         return 0.0
 
 
-def search_external(query: str, limit: int = 15) -> list[ExternalFoodOut]:
+def search_external(query: str, limit: int = 15, lang: str = "en") -> list[ExternalFoodOut]:
     term = query.strip()
     if not term:
         return []
+    # lc = idioma da resposta (nomes localizados); pedimos o nome no idioma do usuario
+    # e o nome padrao como fallback.
+    localized_field = f"product_name_{lang}"
     params = {
         "search_terms": term,
-        "fields": "product_name,brands,nutriments",
-        "page_size": limit,
+        "search_simple": 1,
+        "action": "process",
         "json": 1,
+        "fields": f"product_name,{localized_field},brands,nutriments",
+        "lc": lang,
+        "page_size": limit,
     }
     try:
         resp = httpx.get(_OFF_URL, params=params, headers=_HEADERS, timeout=_TIMEOUT)
@@ -41,7 +49,8 @@ def search_external(query: str, limit: int = 15) -> list[ExternalFoodOut]:
 
     out: list[ExternalFoodOut] = []
     for product in products:
-        name = (product.get("product_name") or "").strip()
+        # prefere o nome no idioma do usuario; cai pro nome padrao se nao houver
+        name = (product.get(localized_field) or product.get("product_name") or "").strip()
         nutriments = product.get("nutriments") or {}
         kcal = nutriments.get("energy-kcal_100g")
         # sem nome ou sem caloria por 100 g nao serve (dado incompleto)
