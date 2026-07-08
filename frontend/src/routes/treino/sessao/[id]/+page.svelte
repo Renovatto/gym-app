@@ -158,6 +158,15 @@
 				});
 				row.logId = log.id;
 				row.done = true;
+				// a proxima serie pendente herda o peso/reps que voce acabou de usar
+				// (evita redigitar a cada serie); so ate ela ser concluida.
+				if (!block.isCardio) {
+					const next = block.sets.find((s) => !s.done && s.setNumber > row.setNumber);
+					if (next) {
+						next.weight = row.weight;
+						next.reps = row.reps;
+					}
+				}
 				// exercício 100% concluído minimiza; descanso roda entre séries e exercícios
 				if (block.sets.every((s) => s.done)) {
 					block.collapsed = true;
@@ -412,7 +421,7 @@
 												<button
 													type="button"
 													onclick={() => (row.weight = w)}
-													class="flex-1 rounded-lg bg-white py-1 text-xs font-bold text-slate-600 active:bg-slate-100"
+													class="flex-1 rounded-lg bg-emerald-50 py-1 text-xs font-bold text-emerald-700 active:bg-emerald-100"
 												>
 													{w}
 												</button>
@@ -550,7 +559,7 @@
 									<button
 										type="button"
 										onclick={() => (focusRow.weight = w)}
-										class="flex-1 rounded-xl bg-slate-100 py-2 text-sm font-bold text-slate-700 active:bg-slate-200"
+										class="flex-1 rounded-xl bg-emerald-50 py-2 text-sm font-bold text-emerald-700 active:bg-emerald-100"
 									>
 										{w}
 									</button>
@@ -639,7 +648,7 @@
 				<p class="text-[10px] font-semibold text-slate-400 uppercase">{m.rest_label()}</p>
 				<p
 					class="font-mono text-3xl leading-none font-black tabular-nums
-						{restRemaining <= 5 ? 'animate-pulse text-emerald-400' : ''}"
+						{restRemaining <= 5 ? 'text-emerald-400' : ''}"
 				>
 					{formatTime(restRemaining)}
 				</p>
