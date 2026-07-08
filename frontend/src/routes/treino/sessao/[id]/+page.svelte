@@ -648,7 +648,7 @@
 				<p class="text-[10px] font-semibold text-slate-400 uppercase">{m.rest_label()}</p>
 				<p
 					class="font-mono text-3xl leading-none font-black tabular-nums
-						{restRemaining <= 5 ? 'text-emerald-400' : ''}"
+						{restRemaining <= 5 ? 'animate-pulse bg-ink-2 text-emerald-400' : ''}"
 				>
 					{formatTime(restRemaining)}
 				</p>
