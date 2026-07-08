@@ -207,6 +207,14 @@
 	// exercício "atual": primeiro com série pendente
 	const currentIndex = $derived(blocks.findIndex((b) => b.sets.some((s) => !s.done)));
 
+	// Atalhos de peso: baseados no ultimo peso do exercicio (ultimo, +2.5, +5);
+	// sem referencia ainda, valores fixos comuns. O +/- continua ajustando fino.
+	function quickWeights(block: ExerciseBlock): number[] {
+		const last = block.item.last_weight_kg;
+		if (last !== null && last > 0) return [last, last + 2.5, last + 5];
+		return [10, 20, 30, 40];
+	}
+
 	// Modo foco: mostra um exercicio por vez, grande, sem perder a lista rolavel por tras.
 	// E aditivo (nao substitui a lista): abre sobre ela e fecha voltando ao mesmo lugar.
 	let focusMode = $state(false);
@@ -369,33 +377,48 @@
 									</button>
 								</div>
 							{:else}
-								<!-- série pendente: uma linha com os steppers compactos e o ✓ para concluir -->
-								<div class="flex items-center gap-2 rounded-2xl bg-slate-50 px-2 py-1.5">
-									{#if block.isCardio}
-										<span class="shrink-0 pl-1 text-xs font-bold text-slate-400">{m.duration_label()}</span>
-										<div class="min-w-0 flex-1">
-											<Stepper size="sm" bind:value={row.duration} min={1} max={300} step={1} unit={m.minutes_short()} />
-										</div>
-									{:else}
-										<span class="grid h-8 w-8 shrink-0 place-items-center rounded-lg bg-white text-xs font-bold text-slate-500">
-											{row.setNumber}
-										</span>
-										<div class="min-w-0 flex-1">
-											<Stepper size="sm" bind:value={row.weight} min={0} max={1000} step={2.5} decimals={1} unit="kg" />
-										</div>
-										<div class="min-w-0 flex-1">
-											<Stepper size="sm" bind:value={row.reps} min={0} max={100} unit={m.reps_short()} />
+								<!-- série pendente: steppers compactos, ✓ para concluir e atalhos de peso -->
+								<div class="rounded-2xl bg-slate-50 px-2 py-1.5">
+									<div class="flex items-center gap-2">
+										{#if block.isCardio}
+											<span class="shrink-0 pl-1 text-xs font-bold text-slate-400">{m.duration_label()}</span>
+											<div class="min-w-0 flex-1">
+												<Stepper size="sm" bind:value={row.duration} min={1} max={300} step={1} unit={m.minutes_short()} />
+											</div>
+										{:else}
+											<span class="grid h-8 w-8 shrink-0 place-items-center rounded-lg bg-white text-xs font-bold text-slate-500">
+												{row.setNumber}
+											</span>
+											<div class="min-w-0 flex-1">
+												<Stepper size="sm" bind:value={row.weight} min={0} max={1000} step={2.5} decimals={1} unit="kg" />
+											</div>
+											<div class="min-w-0 flex-1">
+												<Stepper size="sm" bind:value={row.reps} min={0} max={100} unit={m.reps_short()} />
+											</div>
+										{/if}
+										<button
+											type="button"
+											aria-label={m.done()}
+											disabled={row.saving}
+											onclick={() => toggleSet(block, row)}
+											class="grid h-9 w-9 shrink-0 place-items-center rounded-xl border-2 border-slate-200 bg-white text-base font-bold text-slate-300 transition-colors"
+										>
+											✓
+										</button>
+									</div>
+									{#if !block.isCardio}
+										<div class="mt-1.5 flex gap-1.5 pl-10">
+											{#each quickWeights(block) as w (w)}
+												<button
+													type="button"
+													onclick={() => (row.weight = w)}
+													class="flex-1 rounded-lg bg-white py-1 text-xs font-bold text-slate-600 active:bg-slate-100"
+												>
+													{w}
+												</button>
+											{/each}
 										</div>
 									{/if}
-									<button
-										type="button"
-										aria-label={m.done()}
-										disabled={row.saving}
-										onclick={() => toggleSet(block, row)}
-										class="grid h-9 w-9 shrink-0 place-items-center rounded-xl border-2 border-slate-200 bg-white text-base font-bold text-slate-300 transition-colors"
-									>
-										✓
-									</button>
 								</div>
 							{/if}
 						{/each}
@@ -522,6 +545,17 @@
 						<div>
 							<p class="mb-1.5 text-center text-xs font-bold text-slate-500 uppercase">{m.weight()} (kg)</p>
 							<Stepper bind:value={focusRow.weight} min={0} max={1000} step={2.5} decimals={1} />
+							<div class="mt-2 flex gap-2">
+								{#each quickWeights(focusBlock) as w (w)}
+									<button
+										type="button"
+										onclick={() => (focusRow.weight = w)}
+										class="flex-1 rounded-xl bg-slate-100 py-2 text-sm font-bold text-slate-700 active:bg-slate-200"
+									>
+										{w}
+									</button>
+								{/each}
+							</div>
 						</div>
 						<div>
 							<p class="mb-1.5 text-center text-xs font-bold text-slate-500 uppercase">{m.reps_label()}</p>
