@@ -253,6 +253,7 @@ class FoodCategory(str, Enum):
     fat = "fat"
     beverage = "beverage"
     sweet = "sweet"
+    supplement = "supplement"  # whey, creatina, etc. (whey conta macro; creatina ~0 kcal)
     other = "other"
 
 

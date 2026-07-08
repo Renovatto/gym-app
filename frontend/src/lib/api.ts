@@ -291,6 +291,7 @@ export type FoodCategory =
 	| 'fat'
 	| 'beverage'
 	| 'sweet'
+	| 'supplement'
 	| 'other';
 
 export type MealType = 'breakfast' | 'lunch' | 'snack' | 'dinner' | 'other';
