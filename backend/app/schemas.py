@@ -434,3 +434,43 @@ class DiaryDayOut(BaseModel):
     meals: list[MealGroupOut]
     totals: MacrosOut
     goals: MacrosOut | None
+
+
+# --- Recomendacao da dieta (motor de encaixe) -----------------------------
+
+
+class FoodSuggestionOut(BaseModel):
+    food: FoodOut
+    grams: float
+    macros: MacrosOut
+
+
+class DiaryGapOut(BaseModel):
+    date: date
+    goals: MacrosOut | None
+    consumed: MacrosOut
+    remaining: MacrosOut | None
+    # Codigo do macro que mais falta (front faz o i18n):
+    # protein | carbs | fat | calories | complete | no_goal
+    primary: str
+    suggestions: list[FoodSuggestionOut]
+
+
+class SubstituteSourceOut(BaseModel):
+    food: FoodOut
+    grams: float
+    macros: MacrosOut
+
+
+class SubstituteItemOut(BaseModel):
+    food: FoodOut
+    grams: float
+    macros: MacrosOut
+    kcal_delta: float
+
+
+class SubstitutesOut(BaseModel):
+    source: SubstituteSourceOut
+    # Macro-ancora igualado na troca: protein | carbs | fat | calories
+    anchor: str
+    items: list[SubstituteItemOut]

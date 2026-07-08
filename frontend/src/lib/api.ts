@@ -362,6 +362,38 @@ export interface DiaryDay {
 	goals: Macros | null;
 }
 
+// --- Recomendacao da dieta (motor de encaixe) ---
+export type GapPrimary = 'protein' | 'carbs' | 'fat' | 'calories' | 'complete' | 'no_goal';
+export type MacroAnchor = 'protein' | 'carbs' | 'fat' | 'calories';
+
+export interface FoodSuggestion {
+	food: Food;
+	grams: number;
+	macros: Macros;
+}
+
+export interface DiaryGap {
+	date: string;
+	goals: Macros | null;
+	consumed: Macros;
+	remaining: Macros | null;
+	primary: GapPrimary;
+	suggestions: FoodSuggestion[];
+}
+
+export interface SubstituteItem {
+	food: Food;
+	grams: number;
+	macros: Macros;
+	kcal_delta: number;
+}
+
+export interface Substitutes {
+	source: { food: Food; grams: number; macros: Macros };
+	anchor: MacroAnchor;
+	items: SubstituteItem[];
+}
+
 export interface FoodInput {
 	name: string;
 	category: FoodCategory;
@@ -582,6 +614,10 @@ export const api = {
 		request<Recipe>(`/me/recipes/${id}`, { method: 'PUT', body: recipe }),
 	deleteRecipe: (id: number) => request<void>(`/me/recipes/${id}`, { method: 'DELETE' }),
 	getDiary: (day: string) => request<DiaryDay>(`/me/diary?day=${day}`),
+	getDiaryGap: (day: string, limit = 4) =>
+		request<DiaryGap>(`/me/diary/gap?day=${day}&limit=${limit}`),
+	getSubstitutes: (foodId: number, grams: number, limit = 6) =>
+		request<Substitutes>(`/me/foods/${foodId}/substitutes?grams=${grams}&limit=${limit}`),
 	getDiaryLoggedDays: (start: string, end: string) =>
 		request<string[]>(`/me/diary/logged-days?start=${start}&end=${end}`),
 	addDiaryEntry: (entry: DiaryEntryInput) =>

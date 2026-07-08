@@ -1,7 +1,18 @@
 <script lang="ts">
-	import { api, localDay, type DiaryDay, type DiaryEntry, type MealType } from '$lib/api';
+	import {
+		api,
+		localDay,
+		type DiaryDay,
+		type DiaryEntry,
+		type DiaryGap,
+		type FoodSuggestion,
+		type MealType,
+		type SubstituteItem,
+		type Substitutes
+	} from '$lib/api';
 	import MacroSummary from '$lib/components/MacroSummary.svelte';
 	import Stepper from '$lib/components/Stepper.svelte';
+	import Spinner from '$lib/components/Spinner.svelte';
 	import CalendarModal from '$lib/components/CalendarModal.svelte';
 	import { showToast } from '$lib/toast.svelte';
 	import { MEAL_TYPES, mealTypeLabel } from '$lib/labels';
@@ -11,6 +22,10 @@
 	let diary = $state<DiaryDay | null>(null);
 	let loading = $state(true);
 	let day = $state(localDay());
+
+	// "O que falta hoje": lacuna + sugestoes vindas do motor de recomendacao.
+	let gap = $state<DiaryGap | null>(null);
+	let addBusy = $state(false);
 
 	// calendario: dias com lancamentos ficam marcados
 	let showCalendar = $state(false);
@@ -36,9 +51,15 @@
 		editing = entry;
 		editQty = entry.quantity;
 		confirmingDeleteEntry = false;
+		subs = null;
 	}
 
 	let confirmingDeleteEntry = $state(false);
+
+	// Substituicao: equivalentes do item aberto na modal.
+	let subs = $state<Substitutes | null>(null);
+	let loadingSubs = $state(false);
+	let swapBusy = $state(false);
 
 	async function saveEdit(): Promise<void> {
 		if (!editing) return;
@@ -87,7 +108,7 @@
 
 	async function load(): Promise<void> {
 		loading = true;
-		diary = await api.getDiary(day);
+		[diary, gap] = await Promise.all([api.getDiary(day), api.getDiaryGap(day)]);
 		loading = false;
 	}
 
@@ -111,6 +132,98 @@
 		isToday ? m.today_title() : df.format(new Date(day + 'T12:00:00'))
 	);
 	const isEmpty = $derived(diary ? diary.meals.every((g) => g.entries.length === 0) : true);
+
+	// Refeicao "do horario" para onde a sugestao entra por padrao (da pra mover depois).
+	function mealByTime(): MealType {
+		const h = new Date().getHours();
+		if (h < 11) return 'breakfast';
+		if (h < 15) return 'lunch';
+		if (h < 18) return 'snack';
+		return 'dinner';
+	}
+
+	async function addSuggestion(s: FoodSuggestion): Promise<void> {
+		addBusy = true;
+		try {
+			await api.addDiaryEntry({
+				entry_date: day,
+				meal_type: mealByTime(),
+				source: 'food',
+				food_id: s.food.id,
+				quantity: s.grams
+			});
+			await load();
+			showToast(m.reco_added());
+		} finally {
+			addBusy = false;
+		}
+	}
+
+	async function openSubstitutes(): Promise<void> {
+		if (!editing || editing.food_id === null) return;
+		loadingSubs = true;
+		try {
+			subs = await api.getSubstitutes(editing.food_id, editing.quantity);
+		} finally {
+			loadingSubs = false;
+		}
+	}
+
+	// Troca = remove o item atual e adiciona o equivalente na mesma refeicao.
+	async function applySwap(item: SubstituteItem): Promise<void> {
+		if (!editing) return;
+		swapBusy = true;
+		try {
+			const meal = editing.meal_type;
+			await api.deleteDiaryEntry(editing.id);
+			await api.addDiaryEntry({
+				entry_date: day,
+				meal_type: meal,
+				source: 'food',
+				food_id: item.food.id,
+				quantity: item.grams
+			});
+			editing = null;
+			subs = null;
+			await load();
+			showToast(m.sub_swapped());
+		} finally {
+			swapBusy = false;
+		}
+	}
+
+	const showGap = $derived(
+		!!gap && gap.suggestions.length > 0 && gap.primary !== 'no_goal' && gap.primary !== 'complete'
+	);
+
+	const gapHeadline = $derived.by(() => {
+		if (!gap || !gap.remaining) return '';
+		const r = gap.remaining;
+		if (gap.primary === 'protein') return m.reco_gap_protein({ g: nf.format(Math.round(r.protein_g)) });
+		if (gap.primary === 'carbs') return m.reco_gap_carbs({ g: nf.format(Math.round(r.carbs_g)) });
+		if (gap.primary === 'fat') return m.reco_gap_fat({ g: nf.format(Math.round(r.fat_g)) });
+		if (gap.primary === 'calories') return m.reco_gap_calories({ kcal: nf.format(Math.round(r.kcal)) });
+		return '';
+	});
+
+	// Detalhe de uma sugestao: gramas, quanto do macro-alvo entrega e as kcal.
+	function suggestionHint(s: FoodSuggestion): string {
+		const kcal = nf.format(Math.round(s.macros.kcal));
+		const grams = `${nf.format(s.grams)} g`;
+		if (!gap || gap.primary === 'calories') return `${grams} · ${kcal} kcal`;
+		const byPrimary: Record<string, number> = {
+			protein: s.macros.protein_g,
+			carbs: s.macros.carbs_g,
+			fat: s.macros.fat_g
+		};
+		const amount = Math.round((byPrimary[gap.primary] ?? 0) * 10) / 10;
+		return `${grams} · +${nf.format(amount)} g · ${kcal} kcal`;
+	}
+
+	function deltaLabel(kcalDelta: number): string {
+		const v = Math.round(kcalDelta);
+		return `${v > 0 ? '+' : ''}${nf.format(v)} kcal`;
+	}
 
 	$effect(() => {
 		day;
@@ -155,6 +268,38 @@
 	</div>
 {:else if diary}
 	<MacroSummary totals={diary.totals} goals={diary.goals} />
+
+	{#if showGap && gap}
+		<section class="mt-3 rounded-3xl bg-emerald-50 p-4 ring-1 ring-emerald-100">
+			<div class="flex items-center gap-2.5">
+				<span class="grid h-8 w-8 shrink-0 place-items-center rounded-xl bg-emerald-600 text-white">
+					<svg viewBox="0 0 24 24" class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v6" /><path d="M9 3h6" /><path d="M7 9h10l-1.2 9.2A2 2 0 0 1 13.8 20h-3.6a2 2 0 0 1-2-1.8z" /></svg>
+				</span>
+				<div class="min-w-0">
+					<p class="text-[11px] font-bold tracking-wide text-emerald-700 uppercase">{m.reco_title()}</p>
+					<p class="text-sm font-semibold text-emerald-900">{gapHeadline}</p>
+				</div>
+			</div>
+			<div class="mt-3 space-y-2">
+				{#each gap.suggestions as s (s.food.id)}
+					<div class="flex items-center gap-2 rounded-2xl bg-white px-3 py-2">
+						<div class="min-w-0 flex-1">
+							<p class="truncate text-sm font-semibold text-slate-800">{s.food.name}</p>
+							<p class="text-xs text-slate-500">{suggestionHint(s)}</p>
+						</div>
+						<button
+							type="button"
+							disabled={addBusy}
+							onclick={() => addSuggestion(s)}
+							class="shrink-0 rounded-xl bg-emerald-600 px-3 py-2 text-sm font-bold text-white active:bg-emerald-700 disabled:opacity-50"
+						>
+							+ {m.reco_add()}
+						</button>
+					</div>
+				{/each}
+			</div>
+		</section>
+	{/if}
 
 	<div class="mt-4 space-y-3">
 		{#each MEAL_TYPES as meal (meal)}
@@ -247,53 +392,104 @@
 			onkeydown={() => {}}
 		>
 			<h2 class="text-lg font-bold text-slate-900">{editing.name}</h2>
-			<p class="mb-4 text-sm text-slate-500">{editPreview} kcal</p>
-			{#if editing.source === 'recipe'}
-				<Stepper bind:value={editQty} min={1} max={20} step={1} unit={m.serving_plural()} />
-			{:else}
-				<Stepper bind:value={editQty} min={1} max={2000} step={5} unit="g" />
-			{/if}
 
-			{#if confirmingDeleteEntry}
-				<p class="mt-5 rounded-xl bg-red-50 px-4 py-3 text-sm font-medium text-red-700">
-					{m.confirm_delete()}
-				</p>
-				<div class="mt-2 flex gap-2">
-					<button
-						type="button"
-						onclick={() => (confirmingDeleteEntry = false)}
-						class="h-12 flex-1 rounded-2xl border-2 border-slate-200 font-semibold text-slate-700 active:bg-slate-100"
-					>
-						{m.cancel()}
-					</button>
-					<button
-						type="button"
-						disabled={editBusy}
-						onclick={deleteEditing}
-						class="h-12 flex-1 rounded-2xl bg-red-600 font-semibold text-white active:bg-red-700 disabled:opacity-50"
-					>
-						{m.delete_confirm_button()}
-					</button>
-				</div>
+			{#if subs}
+				<!-- Substituir: equivalentes da mesma categoria, macro-ancora igualado -->
+				<p class="mt-1 mb-3 text-sm text-slate-500">{m.sub_title()}</p>
+				{#if subs.items.length === 0}
+					<p class="rounded-xl bg-slate-50 px-4 py-3 text-sm text-slate-500">{m.sub_none()}</p>
+				{:else}
+					<div class="space-y-2">
+						{#each subs.items as item (item.food.id)}
+							<div class="flex items-center gap-2 rounded-2xl bg-slate-50 px-3 py-2">
+								<div class="min-w-0 flex-1">
+									<p class="truncate text-sm font-semibold text-slate-800">{item.food.name}</p>
+									<p class="text-xs text-slate-500">
+										{nf.format(item.grams)} g · {nf.format(Math.round(item.macros.kcal))} kcal ·
+										<span class={item.kcal_delta > 0 ? 'text-amber-600' : 'text-emerald-600'}>
+											{deltaLabel(item.kcal_delta)}
+										</span>
+									</p>
+								</div>
+								<button
+									type="button"
+									disabled={swapBusy}
+									onclick={() => applySwap(item)}
+									class="shrink-0 rounded-xl bg-emerald-600 px-3 py-2 text-sm font-bold text-white active:bg-emerald-700 disabled:opacity-50"
+								>
+									{m.sub_swap()}
+								</button>
+							</div>
+						{/each}
+					</div>
+				{/if}
+				<button
+					type="button"
+					onclick={() => (subs = null)}
+					class="mt-4 h-12 w-full rounded-2xl border-2 border-slate-200 font-semibold text-slate-700 active:bg-slate-100"
+				>
+					{m.back()}
+				</button>
 			{:else}
-				<div class="mt-5 flex gap-2">
-					<button
-						type="button"
-						disabled={editBusy}
-						onclick={() => (confirmingDeleteEntry = true)}
-						class="h-12 flex-1 rounded-2xl border-2 border-red-200 font-semibold text-red-600 active:bg-red-50 disabled:opacity-50"
-					>
-						{m.remove()}
-					</button>
-					<button
-						type="button"
-						disabled={editBusy}
-						onclick={saveEdit}
-						class="h-12 flex-[2] rounded-2xl bg-emerald-600 font-bold text-white active:bg-emerald-700 disabled:opacity-50"
-					>
-						{m.save()}
-					</button>
-				</div>
+				<p class="mb-4 text-sm text-slate-500">{editPreview} kcal</p>
+				{#if editing.source === 'recipe'}
+					<Stepper bind:value={editQty} min={1} max={20} step={1} unit={m.serving_plural()} />
+				{:else}
+					<Stepper bind:value={editQty} min={1} max={2000} step={5} unit="g" />
+				{/if}
+
+				{#if confirmingDeleteEntry}
+					<p class="mt-5 rounded-xl bg-red-50 px-4 py-3 text-sm font-medium text-red-700">
+						{m.confirm_delete()}
+					</p>
+					<div class="mt-2 flex gap-2">
+						<button
+							type="button"
+							onclick={() => (confirmingDeleteEntry = false)}
+							class="h-12 flex-1 rounded-2xl border-2 border-slate-200 font-semibold text-slate-700 active:bg-slate-100"
+						>
+							{m.cancel()}
+						</button>
+						<button
+							type="button"
+							disabled={editBusy}
+							onclick={deleteEditing}
+							class="h-12 flex-1 rounded-2xl bg-red-600 font-semibold text-white active:bg-red-700 disabled:opacity-50"
+						>
+							{m.delete_confirm_button()}
+						</button>
+					</div>
+				{:else}
+					{#if editing.source === 'food'}
+						<button
+							type="button"
+							disabled={loadingSubs}
+							onclick={openSubstitutes}
+							class="mt-5 flex h-12 w-full items-center justify-center gap-2 rounded-2xl border-2 border-emerald-200 font-semibold text-emerald-700 active:bg-emerald-50 disabled:opacity-50"
+						>
+							{#if loadingSubs}<Spinner class="h-4 w-4" />{/if}
+							{m.sub_action()}
+						</button>
+					{/if}
+					<div class="mt-2 flex gap-2">
+						<button
+							type="button"
+							disabled={editBusy}
+							onclick={() => (confirmingDeleteEntry = true)}
+							class="h-12 flex-1 rounded-2xl border-2 border-red-200 font-semibold text-red-600 active:bg-red-50 disabled:opacity-50"
+						>
+							{m.remove()}
+						</button>
+						<button
+							type="button"
+							disabled={editBusy}
+							onclick={saveEdit}
+							class="h-12 flex-[2] rounded-2xl bg-emerald-600 font-bold text-white active:bg-emerald-700 disabled:opacity-50"
+						>
+							{m.save()}
+						</button>
+					</div>
+				{/if}
 			{/if}
 		</div>
 	</div>

@@ -21,12 +21,14 @@ from ..schemas import (
     DiaryEntryIn,
     DiaryEntryOut,
     DiaryEntryUpdate,
+    DiaryGapOut,
     FoodIn,
     FoodOut,
     MacrosOut,
     MealGroupOut,
     RecipeIn,
     RecipeOut,
+    SubstitutesOut,
 )
 from ..services.diet import (
     food_macros,
@@ -36,6 +38,8 @@ from ..services.diet import (
     to_food_out,
 )
 from ..services.goals import compute_goals
+from ..services.recommend import substitutes as compute_substitutes
+from ..services.recommend import suggest_gap
 from ..services.text import normalize_search
 
 router = APIRouter(tags=["diet"])
@@ -117,6 +121,21 @@ def create_food(data: FoodIn, user: CurrentUser, session: SessionDep) -> FoodOut
     session.commit()
     session.refresh(food)
     return to_food_out(food, user.locale)
+
+
+@router.get("/me/foods/{food_id}/substitutes", response_model=SubstitutesOut)
+def food_substitutes(
+    food_id: int,
+    user: CurrentUser,
+    session: SessionDep,
+    grams: float = Query(..., gt=0, le=2000, description="Porcao atual em gramas"),
+    limit: int = Query(default=6, ge=1, le=12),
+) -> SubstitutesOut:
+    """Equivalentes na mesma categoria, igualando o macro-ancora (troca inteligente)."""
+    food = _visible_food(session, food_id, user.id)
+    if food is None:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, detail="FOOD_NOT_FOUND")
+    return compute_substitutes(session, user, food, grams, limit)
 
 
 # --- Receitas -------------------------------------------------------------
@@ -268,6 +287,17 @@ def get_diary(
         meals.append(MealGroupOut(meal_type=meal_type, entries=entry_outs, subtotal=subtotal))
     totals = sum_macros([_entry_out(e).macros for e in entries])
     return DiaryDayOut(date=day, meals=meals, totals=totals, goals=_daily_goals(session, user.id))
+
+
+@router.get("/me/diary/gap", response_model=DiaryGapOut)
+def diary_gap(
+    user: CurrentUser,
+    session: SessionDep,
+    day: date = Query(..., description="Dia local do cliente (YYYY-MM-DD)"),
+    limit: int = Query(default=4, ge=1, le=8),
+) -> DiaryGapOut:
+    """O que falta pra fechar as metas do dia + alimentos que encaixam na lacuna."""
+    return suggest_gap(session, user, day, limit)
 
 
 def _entry_macros_and_name(
