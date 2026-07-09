@@ -425,14 +425,16 @@
 									onclick={() => openVariation(routine.id)}
 									class="grid h-9 w-9 place-items-center rounded-full text-emerald-700 active:bg-emerald-50 disabled:opacity-50"
 								>
-									<svg viewBox="0 0 24 24" class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 3h5v5" /><path d="M4 20 21 3" /><path d="M21 16v5h-5" /><path d="M15 15l6 6" /><path d="M4 4l5 5" /></svg>
+									<svg viewBox="0 0 24 24" class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 17c5 0 5-10 11-10" /><path d="M4 7c5 0 5 10 11 10" /><path d="M12 4l3 3-3 3" /><path d="M12 20l3-3-3-3" /></svg>
 								</button>
 							{/if}
 							<a
 								href="/treino/rotina/{routine.id}"
-								class="text-sm font-semibold text-slate-400"
+								aria-label={m.edit()}
+								title={m.edit()}
+								class="grid h-9 w-9 place-items-center rounded-full text-slate-400 active:bg-slate-100"
 							>
-								{m.edit()}
+								<svg viewBox="0 0 24 24" class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9M16.5 3.5a2.1 2.1 0 013 3L7 19l-4 1 1-4z" /></svg>
 							</a>
 						</div>
 					</div>

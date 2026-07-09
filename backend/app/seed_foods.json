@@ -1838,5 +1838,545 @@
 			"en": "Multivitamin",
 			"es": "Multivitamínico"
 		}
+	},
+	{
+		"slug": "white-beans",
+		"category": "legume",
+		"kcal": 140,
+		"protein_g": 8.7,
+		"carbs_g": 25.0,
+		"fat_g": 0.5,
+		"default_portion_g": 150,
+		"portions": [
+			{
+				"label_key": "portion",
+				"grams": 150
+			}
+		],
+		"names": {
+			"pt-BR": "Feijão branco cozido",
+			"en": "White beans, cooked",
+			"es": "Alubias blancas cocidas"
+		}
+	},
+	{
+		"slug": "black-eyed-peas",
+		"category": "legume",
+		"kcal": 116,
+		"protein_g": 7.7,
+		"carbs_g": 20.8,
+		"fat_g": 0.5,
+		"default_portion_g": 150,
+		"portions": [
+			{
+				"label_key": "portion",
+				"grams": 150
+			}
+		],
+		"names": {
+			"pt-BR": "Feijão fradinho cozido",
+			"en": "Black-eyed peas, cooked",
+			"es": "Alubias carilla cocidas"
+		}
+	},
+	{
+		"slug": "pinto-beans",
+		"category": "legume",
+		"kcal": 143,
+		"protein_g": 9.0,
+		"carbs_g": 26.0,
+		"fat_g": 0.6,
+		"default_portion_g": 150,
+		"portions": [
+			{
+				"label_key": "portion",
+				"grams": 150
+			}
+		],
+		"names": {
+			"pt-BR": "Feijão roxinho cozido",
+			"en": "Pinto beans, cooked",
+			"es": "Alubias pintas cocidas"
+		}
+	},
+	{
+		"slug": "beef-tenderloin",
+		"category": "protein",
+		"kcal": 143,
+		"protein_g": 21.0,
+		"carbs_g": 0.0,
+		"fat_g": 6.0,
+		"default_portion_g": 150,
+		"portions": [
+			{
+				"label_key": "filet",
+				"grams": 150
+			}
+		],
+		"names": {
+			"pt-BR": "Filé mignon grelhado",
+			"en": "Grilled beef tenderloin",
+			"es": "Solomillo a la plancha"
+		}
+	},
+	{
+		"slug": "beef-ribeye",
+		"category": "protein",
+		"kcal": 250,
+		"protein_g": 25.0,
+		"carbs_g": 0.0,
+		"fat_g": 16.0,
+		"default_portion_g": 150,
+		"portions": [
+			{
+				"label_key": "filet",
+				"grams": 150
+			}
+		],
+		"names": {
+			"pt-BR": "Contra-filé grelhado",
+			"en": "Grilled ribeye",
+			"es": "Entrecot / chuletón a la plancha"
+		}
+	},
+	{
+		"slug": "beef-sirloin",
+		"category": "protein",
+		"kcal": 180,
+		"protein_g": 26.0,
+		"carbs_g": 0.0,
+		"fat_g": 8.0,
+		"default_portion_g": 150,
+		"portions": [
+			{
+				"label_key": "filet",
+				"grams": 150
+			}
+		],
+		"names": {
+			"pt-BR": "Lombo bovino grelhado",
+			"en": "Grilled sirloin",
+			"es": "Lomo bajo a la plancha"
+		}
+	},
+	{
+		"slug": "beef-shank",
+		"category": "protein",
+		"kcal": 160,
+		"protein_g": 28.0,
+		"carbs_g": 0.0,
+		"fat_g": 5.0,
+		"default_portion_g": 150,
+		"portions": [
+			{
+				"label_key": "portion",
+				"grams": 150
+			}
+		],
+		"names": {
+			"pt-BR": "Músculo bovino cozido",
+			"en": "Braised beef shank",
+			"es": "Morcillo de ternera guisado"
+		}
+	},
+	{
+		"slug": "beef-flank",
+		"category": "protein",
+		"kcal": 192,
+		"protein_g": 21.0,
+		"carbs_g": 0.0,
+		"fat_g": 11.0,
+		"default_portion_g": 150,
+		"portions": [
+			{
+				"label_key": "filet",
+				"grams": 150
+			}
+		],
+		"names": {
+			"pt-BR": "Fraldinha grelhada",
+			"en": "Grilled flank steak",
+			"es": "Falda a la plancha"
+		}
+	},
+	{
+		"slug": "beef-rump-cap",
+		"category": "protein",
+		"kcal": 230,
+		"protein_g": 24.0,
+		"carbs_g": 0.0,
+		"fat_g": 14.0,
+		"default_portion_g": 150,
+		"portions": [
+			{
+				"label_key": "filet",
+				"grams": 150
+			}
+		],
+		"names": {
+			"pt-BR": "Picanha grelhada",
+			"en": "Grilled rump cap",
+			"es": "Tapa de cuadril a la plancha"
+		}
+	},
+	{
+		"slug": "beef-bottom-sirloin",
+		"category": "protein",
+		"kcal": 172,
+		"protein_g": 22.0,
+		"carbs_g": 0.0,
+		"fat_g": 9.0,
+		"default_portion_g": 150,
+		"portions": [
+			{
+				"label_key": "filet",
+				"grams": 150
+			}
+		],
+		"names": {
+			"pt-BR": "Maminha grelhada",
+			"en": "Grilled bottom sirloin",
+			"es": "Babilla a la plancha"
+		}
+	},
+	{
+		"slug": "beef-chuck",
+		"category": "protein",
+		"kcal": 215,
+		"protein_g": 20.0,
+		"carbs_g": 0.0,
+		"fat_g": 14.0,
+		"default_portion_g": 150,
+		"portions": [
+			{
+				"label_key": "portion",
+				"grams": 150
+			}
+		],
+		"names": {
+			"pt-BR": "Acém cozido",
+			"en": "Braised chuck",
+			"es": "Aguja de ternera guisada"
+		}
+	},
+	{
+		"slug": "iberian-secreto",
+		"category": "protein",
+		"kcal": 275,
+		"protein_g": 17.0,
+		"carbs_g": 0.0,
+		"fat_g": 23.0,
+		"default_portion_g": 150,
+		"portions": [
+			{
+				"label_key": "filet",
+				"grams": 150
+			}
+		],
+		"names": {
+			"pt-BR": "Secreto ibérico grelhado",
+			"en": "Grilled secreto ibérico",
+			"es": "Secreto ibérico a la plancha"
+		}
+	},
+	{
+		"slug": "iberian-presa",
+		"category": "protein",
+		"kcal": 250,
+		"protein_g": 19.0,
+		"carbs_g": 0.0,
+		"fat_g": 19.0,
+		"default_portion_g": 150,
+		"portions": [
+			{
+				"label_key": "filet",
+				"grams": 150
+			}
+		],
+		"names": {
+			"pt-BR": "Presa ibérica grelhada",
+			"en": "Grilled presa ibérica",
+			"es": "Presa ibérica a la plancha"
+		}
+	},
+	{
+		"slug": "iberian-pluma",
+		"category": "protein",
+		"kcal": 230,
+		"protein_g": 20.0,
+		"carbs_g": 0.0,
+		"fat_g": 16.0,
+		"default_portion_g": 150,
+		"portions": [
+			{
+				"label_key": "filet",
+				"grams": 150
+			}
+		],
+		"names": {
+			"pt-BR": "Pluma ibérica grelhada",
+			"en": "Grilled pluma ibérica",
+			"es": "Pluma ibérica a la plancha"
+		}
+	},
+	{
+		"slug": "pork-cheek",
+		"category": "protein",
+		"kcal": 230,
+		"protein_g": 18.0,
+		"carbs_g": 0.0,
+		"fat_g": 17.0,
+		"default_portion_g": 150,
+		"portions": [
+			{
+				"label_key": "portion",
+				"grams": 150
+			}
+		],
+		"names": {
+			"pt-BR": "Bochecha de porco cozida",
+			"en": "Braised pork cheek",
+			"es": "Carrillera de cerdo guisada"
+		}
+	},
+	{
+		"slug": "pork-leg",
+		"category": "protein",
+		"kcal": 180,
+		"protein_g": 24.0,
+		"carbs_g": 0.0,
+		"fat_g": 8.0,
+		"default_portion_g": 150,
+		"portions": [
+			{
+				"label_key": "filet",
+				"grams": 150
+			}
+		],
+		"names": {
+			"pt-BR": "Pernil suíno assado",
+			"en": "Roasted pork leg",
+			"es": "Pierna de cerdo al horno"
+		}
+	},
+	{
+		"slug": "pork-chop",
+		"category": "protein",
+		"kcal": 200,
+		"protein_g": 24.0,
+		"carbs_g": 0.0,
+		"fat_g": 11.0,
+		"default_portion_g": 150,
+		"portions": [
+			{
+				"label_key": "filet",
+				"grams": 150
+			}
+		],
+		"names": {
+			"pt-BR": "Bisteca suína grelhada",
+			"en": "Grilled pork chop",
+			"es": "Chuleta de cerdo a la plancha"
+		}
+	},
+	{
+		"slug": "pork-ribs",
+		"category": "protein",
+		"kcal": 280,
+		"protein_g": 20.0,
+		"carbs_g": 0.0,
+		"fat_g": 22.0,
+		"default_portion_g": 150,
+		"portions": [
+			{
+				"label_key": "portion",
+				"grams": 150
+			}
+		],
+		"names": {
+			"pt-BR": "Costela suína assada",
+			"en": "Roasted pork ribs",
+			"es": "Costillas de cerdo al horno"
+		}
+	},
+	{
+		"slug": "pork-belly",
+		"category": "fat",
+		"kcal": 518,
+		"protein_g": 9.0,
+		"carbs_g": 0.0,
+		"fat_g": 53.0,
+		"default_portion_g": 100,
+		"portions": [
+			{
+				"label_key": "portion",
+				"grams": 100
+			}
+		],
+		"names": {
+			"pt-BR": "Panceta / barriga de porco",
+			"en": "Pork belly",
+			"es": "Panceta de cerdo"
+		}
+	},
+	{
+		"slug": "chicken-thigh",
+		"category": "protein",
+		"kcal": 180,
+		"protein_g": 24.0,
+		"carbs_g": 0.0,
+		"fat_g": 9.0,
+		"default_portion_g": 120,
+		"portions": [
+			{
+				"label_key": "filet",
+				"grams": 120
+			}
+		],
+		"names": {
+			"pt-BR": "Coxa de frango grelhada",
+			"en": "Grilled chicken thigh",
+			"es": "Muslo de pollo a la plancha"
+		}
+	},
+	{
+		"slug": "chicken-drumstick-thigh",
+		"category": "protein",
+		"kcal": 190,
+		"protein_g": 25.0,
+		"carbs_g": 0.0,
+		"fat_g": 10.0,
+		"default_portion_g": 120,
+		"portions": [
+			{
+				"label_key": "filet",
+				"grams": 120
+			}
+		],
+		"names": {
+			"pt-BR": "Sobrecoxa de frango grelhada",
+			"en": "Grilled chicken thigh+drumstick",
+			"es": "Contramuslo de pollo a la plancha"
+		}
+	},
+	{
+		"slug": "chicken-wing",
+		"category": "protein",
+		"kcal": 203,
+		"protein_g": 19.0,
+		"carbs_g": 0.0,
+		"fat_g": 14.0,
+		"default_portion_g": 80,
+		"portions": [
+			{
+				"label_key": "portion",
+				"grams": 80
+			}
+		],
+		"names": {
+			"pt-BR": "Asa de frango assada",
+			"en": "Roasted chicken wing",
+			"es": "Ala de pollo al horno"
+		}
+	},
+	{
+		"slug": "hake",
+		"category": "protein",
+		"kcal": 86,
+		"protein_g": 18.0,
+		"carbs_g": 0.0,
+		"fat_g": 1.0,
+		"default_portion_g": 150,
+		"portions": [
+			{
+				"label_key": "filet",
+				"grams": 150
+			}
+		],
+		"names": {
+			"pt-BR": "Pescada grelhada",
+			"en": "Grilled hake",
+			"es": "Merluza a la plancha"
+		}
+	},
+	{
+		"slug": "sea-bass",
+		"category": "protein",
+		"kcal": 97,
+		"protein_g": 19.0,
+		"carbs_g": 0.0,
+		"fat_g": 2.0,
+		"default_portion_g": 150,
+		"portions": [
+			{
+				"label_key": "filet",
+				"grams": 150
+			}
+		],
+		"names": {
+			"pt-BR": "Robalo grelhado",
+			"en": "Grilled sea bass",
+			"es": "Lubina a la plancha"
+		}
+	},
+	{
+		"slug": "cod",
+		"category": "protein",
+		"kcal": 82,
+		"protein_g": 18.0,
+		"carbs_g": 0.0,
+		"fat_g": 0.7,
+		"default_portion_g": 150,
+		"portions": [
+			{
+				"label_key": "filet",
+				"grams": 150
+			}
+		],
+		"names": {
+			"pt-BR": "Bacalhau cozido",
+			"en": "Cod, cooked",
+			"es": "Bacalao cocido"
+		}
+	},
+	{
+		"slug": "anchovy",
+		"category": "protein",
+		"kcal": 131,
+		"protein_g": 20.0,
+		"carbs_g": 0.0,
+		"fat_g": 5.0,
+		"default_portion_g": 60,
+		"portions": [
+			{
+				"label_key": "portion",
+				"grams": 60
+			}
+		],
+		"names": {
+			"pt-BR": "Boquerão grelhado",
+			"en": "Grilled anchovy",
+			"es": "Boquerones a la plancha"
+		}
+	},
+	{
+		"slug": "gilthead-bream",
+		"category": "protein",
+		"kcal": 96,
+		"protein_g": 18.0,
+		"carbs_g": 0.0,
+		"fat_g": 2.5,
+		"default_portion_g": 150,
+		"portions": [
+			{
+				"label_key": "filet",
+				"grams": 150
+			}
+		],
+		"names": {
+			"pt-BR": "Dourada grelhada",
+			"en": "Grilled gilt-head bream",
+			"es": "Dorada a la plancha"
+		}
 	}
 ]
