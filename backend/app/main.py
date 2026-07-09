@@ -13,6 +13,7 @@ from .routers import (
     diet,
     profile,
     stats,
+    supplements,
     water,
     weight,
     workout,
@@ -57,6 +58,7 @@ app.include_router(stats.router)
 app.include_router(coach.router)
 app.include_router(achievements.router)
 app.include_router(account.router)
+app.include_router(supplements.router)
 
 
 @app.get("/health")

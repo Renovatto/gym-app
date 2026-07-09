@@ -381,3 +381,33 @@ class PasswordResetToken(SQLModel, table=True):
     token: str = Field(index=True)
     expires_at: datetime
     used: bool = Field(default=False)
+
+
+class Supplement(SQLModel, table=True):
+    """Suplemento do usuario (ex.: creatina, vitamina D). Os zero-macro sao
+    acompanhados por ADESAO diaria (tomou hoje?), nao por calorias."""
+
+    __tablename__ = "supplements"
+
+    id: int | None = Field(default=None, primary_key=True)
+    user_id: int = Field(foreign_key="users.id", index=True, ondelete="CASCADE")
+    name: str
+    dose: str = ""  # texto livre, ex.: "5 g", "2000 UI" (pode ficar vazio)
+    active: bool = Field(default=True)
+    position: int = Field(default=0)
+    created_at: datetime = Field(default_factory=utcnow)
+
+    logs: list["SupplementLog"] = Relationship(back_populates="supplement", cascade_delete=True)
+
+
+class SupplementLog(SQLModel, table=True):
+    """Registro de que o suplemento foi tomado num dia. A presenca da linha = tomou."""
+
+    __tablename__ = "supplement_logs"
+
+    id: int | None = Field(default=None, primary_key=True)
+    user_id: int = Field(foreign_key="users.id", index=True, ondelete="CASCADE")
+    supplement_id: int = Field(foreign_key="supplements.id", index=True, ondelete="CASCADE")
+    log_date: date = Field(index=True)  # dia local do usuario
+
+    supplement: "Supplement" = Relationship(back_populates="logs")

@@ -544,3 +544,27 @@ class RoutineVariationOut(BaseModel):
     routine_id: int
     name: str
     items: list[RoutineVariationItemOut]
+
+
+# --- Suplementos (adesao diaria; zero-macro nao entra no calculo de macros) ---
+
+
+class SupplementIn(BaseModel):
+    name: str = Field(min_length=1, max_length=60)
+    dose: str = Field(default="", max_length=40)
+
+
+class SupplementOut(BaseModel):
+    id: int
+    name: str
+    dose: str
+    active: bool
+    taken: bool  # tomado no dia consultado
+    taken_last_7: int  # dias tomados nos ultimos 7 (consistencia)
+
+
+class SupplementsDayOut(BaseModel):
+    date: date
+    items: list[SupplementOut]
+    taken_count: int
+    total: int

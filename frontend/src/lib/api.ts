@@ -478,6 +478,28 @@ export interface DiaryEntryInput {
 	quantity: number;
 }
 
+// --- Suplementos (adesao diaria; zero-macro nao entra no calculo de macros) ---
+export interface Supplement {
+	id: number;
+	name: string;
+	dose: string;
+	active: boolean;
+	taken: boolean;
+	taken_last_7: number;
+}
+
+export interface SupplementsDay {
+	date: string;
+	items: Supplement[];
+	taken_count: number;
+	total: number;
+}
+
+export interface SupplementInput {
+	name: string;
+	dose: string;
+}
+
 export function getTokens(): { access: string | null; refresh: string | null } {
 	return {
 		access: localStorage.getItem(ACCESS_KEY),
@@ -689,6 +711,18 @@ export const api = {
 		request<ExternalFood[]>(`/me/foods/search-external?q=${encodeURIComponent(q)}&limit=${limit}`),
 	getDiaryLoggedDays: (start: string, end: string) =>
 		request<string[]>(`/me/diary/logged-days?start=${start}&end=${end}`),
+	getSupplements: (day: string) =>
+		request<SupplementsDay>(`/me/supplements?day=${day}`),
+	createSupplement: (day: string, data: SupplementInput) =>
+		request<Supplement>(`/me/supplements?day=${day}`, { method: 'POST', body: data }),
+	updateSupplement: (id: number, day: string, data: SupplementInput) =>
+		request<Supplement>(`/me/supplements/${id}?day=${day}`, { method: 'PUT', body: data }),
+	deleteSupplement: (id: number) =>
+		request<void>(`/me/supplements/${id}`, { method: 'DELETE' }),
+	markSupplement: (id: number, day: string) =>
+		request<Supplement>(`/me/supplements/${id}/log?day=${day}`, { method: 'POST' }),
+	unmarkSupplement: (id: number, day: string) =>
+		request<Supplement>(`/me/supplements/${id}/log?day=${day}`, { method: 'DELETE' }),
 	addDiaryEntry: (entry: DiaryEntryInput) =>
 		request<DiaryEntry>('/me/diary', { method: 'POST', body: entry }),
 	updateDiaryEntry: (id: number, quantity: number) =>

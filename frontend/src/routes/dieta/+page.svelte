@@ -10,7 +10,9 @@
 		type MealPlanMeal,
 		type MealType,
 		type SubstituteItem,
-		type Substitutes
+		type Substitutes,
+		type Supplement,
+		type SupplementsDay
 	} from '$lib/api';
 	import MacroSummary from '$lib/components/MacroSummary.svelte';
 	import Stepper from '$lib/components/Stepper.svelte';
@@ -42,6 +44,16 @@
 	// calendario: dias com lancamentos ficam marcados
 	let showCalendar = $state(false);
 	let loggedDays = $state<Set<string>>(new Set());
+
+	// Suplementos (adesao diaria; zero-macro nao entra nos macros)
+	let supplements = $state<SupplementsDay | null>(null);
+	let supplementBusy = $state(false);
+	let showSupplementManager = $state(false);
+	let suppName = $state('');
+	let suppDose = $state('');
+	let suppEditingId = $state<number | null>(null);
+	let suppFormBusy = $state(false);
+	let confirmingDeleteSupp = $state<number | null>(null);
 
 	function pad2(n: number): string {
 		return String(n).padStart(2, '0');
@@ -120,12 +132,78 @@
 
 	async function load(): Promise<void> {
 		loading = true;
-		[diary, gap, mealPlan] = await Promise.all([
+		[diary, gap, mealPlan, supplements] = await Promise.all([
 			api.getDiary(day),
 			api.getDiaryGap(day),
-			api.getMealPlan(day)
+			api.getMealPlan(day),
+			api.getSupplements(day)
 		]);
 		loading = false;
+	}
+
+	// Marca/desmarca o suplemento no dia (feedback imediato pelo check, sem toast).
+	async function toggleSupplement(s: Supplement): Promise<void> {
+		if (supplementBusy) return;
+		supplementBusy = true;
+		try {
+			const updated = s.taken
+				? await api.unmarkSupplement(s.id, day)
+				: await api.markSupplement(s.id, day);
+			if (supplements) {
+				supplements.items = supplements.items.map((it) => (it.id === updated.id ? updated : it));
+				supplements.taken_count = supplements.items.filter((it) => it.taken).length;
+			}
+		} finally {
+			supplementBusy = false;
+		}
+	}
+
+	function openSupplementManager(): void {
+		showSupplementManager = true;
+		suppEditingId = null;
+		suppName = '';
+		suppDose = '';
+		confirmingDeleteSupp = null;
+	}
+
+	function editSupplement(s: Supplement): void {
+		suppEditingId = s.id;
+		suppName = s.name;
+		suppDose = s.dose;
+		confirmingDeleteSupp = null;
+	}
+
+	async function saveSupplement(): Promise<void> {
+		const name = suppName.trim();
+		if (!name || suppFormBusy) return;
+		suppFormBusy = true;
+		try {
+			if (suppEditingId !== null) {
+				await api.updateSupplement(suppEditingId, day, { name, dose: suppDose.trim() });
+				showToast(m.toast_saved());
+			} else {
+				await api.createSupplement(day, { name, dose: suppDose.trim() });
+				showToast(m.supp_added());
+			}
+			suppEditingId = null;
+			suppName = '';
+			suppDose = '';
+			supplements = await api.getSupplements(day);
+		} finally {
+			suppFormBusy = false;
+		}
+	}
+
+	async function removeSupplement(id: number): Promise<void> {
+		await api.deleteSupplement(id);
+		confirmingDeleteSupp = null;
+		if (suppEditingId === id) {
+			suppEditingId = null;
+			suppName = '';
+			suppDose = '';
+		}
+		supplements = await api.getSupplements(day);
+		showToast(m.toast_deleted());
 	}
 
 	async function repeatPrevious(): Promise<void> {
@@ -485,6 +563,60 @@
 		{/each}
 	</div>
 
+	{#if supplements && supplements.total > 0}
+		<section class="mt-4 rounded-3xl bg-white p-4 shadow-sm">
+			<div class="mb-3 flex items-center justify-between gap-2">
+				<div>
+					<h2 class="font-bold text-slate-900">{m.supplements_title()}</h2>
+					<p class="text-xs text-slate-500">
+						{supplements.taken_count}/{supplements.total} {m.supp_taken_label()}
+					</p>
+				</div>
+				<button
+					type="button"
+					onclick={openSupplementManager}
+					aria-label={m.supp_manage()}
+					class="grid h-9 w-9 shrink-0 place-items-center rounded-xl border-2 border-slate-200 text-slate-500 active:bg-slate-100"
+				>
+					<svg viewBox="0 0 24 24" class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9M16.5 3.5a2.1 2.1 0 013 3L7 19l-4 1 1-4z" stroke-linecap="round" stroke-linejoin="round" /></svg>
+				</button>
+			</div>
+			<div class="space-y-2">
+				{#each supplements.items as s (s.id)}
+					<button
+						type="button"
+						onclick={() => toggleSupplement(s)}
+						disabled={supplementBusy}
+						class="flex w-full items-center gap-3 rounded-2xl px-3 py-2 text-left transition-colors {s.taken
+							? 'bg-emerald-50'
+							: 'bg-slate-50'}"
+					>
+						<span
+							class="grid h-8 w-8 shrink-0 place-items-center rounded-lg border-2 {s.taken
+								? 'border-emerald-600 bg-emerald-600 text-white'
+								: 'border-slate-300 text-transparent'}"
+						>
+							<svg viewBox="0 0 24 24" class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 13l4 4L19 7" /></svg>
+						</span>
+						<span class="min-w-0 flex-1 truncate font-semibold {s.taken ? 'text-emerald-900' : 'text-slate-800'}">
+							{s.name}{#if s.dose}<span class="font-normal text-slate-500"> · {s.dose}</span>{/if}
+						</span>
+						<span class="shrink-0 text-xs font-semibold text-slate-400">{s.taken_last_7}/7</span>
+					</button>
+				{/each}
+			</div>
+		</section>
+	{:else if !loading}
+		<button
+			type="button"
+			onclick={openSupplementManager}
+			class="mt-4 flex h-12 w-full items-center justify-center gap-2 rounded-2xl border-2 border-dashed border-slate-200 font-semibold text-slate-500 active:bg-slate-50"
+		>
+			<svg viewBox="0 0 24 24" class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14" stroke-linecap="round" /></svg>
+			{m.supp_add_first()}
+		</button>
+	{/if}
+
 	{#if isEmpty}
 		<button
 			type="button"
@@ -674,6 +806,117 @@
 			>
 				{m.back()}
 			</button>
+		</div>
+	</div>
+{/if}
+
+<!-- Gerenciar suplementos: adicionar, editar e remover (a marcacao diaria e no card) -->
+{#if showSupplementManager}
+	<div
+		class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
+		role="button"
+		tabindex="-1"
+		onclick={() => (showSupplementManager = false)}
+		onkeydown={(e) => e.key === 'Escape' && (showSupplementManager = false)}
+	>
+		<div
+			class="w-full max-w-md rounded-3xl bg-white p-5"
+			role="dialog"
+			tabindex="-1"
+			onclick={(e) => e.stopPropagation()}
+			onkeydown={() => {}}
+		>
+			<div class="mb-4 flex items-center justify-between">
+				<h2 class="text-lg font-bold text-slate-900">{m.supplements_title()}</h2>
+				<button
+					type="button"
+					onclick={() => (showSupplementManager = false)}
+					aria-label={m.close()}
+					class="grid h-9 w-9 place-items-center rounded-full bg-slate-100 text-slate-500 active:bg-slate-200"
+				>
+					<svg viewBox="0 0 24 24" class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 6l12 12M18 6L6 18" stroke-linecap="round" /></svg>
+				</button>
+			</div>
+
+			<div class="space-y-2">
+				<input
+					bind:value={suppName}
+					placeholder={m.supp_name_placeholder()}
+					maxlength="60"
+					class="h-12 w-full rounded-2xl border-2 border-slate-200 px-4 text-base outline-none focus:border-emerald-600"
+				/>
+				<div class="flex gap-2">
+					<input
+						bind:value={suppDose}
+						placeholder={m.supp_dose_placeholder()}
+						maxlength="40"
+						class="h-12 min-w-0 flex-1 rounded-2xl border-2 border-slate-200 px-4 text-base outline-none focus:border-emerald-600"
+					/>
+					<button
+						type="button"
+						onclick={saveSupplement}
+						disabled={!suppName.trim() || suppFormBusy}
+						class="flex h-12 shrink-0 items-center gap-2 rounded-2xl bg-emerald-600 px-5 font-bold text-white active:bg-emerald-700 disabled:opacity-50"
+					>
+						{#if suppFormBusy}<Spinner class="h-5 w-5" />{/if}
+						{suppEditingId !== null ? m.save() : m.supp_add()}
+					</button>
+				</div>
+				{#if suppEditingId !== null}
+					<button
+						type="button"
+						onclick={() => {
+							suppEditingId = null;
+							suppName = '';
+							suppDose = '';
+						}}
+						class="text-sm font-semibold text-slate-500">{m.cancel()}</button
+					>
+				{/if}
+			</div>
+
+			{#if supplements && supplements.items.length > 0}
+				<div class="mt-4 space-y-2">
+					{#each supplements.items as s (s.id)}
+						<div class="flex items-center gap-2 rounded-2xl bg-slate-50 px-3 py-2">
+							<div class="min-w-0 flex-1">
+								<p class="truncate text-sm font-semibold text-slate-800">{s.name}</p>
+								{#if s.dose}<p class="text-xs text-slate-500">{s.dose}</p>{/if}
+							</div>
+							{#if confirmingDeleteSupp === s.id}
+								<button
+									type="button"
+									onclick={() => removeSupplement(s.id)}
+									class="rounded-xl bg-red-600 px-3 py-1.5 text-xs font-bold text-white active:bg-red-700"
+									>{m.confirm_delete()}</button
+								>
+								<button
+									type="button"
+									onclick={() => (confirmingDeleteSupp = null)}
+									class="rounded-xl px-2 py-1.5 text-xs font-semibold text-slate-500">{m.cancel()}</button
+								>
+							{:else}
+								<button
+									type="button"
+									onclick={() => editSupplement(s)}
+									aria-label={m.edit()}
+									class="grid h-8 w-8 place-items-center rounded-lg text-slate-400 active:bg-slate-100"
+								>
+									<svg viewBox="0 0 24 24" class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9M16.5 3.5a2.1 2.1 0 013 3L7 19l-4 1 1-4z" stroke-linecap="round" stroke-linejoin="round" /></svg>
+								</button>
+								<button
+									type="button"
+									onclick={() => (confirmingDeleteSupp = s.id)}
+									aria-label={m.confirm_delete()}
+									class="grid h-8 w-8 place-items-center rounded-lg text-slate-400 active:bg-slate-100"
+								>
+									<svg viewBox="0 0 24 24" class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 7h16M9 7V5h6v2M6 7l1 13h10l1-13" stroke-linecap="round" stroke-linejoin="round" /></svg>
+								</button>
+							{/if}
+						</div>
+					{/each}
+				</div>
+			{/if}
 		</div>
 	</div>
 {/if}
