@@ -83,12 +83,16 @@ def routines_periodization(
     ).all()
     out: list[RoutinePeriodizationOut] = []
     for routine in routines:
-        weeks = max(0, (today - routine.created_at.date()).days // 7)
+        started = routine.created_at.date()
+        weeks = max(0, (today - started).days // 7)
         out.append(
             RoutinePeriodizationOut(
                 routine_id=routine.id,
                 name=routine.name,
+                started_on=started,
+                renew_on=started + timedelta(weeks=RENEW_AFTER_WEEKS),
                 weeks_active=weeks,
+                weeks_remaining=max(0, RENEW_AFTER_WEEKS - weeks),
                 due=weeks >= RENEW_AFTER_WEEKS,
             )
         )

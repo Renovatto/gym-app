@@ -440,7 +440,10 @@ export interface DietAdherence {
 export interface RoutinePeriodization {
 	routine_id: number;
 	name: string;
+	started_on: string;
+	renew_on: string;
 	weeks_active: number;
+	weeks_remaining: number;
 	due: boolean;
 }
 

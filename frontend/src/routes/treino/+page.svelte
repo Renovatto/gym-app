@@ -107,6 +107,13 @@
 
 	// Rotina "vencida" (passou do mesociclo): sinaliza hora de variar o estimulo.
 	const dueRoutine = $derived(periodization.find((p) => p.due));
+	const periodizationFor = (routineId: number): RoutinePeriodization | undefined =>
+		periodization.find((p) => p.routine_id === routineId);
+	// detalhes do ciclo (validade) da rotina clicada
+	let selectedPeriod = $state<RoutinePeriodization | null>(null);
+	function fmtDate(iso: string): string {
+		return df.format(new Date(iso + 'T12:00:00'));
+	}
 	let creatingTemplate = $state(false);
 	let showTemplates = $state(false);
 	let completingId = $state<number | null>(null);
@@ -212,6 +219,82 @@
 			<p class="mt-0.5 text-sm text-amber-700">
 				{m.periodization_text({ name: dueRoutine.name, weeks: dueRoutine.weeks_active })}
 			</p>
+		</div>
+	</div>
+{/if}
+
+<!-- Detalhes do ciclo (validade) da rotina: inicio, validade e semanas -->
+{#if selectedPeriod}
+	<div
+		class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
+		role="button"
+		tabindex="-1"
+		onclick={() => (selectedPeriod = null)}
+		onkeydown={(e) => e.key === 'Escape' && (selectedPeriod = null)}
+	>
+		<div
+			class="w-full max-w-md rounded-3xl bg-white p-5"
+			role="dialog"
+			tabindex="-1"
+			onclick={(e) => e.stopPropagation()}
+			onkeydown={() => {}}
+		>
+			<div class="mb-4 flex items-start justify-between gap-2">
+				<div class="min-w-0">
+					<p class="text-xs font-bold uppercase tracking-wide text-slate-400">{m.cycle_title()}</p>
+					<h2 class="truncate text-lg font-bold text-slate-900">{selectedPeriod.name}</h2>
+				</div>
+				<button
+					type="button"
+					aria-label={m.close()}
+					onclick={() => (selectedPeriod = null)}
+					class="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-slate-100 text-slate-500 active:bg-slate-200"
+				>
+					<svg viewBox="0 0 24 24" class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 6l12 12M18 6L6 18" stroke-linecap="round" /></svg>
+				</button>
+			</div>
+
+			<div class="grid grid-cols-2 gap-3">
+				<div class="rounded-2xl bg-slate-50 p-3">
+					<p class="text-xs font-semibold text-slate-500">{m.cycle_started()}</p>
+					<p class="mt-0.5 font-bold text-slate-900">{fmtDate(selectedPeriod.started_on)}</p>
+				</div>
+				<div class="rounded-2xl p-3 {selectedPeriod.due ? 'bg-amber-50' : 'bg-slate-50'}">
+					<p class="text-xs font-semibold {selectedPeriod.due ? 'text-amber-600' : 'text-slate-500'}">
+						{m.cycle_valid_through()}
+					</p>
+					<p class="mt-0.5 font-bold {selectedPeriod.due ? 'text-amber-700' : 'text-slate-900'}">
+						{fmtDate(selectedPeriod.renew_on)}
+					</p>
+				</div>
+			</div>
+
+			<p class="mt-3 text-sm text-slate-500">
+				{#if selectedPeriod.due}
+					{m.cycle_due_text({ weeks: selectedPeriod.weeks_active })}
+				{:else}
+					{m.cycle_active_text({
+						active: selectedPeriod.weeks_active,
+						remaining: selectedPeriod.weeks_remaining
+					})}
+				{/if}
+			</p>
+
+			<button
+				type="button"
+				onclick={() => {
+					if (!selectedPeriod) return;
+					const id = selectedPeriod.routine_id;
+					selectedPeriod = null;
+					openVariation(id);
+				}}
+				class="mt-4 flex h-12 w-full items-center justify-center gap-2 rounded-2xl font-bold text-white {selectedPeriod.due
+					? 'bg-amber-500 active:bg-amber-600'
+					: 'bg-emerald-600 active:bg-emerald-700'}"
+			>
+				<svg viewBox="0 0 24 24" class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 17c5 0 5-10 11-10" /><path d="M4 7c5 0 5 10 11 10" /><path d="M12 4l3 3-3 3" /><path d="M12 20l3-3-3-3" /></svg>
+				{m.cycle_renew_action()}
+			</button>
 		</div>
 	</div>
 {/if}
@@ -399,6 +482,7 @@
 		{/if}
 		<div class="space-y-3">
 			{#each routines as routine (routine.id)}
+				{@const period = periodizationFor(routine.id)}
 				<section class="rounded-3xl bg-white p-5 shadow-sm">
 					<div class="flex items-start justify-between gap-2">
 						<div class="min-w-0">
@@ -414,6 +498,22 @@
 								{routine.items.length}
 								{routine.items.length === 1 ? m.exercise_singular() : m.exercise_plural()}
 							</p>
+							{#if period}
+								<button
+									type="button"
+									onclick={() => (selectedPeriod = period)}
+									class="mt-1.5 inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-semibold {period.due
+										? 'bg-amber-50 text-amber-700'
+										: 'bg-slate-100 text-slate-500'}"
+								>
+									<svg viewBox="0 0 24 24" class="h-3.5 w-3.5" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="17" rx="2" /><path d="M3 9h18M8 2v4M16 2v4" stroke-linecap="round" /></svg>
+									{#if period.due}
+										{m.cycle_renew_badge()}
+									{:else}
+										{m.cycle_valid_until({ date: fmtDate(period.renew_on) })}
+									{/if}
+								</button>
+							{/if}
 						</div>
 						<div class="flex shrink-0 items-center gap-3">
 							{#if routine.items.length > 0}

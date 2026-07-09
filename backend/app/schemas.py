@@ -510,7 +510,10 @@ class DietAdherenceOut(BaseModel):
 class RoutinePeriodizationOut(BaseModel):
     routine_id: int
     name: str
+    started_on: date  # inicio do ciclo (criacao da rotina)
+    renew_on: date  # validade sugerida = inicio + mesociclo
     weeks_active: int
+    weeks_remaining: int  # semanas ate a validade (0 = ja venceu)
     due: bool  # passou da validade sugerida (mesociclo) -> hora de variar
 
 
