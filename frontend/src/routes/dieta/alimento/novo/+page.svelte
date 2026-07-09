@@ -22,14 +22,22 @@
 	let extSearching = $state(false);
 	let extSearched = $state(false);
 
+	// Guarda contra respostas fora de ordem: se o usuario buscar de novo antes da
+	// resposta anterior voltar, a resposta antiga (mais lenta) nao pode sobrescrever
+	// a mais nova ao chegar depois - so aplicamos o resultado da busca MAIS RECENTE.
+	let extRequestId = 0;
+
 	async function searchExternal(): Promise<void> {
 		if (extQuery.trim().length < 2) return;
+		const requestId = ++extRequestId;
 		extSearching = true;
 		try {
-			extResults = await api.searchExternalFoods(extQuery.trim());
+			const results = await api.searchExternalFoods(extQuery.trim());
+			if (requestId !== extRequestId) return; // uma busca mais nova ja foi disparada
+			extResults = results;
 			extSearched = true;
 		} finally {
-			extSearching = false;
+			if (requestId === extRequestId) extSearching = false;
 		}
 	}
 

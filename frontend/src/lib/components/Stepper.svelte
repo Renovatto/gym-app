@@ -20,8 +20,16 @@
 		onchange?: (value: number) => void;
 	} = $props();
 
-	function clamp(v: number): number {
-		return Math.min(max, Math.max(min, Math.round(v / step) * step));
+	// Usado na digitacao manual: so respeita min/max, sem forcar multiplo do
+	// step - digitar "3" com step=2.5 deve salvar 3, nao arredondar pra 2.5.
+	function clampRange(v: number): number {
+		return Math.min(max, Math.max(min, v));
+	}
+
+	// Usado pelos botoes +/-: alem do min/max, arredonda pro multiplo do step
+	// (mantem os incrementos "redondos": 2.5, 5, 7.5...).
+	function clampToStep(v: number): number {
+		return clampRange(Math.round(v / step) * step);
 	}
 
 	function set(v: number): void {
@@ -30,13 +38,13 @@
 	}
 
 	function nudge(direction: 1 | -1): void {
-		set(clamp(value + direction * step));
+		set(clampToStep(value + direction * step));
 	}
 
 	function onInput(event: Event): void {
 		const raw = (event.currentTarget as HTMLInputElement).value.replace(',', '.');
 		const parsed = Number(raw);
-		if (!Number.isNaN(parsed)) set(clamp(parsed));
+		if (!Number.isNaN(parsed)) set(clampRange(parsed));
 	}
 
 	// Enquanto digita, remove tudo que nao seja numero, virgula, ponto ou sinal.

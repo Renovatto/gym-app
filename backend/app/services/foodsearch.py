@@ -4,6 +4,8 @@ Retorna candidatos com macros por 100 g; o usuario revisa e salva no catalogo de
 pelo fluxo normal de criar alimento. Falha de rede/timeout devolve lista vazia (o app
 nunca trava por causa disso)."""
 
+import time
+
 import httpx
 
 from ..schemas import ExternalFoodOut
@@ -14,6 +16,10 @@ _OFF_URL = "https://world.openfoodfacts.org/cgi/search.pl"
 _TIMEOUT = 8.0
 # Open Food Facts pede um User-Agent identificavel nas chamadas de API.
 _HEADERS = {"User-Agent": "GymApp/0.1 (personal fitness app)"}
+# O OFF e instavel (rate limit/timeout ocasional): 1 nova tentativa evita que uma
+# falha transitoria vire "nada encontrado" para o usuario.
+_MAX_ATTEMPTS = 2
+_RETRY_DELAY_S = 0.6
 
 
 def _num(value: object) -> float:
@@ -39,13 +45,19 @@ def search_external(query: str, limit: int = 15, lang: str = "en") -> list[Exter
         "lc": lang,
         "page_size": limit,
     }
-    try:
-        resp = httpx.get(_OFF_URL, params=params, headers=_HEADERS, timeout=_TIMEOUT)
-        resp.raise_for_status()
-        products = resp.json().get("products", [])
-    except Exception:
-        # rede/timeout/parsing: devolve vazio, sem quebrar o app
-        return []
+    products: list[dict] = []
+    for attempt in range(1, _MAX_ATTEMPTS + 1):
+        try:
+            resp = httpx.get(_OFF_URL, params=params, headers=_HEADERS, timeout=_TIMEOUT)
+            resp.raise_for_status()
+            products = resp.json().get("products", [])
+            break
+        except Exception:
+            # rede/timeout/resposta invalida (comum no OFF): tenta mais uma vez antes
+            # de desistir, para nao trocar uma falha transitoria por "nada encontrado"
+            if attempt == _MAX_ATTEMPTS:
+                return []
+            time.sleep(_RETRY_DELAY_S)
 
     out: list[ExternalFoodOut] = []
     for product in products:
