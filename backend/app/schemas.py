@@ -517,6 +517,17 @@ class RoutinePeriodizationOut(BaseModel):
     due: bool  # passou da validade sugerida (mesociclo) -> hora de variar
 
 
+class DietPeriodOut(BaseModel):
+    started_on: date  # inicio do periodo (vigencia) da meta
+    review_on: date  # validade sugerida = inicio + review_weeks
+    objective: Objective  # objetivo daquele periodo (do perfil)
+    review_weeks: int
+    target_kcal: int  # meta calorica efetiva atual (ja com override, se houver)
+    maintenance_kcal: int | None  # manutencao real adotada (override) ou None
+    days_active: int
+    due: bool  # passou da validade sugerida -> hora de revisar/renovar
+
+
 # --- Busca externa de alimentos (fase 5) ----------------------------------
 
 

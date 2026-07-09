@@ -123,17 +123,24 @@ def target_calories_from_maintenance(
     return round(max(target, bmr))
 
 
-def compute_goals(profile: Profile, weight_kg: float) -> GoalsOut:
+def compute_goals(
+    profile: Profile, weight_kg: float, maintenance_override: float | None = None
+) -> GoalsOut:
     age = age_from_birthdate(profile.birthdate)
     bmr = basal_metabolic_rate(weight_kg, profile.height_cm, age, profile.sex)
     tdee = bmr * ACTIVITY_FACTORS[profile.activity_level]
 
+    # Manutencao usada para a meta: por padrao o TDEE da formula, mas quando o usuario
+    # adota a manutencao REAL medida (TDEE adaptativo, via periodo de dieta renovado),
+    # usamos ela como base - a formula de 80 kg nao serve a 76 kg.
+    maintenance = maintenance_override if maintenance_override is not None else tdee
+
     # Calorias-alvo por objetivo. Perder gordura usa a taxa de perda; os demais
-    # objetivos usam o multiplicador simples sobre o TDEE.
+    # objetivos usam o multiplicador simples sobre a manutencao.
     if profile.objective == Objective.lose_fat:
-        target_kcal = tdee - daily_deficit_for_cut(weight_kg, profile.cut_intensity)
+        target_kcal = maintenance - daily_deficit_for_cut(weight_kg, profile.cut_intensity)
     else:
-        target_kcal = tdee * KCAL_MULTIPLIER[profile.objective]
+        target_kcal = maintenance * KCAL_MULTIPLIER[profile.objective]
 
     # Piso de seguranca: a meta nunca fica abaixo do BMR (comer abaixo do gasto de
     # repouso e insustentavel e acelera a perda de musculo).

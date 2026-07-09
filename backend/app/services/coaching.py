@@ -19,6 +19,7 @@ from ..schemas import (
     RoutineVariationItemOut,
     RoutineVariationOut,
 )
+from .dietplan import maintenance_override as _maintenance_override
 from .exercises import to_exercise_out
 from .goals import compute_goals
 
@@ -39,7 +40,9 @@ def diet_adherence(session: Session, user: User, end: date, window: int = 7) -> 
             window=window, logged_days=0, kcal_pct=0, protein_pct=0, has_goal=False
         )
 
-    goals = compute_goals(profile, latest.weight_kg)
+    goals = compute_goals(
+        profile, latest.weight_kg, maintenance_override=_maintenance_override(session, user.id)
+    )
     start = end - timedelta(days=window - 1)
     entries = session.exec(
         select(DiaryEntry)

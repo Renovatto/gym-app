@@ -16,6 +16,7 @@ from ..services.goals import (
     compute_goals,
     target_calories_from_maintenance,
 )
+from ..services.dietplan import maintenance_override as diet_maintenance_override
 
 router = APIRouter(prefix="/me/summary", tags=["stats"])
 
@@ -188,7 +189,9 @@ def adaptive_tdee(
         weekly_change_kg=estimate.weekly_change_kg,
         estimated_maintenance_kcal=estimate.estimated_maintenance_kcal,
         formula_tdee_kcal=formula_goals.tdee_kcal,
-        current_target_kcal=formula_goals.target_kcal,
+        current_target_kcal=compute_goals(
+            profile, weight_kg, maintenance_override=diet_maintenance_override(session, user.id)
+        ).target_kcal,
         suggested_target_kcal=suggested_target,
         message_code=message_code,
     )

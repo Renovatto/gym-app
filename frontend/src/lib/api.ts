@@ -447,6 +447,17 @@ export interface RoutinePeriodization {
 	due: boolean;
 }
 
+export interface DietPeriod {
+	started_on: string;
+	review_on: string;
+	objective: Objective;
+	review_weeks: number;
+	target_kcal: number;
+	maintenance_kcal: number | null;
+	days_active: number;
+	due: boolean;
+}
+
 export interface ExternalFood {
 	name: string;
 	brand: string | null;
@@ -708,6 +719,11 @@ export const api = {
 		request<MealPlan>(`/me/diary/meal-plan?day=${day}&limit=${limit}`),
 	getDietAdherence: (end: string, window = 7) =>
 		request<DietAdherence>(`/me/diet/adherence?end=${end}&window=${window}`),
+	getDietPeriod: (day: string) => request<DietPeriod | null>(`/me/diet/period?day=${day}`),
+	renewDietPeriod: (day: string, adoptMaintenanceKcal?: number) => {
+		const q = adoptMaintenanceKcal ? `&adopt_maintenance_kcal=${adoptMaintenanceKcal}` : '';
+		return request<DietPeriod | null>(`/me/diet/period/renew?day=${day}${q}`, { method: 'POST' });
+	},
 	getTrainingPeriodization: (today: string) =>
 		request<RoutinePeriodization[]>(`/me/training/periodization?today=${today}`),
 	searchExternalFoods: (q: string, limit = 15) =>

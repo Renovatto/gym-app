@@ -10,6 +10,7 @@ from sqlmodel import desc, select
 from ..deps import CurrentUser, SessionDep
 from ..models import DiaryEntry, Objective, Profile, WaterLog, WeightLog, WorkoutSession
 from ..schemas import CoachNote, CoachOut
+from ..services.dietplan import maintenance_override as diet_maintenance_override
 from ..services.goals import compute_goals
 
 router = APIRouter(prefix="/me/coach", tags=["coach"])
@@ -52,7 +53,15 @@ def coach_notes(
         days_since_weigh_in = (day - last_local_date).days
 
     notes: list[CoachNote] = []
-    goals = compute_goals(profile, latest_weight.weight_kg) if latest_weight else None
+    goals = (
+        compute_goals(
+            profile,
+            latest_weight.weight_kg,
+            maintenance_override=diet_maintenance_override(session, user.id),
+        )
+        if latest_weight
+        else None
+    )
 
     # --- Regras de dieta (so quando o modulo esta ativo) -------------------
     if profile.diet_enabled and goals is not None:

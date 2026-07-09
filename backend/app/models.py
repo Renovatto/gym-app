@@ -411,3 +411,21 @@ class SupplementLog(SQLModel, table=True):
     log_date: date = Field(index=True)  # dia local do usuario
 
     supplement: "Supplement" = Relationship(back_populates="logs")
+
+
+class DietPeriod(SQLModel, table=True):
+    """Periodo (vigencia) da meta de dieta: quando comecou, o objetivo e a validade.
+    Renovar cria um periodo novo (o anterior fica inativo). Ao adotar a manutencao real
+    medida pelo TDEE adaptativo, guarda em maintenance_kcal (override da formula)."""
+
+    __tablename__ = "diet_periods"
+
+    id: int | None = Field(default=None, primary_key=True)
+    user_id: int = Field(foreign_key="users.id", index=True, ondelete="CASCADE")
+    started_on: date = Field(index=True)
+    objective: Objective
+    review_weeks: int = Field(default=4)
+    target_kcal: int  # meta calorica no inicio do periodo (snapshot para exibir)
+    maintenance_kcal: int | None = Field(default=None)  # manutencao real adotada (override)
+    active: bool = Field(default=True)
+    created_at: datetime = Field(default_factory=utcnow)

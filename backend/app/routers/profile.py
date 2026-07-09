@@ -13,6 +13,7 @@ from ..schemas import (
     UserOut,
 )
 from ..security import hash_password, verify_password
+from ..services.dietplan import maintenance_override as diet_maintenance_override
 from ..services.goals import compute_goals
 
 router = APIRouter(prefix="/me", tags=["me"])
@@ -123,4 +124,6 @@ def get_goals(user: CurrentUser, session: SessionDep) -> GoalsOut:
     latest = _latest_weight(session, user.id)
     if latest is None:
         raise HTTPException(status.HTTP_404_NOT_FOUND, detail="WEIGHT_NOT_FOUND")
-    return compute_goals(profile, latest.weight_kg)
+    return compute_goals(
+        profile, latest.weight_kg, maintenance_override=diet_maintenance_override(session, user.id)
+    )

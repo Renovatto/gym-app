@@ -22,6 +22,7 @@ from ..schemas import (
     DiaryEntryOut,
     DiaryEntryUpdate,
     DietAdherenceOut,
+    DietPeriodOut,
     DiaryGapOut,
     ExternalFoodOut,
     FoodIn,
@@ -34,6 +35,9 @@ from ..schemas import (
     SubstitutesOut,
 )
 from ..services.coaching import diet_adherence
+from ..services.dietplan import maintenance_override as diet_maintenance_override
+from ..services.dietplan import period_out as diet_period_out
+from ..services.dietplan import renew as renew_diet_period
 from ..services.foodsearch import search_external
 from ..services.diet import (
     food_macros,
@@ -248,7 +252,9 @@ def _daily_goals(session: Session, user_id: int) -> MacrosOut | None:
     ).first()
     if profile is None or latest is None:
         return None
-    g = compute_goals(profile, latest.weight_kg)
+    g = compute_goals(
+        profile, latest.weight_kg, maintenance_override=diet_maintenance_override(session, user_id)
+    )
     return MacrosOut(
         kcal=g.target_kcal, protein_g=g.protein_g, carbs_g=g.carbs_g, fat_g=g.fat_g
     )
@@ -338,6 +344,28 @@ def diet_adherence_endpoint(
 ) -> DietAdherenceOut:
     """Aderencia (recomendado x real) das ultimas janelas de dias."""
     return diet_adherence(session, user, end, window)
+
+
+@router.get("/me/diet/period", response_model=DietPeriodOut | None)
+def diet_period(
+    user: CurrentUser,
+    session: SessionDep,
+    day: date = Query(..., description="Dia local do cliente (YYYY-MM-DD)"),
+) -> DietPeriodOut | None:
+    """Periodo (vigencia) da meta de dieta: inicio, validade e objetivo."""
+    return diet_period_out(session, user, day)
+
+
+@router.post("/me/diet/period/renew", response_model=DietPeriodOut | None)
+def diet_period_renew(
+    user: CurrentUser,
+    session: SessionDep,
+    day: date = Query(...),
+    adopt_maintenance_kcal: int | None = Query(default=None, ge=800, le=6000),
+) -> DietPeriodOut | None:
+    """Renova o periodo. Se adopt_maintenance_kcal vier, a meta passa a sair da
+    manutencao real medida (override); senao segue a formula do perfil."""
+    return renew_diet_period(session, user, day, adopt_maintenance_kcal)
 
 
 def _entry_macros_and_name(

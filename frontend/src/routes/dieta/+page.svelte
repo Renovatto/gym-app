@@ -12,7 +12,9 @@
 		type SubstituteItem,
 		type Substitutes,
 		type Supplement,
-		type SupplementsDay
+		type SupplementsDay,
+		type DietPeriod,
+		type AdaptiveTdee
 	} from '$lib/api';
 	import MacroSummary from '$lib/components/MacroSummary.svelte';
 	import Stepper from '$lib/components/Stepper.svelte';
@@ -54,6 +56,45 @@
 	let suppEditingId = $state<number | null>(null);
 	let suppFormBusy = $state(false);
 	let confirmingDeleteSupp = $state<number | null>(null);
+
+	// Periodo da dieta (vigencia da meta): datas, objetivo, validade e renovacao
+	let dietPeriod = $state<DietPeriod | null>(null);
+	let showPeriodModal = $state(false);
+	let periodAdaptive = $state<AdaptiveTdee | null>(null);
+	let periodBusy = $state(false);
+	const pdf = new Intl.DateTimeFormat(getLocale(), { day: '2-digit', month: 'short' });
+	function fmtPeriodDate(iso: string): string {
+		return pdf.format(new Date(iso + 'T12:00:00'));
+	}
+	function objectiveLabel(obj: string): string {
+		if (obj === 'gain_muscle') return m.objective_gain_muscle();
+		if (obj === 'lose_fat') return m.objective_lose_fat();
+		if (obj === 'recomp') return m.objective_recomp();
+		return m.objective_maintain();
+	}
+	async function openPeriodModal(): Promise<void> {
+		showPeriodModal = true;
+		periodAdaptive = null;
+		try {
+			// a sugestao de adotar a manutencao medida vem do TDEE adaptativo
+			periodAdaptive = await api.getAdaptiveTdee(day, new Date().getTimezoneOffset());
+		} catch {
+			// extra: sem ela ainda da pra renovar reiniciando o periodo
+		}
+	}
+	async function renewPeriod(adopt: boolean): Promise<void> {
+		if (periodBusy) return;
+		periodBusy = true;
+		try {
+			const kcal = adopt ? (periodAdaptive?.estimated_maintenance_kcal ?? undefined) : undefined;
+			dietPeriod = await api.renewDietPeriod(day, kcal);
+			showPeriodModal = false;
+			await load(); // a meta muda -> recarrega diario/lacuna/cardapio
+			showToast(m.diet_period_renewed());
+		} finally {
+			periodBusy = false;
+		}
+	}
 
 	function pad2(n: number): string {
 		return String(n).padStart(2, '0');
@@ -132,11 +173,12 @@
 
 	async function load(): Promise<void> {
 		loading = true;
-		[diary, gap, mealPlan, supplements] = await Promise.all([
+		[diary, gap, mealPlan, supplements, dietPeriod] = await Promise.all([
 			api.getDiary(day),
 			api.getDiaryGap(day),
 			api.getMealPlan(day),
-			api.getSupplements(day)
+			api.getSupplements(day),
+			api.getDietPeriod(day)
 		]);
 		loading = false;
 	}
@@ -407,6 +449,32 @@
 	</div>
 {:else if diary}
 	<MacroSummary totals={diary.totals} goals={diary.goals} />
+
+	{#if dietPeriod}
+		<button
+			type="button"
+			onclick={openPeriodModal}
+			class="mt-3 flex w-full items-center gap-2.5 rounded-2xl border px-3 py-2.5 text-left {dietPeriod.due
+				? 'border-amber-200 bg-amber-50'
+				: 'border-slate-200 bg-white'}"
+		>
+			<svg viewBox="0 0 24 24" class="h-5 w-5 shrink-0 {dietPeriod.due ? 'text-amber-600' : 'text-slate-400'}" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="17" rx="2" /><path d="M3 9h18M8 2v4M16 2v4" stroke-linecap="round" /></svg>
+			<span class="min-w-0 flex-1">
+				<span class="block text-sm font-semibold {dietPeriod.due ? 'text-amber-800' : 'text-slate-700'}">
+					{m.diet_period_label()}
+				</span>
+				<span class="block truncate text-xs {dietPeriod.due ? 'text-amber-600' : 'text-slate-500'}">
+					{#if dietPeriod.due}
+						{m.diet_period_due()}
+					{:else}
+						{m.diet_period_review({ date: fmtPeriodDate(dietPeriod.review_on) })}
+					{/if}
+					· {objectiveLabel(dietPeriod.objective)}
+				</span>
+			</span>
+			<svg viewBox="0 0 24 24" class="h-5 w-5 shrink-0 text-slate-300" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 6l6 6-6 6" stroke-linecap="round" stroke-linejoin="round" /></svg>
+		</button>
+	{/if}
 
 	{#if showGap && gap}
 		<section class="mt-3 rounded-3xl bg-emerald-50 p-4 ring-1 ring-emerald-100">
@@ -815,6 +883,89 @@
 {/if}
 
 <!-- Gerenciar suplementos: adicionar, editar e remover (a marcacao diaria e no card) -->
+<!-- Detalhes do periodo da dieta: datas, objetivo e renovacao (adotar manutencao medida) -->
+{#if showPeriodModal && dietPeriod}
+	<div
+		class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
+		role="button"
+		tabindex="-1"
+		onclick={() => (showPeriodModal = false)}
+		onkeydown={(e) => e.key === 'Escape' && (showPeriodModal = false)}
+	>
+		<div
+			class="w-full max-w-md rounded-3xl bg-white p-5"
+			role="dialog"
+			tabindex="-1"
+			onclick={(e) => e.stopPropagation()}
+			onkeydown={() => {}}
+		>
+			<div class="mb-4 flex items-start justify-between gap-2">
+				<div class="min-w-0">
+					<p class="text-xs font-bold uppercase tracking-wide text-slate-400">{m.diet_period_title()}</p>
+					<h2 class="truncate text-lg font-bold text-slate-900">{objectiveLabel(dietPeriod.objective)}</h2>
+				</div>
+				<button
+					type="button"
+					aria-label={m.close()}
+					onclick={() => (showPeriodModal = false)}
+					class="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-slate-100 text-slate-500 active:bg-slate-200"
+				>
+					<svg viewBox="0 0 24 24" class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 6l12 12M18 6L6 18" stroke-linecap="round" /></svg>
+				</button>
+			</div>
+
+			<div class="grid grid-cols-2 gap-3">
+				<div class="rounded-2xl bg-slate-50 p-3">
+					<p class="text-xs font-semibold text-slate-500">{m.diet_period_started()}</p>
+					<p class="mt-0.5 font-bold text-slate-900">{fmtPeriodDate(dietPeriod.started_on)}</p>
+				</div>
+				<div class="rounded-2xl p-3 {dietPeriod.due ? 'bg-amber-50' : 'bg-slate-50'}">
+					<p class="text-xs font-semibold {dietPeriod.due ? 'text-amber-600' : 'text-slate-500'}">
+						{m.diet_period_valid()}
+					</p>
+					<p class="mt-0.5 font-bold {dietPeriod.due ? 'text-amber-700' : 'text-slate-900'}">
+						{fmtPeriodDate(dietPeriod.review_on)}
+					</p>
+				</div>
+			</div>
+
+			<div class="mt-3 flex items-center justify-between rounded-2xl bg-slate-50 px-3 py-2.5">
+				<span class="text-sm font-semibold text-slate-500">{m.diet_period_target()}</span>
+				<span class="font-bold text-slate-900">
+					{nf.format(dietPeriod.target_kcal)} kcal
+					{#if dietPeriod.maintenance_kcal}<span class="text-xs font-normal text-emerald-600"> · {m.diet_period_adopted()}</span>{/if}
+				</span>
+			</div>
+
+			{#if periodAdaptive && periodAdaptive.has_enough_data && periodAdaptive.estimated_maintenance_kcal}
+				<div class="mt-4 rounded-2xl border border-emerald-100 bg-emerald-50 p-3">
+					<p class="text-sm font-semibold text-emerald-800">
+						{m.diet_period_measured({ kcal: nf.format(periodAdaptive.estimated_maintenance_kcal) })}
+					</p>
+					<button
+						type="button"
+						disabled={periodBusy}
+						onclick={() => renewPeriod(true)}
+						class="mt-2 flex h-11 w-full items-center justify-center gap-2 rounded-2xl bg-emerald-600 font-bold text-white active:bg-emerald-700 disabled:opacity-50"
+					>
+						{#if periodBusy}<Spinner class="h-5 w-5" />{/if}
+						{m.diet_period_renew_adopt()}
+					</button>
+				</div>
+			{/if}
+
+			<button
+				type="button"
+				disabled={periodBusy}
+				onclick={() => renewPeriod(false)}
+				class="mt-2 flex h-11 w-full items-center justify-center rounded-2xl border-2 border-slate-200 font-semibold text-slate-600 active:bg-slate-50 disabled:opacity-50"
+			>
+				{m.diet_period_renew_restart()}
+			</button>
+		</div>
+	</div>
+{/if}
+
 {#if showSupplementManager}
 	<div
 		class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"

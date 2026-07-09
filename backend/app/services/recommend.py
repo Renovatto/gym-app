@@ -38,6 +38,7 @@ from ..schemas import (
     SubstituteSourceOut,
 )
 from .diet import food_macros, to_food_out
+from .dietplan import maintenance_override as _maintenance_override
 from .goals import compute_goals
 
 # Macro-ancora de cada categoria: o macro que a troca equivalente mantem igual.
@@ -104,7 +105,9 @@ def _daily_target(session: Session, user_id: int) -> MacrosOut | None:
     ).first()
     if profile is None or latest is None:
         return None
-    g = compute_goals(profile, latest.weight_kg)
+    g = compute_goals(
+        profile, latest.weight_kg, maintenance_override=_maintenance_override(session, user_id)
+    )
     return MacrosOut(kcal=g.target_kcal, protein_g=g.protein_g, carbs_g=g.carbs_g, fat_g=g.fat_g)
 
 
