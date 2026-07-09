@@ -246,6 +246,7 @@
 	"supp_add": "Add",
 	"supp_name_placeholder": "Name (e.g. Creatine)",
 	"supp_dose_placeholder": "Dose (e.g. 5 g)",
+	"supp_empty_hint": "Track creatine, vitamins and the like as a daily habit.",
 	"sub_action": "Substitute",
 	"sub_title": "Swap for an equivalent",
 	"sub_swap": "Swap",

@@ -246,6 +246,7 @@
 	"supp_add": "Adicionar",
 	"supp_name_placeholder": "Nome (ex.: Creatina)",
 	"supp_dose_placeholder": "Dose (ex.: 5 g)",
+	"supp_empty_hint": "Acompanhe creatina, vitaminas e afins como hábito diário.",
 	"sub_action": "Substituir",
 	"sub_title": "Trocar por equivalente",
 	"sub_swap": "Trocar",

@@ -607,14 +607,18 @@
 			</div>
 		</section>
 	{:else if !loading}
-		<button
-			type="button"
-			onclick={openSupplementManager}
-			class="mt-4 flex h-12 w-full items-center justify-center gap-2 rounded-2xl border-2 border-dashed border-slate-200 font-semibold text-slate-500 active:bg-slate-50"
-		>
-			<svg viewBox="0 0 24 24" class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14" stroke-linecap="round" /></svg>
-			{m.supp_add_first()}
-		</button>
+		<section class="mt-4 rounded-3xl bg-white p-4 shadow-sm">
+			<h2 class="font-bold text-slate-900">{m.supplements_title()}</h2>
+			<p class="mt-1 text-xs text-slate-500">{m.supp_empty_hint()}</p>
+			<button
+				type="button"
+				onclick={openSupplementManager}
+				class="mt-3 flex h-12 w-full items-center justify-center gap-2 rounded-2xl border-2 border-dashed border-slate-200 font-semibold text-slate-500 active:bg-slate-50"
+			>
+				<svg viewBox="0 0 24 24" class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14" stroke-linecap="round" /></svg>
+				{m.supp_add_first()}
+			</button>
+		</section>
 	{/if}
 
 	{#if isEmpty}
