@@ -6,9 +6,11 @@ export const MEAL_TYPES: MealType[] = ['breakfast', 'lunch', 'snack', 'dinner', 
 export function mealTypeLabel(meal: MealType): string {
 	return {
 		breakfast: m.meal_breakfast(),
+		pre_workout: m.meal_pre_workout(),
 		lunch: m.meal_lunch(),
 		snack: m.meal_snack(),
 		dinner: m.meal_dinner(),
+		supper: m.meal_supper(),
 		other: m.meal_other()
 	}[meal];
 }

@@ -313,7 +313,14 @@ export type FoodCategory =
 	| 'supplement'
 	| 'other';
 
-export type MealType = 'breakfast' | 'lunch' | 'snack' | 'dinner' | 'other';
+export type MealType =
+	| 'breakfast'
+	| 'pre_workout'
+	| 'lunch'
+	| 'snack'
+	| 'dinner'
+	| 'supper'
+	| 'other';
 export type EntrySource = 'food' | 'recipe';
 
 export interface Macros {

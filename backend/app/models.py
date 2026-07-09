@@ -259,9 +259,11 @@ class FoodCategory(str, Enum):
 
 class MealType(str, Enum):
     breakfast = "breakfast"
+    pre_workout = "pre_workout"  # refeicao extra (opcional): pre-treino
     lunch = "lunch"
     snack = "snack"
     dinner = "dinner"
+    supper = "supper"  # refeicao extra (opcional): ceia
     other = "other"
 
 

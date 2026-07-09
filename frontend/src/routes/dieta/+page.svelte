@@ -264,6 +264,42 @@
 		return diary?.meals.find((g) => g.meal_type === meal);
 	}
 
+	// Refeicoes extras (opcionais): pre-treino e ceia. Ficam escondidas ate o usuario
+	// adiciona-las (lembrado no dispositivo) ou terem algum lancamento no dia.
+	const EXTRA_MEALS: MealType[] = ['pre_workout', 'supper'];
+	const MEAL_ORDER: MealType[] = [
+		'breakfast', 'pre_workout', 'lunch', 'snack', 'dinner', 'supper', 'other'
+	];
+	const REVEALED_KEY = 'gymapp.diet.extraMeals';
+	function loadRevealed(): string[] {
+		try {
+			return JSON.parse(localStorage.getItem(REVEALED_KEY) ?? '[]');
+		} catch {
+			return [];
+		}
+	}
+	let revealedExtras = $state<Set<string>>(new Set(loadRevealed()));
+	let showMealChooser = $state(false);
+	function mealHasEntries(meal: MealType): boolean {
+		const group = mealGroup(meal);
+		return !!group && group.entries.length > 0;
+	}
+	const mealsToShow = $derived(
+		MEAL_ORDER.filter(
+			(meal) => MEAL_TYPES.includes(meal) || revealedExtras.has(meal) || mealHasEntries(meal)
+		)
+	);
+	const addableMeals = $derived(
+		EXTRA_MEALS.filter((meal) => !revealedExtras.has(meal) && !mealHasEntries(meal))
+	);
+	function revealMeal(meal: MealType): void {
+		const next = new Set(revealedExtras);
+		next.add(meal);
+		revealedExtras = next;
+		localStorage.setItem(REVEALED_KEY, JSON.stringify([...next]));
+		showMealChooser = false;
+	}
+
 	const dayLabel = $derived(
 		isToday ? m.today_title() : df.format(new Date(day + 'T12:00:00'))
 	);
@@ -530,7 +566,7 @@
 	{/if}
 
 	<div class="mt-4 space-y-3">
-		{#each MEAL_TYPES as meal (meal)}
+		{#each mealsToShow as meal (meal)}
 			{@const group = mealGroup(meal)}
 			{@const plan = mealPlanFor(meal)}
 			<section class="rounded-3xl bg-white p-4 shadow-sm">
@@ -630,6 +666,40 @@
 			</section>
 		{/each}
 	</div>
+
+	{#if addableMeals.length > 0}
+		<div class="mt-3">
+			{#if showMealChooser}
+				<div class="flex flex-wrap items-center gap-2 rounded-2xl border-2 border-dashed border-slate-200 p-2">
+					{#each addableMeals as meal (meal)}
+						<button
+							type="button"
+							onclick={() => revealMeal(meal)}
+							class="rounded-xl bg-slate-100 px-3 py-2 text-sm font-semibold text-slate-700 active:bg-slate-200"
+						>
+							+ {mealTypeLabel(meal)}
+						</button>
+					{/each}
+					<button
+						type="button"
+						onclick={() => (showMealChooser = false)}
+						class="ml-auto px-2 text-sm font-semibold text-slate-400"
+					>
+						{m.cancel()}
+					</button>
+				</div>
+			{:else}
+				<button
+					type="button"
+					onclick={() => (showMealChooser = true)}
+					class="flex h-11 w-full items-center justify-center gap-1.5 rounded-2xl border-2 border-dashed border-slate-200 text-sm font-semibold text-slate-500 active:bg-slate-50"
+				>
+					<svg viewBox="0 0 24 24" class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14" stroke-linecap="round" /></svg>
+					{m.add_meal_title()}
+				</button>
+			{/if}
+		</div>
+	{/if}
 
 	{#if supplements && supplements.total > 0}
 		<section class="mt-4 rounded-3xl bg-white p-4 shadow-sm">
