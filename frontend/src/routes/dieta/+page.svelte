@@ -20,6 +20,7 @@
 	import Stepper from '$lib/components/Stepper.svelte';
 	import Spinner from '$lib/components/Spinner.svelte';
 	import CalendarModal from '$lib/components/CalendarModal.svelte';
+	import AddEntryModal from '$lib/components/AddEntryModal.svelte';
 	import { showToast } from '$lib/toast.svelte';
 	import { MEAL_TYPES, mealTypeLabel } from '$lib/labels';
 	import { m } from '$lib/paraglide/messages';
@@ -171,8 +172,9 @@
 		return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
 	}
 
-	async function load(): Promise<void> {
-		loading = true;
+	// Recarrega os dados SEM o spinner de tela cheia: usado quando a modal de
+	// adicionar lanca um item, para a lista atualizar mantendo a posicao de rolagem.
+	async function reloadSilent(): Promise<void> {
 		[diary, gap, mealPlan, supplements, dietPeriod] = await Promise.all([
 			api.getDiary(day),
 			api.getDiaryGap(day),
@@ -180,8 +182,16 @@
 			api.getSupplements(day),
 			api.getDietPeriod(day)
 		]);
+	}
+
+	async function load(): Promise<void> {
+		loading = true;
+		await reloadSilent();
 		loading = false;
 	}
+
+	// Modal de adicionar alimento/receita (fica aberta para lancar varios itens).
+	let addingToMeal = $state<MealType | null>(null);
 
 	// Marca/desmarca o suplemento no dia (feedback imediato pelo check, sem toast).
 	async function toggleSupplement(s: Supplement): Promise<void> {
@@ -523,6 +533,27 @@
 					<p class="text-sm font-semibold text-emerald-900">{gapHeadline}</p>
 				</div>
 			</div>
+			{#if gap.remaining}
+				<!-- faltas completas do dia (kcal + 3 macros), nao so o macro prioritario -->
+				<div class="mt-2.5 grid grid-cols-4 gap-1.5 text-center">
+					<div class="rounded-xl bg-white/70 px-1 py-1.5">
+						<p class="text-sm font-bold text-emerald-900">{nf.format(Math.round(gap.remaining.kcal))}</p>
+						<p class="text-[10px] font-semibold text-emerald-700">kcal</p>
+					</div>
+					<div class="rounded-xl bg-white/70 px-1 py-1.5 {gap.primary === 'protein' ? 'ring-2 ring-emerald-400' : ''}">
+						<p class="text-sm font-bold text-emerald-900">{nf.format(Math.round(gap.remaining.protein_g))}g</p>
+						<p class="text-[10px] font-semibold text-emerald-700">{m.protein()}</p>
+					</div>
+					<div class="rounded-xl bg-white/70 px-1 py-1.5 {gap.primary === 'carbs' ? 'ring-2 ring-emerald-400' : ''}">
+						<p class="text-sm font-bold text-emerald-900">{nf.format(Math.round(gap.remaining.carbs_g))}g</p>
+						<p class="text-[10px] font-semibold text-emerald-700">{m.carbs()}</p>
+					</div>
+					<div class="rounded-xl bg-white/70 px-1 py-1.5 {gap.primary === 'fat' ? 'ring-2 ring-emerald-400' : ''}">
+						<p class="text-sm font-bold text-emerald-900">{nf.format(Math.round(gap.remaining.fat_g))}g</p>
+						<p class="text-[10px] font-semibold text-emerald-700">{m.fat()}</p>
+					</div>
+				</div>
+			{/if}
 			<div class="mt-3 space-y-2">
 				{#each gap.suggestions as s (s.food.id)}
 					<div class="flex items-center gap-2 rounded-2xl bg-white px-3 py-2">
@@ -645,12 +676,13 @@
 				{/if}
 
 				<div class="mt-2 flex gap-2">
-					<a
-						href="/dieta/adicionar?meal={meal}&day={day}"
+					<button
+						type="button"
+						onclick={() => (addingToMeal = meal)}
 						class="flex h-11 flex-1 items-center justify-center rounded-2xl border-2 border-dashed border-emerald-200 text-sm font-bold text-emerald-700 active:bg-emerald-50"
 					>
 						+ {m.add_food()}
-					</a>
+					</button>
 					{#if !group || group.entries.length === 0}
 						<button
 							type="button"
@@ -1155,5 +1187,15 @@
 		onmonth={loadMonthMarks}
 		onselect={(d) => (day = d)}
 		onclose={() => (showCalendar = false)}
+	/>
+{/if}
+
+<!-- Adicionar alimento/receita sem sair da tela: modal que fica aberta para varios itens -->
+{#if addingToMeal}
+	<AddEntryModal
+		meal={addingToMeal}
+		{day}
+		onClose={() => (addingToMeal = null)}
+		onAdded={reloadSilent}
 	/>
 {/if}

@@ -534,9 +534,10 @@
 					</div>
 					<div class="flex gap-1.5">
 						{#each focusBlock.sets as s (s.setNumber)}
+							<!-- serie atual pisca (animate-pulse) para mostrar onde voce esta -->
 							<span
 								class="h-2 flex-1 rounded-full transition-colors
-									{s.done ? 'bg-emerald-500' : s === focusRow ? 'bg-emerald-500/45' : 'bg-slate-200'}"
+									{s.done ? 'bg-emerald-500' : s === focusRow ? 'animate-pulse bg-emerald-500/60' : 'bg-slate-200'}"
 							></span>
 						{/each}
 					</div>
@@ -586,6 +587,19 @@
 							{/if}
 						</div>
 					{/each}
+				</div>
+			{/if}
+
+			{#if !focusBlock.isCardio}
+				<!-- serie adicional sem sair do foco: a nova vira a proxima pendente -->
+				<div class="mx-auto mt-3 max-w-sm">
+					<button
+						type="button"
+						onclick={() => addSet(focusBlock)}
+						class="h-10 w-full rounded-2xl border-2 border-dashed border-slate-200 text-sm font-bold text-slate-500 active:bg-slate-100"
+					>
+						+ {m.add_set()}
+					</button>
 				</div>
 			{/if}
 		</div>
