@@ -3,7 +3,13 @@
 	import { m } from '$lib/paraglide/messages';
 	import { getLocale } from '$lib/paraglide/runtime';
 
-	let { onPick, onClose }: { onPick: (food: Food) => void; onClose: () => void } = $props();
+	// addedCount: quantos itens ja entraram nesta sessao do picker (mostrado no botao
+	// Pronto, ja que a tela fica aberta para adicionar varios seguidos).
+	let {
+		onPick,
+		onClose,
+		addedCount = 0
+	}: { onPick: (food: Food) => void; onClose: () => void; addedCount?: number } = $props();
 
 	const nf = new Intl.NumberFormat(getLocale());
 	let query = $state('');
@@ -28,9 +34,9 @@
 			<button
 				type="button"
 				onclick={onClose}
-				class="rounded-full bg-emerald-600 px-5 py-2 text-sm font-bold text-white"
+				class="rounded-full bg-emerald-600 px-5 py-2 text-sm font-bold text-white active:bg-emerald-700"
 			>
-				{m.done()}
+				{m.done()}{addedCount > 0 ? ` (${addedCount})` : ''}
 			</button>
 		</div>
 		<input

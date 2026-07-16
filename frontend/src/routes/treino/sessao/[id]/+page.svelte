@@ -416,12 +416,16 @@
 										</button>
 									</div>
 									{#if !block.isCardio}
-										<div class="mt-1.5 flex gap-1.5 pl-10">
+										<!-- atalhos de peso: halter identifica a linha, borda verde destaca os boxes -->
+										<div class="mt-1.5 flex items-center gap-1.5 pl-10">
+											<svg viewBox="0 0 24 24" class="h-4 w-4 shrink-0 text-emerald-600" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+												<path d="M6.5 6.5v11M3.5 9.5v5M17.5 6.5v11M20.5 9.5v5M6.5 12h11" />
+											</svg>
 											{#each quickWeights(block) as w (w)}
 												<button
 													type="button"
 													onclick={() => (row.weight = w)}
-													class="flex-1 rounded-lg bg-emerald-50 py-1 text-xs font-bold text-emerald-700 active:bg-emerald-100"
+													class="flex-1 rounded-lg border-2 border-emerald-400 bg-emerald-50 py-1 text-xs font-bold text-emerald-700 active:bg-emerald-100"
 												>
 													{w}
 												</button>
@@ -555,12 +559,15 @@
 						<div>
 							<p class="mb-1.5 text-center text-xs font-bold text-slate-500 uppercase">{m.weight()} (kg)</p>
 							<Stepper bind:value={focusRow.weight} min={0} max={1000} step={2.5} decimals={1} />
-							<div class="mt-2 flex gap-2">
+							<div class="mt-2 flex items-center gap-2">
+								<svg viewBox="0 0 24 24" class="h-5 w-5 shrink-0 text-emerald-600" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+									<path d="M6.5 6.5v11M3.5 9.5v5M17.5 6.5v11M20.5 9.5v5M6.5 12h11" />
+								</svg>
 								{#each quickWeights(focusBlock) as w (w)}
 									<button
 										type="button"
 										onclick={() => (focusRow.weight = w)}
-										class="flex-1 rounded-xl bg-emerald-50 py-2 text-sm font-bold text-emerald-700 active:bg-emerald-100"
+										class="flex-1 rounded-xl border-2 border-emerald-400 bg-emerald-50 py-2 text-sm font-bold text-emerald-700 active:bg-emerald-100"
 									>
 										{w}
 									</button>

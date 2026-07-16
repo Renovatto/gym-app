@@ -153,12 +153,18 @@
 		}
 	}
 
+	// Iniciar e marcar feito pedem confirmacao (evita inicio/duplicata por clique acidental)
+	let confirmingStart = $state<number | null>(null);
+	let confirmingDone = $state<number | null>(null);
+
 	async function start(routineId: number): Promise<void> {
+		confirmingStart = null;
 		const session = await api.startSession(routineId);
 		await goto(`/treino/sessao/${session.id}`);
 	}
 
 	async function markDone(routineId: number): Promise<void> {
+		confirmingDone = null;
 		completingId = routineId;
 		try {
 			await api.completeRoutine(routineId);
@@ -167,6 +173,16 @@
 		} finally {
 			completingId = null;
 		}
+	}
+
+	// Excluir um treino do historico (sempre com confirmacao)
+	let confirmingDeleteHistory = $state<number | null>(null);
+
+	async function deleteHistory(sessionId: number): Promise<void> {
+		confirmingDeleteHistory = null;
+		await api.deleteSession(sessionId);
+		await load();
+		showToast(m.toast_deleted());
 	}
 
 	// rotinas com sessão concluída hoje (mostra selo "feito hoje")
@@ -573,24 +589,65 @@
 							</span>
 						</button>
 					{/if}
-					<div class="mt-4 flex gap-2">
-						<button
-							type="button"
-							onclick={() => start(routine.id)}
-							disabled={routine.items.length === 0}
-							class="h-12 flex-[2] rounded-2xl bg-emerald-600 font-bold text-white active:bg-emerald-700 disabled:opacity-40"
-						>
-							{m.start_workout()}
-						</button>
-						<button
-							type="button"
-							onclick={() => markDone(routine.id)}
-							disabled={routine.items.length === 0 || completingId === routine.id}
-							class="h-12 flex-1 rounded-2xl border-2 border-emerald-200 font-bold text-emerald-700 active:bg-emerald-50 disabled:opacity-40"
-						>
-							{completingId === routine.id ? '…' : m.mark_done()}
-						</button>
-					</div>
+					{#if !activeSession}
+						<!-- com sessao ativa, os botoes somem: nao da pra iniciar de novo -->
+						{#if confirmingStart === routine.id}
+							<div class="mt-4 flex items-center gap-2 rounded-2xl bg-emerald-50 p-2">
+								<span class="min-w-0 flex-1 pl-2 text-sm font-semibold text-emerald-800">{m.workout_start_confirm()}</span>
+								<button
+									type="button"
+									onclick={() => start(routine.id)}
+									class="h-10 shrink-0 rounded-xl bg-emerald-600 px-4 font-bold text-white active:bg-emerald-700"
+								>
+									{m.start_workout()}
+								</button>
+								<button
+									type="button"
+									onclick={() => (confirmingStart = null)}
+									class="h-10 shrink-0 rounded-xl px-3 text-sm font-semibold text-slate-500 active:bg-slate-100"
+								>
+									{m.cancel()}
+								</button>
+							</div>
+						{:else if confirmingDone === routine.id}
+							<div class="mt-4 flex items-center gap-2 rounded-2xl bg-emerald-50 p-2">
+								<span class="min-w-0 flex-1 pl-2 text-sm font-semibold text-emerald-800">{m.workout_done_confirm()}</span>
+								<button
+									type="button"
+									onclick={() => markDone(routine.id)}
+									class="h-10 shrink-0 rounded-xl bg-emerald-600 px-4 font-bold text-white active:bg-emerald-700"
+								>
+									{m.mark_done()}
+								</button>
+								<button
+									type="button"
+									onclick={() => (confirmingDone = null)}
+									class="h-10 shrink-0 rounded-xl px-3 text-sm font-semibold text-slate-500 active:bg-slate-100"
+								>
+									{m.cancel()}
+								</button>
+							</div>
+						{:else}
+							<div class="mt-4 flex gap-2">
+								<button
+									type="button"
+									onclick={() => (confirmingStart = routine.id)}
+									disabled={routine.items.length === 0}
+									class="h-12 flex-[2] rounded-2xl bg-emerald-600 font-bold text-white active:bg-emerald-700 disabled:opacity-40"
+								>
+									{m.start_workout()}
+								</button>
+								<button
+									type="button"
+									onclick={() => (confirmingDone = routine.id)}
+									disabled={routine.items.length === 0 || completingId === routine.id}
+									class="h-12 flex-1 rounded-2xl border-2 border-emerald-200 font-bold text-emerald-700 active:bg-emerald-50 disabled:opacity-40"
+								>
+									{completingId === routine.id ? '…' : m.mark_done()}
+								</button>
+							</div>
+						{/if}
+					{/if}
 				</section>
 			{/each}
 		</div>
@@ -617,14 +674,39 @@
 			<h2 class="mb-2 text-sm font-bold text-slate-500 uppercase">{m.workout_history()}</h2>
 			<div class="overflow-hidden rounded-3xl bg-white shadow-sm">
 				{#each finishedSessions.slice(0, 8) as session, i (session.id)}
-					<div class="flex items-center justify-between px-5 py-3.5 {i > 0 ? 'border-t border-slate-100' : ''}">
-						<div>
-							<p class="font-semibold text-slate-900">{session.routine_name ?? m.free_workout()}</p>
+					<div class="flex items-center gap-2 px-5 py-3.5 {i > 0 ? 'border-t border-slate-100' : ''}">
+						<div class="min-w-0 flex-1">
+							<p class="truncate font-semibold text-slate-900">{session.routine_name ?? m.free_workout()}</p>
 							<p class="text-sm text-slate-500">
 								{session.total_sets} {m.sets_label()} · {nf.format(session.total_volume_kg)} kg
 							</p>
 						</div>
-						<span class="text-sm text-slate-400">{df.format(new Date(session.started_at))}</span>
+						{#if confirmingDeleteHistory === session.id}
+							<button
+								type="button"
+								onclick={() => deleteHistory(session.id)}
+								class="shrink-0 rounded-xl bg-red-600 px-3 py-1.5 text-xs font-bold text-white active:bg-red-700"
+							>
+								{m.confirm_delete()}
+							</button>
+							<button
+								type="button"
+								onclick={() => (confirmingDeleteHistory = null)}
+								class="shrink-0 rounded-xl px-2 py-1.5 text-xs font-semibold text-slate-500"
+							>
+								{m.cancel()}
+							</button>
+						{:else}
+							<span class="shrink-0 text-sm text-slate-400">{df.format(new Date(session.started_at))}</span>
+							<button
+								type="button"
+								aria-label={m.confirm_delete()}
+								onclick={() => (confirmingDeleteHistory = session.id)}
+								class="grid h-8 w-8 shrink-0 place-items-center rounded-lg text-slate-300 active:bg-slate-100 active:text-red-500"
+							>
+								<svg viewBox="0 0 24 24" class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 7h16M9 7V5h6v2M6 7l1 13h10l1-13" stroke-linecap="round" stroke-linejoin="round" /></svg>
+							</button>
+						{/if}
 					</div>
 				{/each}
 			</div>

@@ -222,6 +222,8 @@
 	"minutes_short": "min",
 	"duration_label": "Duration",
 	"mark_done": "Mark done",
+	"workout_start_confirm": "Start the workout now?",
+	"workout_done_confirm": "Mark this workout as done?",
 	"use_template": "Use template",
 	"template_adds_hint": "This adds new routines to the ones you already have.",
 	"over_goal": "Over goal",

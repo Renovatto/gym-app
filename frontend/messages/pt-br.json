@@ -222,6 +222,8 @@
 	"minutes_short": "min",
 	"duration_label": "Duração",
 	"mark_done": "Marcar feito",
+	"workout_start_confirm": "Iniciar o treino agora?",
+	"workout_done_confirm": "Marcar este treino como feito?",
 	"use_template": "Usar modelo",
 	"template_adds_hint": "Isso adiciona novas rotinas às que você já tem.",
 	"over_goal": "Acima da meta",

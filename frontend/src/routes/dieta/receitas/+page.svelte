@@ -55,7 +55,9 @@
 							· {nf.format(Math.round(recipe.per_serving.kcal))} kcal/{m.serving_singular()}
 						</p>
 					</div>
-					<span class="text-sm font-semibold text-slate-400">{m.edit()}</span>
+					<span aria-label={m.edit()} title={m.edit()} class="grid h-9 w-9 shrink-0 place-items-center rounded-xl text-slate-400">
+						<svg viewBox="0 0 24 24" class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9M16.5 3.5a2.1 2.1 0 013 3L7 19l-4 1 1-4z" /></svg>
+					</span>
 				</a>
 			{/each}
 		</div>

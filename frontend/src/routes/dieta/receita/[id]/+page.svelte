@@ -40,9 +40,14 @@
 		loading = false;
 	}
 
+	// contador de itens adicionados nesta abertura do picker (mostrado no Pronto)
+	let pickerAdded = $state(0);
+
 	function addFood(food: Food): void {
 		if (ingredients.some((i) => i.food.id === food.id)) return;
 		ingredients = [...ingredients, { food, grams: food.default_portion_g }];
+		pickerAdded += 1;
+		showToast(m.toast_added());
 	}
 
 	function removeIngredient(index: number): void {
@@ -110,7 +115,7 @@
 </script>
 
 {#if picking}
-	<FoodPicker onPick={addFood} onClose={() => (picking = false)} />
+	<FoodPicker onPick={addFood} addedCount={pickerAdded} onClose={() => (picking = false)} />
 {/if}
 
 {#if loading}
@@ -167,7 +172,10 @@
 
 	<button
 		type="button"
-		onclick={() => (picking = true)}
+		onclick={() => {
+			pickerAdded = 0;
+			picking = true;
+		}}
 		class="mt-3 h-14 w-full rounded-2xl border-2 border-dashed border-emerald-300 font-bold text-emerald-700 active:bg-emerald-50"
 	>
 		+ {m.add_ingredient()}
