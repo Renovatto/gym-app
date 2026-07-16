@@ -5,18 +5,12 @@
 	import Stepper from '$lib/components/Stepper.svelte';
 	import { bootstrap } from '$lib/session.svelte';
 	import { m } from '$lib/paraglide/messages';
-	import { getLocale, setLocale, localStorageKey, type Locale } from '$lib/paraglide/runtime';
+	import { getLocale, setLocale, type Locale } from '$lib/paraglide/runtime';
 	import { toBackendLocale } from '$lib/errors';
 
-	// Idioma e a PRIMEIRA pergunta do cadastro e o padrao e ingles: se o usuario
-	// ainda nao escolheu explicitamente (sem chave no localStorage), forca 'en'
-	// antes de tudo (setLocale recarrega a pagina ja em ingles, uma unica vez).
-	const hasExplicitLocale =
-		typeof localStorage !== 'undefined' && localStorage.getItem(localStorageKey) !== null;
-	if (!hasExplicitLocale && getLocale() !== 'en') {
-		setLocale('en');
-	}
-
+	// Idioma e a PRIMEIRA pergunta do cadastro. Vem pre-selecionado com o idioma
+	// AUTO-DETECTADO do aparelho; quando o idioma do aparelho nao e suportado, o
+	// detector cai no ingles (baseLocale = en). O usuario pode trocar aqui.
 	let language = $state<Locale>(getLocale());
 
 	function pickLanguage(locale: Locale): void {
