@@ -284,6 +284,8 @@
 	"diet_period_renew_adopt": "Renovar adoptando este mantenimiento",
 	"diet_period_renew_restart": "Renovar (reiniciar período)",
 	"diet_period_renewed": "Período renovado ✓",
+	"search_recipes": "Buscar receta o ingrediente…",
+	"search_no_results": "No se encontró nada para esta búsqueda.",
 	"library_title": "Biblioteca de recetas",
 	"library_hint": "Recetas listas — toca + para copiarlas a las tuyas y usarlas en el diario.",
 	"tag_all": "Todas",

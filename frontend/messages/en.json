@@ -284,6 +284,8 @@
 	"diet_period_renew_adopt": "Renew adopting this maintenance",
 	"diet_period_renew_restart": "Renew (restart period)",
 	"diet_period_renewed": "Period renewed ✓",
+	"search_recipes": "Search recipe or ingredient…",
+	"search_no_results": "Nothing found for this search.",
 	"library_title": "Recipe library",
 	"library_hint": "Ready-made recipes — tap + to copy to yours and log them in the diary.",
 	"tag_all": "All",

@@ -284,6 +284,8 @@
 	"diet_period_renew_adopt": "Renovar adotando essa manutenção",
 	"diet_period_renew_restart": "Renovar (reiniciar período)",
 	"diet_period_renewed": "Período renovado ✓",
+	"search_recipes": "Buscar receita ou ingrediente…",
+	"search_no_results": "Nada encontrado para essa busca.",
 	"library_title": "Biblioteca de receitas",
 	"library_hint": "Receitas prontas da nutri — toque em + para copiar às suas e usar no diário.",
 	"tag_all": "Todas",

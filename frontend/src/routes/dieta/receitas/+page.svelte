@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { api, type LibraryRecipe, type Recipe } from '$lib/api';
+	import { normalizeSearch, searchMatches } from '$lib/text';
 	import { showToast } from '$lib/toast.svelte';
 	import { m } from '$lib/paraglide/messages';
 	import { getLocale } from '$lib/paraglide/runtime';
@@ -18,6 +19,14 @@
 		load();
 	});
 
+	// Busca de verdade: sem acento/caixa (normalizeSearch) e olhando tambem os
+	// INGREDIENTES da biblioteca ("frango" acha toda receita que leva frango).
+	let query = $state('');
+	const term = $derived(normalizeSearch(query));
+	const filteredMyRecipes = $derived(
+		recipes.filter((r) => searchMatches(r.name, term))
+	);
+
 	// Biblioteca: filtro por tag e "adotar" (copia para as minhas receitas)
 	const TAGS = ['protein', 'quick', 'veggie', 'sweet', 'budget'] as const;
 	let activeTag = $state<string | null>(null);
@@ -34,7 +43,12 @@
 	}
 
 	const filteredLibrary = $derived(
-		activeTag ? library.filter((r) => r.tags.includes(activeTag!)) : library
+		library.filter(
+			(r) =>
+				(!activeTag || r.tags.includes(activeTag)) &&
+				(searchMatches(r.name, term) ||
+					r.ingredients.some((ing) => searchMatches(ing.name, term)))
+		)
 	);
 	// nomes que o usuario ja tem (pra marcar como adicionada)
 	const myNames = $derived(new Set(recipes.map((r) => r.name)));
@@ -69,14 +83,26 @@
 		<div class="h-8 w-8 animate-spin rounded-full border-4 border-emerald-600 border-t-transparent"></div>
 	</div>
 {:else}
+	<!-- busca sem acento/caixa; na biblioteca vale tambem por INGREDIENTE -->
+	<div class="relative mb-4">
+		<svg viewBox="0 0 24 24" class="pointer-events-none absolute top-1/2 left-4 h-5 w-5 -translate-y-1/2 text-slate-400" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7" /><path d="M21 21l-4.3-4.3" stroke-linecap="round" /></svg>
+		<input
+			bind:value={query}
+			placeholder={m.search_recipes()}
+			class="h-12 w-full rounded-2xl border-2 border-slate-200 bg-white pr-4 pl-11 outline-none focus:border-emerald-600"
+		/>
+	</div>
+
 	{#if recipes.length === 0}
 		<div class="rounded-3xl border-2 border-dashed border-slate-200 p-8 text-center">
 			<p class="font-semibold text-slate-600">{m.no_recipes_title()}</p>
 			<p class="mt-1 text-sm text-slate-400">{m.no_recipes_text()}</p>
 		</div>
+	{:else if filteredMyRecipes.length === 0}
+		<p class="rounded-2xl bg-white px-4 py-3 text-center text-sm text-slate-400 shadow-sm">{m.search_no_results()}</p>
 	{:else}
 		<div class="space-y-2">
-			{#each recipes as recipe (recipe.id)}
+			{#each filteredMyRecipes as recipe (recipe.id)}
 				<a
 					href="/dieta/receita/{recipe.id}"
 					class="flex items-center justify-between rounded-2xl bg-white p-4 shadow-sm active:bg-slate-50"
@@ -133,6 +159,9 @@
 				{/each}
 			</div>
 
+			{#if filteredLibrary.length === 0}
+				<p class="mt-3 rounded-2xl bg-white px-4 py-3 text-center text-sm text-slate-400 shadow-sm">{m.search_no_results()}</p>
+			{/if}
 			<div class="mt-3 space-y-2">
 				{#each filteredLibrary as recipe (recipe.slug)}
 					{@const owned = myNames.has(recipe.name)}
