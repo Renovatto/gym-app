@@ -310,6 +310,7 @@ export type FoodCategory =
 	| 'fat'
 	| 'beverage'
 	| 'sweet'
+	| 'prepared'
 	| 'supplement'
 	| 'other';
 

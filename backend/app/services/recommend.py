@@ -52,6 +52,7 @@ _CATEGORY_ANCHOR: dict[FoodCategory, str] = {
     FoodCategory.sweet: "carbs_g",
     FoodCategory.vegetable: "carbs_g",
     FoodCategory.fat: "fat_g",
+    FoodCategory.prepared: "kcal",
     FoodCategory.beverage: "kcal",
     FoodCategory.other: "kcal",
 }

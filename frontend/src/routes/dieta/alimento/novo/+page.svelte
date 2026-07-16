@@ -153,6 +153,7 @@
 			{ value: 'dairy', label: m.cat_dairy() },
 			{ value: 'legume', label: m.cat_legume() },
 			{ value: 'sweet', label: m.cat_sweet() },
+			{ value: 'prepared', label: m.cat_prepared() },
 			{ value: 'supplement', label: m.cat_supplement() },
 			{ value: 'other', label: m.cat_other() }
 		]}

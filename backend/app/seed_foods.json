@@ -1,3142 +1,3862 @@
 [
-	{
-		"slug": "chicken-breast",
-		"category": "protein",
-		"kcal": 165,
-		"protein_g": 31,
-		"carbs_g": 0,
-		"fat_g": 3.6,
-		"default_portion_g": 120,
-		"portions": [
-			{
-				"label_key": "filet",
-				"grams": 120
-			}
-		],
-		"names": {
-			"pt-BR": "Peito de frango grelhado",
-			"en": "Grilled chicken breast",
-			"es": "Pechuga de pollo a la plancha"
-		}
-	},
-	{
-		"slug": "egg",
-		"category": "protein",
-		"kcal": 143,
-		"protein_g": 13,
-		"carbs_g": 1.1,
-		"fat_g": 9.5,
-		"default_portion_g": 50,
-		"portions": [
-			{
-				"label_key": "unit",
-				"grams": 50
-			}
-		],
-		"names": {
-			"pt-BR": "Ovo",
-			"en": "Egg",
-			"es": "Huevo"
-		}
-	},
-	{
-		"slug": "egg-white",
-		"category": "protein",
-		"kcal": 52,
-		"protein_g": 11,
-		"carbs_g": 0.7,
-		"fat_g": 0.2,
-		"default_portion_g": 33,
-		"portions": [
-			{
-				"label_key": "unit",
-				"grams": 33
-			}
-		],
-		"names": {
-			"pt-BR": "Clara de ovo",
-			"en": "Egg white",
-			"es": "Clara de huevo"
-		}
-	},
-	{
-		"slug": "lean-beef",
-		"category": "protein",
-		"kcal": 187,
-		"protein_g": 26,
-		"carbs_g": 0,
-		"fat_g": 8.6,
-		"default_portion_g": 120,
-		"portions": [
-			{
-				"label_key": "filet",
-				"grams": 120
-			}
-		],
-		"names": {
-			"pt-BR": "Carne bovina magra (patinho)",
-			"en": "Lean beef",
-			"es": "Carne de res magra"
-		}
-	},
-	{
-		"slug": "ground-beef",
-		"category": "protein",
-		"kcal": 250,
-		"protein_g": 26,
-		"carbs_g": 0,
-		"fat_g": 15,
-		"default_portion_g": 100,
-		"portions": [],
-		"names": {
-			"pt-BR": "Carne moída",
-			"en": "Ground beef",
-			"es": "Carne picada"
-		}
-	},
-	{
-		"slug": "pork-loin",
-		"category": "protein",
-		"kcal": 143,
-		"protein_g": 21,
-		"carbs_g": 0,
-		"fat_g": 6,
-		"default_portion_g": 120,
-		"portions": [
-			{
-				"label_key": "filet",
-				"grams": 120
-			}
-		],
-		"names": {
-			"pt-BR": "Lombo suíno",
-			"en": "Pork loin",
-			"es": "Lomo de cerdo"
-		}
-	},
-	{
-		"slug": "tilapia",
-		"category": "protein",
-		"kcal": 128,
-		"protein_g": 26,
-		"carbs_g": 0,
-		"fat_g": 2.7,
-		"default_portion_g": 120,
-		"portions": [
-			{
-				"label_key": "filet",
-				"grams": 120
-			}
-		],
-		"names": {
-			"pt-BR": "Tilápia",
-			"en": "Tilapia",
-			"es": "Tilapia"
-		}
-	},
-	{
-		"slug": "salmon",
-		"category": "protein",
-		"kcal": 208,
-		"protein_g": 20,
-		"carbs_g": 0,
-		"fat_g": 13,
-		"default_portion_g": 120,
-		"portions": [
-			{
-				"label_key": "filet",
-				"grams": 120
-			}
-		],
-		"names": {
-			"pt-BR": "Salmão",
-			"en": "Salmon",
-			"es": "Salmón"
-		}
-	},
-	{
-		"slug": "canned-tuna",
-		"category": "protein",
-		"kcal": 116,
-		"protein_g": 26,
-		"carbs_g": 0,
-		"fat_g": 1,
-		"default_portion_g": 80,
-		"portions": [
-			{
-				"label_key": "portion",
-				"grams": 80
-			}
-		],
-		"names": {
-			"pt-BR": "Atum (lata)",
-			"en": "Canned tuna",
-			"es": "Atún en lata"
-		}
-	},
-	{
-		"slug": "sardine",
-		"category": "protein",
-		"kcal": 208,
-		"protein_g": 25,
-		"carbs_g": 0,
-		"fat_g": 11,
-		"default_portion_g": 80,
-		"portions": [],
-		"names": {
-			"pt-BR": "Sardinha",
-			"en": "Sardine",
-			"es": "Sardina"
-		}
-	},
-	{
-		"slug": "shrimp",
-		"category": "protein",
-		"kcal": 99,
-		"protein_g": 24,
-		"carbs_g": 0.2,
-		"fat_g": 0.3,
-		"default_portion_g": 100,
-		"portions": [],
-		"names": {
-			"pt-BR": "Camarão",
-			"en": "Shrimp",
-			"es": "Camarón"
-		}
-	},
-	{
-		"slug": "turkey-breast",
-		"category": "protein",
-		"kcal": 135,
-		"protein_g": 29,
-		"carbs_g": 0,
-		"fat_g": 1,
-		"default_portion_g": 100,
-		"portions": [
-			{
-				"label_key": "slice",
-				"grams": 20
-			}
-		],
-		"names": {
-			"pt-BR": "Peito de peru",
-			"en": "Turkey breast",
-			"es": "Pechuga de pavo"
-		}
-	},
-	{
-		"slug": "whey-protein",
-		"category": "supplement",
-		"kcal": 400,
-		"protein_g": 80,
-		"carbs_g": 8,
-		"fat_g": 6,
-		"default_portion_g": 30,
-		"portions": [
-			{
-				"label_key": "scoop",
-				"grams": 30
-			}
-		],
-		"names": {
-			"pt-BR": "Whey protein",
-			"en": "Whey protein",
-			"es": "Proteína whey"
-		}
-	},
-	{
-		"slug": "white-rice",
-		"category": "carb",
-		"kcal": 130,
-		"protein_g": 2.7,
-		"carbs_g": 28,
-		"fat_g": 0.3,
-		"default_portion_g": 100,
-		"portions": [
-			{
-				"label_key": "tbsp",
-				"grams": 25
-			},
-			{
-				"label_key": "cup",
-				"grams": 150
-			}
-		],
-		"names": {
-			"pt-BR": "Arroz branco cozido",
-			"en": "White rice, cooked",
-			"es": "Arroz blanco cocido"
-		}
-	},
-	{
-		"slug": "brown-rice",
-		"category": "carb",
-		"kcal": 111,
-		"protein_g": 2.6,
-		"carbs_g": 23,
-		"fat_g": 0.9,
-		"default_portion_g": 100,
-		"portions": [
-			{
-				"label_key": "tbsp",
-				"grams": 25
-			},
-			{
-				"label_key": "cup",
-				"grams": 150
-			}
-		],
-		"names": {
-			"pt-BR": "Arroz integral cozido",
-			"en": "Brown rice, cooked",
-			"es": "Arroz integral cocido"
-		}
-	},
-	{
-		"slug": "pasta",
-		"category": "carb",
-		"kcal": 158,
-		"protein_g": 6,
-		"carbs_g": 31,
-		"fat_g": 0.9,
-		"default_portion_g": 100,
-		"portions": [
-			{
-				"label_key": "cup",
-				"grams": 140
-			}
-		],
-		"names": {
-			"pt-BR": "Macarrão cozido",
-			"en": "Pasta, cooked",
-			"es": "Pasta cocida"
-		}
-	},
-	{
-		"slug": "potato",
-		"category": "carb",
-		"kcal": 87,
-		"protein_g": 2,
-		"carbs_g": 20,
-		"fat_g": 0.1,
-		"default_portion_g": 100,
-		"portions": [
-			{
-				"label_key": "unit",
-				"grams": 130
-			}
-		],
-		"names": {
-			"pt-BR": "Batata cozida",
-			"en": "Boiled potato",
-			"es": "Papa cocida"
-		}
-	},
-	{
-		"slug": "sweet-potato",
-		"category": "carb",
-		"kcal": 86,
-		"protein_g": 1.6,
-		"carbs_g": 20,
-		"fat_g": 0.1,
-		"default_portion_g": 100,
-		"portions": [
-			{
-				"label_key": "unit",
-				"grams": 130
-			}
-		],
-		"names": {
-			"pt-BR": "Batata-doce",
-			"en": "Sweet potato",
-			"es": "Batata / boniato"
-		}
-	},
-	{
-		"slug": "cassava",
-		"category": "carb",
-		"kcal": 160,
-		"protein_g": 1.4,
-		"carbs_g": 38,
-		"fat_g": 0.3,
-		"default_portion_g": 100,
-		"portions": [],
-		"names": {
-			"pt-BR": "Mandioca cozida",
-			"en": "Cooked cassava",
-			"es": "Yuca cocida"
-		}
-	},
-	{
-		"slug": "bread",
-		"category": "carb",
-		"kcal": 265,
-		"protein_g": 9,
-		"carbs_g": 49,
-		"fat_g": 3.2,
-		"default_portion_g": 50,
-		"portions": [
-			{
-				"label_key": "slice",
-				"grams": 25
-			}
-		],
-		"names": {
-			"pt-BR": "Pão de forma",
-			"en": "Sliced bread",
-			"es": "Pan de molde"
-		}
-	},
-	{
-		"slug": "french-bread",
-		"category": "carb",
-		"kcal": 300,
-		"protein_g": 8,
-		"carbs_g": 58,
-		"fat_g": 3,
-		"default_portion_g": 50,
-		"portions": [
-			{
-				"label_key": "unit",
-				"grams": 50
-			}
-		],
-		"names": {
-			"pt-BR": "Pão francês",
-			"en": "French roll",
-			"es": "Pan francés"
-		}
-	},
-	{
-		"slug": "tapioca-flour",
-		"category": "carb",
-		"kcal": 358,
-		"protein_g": 0.2,
-		"carbs_g": 89,
-		"fat_g": 0.1,
-		"default_portion_g": 30,
-		"portions": [
-			{
-				"label_key": "tbsp",
-				"grams": 15
-			}
-		],
-		"names": {
-			"pt-BR": "Goma de tapioca",
-			"en": "Tapioca flour",
-			"es": "Almidón de tapioca"
-		}
-	},
-	{
-		"slug": "oats",
-		"category": "carb",
-		"kcal": 389,
-		"protein_g": 17,
-		"carbs_g": 66,
-		"fat_g": 7,
-		"default_portion_g": 30,
-		"portions": [
-			{
-				"label_key": "tbsp",
-				"grams": 15
-			}
-		],
-		"names": {
-			"pt-BR": "Aveia em flocos",
-			"en": "Rolled oats",
-			"es": "Avena en hojuelas"
-		}
-	},
-	{
-		"slug": "corn",
-		"category": "carb",
-		"kcal": 96,
-		"protein_g": 3.4,
-		"carbs_g": 21,
-		"fat_g": 1.5,
-		"default_portion_g": 100,
-		"portions": [
-			{
-				"label_key": "tbsp",
-				"grams": 20
-			}
-		],
-		"names": {
-			"pt-BR": "Milho",
-			"en": "Corn",
-			"es": "Maíz"
-		}
-	},
-	{
-		"slug": "couscous",
-		"category": "carb",
-		"kcal": 112,
-		"protein_g": 3.8,
-		"carbs_g": 23,
-		"fat_g": 0.2,
-		"default_portion_g": 100,
-		"portions": [],
-		"names": {
-			"pt-BR": "Cuscuz",
-			"en": "Couscous",
-			"es": "Cuscús"
-		}
-	},
-	{
-		"slug": "quinoa",
-		"category": "carb",
-		"kcal": 120,
-		"protein_g": 4.4,
-		"carbs_g": 21,
-		"fat_g": 1.9,
-		"default_portion_g": 100,
-		"portions": [
-			{
-				"label_key": "cup",
-				"grams": 150
-			}
-		],
-		"names": {
-			"pt-BR": "Quinoa cozida",
-			"en": "Cooked quinoa",
-			"es": "Quinua cocida"
-		}
-	},
-	{
-		"slug": "granola",
-		"category": "carb",
-		"kcal": 471,
-		"protein_g": 10,
-		"carbs_g": 64,
-		"fat_g": 20,
-		"default_portion_g": 40,
-		"portions": [
-			{
-				"label_key": "tbsp",
-				"grams": 15
-			}
-		],
-		"names": {
-			"pt-BR": "Granola",
-			"en": "Granola",
-			"es": "Granola"
-		}
-	},
-	{
-		"slug": "tapioca-cooked",
-		"category": "carb",
-		"kcal": 240,
-		"protein_g": 0.4,
-		"carbs_g": 60,
-		"fat_g": 0.1,
-		"default_portion_g": 80,
-		"portions": [],
-		"names": {
-			"pt-BR": "Tapioca (goma hidratada)",
-			"en": "Tapioca crepe",
-			"es": "Tapioca"
-		}
-	},
-	{
-		"slug": "beans",
-		"category": "legume",
-		"kcal": 76,
-		"protein_g": 4.8,
-		"carbs_g": 14,
-		"fat_g": 0.5,
-		"default_portion_g": 100,
-		"portions": [
-			{
-				"label_key": "tbsp",
-				"grams": 25
-			},
-			{
-				"label_key": "cup",
-				"grams": 150
-			}
-		],
-		"names": {
-			"pt-BR": "Feijão carioca cozido",
-			"en": "Cooked pinto beans",
-			"es": "Frijoles cocidos"
-		}
-	},
-	{
-		"slug": "black-beans",
-		"category": "legume",
-		"kcal": 91,
-		"protein_g": 6,
-		"carbs_g": 16,
-		"fat_g": 0.5,
-		"default_portion_g": 100,
-		"portions": [
-			{
-				"label_key": "tbsp",
-				"grams": 25
-			},
-			{
-				"label_key": "cup",
-				"grams": 150
-			}
-		],
-		"names": {
-			"pt-BR": "Feijão preto cozido",
-			"en": "Cooked black beans",
-			"es": "Frijoles negros cocidos"
-		}
-	},
-	{
-		"slug": "lentils",
-		"category": "legume",
-		"kcal": 116,
-		"protein_g": 9,
-		"carbs_g": 20,
-		"fat_g": 0.4,
-		"default_portion_g": 100,
-		"portions": [
-			{
-				"label_key": "cup",
-				"grams": 150
-			}
-		],
-		"names": {
-			"pt-BR": "Lentilha cozida",
-			"en": "Cooked lentils",
-			"es": "Lentejas cocidas"
-		}
-	},
-	{
-		"slug": "chickpeas",
-		"category": "legume",
-		"kcal": 164,
-		"protein_g": 9,
-		"carbs_g": 27,
-		"fat_g": 2.6,
-		"default_portion_g": 100,
-		"portions": [
-			{
-				"label_key": "cup",
-				"grams": 150
-			}
-		],
-		"names": {
-			"pt-BR": "Grão-de-bico cozido",
-			"en": "Cooked chickpeas",
-			"es": "Garbanzos cocidos"
-		}
-	},
-	{
-		"slug": "soy",
-		"category": "legume",
-		"kcal": 173,
-		"protein_g": 17,
-		"carbs_g": 10,
-		"fat_g": 9,
-		"default_portion_g": 100,
-		"portions": [],
-		"names": {
-			"pt-BR": "Soja cozida",
-			"en": "Cooked soybeans",
-			"es": "Soja cocida"
-		}
-	},
-	{
-		"slug": "banana",
-		"category": "fruit",
-		"kcal": 89,
-		"protein_g": 1.1,
-		"carbs_g": 23,
-		"fat_g": 0.3,
-		"default_portion_g": 100,
-		"portions": [
-			{
-				"label_key": "unit",
-				"grams": 100
-			}
-		],
-		"names": {
-			"pt-BR": "Banana",
-			"en": "Banana",
-			"es": "Plátano"
-		}
-	},
-	{
-		"slug": "apple",
-		"category": "fruit",
-		"kcal": 52,
-		"protein_g": 0.3,
-		"carbs_g": 14,
-		"fat_g": 0.2,
-		"default_portion_g": 130,
-		"portions": [
-			{
-				"label_key": "unit",
-				"grams": 130
-			}
-		],
-		"names": {
-			"pt-BR": "Maçã",
-			"en": "Apple",
-			"es": "Manzana"
-		}
-	},
-	{
-		"slug": "orange",
-		"category": "fruit",
-		"kcal": 47,
-		"protein_g": 0.9,
-		"carbs_g": 12,
-		"fat_g": 0.1,
-		"default_portion_g": 130,
-		"portions": [
-			{
-				"label_key": "unit",
-				"grams": 130
-			}
-		],
-		"names": {
-			"pt-BR": "Laranja",
-			"en": "Orange",
-			"es": "Naranja"
-		}
-	},
-	{
-		"slug": "papaya",
-		"category": "fruit",
-		"kcal": 43,
-		"protein_g": 0.5,
-		"carbs_g": 11,
-		"fat_g": 0.3,
-		"default_portion_g": 150,
-		"portions": [
-			{
-				"label_key": "portion",
-				"grams": 150
-			}
-		],
-		"names": {
-			"pt-BR": "Mamão",
-			"en": "Papaya",
-			"es": "Papaya"
-		}
-	},
-	{
-		"slug": "watermelon",
-		"category": "fruit",
-		"kcal": 30,
-		"protein_g": 0.6,
-		"carbs_g": 8,
-		"fat_g": 0.2,
-		"default_portion_g": 150,
-		"portions": [
-			{
-				"label_key": "portion",
-				"grams": 150
-			}
-		],
-		"names": {
-			"pt-BR": "Melancia",
-			"en": "Watermelon",
-			"es": "Sandía"
-		}
-	},
-	{
-		"slug": "mango",
-		"category": "fruit",
-		"kcal": 60,
-		"protein_g": 0.8,
-		"carbs_g": 15,
-		"fat_g": 0.4,
-		"default_portion_g": 120,
-		"portions": [
-			{
-				"label_key": "unit",
-				"grams": 200
-			}
-		],
-		"names": {
-			"pt-BR": "Manga",
-			"en": "Mango",
-			"es": "Mango"
-		}
-	},
-	{
-		"slug": "grape",
-		"category": "fruit",
-		"kcal": 69,
-		"protein_g": 0.7,
-		"carbs_g": 18,
-		"fat_g": 0.2,
-		"default_portion_g": 100,
-		"portions": [
-			{
-				"label_key": "handful",
-				"grams": 50
-			}
-		],
-		"names": {
-			"pt-BR": "Uva",
-			"en": "Grapes",
-			"es": "Uvas"
-		}
-	},
-	{
-		"slug": "strawberry",
-		"category": "fruit",
-		"kcal": 32,
-		"protein_g": 0.7,
-		"carbs_g": 8,
-		"fat_g": 0.3,
-		"default_portion_g": 100,
-		"portions": [
-			{
-				"label_key": "unit",
-				"grams": 12
-			}
-		],
-		"names": {
-			"pt-BR": "Morango",
-			"en": "Strawberry",
-			"es": "Fresa"
-		}
-	},
-	{
-		"slug": "avocado",
-		"category": "fat",
-		"kcal": 160,
-		"protein_g": 2,
-		"carbs_g": 9,
-		"fat_g": 15,
-		"default_portion_g": 100,
-		"portions": [
-			{
-				"label_key": "portion",
-				"grams": 100
-			}
-		],
-		"names": {
-			"pt-BR": "Abacate",
-			"en": "Avocado",
-			"es": "Aguacate"
-		}
-	},
-	{
-		"slug": "pineapple",
-		"category": "fruit",
-		"kcal": 50,
-		"protein_g": 0.5,
-		"carbs_g": 13,
-		"fat_g": 0.1,
-		"default_portion_g": 100,
-		"portions": [
-			{
-				"label_key": "slice",
-				"grams": 80
-			}
-		],
-		"names": {
-			"pt-BR": "Abacaxi",
-			"en": "Pineapple",
-			"es": "Piña"
-		}
-	},
-	{
-		"slug": "pear",
-		"category": "fruit",
-		"kcal": 57,
-		"protein_g": 0.4,
-		"carbs_g": 15,
-		"fat_g": 0.1,
-		"default_portion_g": 130,
-		"portions": [
-			{
-				"label_key": "unit",
-				"grams": 130
-			}
-		],
-		"names": {
-			"pt-BR": "Pera",
-			"en": "Pear",
-			"es": "Pera"
-		}
-	},
-	{
-		"slug": "broccoli",
-		"category": "vegetable",
-		"kcal": 34,
-		"protein_g": 2.8,
-		"carbs_g": 7,
-		"fat_g": 0.4,
-		"default_portion_g": 100,
-		"portions": [
-			{
-				"label_key": "cup",
-				"grams": 90
-			}
-		],
-		"names": {
-			"pt-BR": "Brócolis",
-			"en": "Broccoli",
-			"es": "Brócoli"
-		}
-	},
-	{
-		"slug": "carrot",
-		"category": "vegetable",
-		"kcal": 41,
-		"protein_g": 0.9,
-		"carbs_g": 10,
-		"fat_g": 0.2,
-		"default_portion_g": 100,
-		"portions": [
-			{
-				"label_key": "unit",
-				"grams": 70
-			}
-		],
-		"names": {
-			"pt-BR": "Cenoura",
-			"en": "Carrot",
-			"es": "Zanahoria"
-		}
-	},
-	{
-		"slug": "tomato",
-		"category": "vegetable",
-		"kcal": 18,
-		"protein_g": 0.9,
-		"carbs_g": 3.9,
-		"fat_g": 0.2,
-		"default_portion_g": 100,
-		"portions": [
-			{
-				"label_key": "unit",
-				"grams": 100
-			}
-		],
-		"names": {
-			"pt-BR": "Tomate",
-			"en": "Tomato",
-			"es": "Tomate"
-		}
-	},
-	{
-		"slug": "lettuce",
-		"category": "vegetable",
-		"kcal": 15,
-		"protein_g": 1.4,
-		"carbs_g": 2.9,
-		"fat_g": 0.2,
-		"default_portion_g": 40,
-		"portions": [
-			{
-				"label_key": "portion",
-				"grams": 40
-			}
-		],
-		"names": {
-			"pt-BR": "Alface",
-			"en": "Lettuce",
-			"es": "Lechuga"
-		}
-	},
-	{
-		"slug": "spinach",
-		"category": "vegetable",
-		"kcal": 23,
-		"protein_g": 2.9,
-		"carbs_g": 3.6,
-		"fat_g": 0.4,
-		"default_portion_g": 60,
-		"portions": [
-			{
-				"label_key": "cup",
-				"grams": 30
-			}
-		],
-		"names": {
-			"pt-BR": "Espinafre",
-			"en": "Spinach",
-			"es": "Espinaca"
-		}
-	},
-	{
-		"slug": "cucumber",
-		"category": "vegetable",
-		"kcal": 15,
-		"protein_g": 0.7,
-		"carbs_g": 3.6,
-		"fat_g": 0.1,
-		"default_portion_g": 100,
-		"portions": [],
-		"names": {
-			"pt-BR": "Pepino",
-			"en": "Cucumber",
-			"es": "Pepino"
-		}
-	},
-	{
-		"slug": "onion",
-		"category": "vegetable",
-		"kcal": 40,
-		"protein_g": 1.1,
-		"carbs_g": 9,
-		"fat_g": 0.1,
-		"default_portion_g": 50,
-		"portions": [],
-		"names": {
-			"pt-BR": "Cebola",
-			"en": "Onion",
-			"es": "Cebolla"
-		}
-	},
-	{
-		"slug": "zucchini",
-		"category": "vegetable",
-		"kcal": 17,
-		"protein_g": 1.2,
-		"carbs_g": 3.1,
-		"fat_g": 0.3,
-		"default_portion_g": 100,
-		"portions": [],
-		"names": {
-			"pt-BR": "Abobrinha",
-			"en": "Zucchini",
-			"es": "Calabacín"
-		}
-	},
-	{
-		"slug": "cauliflower",
-		"category": "vegetable",
-		"kcal": 25,
-		"protein_g": 1.9,
-		"carbs_g": 5,
-		"fat_g": 0.3,
-		"default_portion_g": 100,
-		"portions": [
-			{
-				"label_key": "cup",
-				"grams": 100
-			}
-		],
-		"names": {
-			"pt-BR": "Couve-flor",
-			"en": "Cauliflower",
-			"es": "Coliflor"
-		}
-	},
-	{
-		"slug": "bell-pepper",
-		"category": "vegetable",
-		"kcal": 31,
-		"protein_g": 1,
-		"carbs_g": 6,
-		"fat_g": 0.3,
-		"default_portion_g": 100,
-		"portions": [
-			{
-				"label_key": "unit",
-				"grams": 120
-			}
-		],
-		"names": {
-			"pt-BR": "Pimentão",
-			"en": "Bell pepper",
-			"es": "Pimiento"
-		}
-	},
-	{
-		"slug": "green-beans",
-		"category": "vegetable",
-		"kcal": 31,
-		"protein_g": 1.8,
-		"carbs_g": 7,
-		"fat_g": 0.2,
-		"default_portion_g": 100,
-		"portions": [],
-		"names": {
-			"pt-BR": "Vagem",
-			"en": "Green beans",
-			"es": "Judías verdes"
-		}
-	},
-	{
-		"slug": "cabbage",
-		"category": "vegetable",
-		"kcal": 25,
-		"protein_g": 1.3,
-		"carbs_g": 6,
-		"fat_g": 0.1,
-		"default_portion_g": 100,
-		"portions": [],
-		"names": {
-			"pt-BR": "Repolho",
-			"en": "Cabbage",
-			"es": "Repollo"
-		}
-	},
-	{
-		"slug": "beetroot",
-		"category": "vegetable",
-		"kcal": 43,
-		"protein_g": 1.6,
-		"carbs_g": 10,
-		"fat_g": 0.2,
-		"default_portion_g": 100,
-		"portions": [
-			{
-				"label_key": "unit",
-				"grams": 80
-			}
-		],
-		"names": {
-			"pt-BR": "Beterraba",
-			"en": "Beetroot",
-			"es": "Remolacha"
-		}
-	},
-	{
-		"slug": "whole-milk",
-		"category": "dairy",
-		"kcal": 61,
-		"protein_g": 3.2,
-		"carbs_g": 4.8,
-		"fat_g": 3.3,
-		"default_portion_g": 200,
-		"portions": [
-			{
-				"label_key": "glass",
-				"grams": 200
-			}
-		],
-		"names": {
-			"pt-BR": "Leite integral",
-			"en": "Whole milk",
-			"es": "Leche entera"
-		}
-	},
-	{
-		"slug": "skim-milk",
-		"category": "dairy",
-		"kcal": 34,
-		"protein_g": 3.4,
-		"carbs_g": 5,
-		"fat_g": 0.1,
-		"default_portion_g": 200,
-		"portions": [
-			{
-				"label_key": "glass",
-				"grams": 200
-			}
-		],
-		"names": {
-			"pt-BR": "Leite desnatado",
-			"en": "Skim milk",
-			"es": "Leche desnatada"
-		}
-	},
-	{
-		"slug": "plain-yogurt",
-		"category": "dairy",
-		"kcal": 61,
-		"protein_g": 3.5,
-		"carbs_g": 4.7,
-		"fat_g": 3.3,
-		"default_portion_g": 170,
-		"portions": [
-			{
-				"label_key": "portion",
-				"grams": 170
-			}
-		],
-		"names": {
-			"pt-BR": "Iogurte natural",
-			"en": "Plain yogurt",
-			"es": "Yogur natural"
-		}
-	},
-	{
-		"slug": "greek-yogurt",
-		"category": "dairy",
-		"kcal": 97,
-		"protein_g": 9,
-		"carbs_g": 4,
-		"fat_g": 5,
-		"default_portion_g": 130,
-		"portions": [
-			{
-				"label_key": "portion",
-				"grams": 130
-			}
-		],
-		"names": {
-			"pt-BR": "Iogurte grego",
-			"en": "Greek yogurt",
-			"es": "Yogur griego"
-		}
-	},
-	{
-		"slug": "white-cheese",
-		"category": "dairy",
-		"kcal": 264,
-		"protein_g": 17,
-		"carbs_g": 3,
-		"fat_g": 20,
-		"default_portion_g": 30,
-		"portions": [
-			{
-				"label_key": "slice",
-				"grams": 30
-			}
-		],
-		"names": {
-			"pt-BR": "Queijo minas frescal",
-			"en": "Fresh white cheese",
-			"es": "Queso fresco"
-		}
-	},
-	{
-		"slug": "mozzarella",
-		"category": "dairy",
-		"kcal": 280,
-		"protein_g": 22,
-		"carbs_g": 2,
-		"fat_g": 22,
-		"default_portion_g": 20,
-		"portions": [
-			{
-				"label_key": "slice",
-				"grams": 20
-			}
-		],
-		"names": {
-			"pt-BR": "Muçarela",
-			"en": "Mozzarella",
-			"es": "Mozzarella"
-		}
-	},
-	{
-		"slug": "cottage",
-		"category": "dairy",
-		"kcal": 98,
-		"protein_g": 11,
-		"carbs_g": 3.4,
-		"fat_g": 4.3,
-		"default_portion_g": 100,
-		"portions": [
-			{
-				"label_key": "tbsp",
-				"grams": 30
-			}
-		],
-		"names": {
-			"pt-BR": "Queijo cottage",
-			"en": "Cottage cheese",
-			"es": "Queso cottage"
-		}
-	},
-	{
-		"slug": "requeijao",
-		"category": "dairy",
-		"kcal": 260,
-		"protein_g": 10,
-		"carbs_g": 4,
-		"fat_g": 23,
-		"default_portion_g": 30,
-		"portions": [
-			{
-				"label_key": "tbsp",
-				"grams": 15
-			}
-		],
-		"names": {
-			"pt-BR": "Requeijão",
-			"en": "Cream cheese spread",
-			"es": "Requesón"
-		}
-	},
-	{
-		"slug": "parmesan",
-		"category": "dairy",
-		"kcal": 431,
-		"protein_g": 38,
-		"carbs_g": 4,
-		"fat_g": 29,
-		"default_portion_g": 10,
-		"portions": [
-			{
-				"label_key": "tbsp",
-				"grams": 5
-			}
-		],
-		"names": {
-			"pt-BR": "Queijo parmesão",
-			"en": "Parmesan",
-			"es": "Parmesano"
-		}
-	},
-	{
-		"slug": "olive-oil",
-		"category": "fat",
-		"kcal": 884,
-		"protein_g": 0,
-		"carbs_g": 0,
-		"fat_g": 100,
-		"default_portion_g": 8,
-		"portions": [
-			{
-				"label_key": "tbsp",
-				"grams": 8
-			}
-		],
-		"names": {
-			"pt-BR": "Azeite de oliva",
-			"en": "Olive oil",
-			"es": "Aceite de oliva"
-		}
-	},
-	{
-		"slug": "peanut",
-		"category": "fat",
-		"kcal": 567,
-		"protein_g": 26,
-		"carbs_g": 16,
-		"fat_g": 49,
-		"default_portion_g": 30,
-		"portions": [
-			{
-				"label_key": "handful",
-				"grams": 30
-			}
-		],
-		"names": {
-			"pt-BR": "Amendoim",
-			"en": "Peanuts",
-			"es": "Cacahuete"
-		}
-	},
-	{
-		"slug": "peanut-butter",
-		"category": "fat",
-		"kcal": 588,
-		"protein_g": 25,
-		"carbs_g": 20,
-		"fat_g": 50,
-		"default_portion_g": 15,
-		"portions": [
-			{
-				"label_key": "tbsp",
-				"grams": 15
-			}
-		],
-		"names": {
-			"pt-BR": "Pasta de amendoim",
-			"en": "Peanut butter",
-			"es": "Mantequilla de maní"
-		}
-	},
-	{
-		"slug": "almonds",
-		"category": "fat",
-		"kcal": 579,
-		"protein_g": 21,
-		"carbs_g": 22,
-		"fat_g": 50,
-		"default_portion_g": 30,
-		"portions": [
-			{
-				"label_key": "handful",
-				"grams": 30
-			}
-		],
-		"names": {
-			"pt-BR": "Amêndoas",
-			"en": "Almonds",
-			"es": "Almendras"
-		}
-	},
-	{
-		"slug": "walnuts",
-		"category": "fat",
-		"kcal": 654,
-		"protein_g": 15,
-		"carbs_g": 14,
-		"fat_g": 65,
-		"default_portion_g": 30,
-		"portions": [
-			{
-				"label_key": "handful",
-				"grams": 30
-			}
-		],
-		"names": {
-			"pt-BR": "Nozes",
-			"en": "Walnuts",
-			"es": "Nueces"
-		}
-	},
-	{
-		"slug": "cashew",
-		"category": "fat",
-		"kcal": 553,
-		"protein_g": 18,
-		"carbs_g": 30,
-		"fat_g": 44,
-		"default_portion_g": 30,
-		"portions": [
-			{
-				"label_key": "handful",
-				"grams": 30
-			}
-		],
-		"names": {
-			"pt-BR": "Castanha de caju",
-			"en": "Cashews",
-			"es": "Anacardos"
-		}
-	},
-	{
-		"slug": "brazil-nut",
-		"category": "fat",
-		"kcal": 656,
-		"protein_g": 14,
-		"carbs_g": 12,
-		"fat_g": 66,
-		"default_portion_g": 5,
-		"portions": [
-			{
-				"label_key": "unit",
-				"grams": 5
-			}
-		],
-		"names": {
-			"pt-BR": "Castanha-do-pará",
-			"en": "Brazil nut",
-			"es": "Nuez de Brasil"
-		}
-	},
-	{
-		"slug": "chia",
-		"category": "fat",
-		"kcal": 486,
-		"protein_g": 17,
-		"carbs_g": 42,
-		"fat_g": 31,
-		"default_portion_g": 12,
-		"portions": [
-			{
-				"label_key": "tbsp",
-				"grams": 12
-			}
-		],
-		"names": {
-			"pt-BR": "Chia",
-			"en": "Chia seeds",
-			"es": "Semillas de chía"
-		}
-	},
-	{
-		"slug": "flaxseed",
-		"category": "fat",
-		"kcal": 534,
-		"protein_g": 18,
-		"carbs_g": 29,
-		"fat_g": 42,
-		"default_portion_g": 10,
-		"portions": [
-			{
-				"label_key": "tbsp",
-				"grams": 10
-			}
-		],
-		"names": {
-			"pt-BR": "Linhaça",
-			"en": "Flaxseed",
-			"es": "Linaza"
-		}
-	},
-	{
-		"slug": "butter",
-		"category": "fat",
-		"kcal": 717,
-		"protein_g": 0.9,
-		"carbs_g": 0.1,
-		"fat_g": 81,
-		"default_portion_g": 5,
-		"portions": [
-			{
-				"label_key": "tsp",
-				"grams": 5
-			}
-		],
-		"names": {
-			"pt-BR": "Manteiga",
-			"en": "Butter",
-			"es": "Mantequilla"
-		}
-	},
-	{
-		"slug": "coconut-oil",
-		"category": "fat",
-		"kcal": 862,
-		"protein_g": 0,
-		"carbs_g": 0,
-		"fat_g": 100,
-		"default_portion_g": 8,
-		"portions": [
-			{
-				"label_key": "tbsp",
-				"grams": 8
-			}
-		],
-		"names": {
-			"pt-BR": "Óleo de coco",
-			"en": "Coconut oil",
-			"es": "Aceite de coco"
-		}
-	},
-	{
-		"slug": "honey",
-		"category": "sweet",
-		"kcal": 304,
-		"protein_g": 0.3,
-		"carbs_g": 82,
-		"fat_g": 0,
-		"default_portion_g": 20,
-		"portions": [
-			{
-				"label_key": "tbsp",
-				"grams": 20
-			}
-		],
-		"names": {
-			"pt-BR": "Mel",
-			"en": "Honey",
-			"es": "Miel"
-		}
-	},
-	{
-		"slug": "sugar",
-		"category": "sweet",
-		"kcal": 387,
-		"protein_g": 0,
-		"carbs_g": 100,
-		"fat_g": 0,
-		"default_portion_g": 5,
-		"portions": [
-			{
-				"label_key": "tsp",
-				"grams": 5
-			},
-			{
-				"label_key": "tbsp",
-				"grams": 12
-			}
-		],
-		"names": {
-			"pt-BR": "Açúcar",
-			"en": "Sugar",
-			"es": "Azúcar"
-		}
-	},
-	{
-		"slug": "dark-chocolate",
-		"category": "sweet",
-		"kcal": 546,
-		"protein_g": 5,
-		"carbs_g": 61,
-		"fat_g": 31,
-		"default_portion_g": 25,
-		"portions": [
-			{
-				"label_key": "portion",
-				"grams": 25
-			}
-		],
-		"names": {
-			"pt-BR": "Chocolate amargo (70%)",
-			"en": "Dark chocolate (70%)",
-			"es": "Chocolate amargo (70%)"
-		}
-	},
-	{
-		"slug": "salt",
-		"category": "other",
-		"kcal": 0,
-		"protein_g": 0,
-		"carbs_g": 0,
-		"fat_g": 0,
-		"default_portion_g": 1,
-		"portions": [
-			{
-				"label_key": "tsp",
-				"grams": 5
-			}
-		],
-		"names": {
-			"pt-BR": "Sal",
-			"en": "Salt",
-			"es": "Sal"
-		}
-	},
-	{
-		"slug": "black-coffee",
-		"category": "beverage",
-		"kcal": 2,
-		"protein_g": 0.1,
-		"carbs_g": 0,
-		"fat_g": 0,
-		"default_portion_g": 50,
-		"portions": [
-			{
-				"label_key": "cup",
-				"grams": 50
-			}
-		],
-		"names": {
-			"pt-BR": "Café sem açúcar",
-			"en": "Black coffee",
-			"es": "Café solo"
-		}
-	},
-	{
-		"slug": "orange-juice",
-		"category": "beverage",
-		"kcal": 45,
-		"protein_g": 0.7,
-		"carbs_g": 10,
-		"fat_g": 0.2,
-		"default_portion_g": 200,
-		"portions": [
-			{
-				"label_key": "glass",
-				"grams": 200
-			}
-		],
-		"names": {
-			"pt-BR": "Suco de laranja",
-			"en": "Orange juice",
-			"es": "Zumo de naranja"
-		}
-	},
-	{
-		"slug": "coconut-water",
-		"category": "beverage",
-		"kcal": 19,
-		"protein_g": 0.7,
-		"carbs_g": 3.7,
-		"fat_g": 0.2,
-		"default_portion_g": 200,
-		"portions": [
-			{
-				"label_key": "glass",
-				"grams": 200
-			}
-		],
-		"names": {
-			"pt-BR": "Água de coco",
-			"en": "Coconut water",
-			"es": "Agua de coco"
-		}
-	},
-	{
-		"slug": "creatine-monohydrate",
-		"category": "supplement",
-		"kcal": 0,
-		"protein_g": 0,
-		"carbs_g": 0,
-		"fat_g": 0,
-		"default_portion_g": 5,
-		"portions": [
-			{
-				"label_key": "scoop",
-				"grams": 5
-			}
-		],
-		"names": {
-			"pt-BR": "Creatina",
-			"en": "Creatine",
-			"es": "Creatina"
-		}
-	},
-	{
-		"slug": "casein-protein",
-		"category": "supplement",
-		"kcal": 360,
-		"protein_g": 80,
-		"carbs_g": 6,
-		"fat_g": 2,
-		"default_portion_g": 30,
-		"portions": [
-			{
-				"label_key": "scoop",
-				"grams": 30
-			}
-		],
-		"names": {
-			"pt-BR": "Caseína",
-			"en": "Casein protein",
-			"es": "Caseína"
-		}
-	},
-	{
-		"slug": "egg-albumin",
-		"category": "supplement",
-		"kcal": 380,
-		"protein_g": 80,
-		"carbs_g": 4,
-		"fat_g": 1,
-		"default_portion_g": 30,
-		"portions": [
-			{
-				"label_key": "scoop",
-				"grams": 30
-			}
-		],
-		"names": {
-			"pt-BR": "Albumina",
-			"en": "Egg albumin",
-			"es": "Albúmina"
-		}
-	},
-	{
-		"slug": "mass-gainer",
-		"category": "supplement",
-		"kcal": 380,
-		"protein_g": 15,
-		"carbs_g": 70,
-		"fat_g": 3,
-		"default_portion_g": 100,
-		"portions": [
-			{
-				"label_key": "scoop",
-				"grams": 100
-			}
-		],
-		"names": {
-			"pt-BR": "Hipercalórico",
-			"en": "Mass gainer",
-			"es": "Ganador de masa"
-		}
-	},
-	{
-		"slug": "maltodextrin",
-		"category": "supplement",
-		"kcal": 380,
-		"protein_g": 0,
-		"carbs_g": 95,
-		"fat_g": 0,
-		"default_portion_g": 30,
-		"portions": [
-			{
-				"label_key": "scoop",
-				"grams": 30
-			}
-		],
-		"names": {
-			"pt-BR": "Maltodextrina",
-			"en": "Maltodextrin",
-			"es": "Maltodextrina"
-		}
-	},
-	{
-		"slug": "bcaa",
-		"category": "supplement",
-		"kcal": 0,
-		"protein_g": 0,
-		"carbs_g": 0,
-		"fat_g": 0,
-		"default_portion_g": 5,
-		"portions": [
-			{
-				"label_key": "scoop",
-				"grams": 5
-			}
-		],
-		"names": {
-			"pt-BR": "BCAA",
-			"en": "BCAA",
-			"es": "BCAA"
-		}
-	},
-	{
-		"slug": "glutamine",
-		"category": "supplement",
-		"kcal": 0,
-		"protein_g": 0,
-		"carbs_g": 0,
-		"fat_g": 0,
-		"default_portion_g": 5,
-		"portions": [
-			{
-				"label_key": "scoop",
-				"grams": 5
-			}
-		],
-		"names": {
-			"pt-BR": "Glutamina",
-			"en": "Glutamine",
-			"es": "Glutamina"
-		}
-	},
-	{
-		"slug": "pre-workout",
-		"category": "supplement",
-		"kcal": 0,
-		"protein_g": 0,
-		"carbs_g": 0,
-		"fat_g": 0,
-		"default_portion_g": 10,
-		"portions": [
-			{
-				"label_key": "scoop",
-				"grams": 10
-			}
-		],
-		"names": {
-			"pt-BR": "Pré-treino",
-			"en": "Pre-workout",
-			"es": "Preentreno"
-		}
-	},
-	{
-		"slug": "fish-oil-omega3",
-		"category": "supplement",
-		"kcal": 902,
-		"protein_g": 0,
-		"carbs_g": 0,
-		"fat_g": 100,
-		"default_portion_g": 1,
-		"portions": [
-			{
-				"label_key": "unit",
-				"grams": 1
-			}
-		],
-		"names": {
-			"pt-BR": "Ômega-3 (óleo de peixe)",
-			"en": "Fish oil (omega-3)",
-			"es": "Omega-3 (aceite de pescado)"
-		}
-	},
-	{
-		"slug": "multivitamin",
-		"category": "supplement",
-		"kcal": 0,
-		"protein_g": 0,
-		"carbs_g": 0,
-		"fat_g": 0,
-		"default_portion_g": 1,
-		"portions": [
-			{
-				"label_key": "unit",
-				"grams": 1
-			}
-		],
-		"names": {
-			"pt-BR": "Multivitamínico",
-			"en": "Multivitamin",
-			"es": "Multivitamínico"
-		}
-	},
-	{
-		"slug": "white-beans",
-		"category": "legume",
-		"kcal": 140,
-		"protein_g": 8.7,
-		"carbs_g": 25.0,
-		"fat_g": 0.5,
-		"default_portion_g": 150,
-		"portions": [
-			{
-				"label_key": "portion",
-				"grams": 150
-			}
-		],
-		"names": {
-			"pt-BR": "Feijão branco cozido",
-			"en": "White beans, cooked",
-			"es": "Alubias blancas cocidas"
-		}
-	},
-	{
-		"slug": "black-eyed-peas",
-		"category": "legume",
-		"kcal": 116,
-		"protein_g": 7.7,
-		"carbs_g": 20.8,
-		"fat_g": 0.5,
-		"default_portion_g": 150,
-		"portions": [
-			{
-				"label_key": "portion",
-				"grams": 150
-			}
-		],
-		"names": {
-			"pt-BR": "Feijão fradinho cozido",
-			"en": "Black-eyed peas, cooked",
-			"es": "Alubias carilla cocidas"
-		}
-	},
-	{
-		"slug": "pinto-beans",
-		"category": "legume",
-		"kcal": 143,
-		"protein_g": 9.0,
-		"carbs_g": 26.0,
-		"fat_g": 0.6,
-		"default_portion_g": 150,
-		"portions": [
-			{
-				"label_key": "portion",
-				"grams": 150
-			}
-		],
-		"names": {
-			"pt-BR": "Feijão roxinho cozido",
-			"en": "Pinto beans, cooked",
-			"es": "Alubias pintas cocidas"
-		}
-	},
-	{
-		"slug": "beef-tenderloin",
-		"category": "protein",
-		"kcal": 143,
-		"protein_g": 21.0,
-		"carbs_g": 0.0,
-		"fat_g": 6.0,
-		"default_portion_g": 150,
-		"portions": [
-			{
-				"label_key": "filet",
-				"grams": 150
-			}
-		],
-		"names": {
-			"pt-BR": "Filé mignon grelhado",
-			"en": "Grilled beef tenderloin",
-			"es": "Solomillo a la plancha"
-		}
-	},
-	{
-		"slug": "beef-ribeye",
-		"category": "protein",
-		"kcal": 250,
-		"protein_g": 25.0,
-		"carbs_g": 0.0,
-		"fat_g": 16.0,
-		"default_portion_g": 150,
-		"portions": [
-			{
-				"label_key": "filet",
-				"grams": 150
-			}
-		],
-		"names": {
-			"pt-BR": "Contra-filé grelhado",
-			"en": "Grilled ribeye",
-			"es": "Entrecot / chuletón a la plancha"
-		}
-	},
-	{
-		"slug": "beef-sirloin",
-		"category": "protein",
-		"kcal": 180,
-		"protein_g": 26.0,
-		"carbs_g": 0.0,
-		"fat_g": 8.0,
-		"default_portion_g": 150,
-		"portions": [
-			{
-				"label_key": "filet",
-				"grams": 150
-			}
-		],
-		"names": {
-			"pt-BR": "Lombo bovino grelhado",
-			"en": "Grilled sirloin",
-			"es": "Lomo bajo a la plancha"
-		}
-	},
-	{
-		"slug": "beef-shank",
-		"category": "protein",
-		"kcal": 160,
-		"protein_g": 28.0,
-		"carbs_g": 0.0,
-		"fat_g": 5.0,
-		"default_portion_g": 150,
-		"portions": [
-			{
-				"label_key": "portion",
-				"grams": 150
-			}
-		],
-		"names": {
-			"pt-BR": "Músculo bovino cozido",
-			"en": "Braised beef shank",
-			"es": "Morcillo de ternera guisado"
-		}
-	},
-	{
-		"slug": "beef-flank",
-		"category": "protein",
-		"kcal": 192,
-		"protein_g": 21.0,
-		"carbs_g": 0.0,
-		"fat_g": 11.0,
-		"default_portion_g": 150,
-		"portions": [
-			{
-				"label_key": "filet",
-				"grams": 150
-			}
-		],
-		"names": {
-			"pt-BR": "Fraldinha grelhada",
-			"en": "Grilled flank steak",
-			"es": "Falda a la plancha"
-		}
-	},
-	{
-		"slug": "beef-rump-cap",
-		"category": "protein",
-		"kcal": 230,
-		"protein_g": 24.0,
-		"carbs_g": 0.0,
-		"fat_g": 14.0,
-		"default_portion_g": 150,
-		"portions": [
-			{
-				"label_key": "filet",
-				"grams": 150
-			}
-		],
-		"names": {
-			"pt-BR": "Picanha grelhada",
-			"en": "Grilled rump cap",
-			"es": "Tapa de cuadril a la plancha"
-		}
-	},
-	{
-		"slug": "beef-bottom-sirloin",
-		"category": "protein",
-		"kcal": 172,
-		"protein_g": 22.0,
-		"carbs_g": 0.0,
-		"fat_g": 9.0,
-		"default_portion_g": 150,
-		"portions": [
-			{
-				"label_key": "filet",
-				"grams": 150
-			}
-		],
-		"names": {
-			"pt-BR": "Maminha grelhada",
-			"en": "Grilled bottom sirloin",
-			"es": "Babilla a la plancha"
-		}
-	},
-	{
-		"slug": "beef-chuck",
-		"category": "protein",
-		"kcal": 215,
-		"protein_g": 20.0,
-		"carbs_g": 0.0,
-		"fat_g": 14.0,
-		"default_portion_g": 150,
-		"portions": [
-			{
-				"label_key": "portion",
-				"grams": 150
-			}
-		],
-		"names": {
-			"pt-BR": "Acém cozido",
-			"en": "Braised chuck",
-			"es": "Aguja de ternera guisada"
-		}
-	},
-	{
-		"slug": "iberian-secreto",
-		"category": "protein",
-		"kcal": 275,
-		"protein_g": 17.0,
-		"carbs_g": 0.0,
-		"fat_g": 23.0,
-		"default_portion_g": 150,
-		"portions": [
-			{
-				"label_key": "filet",
-				"grams": 150
-			}
-		],
-		"names": {
-			"pt-BR": "Secreto ibérico grelhado",
-			"en": "Grilled secreto ibérico",
-			"es": "Secreto ibérico a la plancha"
-		}
-	},
-	{
-		"slug": "iberian-presa",
-		"category": "protein",
-		"kcal": 250,
-		"protein_g": 19.0,
-		"carbs_g": 0.0,
-		"fat_g": 19.0,
-		"default_portion_g": 150,
-		"portions": [
-			{
-				"label_key": "filet",
-				"grams": 150
-			}
-		],
-		"names": {
-			"pt-BR": "Presa ibérica grelhada",
-			"en": "Grilled presa ibérica",
-			"es": "Presa ibérica a la plancha"
-		}
-	},
-	{
-		"slug": "iberian-pluma",
-		"category": "protein",
-		"kcal": 230,
-		"protein_g": 20.0,
-		"carbs_g": 0.0,
-		"fat_g": 16.0,
-		"default_portion_g": 150,
-		"portions": [
-			{
-				"label_key": "filet",
-				"grams": 150
-			}
-		],
-		"names": {
-			"pt-BR": "Pluma ibérica grelhada",
-			"en": "Grilled pluma ibérica",
-			"es": "Pluma ibérica a la plancha"
-		}
-	},
-	{
-		"slug": "pork-cheek",
-		"category": "protein",
-		"kcal": 230,
-		"protein_g": 18.0,
-		"carbs_g": 0.0,
-		"fat_g": 17.0,
-		"default_portion_g": 150,
-		"portions": [
-			{
-				"label_key": "portion",
-				"grams": 150
-			}
-		],
-		"names": {
-			"pt-BR": "Bochecha de porco cozida",
-			"en": "Braised pork cheek",
-			"es": "Carrillera de cerdo guisada"
-		}
-	},
-	{
-		"slug": "pork-leg",
-		"category": "protein",
-		"kcal": 180,
-		"protein_g": 24.0,
-		"carbs_g": 0.0,
-		"fat_g": 8.0,
-		"default_portion_g": 150,
-		"portions": [
-			{
-				"label_key": "filet",
-				"grams": 150
-			}
-		],
-		"names": {
-			"pt-BR": "Pernil suíno assado",
-			"en": "Roasted pork leg",
-			"es": "Pierna de cerdo al horno"
-		}
-	},
-	{
-		"slug": "pork-chop",
-		"category": "protein",
-		"kcal": 200,
-		"protein_g": 24.0,
-		"carbs_g": 0.0,
-		"fat_g": 11.0,
-		"default_portion_g": 150,
-		"portions": [
-			{
-				"label_key": "filet",
-				"grams": 150
-			}
-		],
-		"names": {
-			"pt-BR": "Bisteca suína grelhada",
-			"en": "Grilled pork chop",
-			"es": "Chuleta de cerdo a la plancha"
-		}
-	},
-	{
-		"slug": "pork-ribs",
-		"category": "protein",
-		"kcal": 280,
-		"protein_g": 20.0,
-		"carbs_g": 0.0,
-		"fat_g": 22.0,
-		"default_portion_g": 150,
-		"portions": [
-			{
-				"label_key": "portion",
-				"grams": 150
-			}
-		],
-		"names": {
-			"pt-BR": "Costela suína assada",
-			"en": "Roasted pork ribs",
-			"es": "Costillas de cerdo al horno"
-		}
-	},
-	{
-		"slug": "pork-belly",
-		"category": "fat",
-		"kcal": 518,
-		"protein_g": 9.0,
-		"carbs_g": 0.0,
-		"fat_g": 53.0,
-		"default_portion_g": 100,
-		"portions": [
-			{
-				"label_key": "portion",
-				"grams": 100
-			}
-		],
-		"names": {
-			"pt-BR": "Panceta / barriga de porco",
-			"en": "Pork belly",
-			"es": "Panceta de cerdo"
-		}
-	},
-	{
-		"slug": "chicken-thigh",
-		"category": "protein",
-		"kcal": 180,
-		"protein_g": 24.0,
-		"carbs_g": 0.0,
-		"fat_g": 9.0,
-		"default_portion_g": 120,
-		"portions": [
-			{
-				"label_key": "filet",
-				"grams": 120
-			}
-		],
-		"names": {
-			"pt-BR": "Coxa de frango grelhada",
-			"en": "Grilled chicken thigh",
-			"es": "Muslo de pollo a la plancha"
-		}
-	},
-	{
-		"slug": "chicken-drumstick-thigh",
-		"category": "protein",
-		"kcal": 190,
-		"protein_g": 25.0,
-		"carbs_g": 0.0,
-		"fat_g": 10.0,
-		"default_portion_g": 120,
-		"portions": [
-			{
-				"label_key": "filet",
-				"grams": 120
-			}
-		],
-		"names": {
-			"pt-BR": "Sobrecoxa de frango grelhada",
-			"en": "Grilled chicken thigh+drumstick",
-			"es": "Contramuslo de pollo a la plancha"
-		}
-	},
-	{
-		"slug": "chicken-wing",
-		"category": "protein",
-		"kcal": 203,
-		"protein_g": 19.0,
-		"carbs_g": 0.0,
-		"fat_g": 14.0,
-		"default_portion_g": 80,
-		"portions": [
-			{
-				"label_key": "portion",
-				"grams": 80
-			}
-		],
-		"names": {
-			"pt-BR": "Asa de frango assada",
-			"en": "Roasted chicken wing",
-			"es": "Ala de pollo al horno"
-		}
-	},
-	{
-		"slug": "hake",
-		"category": "protein",
-		"kcal": 86,
-		"protein_g": 18.0,
-		"carbs_g": 0.0,
-		"fat_g": 1.0,
-		"default_portion_g": 150,
-		"portions": [
-			{
-				"label_key": "filet",
-				"grams": 150
-			}
-		],
-		"names": {
-			"pt-BR": "Pescada grelhada",
-			"en": "Grilled hake",
-			"es": "Merluza a la plancha"
-		}
-	},
-	{
-		"slug": "sea-bass",
-		"category": "protein",
-		"kcal": 97,
-		"protein_g": 19.0,
-		"carbs_g": 0.0,
-		"fat_g": 2.0,
-		"default_portion_g": 150,
-		"portions": [
-			{
-				"label_key": "filet",
-				"grams": 150
-			}
-		],
-		"names": {
-			"pt-BR": "Robalo grelhado",
-			"en": "Grilled sea bass",
-			"es": "Lubina a la plancha"
-		}
-	},
-	{
-		"slug": "cod",
-		"category": "protein",
-		"kcal": 82,
-		"protein_g": 18.0,
-		"carbs_g": 0.0,
-		"fat_g": 0.7,
-		"default_portion_g": 150,
-		"portions": [
-			{
-				"label_key": "filet",
-				"grams": 150
-			}
-		],
-		"names": {
-			"pt-BR": "Bacalhau cozido",
-			"en": "Cod, cooked",
-			"es": "Bacalao cocido"
-		}
-	},
-	{
-		"slug": "anchovy",
-		"category": "protein",
-		"kcal": 131,
-		"protein_g": 20.0,
-		"carbs_g": 0.0,
-		"fat_g": 5.0,
-		"default_portion_g": 60,
-		"portions": [
-			{
-				"label_key": "portion",
-				"grams": 60
-			}
-		],
-		"names": {
-			"pt-BR": "Boquerão grelhado",
-			"en": "Grilled anchovy",
-			"es": "Boquerones a la plancha"
-		}
-	},
-	{
-		"slug": "gilthead-bream",
-		"category": "protein",
-		"kcal": 96,
-		"protein_g": 18.0,
-		"carbs_g": 0.0,
-		"fat_g": 2.5,
-		"default_portion_g": 150,
-		"portions": [
-			{
-				"label_key": "filet",
-				"grams": 150
-			}
-		],
-		"names": {
-			"pt-BR": "Dourada grelhada",
-			"en": "Grilled gilt-head bream",
-			"es": "Dorada a la plancha"
-		}
-	},
-	{
-		"slug": "garlic",
-		"category": "vegetable",
-		"kcal": 113.0,
-		"protein_g": 7.0,
-		"carbs_g": 23.9,
-		"fat_g": 0.2,
-		"default_portion_g": 5,
-		"portions": [
-			{
-				"label_key": "unit",
-				"grams": 5
-			}
-		],
-		"names": {
-			"pt-BR": "Alho cru",
-			"en": "Raw garlic",
-			"es": "Ajo crudo"
-		}
-	},
-	{
-		"slug": "scallion",
-		"category": "vegetable",
-		"kcal": 20.0,
-		"protein_g": 1.9,
-		"carbs_g": 3.4,
-		"fat_g": 0.4,
-		"default_portion_g": 30,
-		"portions": [
-			{
-				"label_key": "portion",
-				"grams": 30
-			}
-		],
-		"names": {
-			"pt-BR": "Cebolinha crua",
-			"en": "Raw scallion",
-			"es": "Cebolleta cruda"
-		}
-	},
-	{
-		"slug": "collard-greens",
-		"category": "vegetable",
-		"kcal": 90.0,
-		"protein_g": 1.7,
-		"carbs_g": 8.7,
-		"fat_g": 6.6,
-		"default_portion_g": 65,
-		"portions": [
-			{
-				"label_key": "portion",
-				"grams": 65
-			}
-		],
-		"names": {
-			"pt-BR": "Couve refogada",
-			"en": "Sautéed collard greens",
-			"es": "Berza salteada"
-		}
-	},
-	{
-		"slug": "okra",
-		"category": "vegetable",
-		"kcal": 30.0,
-		"protein_g": 1.9,
-		"carbs_g": 6.4,
-		"fat_g": 0.3,
-		"default_portion_g": 100,
-		"portions": [
-			{
-				"label_key": "portion",
-				"grams": 100
-			}
-		],
-		"names": {
-			"pt-BR": "Quiabo cru",
-			"en": "Raw okra",
-			"es": "Okra cruda"
-		}
-	},
-	{
-		"slug": "eggplant",
-		"category": "vegetable",
-		"kcal": 19.0,
-		"protein_g": 0.7,
-		"carbs_g": 4.5,
-		"fat_g": 0.1,
-		"default_portion_g": 100,
-		"portions": [
-			{
-				"label_key": "portion",
-				"grams": 100
-			}
-		],
-		"names": {
-			"pt-BR": "Berinjela cozida",
-			"en": "Cooked eggplant",
-			"es": "Berenjena cocida"
-		}
-	},
-	{
-		"slug": "chard",
-		"category": "vegetable",
-		"kcal": 21.0,
-		"protein_g": 1.4,
-		"carbs_g": 4.6,
-		"fat_g": 0.1,
-		"default_portion_g": 65,
-		"portions": [
-			{
-				"label_key": "portion",
-				"grams": 65
-			}
-		],
-		"names": {
-			"pt-BR": "Acelga crua",
-			"en": "Raw chard",
-			"es": "Acelga cruda"
-		}
-	},
-	{
-		"slug": "leek",
-		"category": "vegetable",
-		"kcal": 32.0,
-		"protein_g": 1.4,
-		"carbs_g": 6.9,
-		"fat_g": 0.1,
-		"default_portion_g": 60,
-		"portions": [
-			{
-				"label_key": "portion",
-				"grams": 60
-			}
-		],
-		"names": {
-			"pt-BR": "Alho-poró cru",
-			"en": "Raw leek",
-			"es": "Puerro crudo"
-		}
-	},
-	{
-		"slug": "heart-of-palm",
-		"category": "vegetable",
-		"kcal": 23.0,
-		"protein_g": 1.8,
-		"carbs_g": 4.3,
-		"fat_g": 0.4,
-		"default_portion_g": 100,
-		"portions": [
-			{
-				"label_key": "portion",
-				"grams": 100
-			}
-		],
-		"names": {
-			"pt-BR": "Palmito em conserva",
-			"en": "Canned heart of palm",
-			"es": "Palmito en conserva"
-		}
-	},
-	{
-		"slug": "radish",
-		"category": "vegetable",
-		"kcal": 14.0,
-		"protein_g": 1.4,
-		"carbs_g": 2.7,
-		"fat_g": 0.1,
-		"default_portion_g": 60,
-		"portions": [
-			{
-				"label_key": "portion",
-				"grams": 60
-			}
-		],
-		"names": {
-			"pt-BR": "Rabanete cru",
-			"en": "Raw radish",
-			"es": "Rábano crudo"
-		}
-	},
-	{
-		"slug": "celery",
-		"category": "vegetable",
-		"kcal": 19.0,
-		"protein_g": 0.8,
-		"carbs_g": 4.3,
-		"fat_g": 0.1,
-		"default_portion_g": 60,
-		"portions": [
-			{
-				"label_key": "portion",
-				"grams": 60
-			}
-		],
-		"names": {
-			"pt-BR": "Aipo cru",
-			"en": "Raw celery",
-			"es": "Apio crudo"
-		}
-	},
-	{
-		"slug": "kiwi",
-		"category": "fruit",
-		"kcal": 51.0,
-		"protein_g": 1.3,
-		"carbs_g": 11.5,
-		"fat_g": 0.6,
-		"default_portion_g": 90,
-		"portions": [
-			{
-				"label_key": "unit",
-				"grams": 90
-			}
-		],
-		"names": {
-			"pt-BR": "Kiwi cru",
-			"en": "Raw kiwi",
-			"es": "Kiwi crudo"
-		}
-	},
-	{
-		"slug": "lemon",
-		"category": "fruit",
-		"kcal": 32.0,
-		"protein_g": 0.9,
-		"carbs_g": 11.1,
-		"fat_g": 0.1,
-		"default_portion_g": 60,
-		"portions": [
-			{
-				"label_key": "unit",
-				"grams": 60
-			}
-		],
-		"names": {
-			"pt-BR": "Limão",
-			"en": "Lemon",
-			"es": "Limón"
-		}
-	},
-	{
-		"slug": "passion-fruit",
-		"category": "fruit",
-		"kcal": 68.0,
-		"protein_g": 2.0,
-		"carbs_g": 12.3,
-		"fat_g": 2.1,
-		"default_portion_g": 100,
-		"portions": [
-			{
-				"label_key": "unit",
-				"grams": 100
-			}
-		],
-		"names": {
-			"pt-BR": "Maracujá",
-			"en": "Passion fruit",
-			"es": "Maracuyá / fruta de la pasión"
-		}
-	},
-	{
-		"slug": "peach",
-		"category": "fruit",
-		"kcal": 36.0,
-		"protein_g": 0.8,
-		"carbs_g": 9.3,
-		"fat_g": 0.0,
-		"default_portion_g": 130,
-		"portions": [
-			{
-				"label_key": "unit",
-				"grams": 130
-			}
-		],
-		"names": {
-			"pt-BR": "Pêssego cru",
-			"en": "Raw peach",
-			"es": "Melocotón crudo"
-		}
-	},
-	{
-		"slug": "guava",
-		"category": "fruit",
-		"kcal": 54.0,
-		"protein_g": 1.1,
-		"carbs_g": 13.0,
-		"fat_g": 0.4,
-		"default_portion_g": 100,
-		"portions": [
-			{
-				"label_key": "unit",
-				"grams": 100
-			}
-		],
-		"names": {
-			"pt-BR": "Goiaba vermelha",
-			"en": "Red guava",
-			"es": "Guayaba roja"
-		}
-	},
-	{
-		"slug": "melon",
-		"category": "fruit",
-		"kcal": 29.0,
-		"protein_g": 0.7,
-		"carbs_g": 7.5,
-		"fat_g": 0.0,
-		"default_portion_g": 150,
-		"portions": [
-			{
-				"label_key": "portion",
-				"grams": 150
-			}
-		],
-		"names": {
-			"pt-BR": "Melão cru",
-			"en": "Raw melon",
-			"es": "Melón crudo"
-		}
-	},
-	{
-		"slug": "tangerine",
-		"category": "fruit",
-		"kcal": 38.0,
-		"protein_g": 0.8,
-		"carbs_g": 9.6,
-		"fat_g": 0.1,
-		"default_portion_g": 100,
-		"portions": [
-			{
-				"label_key": "unit",
-				"grams": 100
-			}
-		],
-		"names": {
-			"pt-BR": "Tangerina",
-			"en": "Tangerine",
-			"es": "Mandarina"
-		}
-	},
-	{
-		"slug": "plum",
-		"category": "fruit",
-		"kcal": 53.0,
-		"protein_g": 0.8,
-		"carbs_g": 13.9,
-		"fat_g": 0.0,
-		"default_portion_g": 60,
-		"portions": [
-			{
-				"label_key": "unit",
-				"grams": 60
-			}
-		],
-		"names": {
-			"pt-BR": "Ameixa crua",
-			"en": "Raw plum",
-			"es": "Ciruela cruda"
-		}
-	},
-	{
-		"slug": "boiled-egg",
-		"category": "protein",
-		"kcal": 146.0,
-		"protein_g": 13.3,
-		"carbs_g": 0.6,
-		"fat_g": 9.5,
-		"default_portion_g": 50,
-		"portions": [
-			{
-				"label_key": "unit",
-				"grams": 50
-			}
-		],
-		"names": {
-			"pt-BR": "Ovo cozido",
-			"en": "Boiled egg",
-			"es": "Huevo cocido"
-		}
-	},
-	{
-		"slug": "fried-egg",
-		"category": "protein",
-		"kcal": 240.0,
-		"protein_g": 15.6,
-		"carbs_g": 1.2,
-		"fat_g": 18.6,
-		"default_portion_g": 50,
-		"portions": [
-			{
-				"label_key": "unit",
-				"grams": 50
-			}
-		],
-		"names": {
-			"pt-BR": "Ovo frito",
-			"en": "Fried egg",
-			"es": "Huevo frito"
-		}
-	},
-	{
-		"slug": "mortadella",
-		"category": "protein",
-		"kcal": 269.0,
-		"protein_g": 12.0,
-		"carbs_g": 5.8,
-		"fat_g": 21.6,
-		"default_portion_g": 50,
-		"portions": [
-			{
-				"label_key": "portion",
-				"grams": 50
-			}
-		],
-		"names": {
-			"pt-BR": "Mortadela",
-			"en": "Mortadella",
-			"es": "Mortadela"
-		}
-	},
-	{
-		"slug": "ham",
-		"category": "protein",
-		"kcal": 94.0,
-		"protein_g": 14.3,
-		"carbs_g": 2.1,
-		"fat_g": 2.7,
-		"default_portion_g": 50,
-		"portions": [
-			{
-				"label_key": "portion",
-				"grams": 50
-			}
-		],
-		"names": {
-			"pt-BR": "Presunto sem gordura",
-			"en": "Lean ham",
-			"es": "Jamón cocido / york"
-		}
-	},
-	{
-		"slug": "bacon",
-		"category": "protein",
-		"kcal": 697.0,
-		"protein_g": 27.3,
-		"carbs_g": 0.0,
-		"fat_g": 64.3,
-		"default_portion_g": 30,
-		"portions": [
-			{
-				"label_key": "portion",
-				"grams": 30
-			}
-		],
-		"names": {
-			"pt-BR": "Bacon frito",
-			"en": "Fried bacon",
-			"es": "Bacon / panceta frita"
-		}
-	},
-	{
-		"slug": "pork-sausage",
-		"category": "protein",
-		"kcal": 280,
-		"protein_g": 16.0,
-		"carbs_g": 2.0,
-		"fat_g": 23.0,
-		"default_portion_g": 100,
-		"portions": [
-			{
-				"label_key": "portion",
-				"grams": 100
-			}
-		],
-		"names": {
-			"pt-BR": "Linguiça grelhada",
-			"en": "Grilled pork sausage",
-			"es": "Salchicha de cerdo a la plancha"
-		}
-	},
-	{
-		"slug": "hot-dog-sausage",
-		"category": "protein",
-		"kcal": 260,
-		"protein_g": 11.0,
-		"carbs_g": 3.0,
-		"fat_g": 23.0,
-		"default_portion_g": 50,
-		"portions": [
-			{
-				"label_key": "unit",
-				"grams": 50
-			}
-		],
-		"names": {
-			"pt-BR": "Salsicha (hot dog)",
-			"en": "Hot dog sausage",
-			"es": "Salchicha tipo frankfurt"
-		}
-	},
-	{
-		"slug": "heavy-cream",
-		"category": "dairy",
-		"kcal": 221.0,
-		"protein_g": 1.5,
-		"carbs_g": 4.5,
-		"fat_g": 22.5,
-		"default_portion_g": 30,
-		"portions": [
-			{
-				"label_key": "tbsp",
-				"grams": 30
-			}
-		],
-		"names": {
-			"pt-BR": "Creme de leite",
-			"en": "Heavy cream",
-			"es": "Nata / crema de leche"
-		}
-	},
-	{
-		"slug": "condensed-milk",
-		"category": "dairy",
-		"kcal": 313.0,
-		"protein_g": 7.7,
-		"carbs_g": 57.0,
-		"fat_g": 6.7,
-		"default_portion_g": 20,
-		"portions": [
-			{
-				"label_key": "tbsp",
-				"grams": 20
-			}
-		],
-		"names": {
-			"pt-BR": "Leite condensado",
-			"en": "Condensed milk",
-			"es": "Leche condensada"
-		}
-	},
-	{
-		"slug": "semi-cured-cheese",
-		"category": "dairy",
-		"kcal": 360.0,
-		"protein_g": 22.7,
-		"carbs_g": 1.9,
-		"fat_g": 29.1,
-		"default_portion_g": 30,
-		"portions": [
-			{
-				"label_key": "portion",
-				"grams": 30
-			}
-		],
-		"names": {
-			"pt-BR": "Queijo tipo prato",
-			"en": "Semi-cured cheese",
-			"es": "Queso semicurado"
-		}
-	},
-	{
-		"slug": "beer",
-		"category": "beverage",
-		"kcal": 41.0,
-		"protein_g": 0.6,
-		"carbs_g": 3.3,
-		"fat_g": 0.0,
-		"default_portion_g": 350,
-		"portions": [
-			{
-				"label_key": "glass",
-				"grams": 350
-			}
-		],
-		"names": {
-			"pt-BR": "Cerveja pilsen",
-			"en": "Pilsner beer",
-			"es": "Cerveza"
-		}
-	},
-	{
-		"slug": "cola-soda",
-		"category": "beverage",
-		"kcal": 34.0,
-		"protein_g": 0.0,
-		"carbs_g": 8.7,
-		"fat_g": 0.0,
-		"default_portion_g": 350,
-		"portions": [
-			{
-				"label_key": "glass",
-				"grams": 350
-			}
-		],
-		"names": {
-			"pt-BR": "Refrigerante de cola",
-			"en": "Cola soda",
-			"es": "Refresco de cola"
-		}
-	},
-	{
-		"slug": "mate-tea",
-		"category": "beverage",
-		"kcal": 3.0,
-		"protein_g": 0.0,
-		"carbs_g": 0.6,
-		"fat_g": 0.1,
-		"default_portion_g": 200,
-		"portions": [
-			{
-				"label_key": "glass",
-				"grams": 200
-			}
-		],
-		"names": {
-			"pt-BR": "Chá mate",
-			"en": "Mate tea",
-			"es": "Té de mate"
-		}
-	},
-	{
-		"slug": "sports-drink",
-		"category": "beverage",
-		"kcal": 26.0,
-		"protein_g": 0.0,
-		"carbs_g": 6.4,
-		"fat_g": 0.0,
-		"default_portion_g": 500,
-		"portions": [
-			{
-				"label_key": "glass",
-				"grams": 500
-			}
-		],
-		"names": {
-			"pt-BR": "Bebida isotônica",
-			"en": "Sports drink",
-			"es": "Bebida isotónica"
-		}
-	},
-	{
-		"slug": "black-tea",
-		"category": "beverage",
-		"kcal": 2.0,
-		"protein_g": 0.0,
-		"carbs_g": 0.6,
-		"fat_g": 0.0,
-		"default_portion_g": 200,
-		"portions": [
-			{
-				"label_key": "glass",
-				"grams": 200
-			}
-		],
-		"names": {
-			"pt-BR": "Chá preto",
-			"en": "Black tea",
-			"es": "Té negro"
-		}
-	},
-	{
-		"slug": "milk-chocolate",
-		"category": "sweet",
-		"kcal": 540.0,
-		"protein_g": 7.2,
-		"carbs_g": 59.6,
-		"fat_g": 30.3,
-		"default_portion_g": 25,
-		"portions": [
-			{
-				"label_key": "portion",
-				"grams": 25
-			}
-		],
-		"names": {
-			"pt-BR": "Chocolate ao leite",
-			"en": "Milk chocolate",
-			"es": "Chocolate con leche"
-		}
-	},
-	{
-		"slug": "dulce-de-leche",
-		"category": "sweet",
-		"kcal": 306.0,
-		"protein_g": 5.5,
-		"carbs_g": 59.5,
-		"fat_g": 6.0,
-		"default_portion_g": 20,
-		"portions": [
-			{
-				"label_key": "tbsp",
-				"grams": 20
-			}
-		],
-		"names": {
-			"pt-BR": "Doce de leite",
-			"en": "Dulce de leche",
-			"es": "Dulce de leche"
-		}
-	},
-	{
-		"slug": "sunflower-oil",
-		"category": "fat",
-		"kcal": 884.0,
-		"protein_g": 0.0,
-		"carbs_g": 0.0,
-		"fat_g": 100.0,
-		"default_portion_g": 10,
-		"portions": [
-			{
-				"label_key": "tbsp",
-				"grams": 10
-			}
-		],
-		"names": {
-			"pt-BR": "Óleo de girassol",
-			"en": "Sunflower oil",
-			"es": "Aceite de girasol"
-		}
-	},
-	{
-		"slug": "cheese-bread",
-		"category": "carb",
-		"kcal": 363.0,
-		"protein_g": 5.1,
-		"carbs_g": 34.2,
-		"fat_g": 24.6,
-		"default_portion_g": 40,
-		"portions": [
-			{
-				"label_key": "unit",
-				"grams": 40
-			}
-		],
-		"names": {
-			"pt-BR": "Pão de queijo",
-			"en": "Brazilian cheese bread",
-			"es": "Pan de queso brasileño"
-		}
-	},
-	{
-		"slug": "whole-wheat-bread",
-		"category": "carb",
-		"kcal": 253.0,
-		"protein_g": 9.4,
-		"carbs_g": 49.9,
-		"fat_g": 3.7,
-		"default_portion_g": 50,
-		"portions": [
-			{
-				"label_key": "slice",
-				"grams": 25
-			}
-		],
-		"names": {
-			"pt-BR": "Pão de forma integral",
-			"en": "Whole wheat bread",
-			"es": "Pan integral de molde"
-		}
-	}
+  {
+    "slug": "chicken-breast",
+    "category": "protein",
+    "kcal": 165,
+    "protein_g": 31,
+    "carbs_g": 0,
+    "fat_g": 3.6,
+    "default_portion_g": 120,
+    "portions": [
+      {
+        "label_key": "filet",
+        "grams": 120
+      }
+    ],
+    "names": {
+      "pt-BR": "Peito de frango grelhado",
+      "en": "Grilled chicken breast",
+      "es": "Pechuga de pollo a la plancha"
+    }
+  },
+  {
+    "slug": "egg",
+    "category": "protein",
+    "kcal": 143,
+    "protein_g": 13,
+    "carbs_g": 1.1,
+    "fat_g": 9.5,
+    "default_portion_g": 50,
+    "portions": [
+      {
+        "label_key": "unit",
+        "grams": 50
+      }
+    ],
+    "names": {
+      "pt-BR": "Ovo",
+      "en": "Egg",
+      "es": "Huevo"
+    }
+  },
+  {
+    "slug": "egg-white",
+    "category": "protein",
+    "kcal": 52,
+    "protein_g": 11,
+    "carbs_g": 0.7,
+    "fat_g": 0.2,
+    "default_portion_g": 33,
+    "portions": [
+      {
+        "label_key": "unit",
+        "grams": 33
+      }
+    ],
+    "names": {
+      "pt-BR": "Clara de ovo",
+      "en": "Egg white",
+      "es": "Clara de huevo"
+    }
+  },
+  {
+    "slug": "lean-beef",
+    "category": "protein",
+    "kcal": 187,
+    "protein_g": 26,
+    "carbs_g": 0,
+    "fat_g": 8.6,
+    "default_portion_g": 120,
+    "portions": [
+      {
+        "label_key": "filet",
+        "grams": 120
+      }
+    ],
+    "names": {
+      "pt-BR": "Carne bovina magra (patinho)",
+      "en": "Lean beef",
+      "es": "Carne de res magra"
+    }
+  },
+  {
+    "slug": "ground-beef",
+    "category": "protein",
+    "kcal": 250,
+    "protein_g": 26,
+    "carbs_g": 0,
+    "fat_g": 15,
+    "default_portion_g": 100,
+    "portions": [],
+    "names": {
+      "pt-BR": "Carne moída",
+      "en": "Ground beef",
+      "es": "Carne picada"
+    }
+  },
+  {
+    "slug": "pork-loin",
+    "category": "protein",
+    "kcal": 143,
+    "protein_g": 21,
+    "carbs_g": 0,
+    "fat_g": 6,
+    "default_portion_g": 120,
+    "portions": [
+      {
+        "label_key": "filet",
+        "grams": 120
+      }
+    ],
+    "names": {
+      "pt-BR": "Lombo suíno",
+      "en": "Pork loin",
+      "es": "Lomo de cerdo"
+    }
+  },
+  {
+    "slug": "tilapia",
+    "category": "protein",
+    "kcal": 128,
+    "protein_g": 26,
+    "carbs_g": 0,
+    "fat_g": 2.7,
+    "default_portion_g": 120,
+    "portions": [
+      {
+        "label_key": "filet",
+        "grams": 120
+      }
+    ],
+    "names": {
+      "pt-BR": "Tilápia",
+      "en": "Tilapia",
+      "es": "Tilapia"
+    }
+  },
+  {
+    "slug": "salmon",
+    "category": "protein",
+    "kcal": 208,
+    "protein_g": 20,
+    "carbs_g": 0,
+    "fat_g": 13,
+    "default_portion_g": 120,
+    "portions": [
+      {
+        "label_key": "filet",
+        "grams": 120
+      }
+    ],
+    "names": {
+      "pt-BR": "Salmão",
+      "en": "Salmon",
+      "es": "Salmón"
+    }
+  },
+  {
+    "slug": "canned-tuna",
+    "category": "protein",
+    "kcal": 116,
+    "protein_g": 26,
+    "carbs_g": 0,
+    "fat_g": 1,
+    "default_portion_g": 80,
+    "portions": [
+      {
+        "label_key": "portion",
+        "grams": 80
+      }
+    ],
+    "names": {
+      "pt-BR": "Atum (lata)",
+      "en": "Canned tuna",
+      "es": "Atún en lata"
+    }
+  },
+  {
+    "slug": "sardine",
+    "category": "protein",
+    "kcal": 208,
+    "protein_g": 25,
+    "carbs_g": 0,
+    "fat_g": 11,
+    "default_portion_g": 80,
+    "portions": [],
+    "names": {
+      "pt-BR": "Sardinha",
+      "en": "Sardine",
+      "es": "Sardina"
+    }
+  },
+  {
+    "slug": "shrimp",
+    "category": "protein",
+    "kcal": 99,
+    "protein_g": 24,
+    "carbs_g": 0.2,
+    "fat_g": 0.3,
+    "default_portion_g": 100,
+    "portions": [],
+    "names": {
+      "pt-BR": "Camarão",
+      "en": "Shrimp",
+      "es": "Camarón"
+    }
+  },
+  {
+    "slug": "turkey-breast",
+    "category": "protein",
+    "kcal": 135,
+    "protein_g": 29,
+    "carbs_g": 0,
+    "fat_g": 1,
+    "default_portion_g": 100,
+    "portions": [
+      {
+        "label_key": "slice",
+        "grams": 20
+      }
+    ],
+    "names": {
+      "pt-BR": "Peito de peru",
+      "en": "Turkey breast",
+      "es": "Pechuga de pavo"
+    }
+  },
+  {
+    "slug": "whey-protein",
+    "category": "supplement",
+    "kcal": 400,
+    "protein_g": 80,
+    "carbs_g": 8,
+    "fat_g": 6,
+    "default_portion_g": 30,
+    "portions": [
+      {
+        "label_key": "scoop",
+        "grams": 30
+      }
+    ],
+    "names": {
+      "pt-BR": "Whey protein",
+      "en": "Whey protein",
+      "es": "Proteína whey"
+    }
+  },
+  {
+    "slug": "white-rice",
+    "category": "carb",
+    "kcal": 130,
+    "protein_g": 2.7,
+    "carbs_g": 28,
+    "fat_g": 0.3,
+    "default_portion_g": 100,
+    "portions": [
+      {
+        "label_key": "tbsp",
+        "grams": 25
+      },
+      {
+        "label_key": "cup",
+        "grams": 150
+      }
+    ],
+    "names": {
+      "pt-BR": "Arroz branco cozido",
+      "en": "White rice, cooked",
+      "es": "Arroz blanco cocido"
+    }
+  },
+  {
+    "slug": "brown-rice",
+    "category": "carb",
+    "kcal": 111,
+    "protein_g": 2.6,
+    "carbs_g": 23,
+    "fat_g": 0.9,
+    "default_portion_g": 100,
+    "portions": [
+      {
+        "label_key": "tbsp",
+        "grams": 25
+      },
+      {
+        "label_key": "cup",
+        "grams": 150
+      }
+    ],
+    "names": {
+      "pt-BR": "Arroz integral cozido",
+      "en": "Brown rice, cooked",
+      "es": "Arroz integral cocido"
+    }
+  },
+  {
+    "slug": "pasta",
+    "category": "carb",
+    "kcal": 158,
+    "protein_g": 6,
+    "carbs_g": 31,
+    "fat_g": 0.9,
+    "default_portion_g": 100,
+    "portions": [
+      {
+        "label_key": "cup",
+        "grams": 140
+      }
+    ],
+    "names": {
+      "pt-BR": "Macarrão cozido",
+      "en": "Pasta, cooked",
+      "es": "Pasta cocida"
+    }
+  },
+  {
+    "slug": "potato",
+    "category": "carb",
+    "kcal": 87,
+    "protein_g": 2,
+    "carbs_g": 20,
+    "fat_g": 0.1,
+    "default_portion_g": 100,
+    "portions": [
+      {
+        "label_key": "unit",
+        "grams": 130
+      }
+    ],
+    "names": {
+      "pt-BR": "Batata cozida",
+      "en": "Boiled potato",
+      "es": "Papa cocida"
+    }
+  },
+  {
+    "slug": "sweet-potato",
+    "category": "carb",
+    "kcal": 86,
+    "protein_g": 1.6,
+    "carbs_g": 20,
+    "fat_g": 0.1,
+    "default_portion_g": 100,
+    "portions": [
+      {
+        "label_key": "unit",
+        "grams": 130
+      }
+    ],
+    "names": {
+      "pt-BR": "Batata-doce",
+      "en": "Sweet potato",
+      "es": "Batata / boniato"
+    }
+  },
+  {
+    "slug": "cassava",
+    "category": "carb",
+    "kcal": 160,
+    "protein_g": 1.4,
+    "carbs_g": 38,
+    "fat_g": 0.3,
+    "default_portion_g": 100,
+    "portions": [],
+    "names": {
+      "pt-BR": "Mandioca cozida",
+      "en": "Cooked cassava",
+      "es": "Yuca cocida"
+    }
+  },
+  {
+    "slug": "bread",
+    "category": "carb",
+    "kcal": 265,
+    "protein_g": 9,
+    "carbs_g": 49,
+    "fat_g": 3.2,
+    "default_portion_g": 50,
+    "portions": [
+      {
+        "label_key": "slice",
+        "grams": 25
+      }
+    ],
+    "names": {
+      "pt-BR": "Pão de forma",
+      "en": "Sliced bread",
+      "es": "Pan de molde"
+    }
+  },
+  {
+    "slug": "french-bread",
+    "category": "carb",
+    "kcal": 300,
+    "protein_g": 8,
+    "carbs_g": 58,
+    "fat_g": 3,
+    "default_portion_g": 50,
+    "portions": [
+      {
+        "label_key": "unit",
+        "grams": 50
+      }
+    ],
+    "names": {
+      "pt-BR": "Pão francês",
+      "en": "French roll",
+      "es": "Pan francés"
+    }
+  },
+  {
+    "slug": "tapioca-flour",
+    "category": "carb",
+    "kcal": 358,
+    "protein_g": 0.2,
+    "carbs_g": 89,
+    "fat_g": 0.1,
+    "default_portion_g": 30,
+    "portions": [
+      {
+        "label_key": "tbsp",
+        "grams": 15
+      }
+    ],
+    "names": {
+      "pt-BR": "Goma de tapioca",
+      "en": "Tapioca flour",
+      "es": "Almidón de tapioca"
+    }
+  },
+  {
+    "slug": "oats",
+    "category": "carb",
+    "kcal": 389,
+    "protein_g": 17,
+    "carbs_g": 66,
+    "fat_g": 7,
+    "default_portion_g": 30,
+    "portions": [
+      {
+        "label_key": "tbsp",
+        "grams": 15
+      }
+    ],
+    "names": {
+      "pt-BR": "Aveia em flocos",
+      "en": "Rolled oats",
+      "es": "Avena en hojuelas"
+    }
+  },
+  {
+    "slug": "corn",
+    "category": "carb",
+    "kcal": 96,
+    "protein_g": 3.4,
+    "carbs_g": 21,
+    "fat_g": 1.5,
+    "default_portion_g": 100,
+    "portions": [
+      {
+        "label_key": "tbsp",
+        "grams": 20
+      }
+    ],
+    "names": {
+      "pt-BR": "Milho",
+      "en": "Corn",
+      "es": "Maíz"
+    }
+  },
+  {
+    "slug": "couscous",
+    "category": "carb",
+    "kcal": 112,
+    "protein_g": 3.8,
+    "carbs_g": 23,
+    "fat_g": 0.2,
+    "default_portion_g": 100,
+    "portions": [],
+    "names": {
+      "pt-BR": "Cuscuz",
+      "en": "Couscous",
+      "es": "Cuscús"
+    }
+  },
+  {
+    "slug": "quinoa",
+    "category": "carb",
+    "kcal": 120,
+    "protein_g": 4.4,
+    "carbs_g": 21,
+    "fat_g": 1.9,
+    "default_portion_g": 100,
+    "portions": [
+      {
+        "label_key": "cup",
+        "grams": 150
+      }
+    ],
+    "names": {
+      "pt-BR": "Quinoa cozida",
+      "en": "Cooked quinoa",
+      "es": "Quinua cocida"
+    }
+  },
+  {
+    "slug": "granola",
+    "category": "carb",
+    "kcal": 471,
+    "protein_g": 10,
+    "carbs_g": 64,
+    "fat_g": 20,
+    "default_portion_g": 40,
+    "portions": [
+      {
+        "label_key": "tbsp",
+        "grams": 15
+      }
+    ],
+    "names": {
+      "pt-BR": "Granola",
+      "en": "Granola",
+      "es": "Granola"
+    }
+  },
+  {
+    "slug": "tapioca-cooked",
+    "category": "carb",
+    "kcal": 240,
+    "protein_g": 0.4,
+    "carbs_g": 60,
+    "fat_g": 0.1,
+    "default_portion_g": 80,
+    "portions": [],
+    "names": {
+      "pt-BR": "Tapioca (goma hidratada)",
+      "en": "Tapioca crepe",
+      "es": "Tapioca"
+    }
+  },
+  {
+    "slug": "beans",
+    "category": "legume",
+    "kcal": 76,
+    "protein_g": 4.8,
+    "carbs_g": 14,
+    "fat_g": 0.5,
+    "default_portion_g": 100,
+    "portions": [
+      {
+        "label_key": "tbsp",
+        "grams": 25
+      },
+      {
+        "label_key": "cup",
+        "grams": 150
+      }
+    ],
+    "names": {
+      "pt-BR": "Feijão carioca cozido",
+      "en": "Cooked pinto beans",
+      "es": "Frijoles cocidos"
+    }
+  },
+  {
+    "slug": "black-beans",
+    "category": "legume",
+    "kcal": 91,
+    "protein_g": 6,
+    "carbs_g": 16,
+    "fat_g": 0.5,
+    "default_portion_g": 100,
+    "portions": [
+      {
+        "label_key": "tbsp",
+        "grams": 25
+      },
+      {
+        "label_key": "cup",
+        "grams": 150
+      }
+    ],
+    "names": {
+      "pt-BR": "Feijão preto cozido",
+      "en": "Cooked black beans",
+      "es": "Frijoles negros cocidos"
+    }
+  },
+  {
+    "slug": "lentils",
+    "category": "legume",
+    "kcal": 116,
+    "protein_g": 9,
+    "carbs_g": 20,
+    "fat_g": 0.4,
+    "default_portion_g": 100,
+    "portions": [
+      {
+        "label_key": "cup",
+        "grams": 150
+      }
+    ],
+    "names": {
+      "pt-BR": "Lentilha cozida",
+      "en": "Cooked lentils",
+      "es": "Lentejas cocidas"
+    }
+  },
+  {
+    "slug": "chickpeas",
+    "category": "legume",
+    "kcal": 164,
+    "protein_g": 9,
+    "carbs_g": 27,
+    "fat_g": 2.6,
+    "default_portion_g": 100,
+    "portions": [
+      {
+        "label_key": "cup",
+        "grams": 150
+      }
+    ],
+    "names": {
+      "pt-BR": "Grão-de-bico cozido",
+      "en": "Cooked chickpeas",
+      "es": "Garbanzos cocidos"
+    }
+  },
+  {
+    "slug": "soy",
+    "category": "legume",
+    "kcal": 173,
+    "protein_g": 17,
+    "carbs_g": 10,
+    "fat_g": 9,
+    "default_portion_g": 100,
+    "portions": [],
+    "names": {
+      "pt-BR": "Soja cozida",
+      "en": "Cooked soybeans",
+      "es": "Soja cocida"
+    }
+  },
+  {
+    "slug": "banana",
+    "category": "fruit",
+    "kcal": 89,
+    "protein_g": 1.1,
+    "carbs_g": 23,
+    "fat_g": 0.3,
+    "default_portion_g": 100,
+    "portions": [
+      {
+        "label_key": "unit",
+        "grams": 100
+      }
+    ],
+    "names": {
+      "pt-BR": "Banana",
+      "en": "Banana",
+      "es": "Plátano"
+    }
+  },
+  {
+    "slug": "apple",
+    "category": "fruit",
+    "kcal": 52,
+    "protein_g": 0.3,
+    "carbs_g": 14,
+    "fat_g": 0.2,
+    "default_portion_g": 130,
+    "portions": [
+      {
+        "label_key": "unit",
+        "grams": 130
+      }
+    ],
+    "names": {
+      "pt-BR": "Maçã",
+      "en": "Apple",
+      "es": "Manzana"
+    }
+  },
+  {
+    "slug": "orange",
+    "category": "fruit",
+    "kcal": 47,
+    "protein_g": 0.9,
+    "carbs_g": 12,
+    "fat_g": 0.1,
+    "default_portion_g": 130,
+    "portions": [
+      {
+        "label_key": "unit",
+        "grams": 130
+      }
+    ],
+    "names": {
+      "pt-BR": "Laranja",
+      "en": "Orange",
+      "es": "Naranja"
+    }
+  },
+  {
+    "slug": "papaya",
+    "category": "fruit",
+    "kcal": 43,
+    "protein_g": 0.5,
+    "carbs_g": 11,
+    "fat_g": 0.3,
+    "default_portion_g": 150,
+    "portions": [
+      {
+        "label_key": "portion",
+        "grams": 150
+      }
+    ],
+    "names": {
+      "pt-BR": "Mamão",
+      "en": "Papaya",
+      "es": "Papaya"
+    }
+  },
+  {
+    "slug": "watermelon",
+    "category": "fruit",
+    "kcal": 30,
+    "protein_g": 0.6,
+    "carbs_g": 8,
+    "fat_g": 0.2,
+    "default_portion_g": 150,
+    "portions": [
+      {
+        "label_key": "portion",
+        "grams": 150
+      }
+    ],
+    "names": {
+      "pt-BR": "Melancia",
+      "en": "Watermelon",
+      "es": "Sandía"
+    }
+  },
+  {
+    "slug": "mango",
+    "category": "fruit",
+    "kcal": 60,
+    "protein_g": 0.8,
+    "carbs_g": 15,
+    "fat_g": 0.4,
+    "default_portion_g": 120,
+    "portions": [
+      {
+        "label_key": "unit",
+        "grams": 200
+      }
+    ],
+    "names": {
+      "pt-BR": "Manga",
+      "en": "Mango",
+      "es": "Mango"
+    }
+  },
+  {
+    "slug": "grape",
+    "category": "fruit",
+    "kcal": 69,
+    "protein_g": 0.7,
+    "carbs_g": 18,
+    "fat_g": 0.2,
+    "default_portion_g": 100,
+    "portions": [
+      {
+        "label_key": "handful",
+        "grams": 50
+      }
+    ],
+    "names": {
+      "pt-BR": "Uva",
+      "en": "Grapes",
+      "es": "Uvas"
+    }
+  },
+  {
+    "slug": "strawberry",
+    "category": "fruit",
+    "kcal": 32,
+    "protein_g": 0.7,
+    "carbs_g": 8,
+    "fat_g": 0.3,
+    "default_portion_g": 100,
+    "portions": [
+      {
+        "label_key": "unit",
+        "grams": 12
+      }
+    ],
+    "names": {
+      "pt-BR": "Morango",
+      "en": "Strawberry",
+      "es": "Fresa"
+    }
+  },
+  {
+    "slug": "avocado",
+    "category": "fat",
+    "kcal": 160,
+    "protein_g": 2,
+    "carbs_g": 9,
+    "fat_g": 15,
+    "default_portion_g": 100,
+    "portions": [
+      {
+        "label_key": "portion",
+        "grams": 100
+      }
+    ],
+    "names": {
+      "pt-BR": "Abacate",
+      "en": "Avocado",
+      "es": "Aguacate"
+    }
+  },
+  {
+    "slug": "pineapple",
+    "category": "fruit",
+    "kcal": 50,
+    "protein_g": 0.5,
+    "carbs_g": 13,
+    "fat_g": 0.1,
+    "default_portion_g": 100,
+    "portions": [
+      {
+        "label_key": "slice",
+        "grams": 80
+      }
+    ],
+    "names": {
+      "pt-BR": "Abacaxi",
+      "en": "Pineapple",
+      "es": "Piña"
+    }
+  },
+  {
+    "slug": "pear",
+    "category": "fruit",
+    "kcal": 57,
+    "protein_g": 0.4,
+    "carbs_g": 15,
+    "fat_g": 0.1,
+    "default_portion_g": 130,
+    "portions": [
+      {
+        "label_key": "unit",
+        "grams": 130
+      }
+    ],
+    "names": {
+      "pt-BR": "Pera",
+      "en": "Pear",
+      "es": "Pera"
+    }
+  },
+  {
+    "slug": "broccoli",
+    "category": "vegetable",
+    "kcal": 34,
+    "protein_g": 2.8,
+    "carbs_g": 7,
+    "fat_g": 0.4,
+    "default_portion_g": 100,
+    "portions": [
+      {
+        "label_key": "cup",
+        "grams": 90
+      }
+    ],
+    "names": {
+      "pt-BR": "Brócolis",
+      "en": "Broccoli",
+      "es": "Brócoli"
+    }
+  },
+  {
+    "slug": "carrot",
+    "category": "vegetable",
+    "kcal": 41,
+    "protein_g": 0.9,
+    "carbs_g": 10,
+    "fat_g": 0.2,
+    "default_portion_g": 100,
+    "portions": [
+      {
+        "label_key": "unit",
+        "grams": 70
+      }
+    ],
+    "names": {
+      "pt-BR": "Cenoura",
+      "en": "Carrot",
+      "es": "Zanahoria"
+    }
+  },
+  {
+    "slug": "tomato",
+    "category": "vegetable",
+    "kcal": 18,
+    "protein_g": 0.9,
+    "carbs_g": 3.9,
+    "fat_g": 0.2,
+    "default_portion_g": 100,
+    "portions": [
+      {
+        "label_key": "unit",
+        "grams": 100
+      }
+    ],
+    "names": {
+      "pt-BR": "Tomate",
+      "en": "Tomato",
+      "es": "Tomate"
+    }
+  },
+  {
+    "slug": "lettuce",
+    "category": "vegetable",
+    "kcal": 15,
+    "protein_g": 1.4,
+    "carbs_g": 2.9,
+    "fat_g": 0.2,
+    "default_portion_g": 40,
+    "portions": [
+      {
+        "label_key": "portion",
+        "grams": 40
+      }
+    ],
+    "names": {
+      "pt-BR": "Alface",
+      "en": "Lettuce",
+      "es": "Lechuga"
+    }
+  },
+  {
+    "slug": "spinach",
+    "category": "vegetable",
+    "kcal": 23,
+    "protein_g": 2.9,
+    "carbs_g": 3.6,
+    "fat_g": 0.4,
+    "default_portion_g": 60,
+    "portions": [
+      {
+        "label_key": "cup",
+        "grams": 30
+      }
+    ],
+    "names": {
+      "pt-BR": "Espinafre",
+      "en": "Spinach",
+      "es": "Espinaca"
+    }
+  },
+  {
+    "slug": "cucumber",
+    "category": "vegetable",
+    "kcal": 15,
+    "protein_g": 0.7,
+    "carbs_g": 3.6,
+    "fat_g": 0.1,
+    "default_portion_g": 100,
+    "portions": [],
+    "names": {
+      "pt-BR": "Pepino",
+      "en": "Cucumber",
+      "es": "Pepino"
+    }
+  },
+  {
+    "slug": "onion",
+    "category": "vegetable",
+    "kcal": 40,
+    "protein_g": 1.1,
+    "carbs_g": 9,
+    "fat_g": 0.1,
+    "default_portion_g": 50,
+    "portions": [],
+    "names": {
+      "pt-BR": "Cebola",
+      "en": "Onion",
+      "es": "Cebolla"
+    }
+  },
+  {
+    "slug": "zucchini",
+    "category": "vegetable",
+    "kcal": 17,
+    "protein_g": 1.2,
+    "carbs_g": 3.1,
+    "fat_g": 0.3,
+    "default_portion_g": 100,
+    "portions": [],
+    "names": {
+      "pt-BR": "Abobrinha",
+      "en": "Zucchini",
+      "es": "Calabacín"
+    }
+  },
+  {
+    "slug": "cauliflower",
+    "category": "vegetable",
+    "kcal": 25,
+    "protein_g": 1.9,
+    "carbs_g": 5,
+    "fat_g": 0.3,
+    "default_portion_g": 100,
+    "portions": [
+      {
+        "label_key": "cup",
+        "grams": 100
+      }
+    ],
+    "names": {
+      "pt-BR": "Couve-flor",
+      "en": "Cauliflower",
+      "es": "Coliflor"
+    }
+  },
+  {
+    "slug": "bell-pepper",
+    "category": "vegetable",
+    "kcal": 31,
+    "protein_g": 1,
+    "carbs_g": 6,
+    "fat_g": 0.3,
+    "default_portion_g": 100,
+    "portions": [
+      {
+        "label_key": "unit",
+        "grams": 120
+      }
+    ],
+    "names": {
+      "pt-BR": "Pimentão",
+      "en": "Bell pepper",
+      "es": "Pimiento"
+    }
+  },
+  {
+    "slug": "green-beans",
+    "category": "vegetable",
+    "kcal": 31,
+    "protein_g": 1.8,
+    "carbs_g": 7,
+    "fat_g": 0.2,
+    "default_portion_g": 100,
+    "portions": [],
+    "names": {
+      "pt-BR": "Vagem",
+      "en": "Green beans",
+      "es": "Judías verdes"
+    }
+  },
+  {
+    "slug": "cabbage",
+    "category": "vegetable",
+    "kcal": 25,
+    "protein_g": 1.3,
+    "carbs_g": 6,
+    "fat_g": 0.1,
+    "default_portion_g": 100,
+    "portions": [],
+    "names": {
+      "pt-BR": "Repolho",
+      "en": "Cabbage",
+      "es": "Repollo"
+    }
+  },
+  {
+    "slug": "beetroot",
+    "category": "vegetable",
+    "kcal": 43,
+    "protein_g": 1.6,
+    "carbs_g": 10,
+    "fat_g": 0.2,
+    "default_portion_g": 100,
+    "portions": [
+      {
+        "label_key": "unit",
+        "grams": 80
+      }
+    ],
+    "names": {
+      "pt-BR": "Beterraba",
+      "en": "Beetroot",
+      "es": "Remolacha"
+    }
+  },
+  {
+    "slug": "whole-milk",
+    "category": "dairy",
+    "kcal": 61,
+    "protein_g": 3.2,
+    "carbs_g": 4.8,
+    "fat_g": 3.3,
+    "default_portion_g": 200,
+    "portions": [
+      {
+        "label_key": "glass",
+        "grams": 200
+      }
+    ],
+    "names": {
+      "pt-BR": "Leite integral",
+      "en": "Whole milk",
+      "es": "Leche entera"
+    }
+  },
+  {
+    "slug": "skim-milk",
+    "category": "dairy",
+    "kcal": 34,
+    "protein_g": 3.4,
+    "carbs_g": 5,
+    "fat_g": 0.1,
+    "default_portion_g": 200,
+    "portions": [
+      {
+        "label_key": "glass",
+        "grams": 200
+      }
+    ],
+    "names": {
+      "pt-BR": "Leite desnatado",
+      "en": "Skim milk",
+      "es": "Leche desnatada"
+    }
+  },
+  {
+    "slug": "plain-yogurt",
+    "category": "dairy",
+    "kcal": 61,
+    "protein_g": 3.5,
+    "carbs_g": 4.7,
+    "fat_g": 3.3,
+    "default_portion_g": 170,
+    "portions": [
+      {
+        "label_key": "portion",
+        "grams": 170
+      }
+    ],
+    "names": {
+      "pt-BR": "Iogurte natural",
+      "en": "Plain yogurt",
+      "es": "Yogur natural"
+    }
+  },
+  {
+    "slug": "greek-yogurt",
+    "category": "dairy",
+    "kcal": 97,
+    "protein_g": 9,
+    "carbs_g": 4,
+    "fat_g": 5,
+    "default_portion_g": 130,
+    "portions": [
+      {
+        "label_key": "portion",
+        "grams": 130
+      }
+    ],
+    "names": {
+      "pt-BR": "Iogurte grego",
+      "en": "Greek yogurt",
+      "es": "Yogur griego"
+    }
+  },
+  {
+    "slug": "white-cheese",
+    "category": "dairy",
+    "kcal": 264,
+    "protein_g": 17,
+    "carbs_g": 3,
+    "fat_g": 20,
+    "default_portion_g": 30,
+    "portions": [
+      {
+        "label_key": "slice",
+        "grams": 30
+      }
+    ],
+    "names": {
+      "pt-BR": "Queijo minas frescal",
+      "en": "Fresh white cheese",
+      "es": "Queso fresco"
+    }
+  },
+  {
+    "slug": "mozzarella",
+    "category": "dairy",
+    "kcal": 280,
+    "protein_g": 22,
+    "carbs_g": 2,
+    "fat_g": 22,
+    "default_portion_g": 20,
+    "portions": [
+      {
+        "label_key": "slice",
+        "grams": 20
+      }
+    ],
+    "names": {
+      "pt-BR": "Muçarela",
+      "en": "Mozzarella",
+      "es": "Mozzarella"
+    }
+  },
+  {
+    "slug": "cottage",
+    "category": "dairy",
+    "kcal": 98,
+    "protein_g": 11,
+    "carbs_g": 3.4,
+    "fat_g": 4.3,
+    "default_portion_g": 100,
+    "portions": [
+      {
+        "label_key": "tbsp",
+        "grams": 30
+      }
+    ],
+    "names": {
+      "pt-BR": "Queijo cottage",
+      "en": "Cottage cheese",
+      "es": "Queso cottage"
+    }
+  },
+  {
+    "slug": "requeijao",
+    "category": "dairy",
+    "kcal": 260,
+    "protein_g": 10,
+    "carbs_g": 4,
+    "fat_g": 23,
+    "default_portion_g": 30,
+    "portions": [
+      {
+        "label_key": "tbsp",
+        "grams": 15
+      }
+    ],
+    "names": {
+      "pt-BR": "Requeijão",
+      "en": "Cream cheese spread",
+      "es": "Requesón"
+    }
+  },
+  {
+    "slug": "parmesan",
+    "category": "dairy",
+    "kcal": 431,
+    "protein_g": 38,
+    "carbs_g": 4,
+    "fat_g": 29,
+    "default_portion_g": 10,
+    "portions": [
+      {
+        "label_key": "tbsp",
+        "grams": 5
+      }
+    ],
+    "names": {
+      "pt-BR": "Queijo parmesão",
+      "en": "Parmesan",
+      "es": "Parmesano"
+    }
+  },
+  {
+    "slug": "olive-oil",
+    "category": "fat",
+    "kcal": 884,
+    "protein_g": 0,
+    "carbs_g": 0,
+    "fat_g": 100,
+    "default_portion_g": 8,
+    "portions": [
+      {
+        "label_key": "tbsp",
+        "grams": 8
+      }
+    ],
+    "names": {
+      "pt-BR": "Azeite de oliva",
+      "en": "Olive oil",
+      "es": "Aceite de oliva"
+    }
+  },
+  {
+    "slug": "peanut",
+    "category": "fat",
+    "kcal": 567,
+    "protein_g": 26,
+    "carbs_g": 16,
+    "fat_g": 49,
+    "default_portion_g": 30,
+    "portions": [
+      {
+        "label_key": "handful",
+        "grams": 30
+      }
+    ],
+    "names": {
+      "pt-BR": "Amendoim",
+      "en": "Peanuts",
+      "es": "Cacahuete"
+    }
+  },
+  {
+    "slug": "peanut-butter",
+    "category": "fat",
+    "kcal": 588,
+    "protein_g": 25,
+    "carbs_g": 20,
+    "fat_g": 50,
+    "default_portion_g": 15,
+    "portions": [
+      {
+        "label_key": "tbsp",
+        "grams": 15
+      }
+    ],
+    "names": {
+      "pt-BR": "Pasta de amendoim",
+      "en": "Peanut butter",
+      "es": "Mantequilla de maní"
+    }
+  },
+  {
+    "slug": "almonds",
+    "category": "fat",
+    "kcal": 579,
+    "protein_g": 21,
+    "carbs_g": 22,
+    "fat_g": 50,
+    "default_portion_g": 30,
+    "portions": [
+      {
+        "label_key": "handful",
+        "grams": 30
+      }
+    ],
+    "names": {
+      "pt-BR": "Amêndoas",
+      "en": "Almonds",
+      "es": "Almendras"
+    }
+  },
+  {
+    "slug": "walnuts",
+    "category": "fat",
+    "kcal": 654,
+    "protein_g": 15,
+    "carbs_g": 14,
+    "fat_g": 65,
+    "default_portion_g": 30,
+    "portions": [
+      {
+        "label_key": "handful",
+        "grams": 30
+      }
+    ],
+    "names": {
+      "pt-BR": "Nozes",
+      "en": "Walnuts",
+      "es": "Nueces"
+    }
+  },
+  {
+    "slug": "cashew",
+    "category": "fat",
+    "kcal": 553,
+    "protein_g": 18,
+    "carbs_g": 30,
+    "fat_g": 44,
+    "default_portion_g": 30,
+    "portions": [
+      {
+        "label_key": "handful",
+        "grams": 30
+      }
+    ],
+    "names": {
+      "pt-BR": "Castanha de caju",
+      "en": "Cashews",
+      "es": "Anacardos"
+    }
+  },
+  {
+    "slug": "brazil-nut",
+    "category": "fat",
+    "kcal": 656,
+    "protein_g": 14,
+    "carbs_g": 12,
+    "fat_g": 66,
+    "default_portion_g": 5,
+    "portions": [
+      {
+        "label_key": "unit",
+        "grams": 5
+      }
+    ],
+    "names": {
+      "pt-BR": "Castanha-do-pará",
+      "en": "Brazil nut",
+      "es": "Nuez de Brasil"
+    }
+  },
+  {
+    "slug": "chia",
+    "category": "fat",
+    "kcal": 486,
+    "protein_g": 17,
+    "carbs_g": 42,
+    "fat_g": 31,
+    "default_portion_g": 12,
+    "portions": [
+      {
+        "label_key": "tbsp",
+        "grams": 12
+      }
+    ],
+    "names": {
+      "pt-BR": "Chia",
+      "en": "Chia seeds",
+      "es": "Semillas de chía"
+    }
+  },
+  {
+    "slug": "flaxseed",
+    "category": "fat",
+    "kcal": 534,
+    "protein_g": 18,
+    "carbs_g": 29,
+    "fat_g": 42,
+    "default_portion_g": 10,
+    "portions": [
+      {
+        "label_key": "tbsp",
+        "grams": 10
+      }
+    ],
+    "names": {
+      "pt-BR": "Linhaça",
+      "en": "Flaxseed",
+      "es": "Linaza"
+    }
+  },
+  {
+    "slug": "butter",
+    "category": "fat",
+    "kcal": 717,
+    "protein_g": 0.9,
+    "carbs_g": 0.1,
+    "fat_g": 81,
+    "default_portion_g": 5,
+    "portions": [
+      {
+        "label_key": "tsp",
+        "grams": 5
+      }
+    ],
+    "names": {
+      "pt-BR": "Manteiga",
+      "en": "Butter",
+      "es": "Mantequilla"
+    }
+  },
+  {
+    "slug": "coconut-oil",
+    "category": "fat",
+    "kcal": 862,
+    "protein_g": 0,
+    "carbs_g": 0,
+    "fat_g": 100,
+    "default_portion_g": 8,
+    "portions": [
+      {
+        "label_key": "tbsp",
+        "grams": 8
+      }
+    ],
+    "names": {
+      "pt-BR": "Óleo de coco",
+      "en": "Coconut oil",
+      "es": "Aceite de coco"
+    }
+  },
+  {
+    "slug": "honey",
+    "category": "sweet",
+    "kcal": 304,
+    "protein_g": 0.3,
+    "carbs_g": 82,
+    "fat_g": 0,
+    "default_portion_g": 20,
+    "portions": [
+      {
+        "label_key": "tbsp",
+        "grams": 20
+      }
+    ],
+    "names": {
+      "pt-BR": "Mel",
+      "en": "Honey",
+      "es": "Miel"
+    }
+  },
+  {
+    "slug": "sugar",
+    "category": "sweet",
+    "kcal": 387,
+    "protein_g": 0,
+    "carbs_g": 100,
+    "fat_g": 0,
+    "default_portion_g": 5,
+    "portions": [
+      {
+        "label_key": "tsp",
+        "grams": 5
+      },
+      {
+        "label_key": "tbsp",
+        "grams": 12
+      }
+    ],
+    "names": {
+      "pt-BR": "Açúcar",
+      "en": "Sugar",
+      "es": "Azúcar"
+    }
+  },
+  {
+    "slug": "dark-chocolate",
+    "category": "sweet",
+    "kcal": 546,
+    "protein_g": 5,
+    "carbs_g": 61,
+    "fat_g": 31,
+    "default_portion_g": 25,
+    "portions": [
+      {
+        "label_key": "portion",
+        "grams": 25
+      }
+    ],
+    "names": {
+      "pt-BR": "Chocolate amargo (70%)",
+      "en": "Dark chocolate (70%)",
+      "es": "Chocolate amargo (70%)"
+    }
+  },
+  {
+    "slug": "salt",
+    "category": "other",
+    "kcal": 0,
+    "protein_g": 0,
+    "carbs_g": 0,
+    "fat_g": 0,
+    "default_portion_g": 1,
+    "portions": [
+      {
+        "label_key": "tsp",
+        "grams": 5
+      }
+    ],
+    "names": {
+      "pt-BR": "Sal",
+      "en": "Salt",
+      "es": "Sal"
+    }
+  },
+  {
+    "slug": "black-coffee",
+    "category": "beverage",
+    "kcal": 2,
+    "protein_g": 0.1,
+    "carbs_g": 0,
+    "fat_g": 0,
+    "default_portion_g": 50,
+    "portions": [
+      {
+        "label_key": "cup",
+        "grams": 50
+      }
+    ],
+    "names": {
+      "pt-BR": "Café sem açúcar",
+      "en": "Black coffee",
+      "es": "Café solo"
+    }
+  },
+  {
+    "slug": "orange-juice",
+    "category": "beverage",
+    "kcal": 45,
+    "protein_g": 0.7,
+    "carbs_g": 10,
+    "fat_g": 0.2,
+    "default_portion_g": 200,
+    "portions": [
+      {
+        "label_key": "glass",
+        "grams": 200
+      }
+    ],
+    "names": {
+      "pt-BR": "Suco de laranja",
+      "en": "Orange juice",
+      "es": "Zumo de naranja"
+    }
+  },
+  {
+    "slug": "coconut-water",
+    "category": "beverage",
+    "kcal": 19,
+    "protein_g": 0.7,
+    "carbs_g": 3.7,
+    "fat_g": 0.2,
+    "default_portion_g": 200,
+    "portions": [
+      {
+        "label_key": "glass",
+        "grams": 200
+      }
+    ],
+    "names": {
+      "pt-BR": "Água de coco",
+      "en": "Coconut water",
+      "es": "Agua de coco"
+    }
+  },
+  {
+    "slug": "creatine-monohydrate",
+    "category": "supplement",
+    "kcal": 0,
+    "protein_g": 0,
+    "carbs_g": 0,
+    "fat_g": 0,
+    "default_portion_g": 5,
+    "portions": [
+      {
+        "label_key": "scoop",
+        "grams": 5
+      }
+    ],
+    "names": {
+      "pt-BR": "Creatina",
+      "en": "Creatine",
+      "es": "Creatina"
+    }
+  },
+  {
+    "slug": "casein-protein",
+    "category": "supplement",
+    "kcal": 360,
+    "protein_g": 80,
+    "carbs_g": 6,
+    "fat_g": 2,
+    "default_portion_g": 30,
+    "portions": [
+      {
+        "label_key": "scoop",
+        "grams": 30
+      }
+    ],
+    "names": {
+      "pt-BR": "Caseína",
+      "en": "Casein protein",
+      "es": "Caseína"
+    }
+  },
+  {
+    "slug": "egg-albumin",
+    "category": "supplement",
+    "kcal": 380,
+    "protein_g": 80,
+    "carbs_g": 4,
+    "fat_g": 1,
+    "default_portion_g": 30,
+    "portions": [
+      {
+        "label_key": "scoop",
+        "grams": 30
+      }
+    ],
+    "names": {
+      "pt-BR": "Albumina",
+      "en": "Egg albumin",
+      "es": "Albúmina"
+    }
+  },
+  {
+    "slug": "mass-gainer",
+    "category": "supplement",
+    "kcal": 380,
+    "protein_g": 15,
+    "carbs_g": 70,
+    "fat_g": 3,
+    "default_portion_g": 100,
+    "portions": [
+      {
+        "label_key": "scoop",
+        "grams": 100
+      }
+    ],
+    "names": {
+      "pt-BR": "Hipercalórico",
+      "en": "Mass gainer",
+      "es": "Ganador de masa"
+    }
+  },
+  {
+    "slug": "maltodextrin",
+    "category": "supplement",
+    "kcal": 380,
+    "protein_g": 0,
+    "carbs_g": 95,
+    "fat_g": 0,
+    "default_portion_g": 30,
+    "portions": [
+      {
+        "label_key": "scoop",
+        "grams": 30
+      }
+    ],
+    "names": {
+      "pt-BR": "Maltodextrina",
+      "en": "Maltodextrin",
+      "es": "Maltodextrina"
+    }
+  },
+  {
+    "slug": "bcaa",
+    "category": "supplement",
+    "kcal": 0,
+    "protein_g": 0,
+    "carbs_g": 0,
+    "fat_g": 0,
+    "default_portion_g": 5,
+    "portions": [
+      {
+        "label_key": "scoop",
+        "grams": 5
+      }
+    ],
+    "names": {
+      "pt-BR": "BCAA",
+      "en": "BCAA",
+      "es": "BCAA"
+    }
+  },
+  {
+    "slug": "glutamine",
+    "category": "supplement",
+    "kcal": 0,
+    "protein_g": 0,
+    "carbs_g": 0,
+    "fat_g": 0,
+    "default_portion_g": 5,
+    "portions": [
+      {
+        "label_key": "scoop",
+        "grams": 5
+      }
+    ],
+    "names": {
+      "pt-BR": "Glutamina",
+      "en": "Glutamine",
+      "es": "Glutamina"
+    }
+  },
+  {
+    "slug": "pre-workout",
+    "category": "supplement",
+    "kcal": 0,
+    "protein_g": 0,
+    "carbs_g": 0,
+    "fat_g": 0,
+    "default_portion_g": 10,
+    "portions": [
+      {
+        "label_key": "scoop",
+        "grams": 10
+      }
+    ],
+    "names": {
+      "pt-BR": "Pré-treino",
+      "en": "Pre-workout",
+      "es": "Preentreno"
+    }
+  },
+  {
+    "slug": "fish-oil-omega3",
+    "category": "supplement",
+    "kcal": 902,
+    "protein_g": 0,
+    "carbs_g": 0,
+    "fat_g": 100,
+    "default_portion_g": 1,
+    "portions": [
+      {
+        "label_key": "unit",
+        "grams": 1
+      }
+    ],
+    "names": {
+      "pt-BR": "Ômega-3 (óleo de peixe)",
+      "en": "Fish oil (omega-3)",
+      "es": "Omega-3 (aceite de pescado)"
+    }
+  },
+  {
+    "slug": "multivitamin",
+    "category": "supplement",
+    "kcal": 0,
+    "protein_g": 0,
+    "carbs_g": 0,
+    "fat_g": 0,
+    "default_portion_g": 1,
+    "portions": [
+      {
+        "label_key": "unit",
+        "grams": 1
+      }
+    ],
+    "names": {
+      "pt-BR": "Multivitamínico",
+      "en": "Multivitamin",
+      "es": "Multivitamínico"
+    }
+  },
+  {
+    "slug": "white-beans",
+    "category": "legume",
+    "kcal": 140,
+    "protein_g": 8.7,
+    "carbs_g": 25.0,
+    "fat_g": 0.5,
+    "default_portion_g": 150,
+    "portions": [
+      {
+        "label_key": "portion",
+        "grams": 150
+      }
+    ],
+    "names": {
+      "pt-BR": "Feijão branco cozido",
+      "en": "White beans, cooked",
+      "es": "Alubias blancas cocidas"
+    }
+  },
+  {
+    "slug": "black-eyed-peas",
+    "category": "legume",
+    "kcal": 116,
+    "protein_g": 7.7,
+    "carbs_g": 20.8,
+    "fat_g": 0.5,
+    "default_portion_g": 150,
+    "portions": [
+      {
+        "label_key": "portion",
+        "grams": 150
+      }
+    ],
+    "names": {
+      "pt-BR": "Feijão fradinho cozido",
+      "en": "Black-eyed peas, cooked",
+      "es": "Alubias carilla cocidas"
+    }
+  },
+  {
+    "slug": "pinto-beans",
+    "category": "legume",
+    "kcal": 143,
+    "protein_g": 9.0,
+    "carbs_g": 26.0,
+    "fat_g": 0.6,
+    "default_portion_g": 150,
+    "portions": [
+      {
+        "label_key": "portion",
+        "grams": 150
+      }
+    ],
+    "names": {
+      "pt-BR": "Feijão roxinho cozido",
+      "en": "Pinto beans, cooked",
+      "es": "Alubias pintas cocidas"
+    }
+  },
+  {
+    "slug": "beef-tenderloin",
+    "category": "protein",
+    "kcal": 143,
+    "protein_g": 21.0,
+    "carbs_g": 0.0,
+    "fat_g": 6.0,
+    "default_portion_g": 150,
+    "portions": [
+      {
+        "label_key": "filet",
+        "grams": 150
+      }
+    ],
+    "names": {
+      "pt-BR": "Filé mignon grelhado",
+      "en": "Grilled beef tenderloin",
+      "es": "Solomillo a la plancha"
+    }
+  },
+  {
+    "slug": "beef-ribeye",
+    "category": "protein",
+    "kcal": 250,
+    "protein_g": 25.0,
+    "carbs_g": 0.0,
+    "fat_g": 16.0,
+    "default_portion_g": 150,
+    "portions": [
+      {
+        "label_key": "filet",
+        "grams": 150
+      }
+    ],
+    "names": {
+      "pt-BR": "Contra-filé grelhado",
+      "en": "Grilled ribeye",
+      "es": "Entrecot / chuletón a la plancha"
+    }
+  },
+  {
+    "slug": "beef-sirloin",
+    "category": "protein",
+    "kcal": 180,
+    "protein_g": 26.0,
+    "carbs_g": 0.0,
+    "fat_g": 8.0,
+    "default_portion_g": 150,
+    "portions": [
+      {
+        "label_key": "filet",
+        "grams": 150
+      }
+    ],
+    "names": {
+      "pt-BR": "Lombo bovino grelhado",
+      "en": "Grilled sirloin",
+      "es": "Lomo bajo a la plancha"
+    }
+  },
+  {
+    "slug": "beef-shank",
+    "category": "protein",
+    "kcal": 160,
+    "protein_g": 28.0,
+    "carbs_g": 0.0,
+    "fat_g": 5.0,
+    "default_portion_g": 150,
+    "portions": [
+      {
+        "label_key": "portion",
+        "grams": 150
+      }
+    ],
+    "names": {
+      "pt-BR": "Músculo bovino cozido",
+      "en": "Braised beef shank",
+      "es": "Morcillo de ternera guisado"
+    }
+  },
+  {
+    "slug": "beef-flank",
+    "category": "protein",
+    "kcal": 192,
+    "protein_g": 21.0,
+    "carbs_g": 0.0,
+    "fat_g": 11.0,
+    "default_portion_g": 150,
+    "portions": [
+      {
+        "label_key": "filet",
+        "grams": 150
+      }
+    ],
+    "names": {
+      "pt-BR": "Fraldinha grelhada",
+      "en": "Grilled flank steak",
+      "es": "Falda a la plancha"
+    }
+  },
+  {
+    "slug": "beef-rump-cap",
+    "category": "protein",
+    "kcal": 230,
+    "protein_g": 24.0,
+    "carbs_g": 0.0,
+    "fat_g": 14.0,
+    "default_portion_g": 150,
+    "portions": [
+      {
+        "label_key": "filet",
+        "grams": 150
+      }
+    ],
+    "names": {
+      "pt-BR": "Picanha grelhada",
+      "en": "Grilled rump cap",
+      "es": "Tapa de cuadril a la plancha"
+    }
+  },
+  {
+    "slug": "beef-bottom-sirloin",
+    "category": "protein",
+    "kcal": 172,
+    "protein_g": 22.0,
+    "carbs_g": 0.0,
+    "fat_g": 9.0,
+    "default_portion_g": 150,
+    "portions": [
+      {
+        "label_key": "filet",
+        "grams": 150
+      }
+    ],
+    "names": {
+      "pt-BR": "Maminha grelhada",
+      "en": "Grilled bottom sirloin",
+      "es": "Babilla a la plancha"
+    }
+  },
+  {
+    "slug": "beef-chuck",
+    "category": "protein",
+    "kcal": 215,
+    "protein_g": 20.0,
+    "carbs_g": 0.0,
+    "fat_g": 14.0,
+    "default_portion_g": 150,
+    "portions": [
+      {
+        "label_key": "portion",
+        "grams": 150
+      }
+    ],
+    "names": {
+      "pt-BR": "Acém cozido",
+      "en": "Braised chuck",
+      "es": "Aguja de ternera guisada"
+    }
+  },
+  {
+    "slug": "iberian-secreto",
+    "category": "protein",
+    "kcal": 275,
+    "protein_g": 17.0,
+    "carbs_g": 0.0,
+    "fat_g": 23.0,
+    "default_portion_g": 150,
+    "portions": [
+      {
+        "label_key": "filet",
+        "grams": 150
+      }
+    ],
+    "names": {
+      "pt-BR": "Secreto ibérico grelhado",
+      "en": "Grilled secreto ibérico",
+      "es": "Secreto ibérico a la plancha"
+    }
+  },
+  {
+    "slug": "iberian-presa",
+    "category": "protein",
+    "kcal": 250,
+    "protein_g": 19.0,
+    "carbs_g": 0.0,
+    "fat_g": 19.0,
+    "default_portion_g": 150,
+    "portions": [
+      {
+        "label_key": "filet",
+        "grams": 150
+      }
+    ],
+    "names": {
+      "pt-BR": "Presa ibérica grelhada",
+      "en": "Grilled presa ibérica",
+      "es": "Presa ibérica a la plancha"
+    }
+  },
+  {
+    "slug": "iberian-pluma",
+    "category": "protein",
+    "kcal": 230,
+    "protein_g": 20.0,
+    "carbs_g": 0.0,
+    "fat_g": 16.0,
+    "default_portion_g": 150,
+    "portions": [
+      {
+        "label_key": "filet",
+        "grams": 150
+      }
+    ],
+    "names": {
+      "pt-BR": "Pluma ibérica grelhada",
+      "en": "Grilled pluma ibérica",
+      "es": "Pluma ibérica a la plancha"
+    }
+  },
+  {
+    "slug": "pork-cheek",
+    "category": "protein",
+    "kcal": 230,
+    "protein_g": 18.0,
+    "carbs_g": 0.0,
+    "fat_g": 17.0,
+    "default_portion_g": 150,
+    "portions": [
+      {
+        "label_key": "portion",
+        "grams": 150
+      }
+    ],
+    "names": {
+      "pt-BR": "Bochecha de porco cozida",
+      "en": "Braised pork cheek",
+      "es": "Carrillera de cerdo guisada"
+    }
+  },
+  {
+    "slug": "pork-leg",
+    "category": "protein",
+    "kcal": 180,
+    "protein_g": 24.0,
+    "carbs_g": 0.0,
+    "fat_g": 8.0,
+    "default_portion_g": 150,
+    "portions": [
+      {
+        "label_key": "filet",
+        "grams": 150
+      }
+    ],
+    "names": {
+      "pt-BR": "Pernil suíno assado",
+      "en": "Roasted pork leg",
+      "es": "Pierna de cerdo al horno"
+    }
+  },
+  {
+    "slug": "pork-chop",
+    "category": "protein",
+    "kcal": 200,
+    "protein_g": 24.0,
+    "carbs_g": 0.0,
+    "fat_g": 11.0,
+    "default_portion_g": 150,
+    "portions": [
+      {
+        "label_key": "filet",
+        "grams": 150
+      }
+    ],
+    "names": {
+      "pt-BR": "Bisteca suína grelhada",
+      "en": "Grilled pork chop",
+      "es": "Chuleta de cerdo a la plancha"
+    }
+  },
+  {
+    "slug": "pork-ribs",
+    "category": "protein",
+    "kcal": 280,
+    "protein_g": 20.0,
+    "carbs_g": 0.0,
+    "fat_g": 22.0,
+    "default_portion_g": 150,
+    "portions": [
+      {
+        "label_key": "portion",
+        "grams": 150
+      }
+    ],
+    "names": {
+      "pt-BR": "Costela suína assada",
+      "en": "Roasted pork ribs",
+      "es": "Costillas de cerdo al horno"
+    }
+  },
+  {
+    "slug": "pork-belly",
+    "category": "fat",
+    "kcal": 518,
+    "protein_g": 9.0,
+    "carbs_g": 0.0,
+    "fat_g": 53.0,
+    "default_portion_g": 100,
+    "portions": [
+      {
+        "label_key": "portion",
+        "grams": 100
+      }
+    ],
+    "names": {
+      "pt-BR": "Panceta / barriga de porco",
+      "en": "Pork belly",
+      "es": "Panceta de cerdo"
+    }
+  },
+  {
+    "slug": "chicken-thigh",
+    "category": "protein",
+    "kcal": 180,
+    "protein_g": 24.0,
+    "carbs_g": 0.0,
+    "fat_g": 9.0,
+    "default_portion_g": 120,
+    "portions": [
+      {
+        "label_key": "filet",
+        "grams": 120
+      }
+    ],
+    "names": {
+      "pt-BR": "Coxa de frango grelhada",
+      "en": "Grilled chicken thigh",
+      "es": "Muslo de pollo a la plancha"
+    }
+  },
+  {
+    "slug": "chicken-drumstick-thigh",
+    "category": "protein",
+    "kcal": 190,
+    "protein_g": 25.0,
+    "carbs_g": 0.0,
+    "fat_g": 10.0,
+    "default_portion_g": 120,
+    "portions": [
+      {
+        "label_key": "filet",
+        "grams": 120
+      }
+    ],
+    "names": {
+      "pt-BR": "Sobrecoxa de frango grelhada",
+      "en": "Grilled chicken thigh+drumstick",
+      "es": "Contramuslo de pollo a la plancha"
+    }
+  },
+  {
+    "slug": "chicken-wing",
+    "category": "protein",
+    "kcal": 203,
+    "protein_g": 19.0,
+    "carbs_g": 0.0,
+    "fat_g": 14.0,
+    "default_portion_g": 80,
+    "portions": [
+      {
+        "label_key": "portion",
+        "grams": 80
+      }
+    ],
+    "names": {
+      "pt-BR": "Asa de frango assada",
+      "en": "Roasted chicken wing",
+      "es": "Ala de pollo al horno"
+    }
+  },
+  {
+    "slug": "hake",
+    "category": "protein",
+    "kcal": 86,
+    "protein_g": 18.0,
+    "carbs_g": 0.0,
+    "fat_g": 1.0,
+    "default_portion_g": 150,
+    "portions": [
+      {
+        "label_key": "filet",
+        "grams": 150
+      }
+    ],
+    "names": {
+      "pt-BR": "Pescada grelhada",
+      "en": "Grilled hake",
+      "es": "Merluza a la plancha"
+    }
+  },
+  {
+    "slug": "sea-bass",
+    "category": "protein",
+    "kcal": 97,
+    "protein_g": 19.0,
+    "carbs_g": 0.0,
+    "fat_g": 2.0,
+    "default_portion_g": 150,
+    "portions": [
+      {
+        "label_key": "filet",
+        "grams": 150
+      }
+    ],
+    "names": {
+      "pt-BR": "Robalo grelhado",
+      "en": "Grilled sea bass",
+      "es": "Lubina a la plancha"
+    }
+  },
+  {
+    "slug": "cod",
+    "category": "protein",
+    "kcal": 82,
+    "protein_g": 18.0,
+    "carbs_g": 0.0,
+    "fat_g": 0.7,
+    "default_portion_g": 150,
+    "portions": [
+      {
+        "label_key": "filet",
+        "grams": 150
+      }
+    ],
+    "names": {
+      "pt-BR": "Bacalhau cozido",
+      "en": "Cod, cooked",
+      "es": "Bacalao cocido"
+    }
+  },
+  {
+    "slug": "anchovy",
+    "category": "protein",
+    "kcal": 131,
+    "protein_g": 20.0,
+    "carbs_g": 0.0,
+    "fat_g": 5.0,
+    "default_portion_g": 60,
+    "portions": [
+      {
+        "label_key": "portion",
+        "grams": 60
+      }
+    ],
+    "names": {
+      "pt-BR": "Boquerão grelhado",
+      "en": "Grilled anchovy",
+      "es": "Boquerones a la plancha"
+    }
+  },
+  {
+    "slug": "gilthead-bream",
+    "category": "protein",
+    "kcal": 96,
+    "protein_g": 18.0,
+    "carbs_g": 0.0,
+    "fat_g": 2.5,
+    "default_portion_g": 150,
+    "portions": [
+      {
+        "label_key": "filet",
+        "grams": 150
+      }
+    ],
+    "names": {
+      "pt-BR": "Dourada grelhada",
+      "en": "Grilled gilt-head bream",
+      "es": "Dorada a la plancha"
+    }
+  },
+  {
+    "slug": "garlic",
+    "category": "vegetable",
+    "kcal": 113.0,
+    "protein_g": 7.0,
+    "carbs_g": 23.9,
+    "fat_g": 0.2,
+    "default_portion_g": 5,
+    "portions": [
+      {
+        "label_key": "unit",
+        "grams": 5
+      }
+    ],
+    "names": {
+      "pt-BR": "Alho cru",
+      "en": "Raw garlic",
+      "es": "Ajo crudo"
+    }
+  },
+  {
+    "slug": "scallion",
+    "category": "vegetable",
+    "kcal": 20.0,
+    "protein_g": 1.9,
+    "carbs_g": 3.4,
+    "fat_g": 0.4,
+    "default_portion_g": 30,
+    "portions": [
+      {
+        "label_key": "portion",
+        "grams": 30
+      }
+    ],
+    "names": {
+      "pt-BR": "Cebolinha crua",
+      "en": "Raw scallion",
+      "es": "Cebolleta cruda"
+    }
+  },
+  {
+    "slug": "collard-greens",
+    "category": "vegetable",
+    "kcal": 90.0,
+    "protein_g": 1.7,
+    "carbs_g": 8.7,
+    "fat_g": 6.6,
+    "default_portion_g": 65,
+    "portions": [
+      {
+        "label_key": "portion",
+        "grams": 65
+      }
+    ],
+    "names": {
+      "pt-BR": "Couve refogada",
+      "en": "Sautéed collard greens",
+      "es": "Berza salteada"
+    }
+  },
+  {
+    "slug": "okra",
+    "category": "vegetable",
+    "kcal": 30.0,
+    "protein_g": 1.9,
+    "carbs_g": 6.4,
+    "fat_g": 0.3,
+    "default_portion_g": 100,
+    "portions": [
+      {
+        "label_key": "portion",
+        "grams": 100
+      }
+    ],
+    "names": {
+      "pt-BR": "Quiabo cru",
+      "en": "Raw okra",
+      "es": "Okra cruda"
+    }
+  },
+  {
+    "slug": "eggplant",
+    "category": "vegetable",
+    "kcal": 19.0,
+    "protein_g": 0.7,
+    "carbs_g": 4.5,
+    "fat_g": 0.1,
+    "default_portion_g": 100,
+    "portions": [
+      {
+        "label_key": "portion",
+        "grams": 100
+      }
+    ],
+    "names": {
+      "pt-BR": "Berinjela cozida",
+      "en": "Cooked eggplant",
+      "es": "Berenjena cocida"
+    }
+  },
+  {
+    "slug": "chard",
+    "category": "vegetable",
+    "kcal": 21.0,
+    "protein_g": 1.4,
+    "carbs_g": 4.6,
+    "fat_g": 0.1,
+    "default_portion_g": 65,
+    "portions": [
+      {
+        "label_key": "portion",
+        "grams": 65
+      }
+    ],
+    "names": {
+      "pt-BR": "Acelga crua",
+      "en": "Raw chard",
+      "es": "Acelga cruda"
+    }
+  },
+  {
+    "slug": "leek",
+    "category": "vegetable",
+    "kcal": 32.0,
+    "protein_g": 1.4,
+    "carbs_g": 6.9,
+    "fat_g": 0.1,
+    "default_portion_g": 60,
+    "portions": [
+      {
+        "label_key": "portion",
+        "grams": 60
+      }
+    ],
+    "names": {
+      "pt-BR": "Alho-poró cru",
+      "en": "Raw leek",
+      "es": "Puerro crudo"
+    }
+  },
+  {
+    "slug": "heart-of-palm",
+    "category": "vegetable",
+    "kcal": 23.0,
+    "protein_g": 1.8,
+    "carbs_g": 4.3,
+    "fat_g": 0.4,
+    "default_portion_g": 100,
+    "portions": [
+      {
+        "label_key": "portion",
+        "grams": 100
+      }
+    ],
+    "names": {
+      "pt-BR": "Palmito em conserva",
+      "en": "Canned heart of palm",
+      "es": "Palmito en conserva"
+    }
+  },
+  {
+    "slug": "radish",
+    "category": "vegetable",
+    "kcal": 14.0,
+    "protein_g": 1.4,
+    "carbs_g": 2.7,
+    "fat_g": 0.1,
+    "default_portion_g": 60,
+    "portions": [
+      {
+        "label_key": "portion",
+        "grams": 60
+      }
+    ],
+    "names": {
+      "pt-BR": "Rabanete cru",
+      "en": "Raw radish",
+      "es": "Rábano crudo"
+    }
+  },
+  {
+    "slug": "celery",
+    "category": "vegetable",
+    "kcal": 19.0,
+    "protein_g": 0.8,
+    "carbs_g": 4.3,
+    "fat_g": 0.1,
+    "default_portion_g": 60,
+    "portions": [
+      {
+        "label_key": "portion",
+        "grams": 60
+      }
+    ],
+    "names": {
+      "pt-BR": "Aipo cru",
+      "en": "Raw celery",
+      "es": "Apio crudo"
+    }
+  },
+  {
+    "slug": "kiwi",
+    "category": "fruit",
+    "kcal": 51.0,
+    "protein_g": 1.3,
+    "carbs_g": 11.5,
+    "fat_g": 0.6,
+    "default_portion_g": 90,
+    "portions": [
+      {
+        "label_key": "unit",
+        "grams": 90
+      }
+    ],
+    "names": {
+      "pt-BR": "Kiwi cru",
+      "en": "Raw kiwi",
+      "es": "Kiwi crudo"
+    }
+  },
+  {
+    "slug": "lemon",
+    "category": "fruit",
+    "kcal": 32.0,
+    "protein_g": 0.9,
+    "carbs_g": 11.1,
+    "fat_g": 0.1,
+    "default_portion_g": 60,
+    "portions": [
+      {
+        "label_key": "unit",
+        "grams": 60
+      }
+    ],
+    "names": {
+      "pt-BR": "Limão",
+      "en": "Lemon",
+      "es": "Limón"
+    }
+  },
+  {
+    "slug": "passion-fruit",
+    "category": "fruit",
+    "kcal": 68.0,
+    "protein_g": 2.0,
+    "carbs_g": 12.3,
+    "fat_g": 2.1,
+    "default_portion_g": 100,
+    "portions": [
+      {
+        "label_key": "unit",
+        "grams": 100
+      }
+    ],
+    "names": {
+      "pt-BR": "Maracujá",
+      "en": "Passion fruit",
+      "es": "Maracuyá / fruta de la pasión"
+    }
+  },
+  {
+    "slug": "peach",
+    "category": "fruit",
+    "kcal": 36.0,
+    "protein_g": 0.8,
+    "carbs_g": 9.3,
+    "fat_g": 0.0,
+    "default_portion_g": 130,
+    "portions": [
+      {
+        "label_key": "unit",
+        "grams": 130
+      }
+    ],
+    "names": {
+      "pt-BR": "Pêssego cru",
+      "en": "Raw peach",
+      "es": "Melocotón crudo"
+    }
+  },
+  {
+    "slug": "guava",
+    "category": "fruit",
+    "kcal": 54.0,
+    "protein_g": 1.1,
+    "carbs_g": 13.0,
+    "fat_g": 0.4,
+    "default_portion_g": 100,
+    "portions": [
+      {
+        "label_key": "unit",
+        "grams": 100
+      }
+    ],
+    "names": {
+      "pt-BR": "Goiaba vermelha",
+      "en": "Red guava",
+      "es": "Guayaba roja"
+    }
+  },
+  {
+    "slug": "melon",
+    "category": "fruit",
+    "kcal": 29.0,
+    "protein_g": 0.7,
+    "carbs_g": 7.5,
+    "fat_g": 0.0,
+    "default_portion_g": 150,
+    "portions": [
+      {
+        "label_key": "portion",
+        "grams": 150
+      }
+    ],
+    "names": {
+      "pt-BR": "Melão cru",
+      "en": "Raw melon",
+      "es": "Melón crudo"
+    }
+  },
+  {
+    "slug": "tangerine",
+    "category": "fruit",
+    "kcal": 38.0,
+    "protein_g": 0.8,
+    "carbs_g": 9.6,
+    "fat_g": 0.1,
+    "default_portion_g": 100,
+    "portions": [
+      {
+        "label_key": "unit",
+        "grams": 100
+      }
+    ],
+    "names": {
+      "pt-BR": "Tangerina",
+      "en": "Tangerine",
+      "es": "Mandarina"
+    }
+  },
+  {
+    "slug": "plum",
+    "category": "fruit",
+    "kcal": 53.0,
+    "protein_g": 0.8,
+    "carbs_g": 13.9,
+    "fat_g": 0.0,
+    "default_portion_g": 60,
+    "portions": [
+      {
+        "label_key": "unit",
+        "grams": 60
+      }
+    ],
+    "names": {
+      "pt-BR": "Ameixa crua",
+      "en": "Raw plum",
+      "es": "Ciruela cruda"
+    }
+  },
+  {
+    "slug": "boiled-egg",
+    "category": "protein",
+    "kcal": 146.0,
+    "protein_g": 13.3,
+    "carbs_g": 0.6,
+    "fat_g": 9.5,
+    "default_portion_g": 50,
+    "portions": [
+      {
+        "label_key": "unit",
+        "grams": 50
+      }
+    ],
+    "names": {
+      "pt-BR": "Ovo cozido",
+      "en": "Boiled egg",
+      "es": "Huevo cocido"
+    }
+  },
+  {
+    "slug": "fried-egg",
+    "category": "protein",
+    "kcal": 240.0,
+    "protein_g": 15.6,
+    "carbs_g": 1.2,
+    "fat_g": 18.6,
+    "default_portion_g": 50,
+    "portions": [
+      {
+        "label_key": "unit",
+        "grams": 50
+      }
+    ],
+    "names": {
+      "pt-BR": "Ovo frito",
+      "en": "Fried egg",
+      "es": "Huevo frito"
+    }
+  },
+  {
+    "slug": "mortadella",
+    "category": "protein",
+    "kcal": 269.0,
+    "protein_g": 12.0,
+    "carbs_g": 5.8,
+    "fat_g": 21.6,
+    "default_portion_g": 50,
+    "portions": [
+      {
+        "label_key": "portion",
+        "grams": 50
+      }
+    ],
+    "names": {
+      "pt-BR": "Mortadela",
+      "en": "Mortadella",
+      "es": "Mortadela"
+    }
+  },
+  {
+    "slug": "ham",
+    "category": "protein",
+    "kcal": 94.0,
+    "protein_g": 14.3,
+    "carbs_g": 2.1,
+    "fat_g": 2.7,
+    "default_portion_g": 50,
+    "portions": [
+      {
+        "label_key": "portion",
+        "grams": 50
+      }
+    ],
+    "names": {
+      "pt-BR": "Presunto sem gordura",
+      "en": "Lean ham",
+      "es": "Jamón cocido / york"
+    }
+  },
+  {
+    "slug": "bacon",
+    "category": "protein",
+    "kcal": 697.0,
+    "protein_g": 27.3,
+    "carbs_g": 0.0,
+    "fat_g": 64.3,
+    "default_portion_g": 30,
+    "portions": [
+      {
+        "label_key": "portion",
+        "grams": 30
+      }
+    ],
+    "names": {
+      "pt-BR": "Bacon frito",
+      "en": "Fried bacon",
+      "es": "Bacon / panceta frita"
+    }
+  },
+  {
+    "slug": "pork-sausage",
+    "category": "protein",
+    "kcal": 280,
+    "protein_g": 16.0,
+    "carbs_g": 2.0,
+    "fat_g": 23.0,
+    "default_portion_g": 100,
+    "portions": [
+      {
+        "label_key": "portion",
+        "grams": 100
+      }
+    ],
+    "names": {
+      "pt-BR": "Linguiça grelhada",
+      "en": "Grilled pork sausage",
+      "es": "Salchicha de cerdo a la plancha"
+    }
+  },
+  {
+    "slug": "hot-dog-sausage",
+    "category": "protein",
+    "kcal": 260,
+    "protein_g": 11.0,
+    "carbs_g": 3.0,
+    "fat_g": 23.0,
+    "default_portion_g": 50,
+    "portions": [
+      {
+        "label_key": "unit",
+        "grams": 50
+      }
+    ],
+    "names": {
+      "pt-BR": "Salsicha (hot dog)",
+      "en": "Hot dog sausage",
+      "es": "Salchicha tipo frankfurt"
+    }
+  },
+  {
+    "slug": "heavy-cream",
+    "category": "dairy",
+    "kcal": 221.0,
+    "protein_g": 1.5,
+    "carbs_g": 4.5,
+    "fat_g": 22.5,
+    "default_portion_g": 30,
+    "portions": [
+      {
+        "label_key": "tbsp",
+        "grams": 30
+      }
+    ],
+    "names": {
+      "pt-BR": "Creme de leite",
+      "en": "Heavy cream",
+      "es": "Nata / crema de leche"
+    }
+  },
+  {
+    "slug": "condensed-milk",
+    "category": "dairy",
+    "kcal": 313.0,
+    "protein_g": 7.7,
+    "carbs_g": 57.0,
+    "fat_g": 6.7,
+    "default_portion_g": 20,
+    "portions": [
+      {
+        "label_key": "tbsp",
+        "grams": 20
+      }
+    ],
+    "names": {
+      "pt-BR": "Leite condensado",
+      "en": "Condensed milk",
+      "es": "Leche condensada"
+    }
+  },
+  {
+    "slug": "semi-cured-cheese",
+    "category": "dairy",
+    "kcal": 360.0,
+    "protein_g": 22.7,
+    "carbs_g": 1.9,
+    "fat_g": 29.1,
+    "default_portion_g": 30,
+    "portions": [
+      {
+        "label_key": "portion",
+        "grams": 30
+      }
+    ],
+    "names": {
+      "pt-BR": "Queijo tipo prato",
+      "en": "Semi-cured cheese",
+      "es": "Queso semicurado"
+    }
+  },
+  {
+    "slug": "beer",
+    "category": "beverage",
+    "kcal": 41.0,
+    "protein_g": 0.6,
+    "carbs_g": 3.3,
+    "fat_g": 0.0,
+    "default_portion_g": 350,
+    "portions": [
+      {
+        "label_key": "glass",
+        "grams": 350
+      }
+    ],
+    "names": {
+      "pt-BR": "Cerveja pilsen",
+      "en": "Pilsner beer",
+      "es": "Cerveza"
+    }
+  },
+  {
+    "slug": "cola-soda",
+    "category": "beverage",
+    "kcal": 34.0,
+    "protein_g": 0.0,
+    "carbs_g": 8.7,
+    "fat_g": 0.0,
+    "default_portion_g": 350,
+    "portions": [
+      {
+        "label_key": "glass",
+        "grams": 350
+      }
+    ],
+    "names": {
+      "pt-BR": "Refrigerante de cola",
+      "en": "Cola soda",
+      "es": "Refresco de cola"
+    }
+  },
+  {
+    "slug": "mate-tea",
+    "category": "beverage",
+    "kcal": 3.0,
+    "protein_g": 0.0,
+    "carbs_g": 0.6,
+    "fat_g": 0.1,
+    "default_portion_g": 200,
+    "portions": [
+      {
+        "label_key": "glass",
+        "grams": 200
+      }
+    ],
+    "names": {
+      "pt-BR": "Chá mate",
+      "en": "Mate tea",
+      "es": "Té de mate"
+    }
+  },
+  {
+    "slug": "sports-drink",
+    "category": "beverage",
+    "kcal": 26.0,
+    "protein_g": 0.0,
+    "carbs_g": 6.4,
+    "fat_g": 0.0,
+    "default_portion_g": 500,
+    "portions": [
+      {
+        "label_key": "glass",
+        "grams": 500
+      }
+    ],
+    "names": {
+      "pt-BR": "Bebida isotônica",
+      "en": "Sports drink",
+      "es": "Bebida isotónica"
+    }
+  },
+  {
+    "slug": "black-tea",
+    "category": "beverage",
+    "kcal": 2.0,
+    "protein_g": 0.0,
+    "carbs_g": 0.6,
+    "fat_g": 0.0,
+    "default_portion_g": 200,
+    "portions": [
+      {
+        "label_key": "glass",
+        "grams": 200
+      }
+    ],
+    "names": {
+      "pt-BR": "Chá preto",
+      "en": "Black tea",
+      "es": "Té negro"
+    }
+  },
+  {
+    "slug": "milk-chocolate",
+    "category": "sweet",
+    "kcal": 540.0,
+    "protein_g": 7.2,
+    "carbs_g": 59.6,
+    "fat_g": 30.3,
+    "default_portion_g": 25,
+    "portions": [
+      {
+        "label_key": "portion",
+        "grams": 25
+      }
+    ],
+    "names": {
+      "pt-BR": "Chocolate ao leite",
+      "en": "Milk chocolate",
+      "es": "Chocolate con leche"
+    }
+  },
+  {
+    "slug": "dulce-de-leche",
+    "category": "sweet",
+    "kcal": 306.0,
+    "protein_g": 5.5,
+    "carbs_g": 59.5,
+    "fat_g": 6.0,
+    "default_portion_g": 20,
+    "portions": [
+      {
+        "label_key": "tbsp",
+        "grams": 20
+      }
+    ],
+    "names": {
+      "pt-BR": "Doce de leite",
+      "en": "Dulce de leche",
+      "es": "Dulce de leche"
+    }
+  },
+  {
+    "slug": "sunflower-oil",
+    "category": "fat",
+    "kcal": 884.0,
+    "protein_g": 0.0,
+    "carbs_g": 0.0,
+    "fat_g": 100.0,
+    "default_portion_g": 10,
+    "portions": [
+      {
+        "label_key": "tbsp",
+        "grams": 10
+      }
+    ],
+    "names": {
+      "pt-BR": "Óleo de girassol",
+      "en": "Sunflower oil",
+      "es": "Aceite de girasol"
+    }
+  },
+  {
+    "slug": "cheese-bread",
+    "category": "carb",
+    "kcal": 363.0,
+    "protein_g": 5.1,
+    "carbs_g": 34.2,
+    "fat_g": 24.6,
+    "default_portion_g": 40,
+    "portions": [
+      {
+        "label_key": "unit",
+        "grams": 40
+      }
+    ],
+    "names": {
+      "pt-BR": "Pão de queijo",
+      "en": "Brazilian cheese bread",
+      "es": "Pan de queso brasileño"
+    }
+  },
+  {
+    "slug": "whole-wheat-bread",
+    "category": "carb",
+    "kcal": 253.0,
+    "protein_g": 9.4,
+    "carbs_g": 49.9,
+    "fat_g": 3.7,
+    "default_portion_g": 50,
+    "portions": [
+      {
+        "label_key": "slice",
+        "grams": 25
+      }
+    ],
+    "names": {
+      "pt-BR": "Pão de forma integral",
+      "en": "Whole wheat bread",
+      "es": "Pan integral de molde"
+    }
+  },
+  {
+    "slug": "spanish-omelette",
+    "category": "prepared",
+    "kcal": 126,
+    "protein_g": 7,
+    "carbs_g": 9,
+    "fat_g": 7,
+    "default_portion_g": 150,
+    "portions": [
+      {
+        "label_key": "portion",
+        "grams": 150
+      }
+    ],
+    "names": {
+      "pt-BR": "Tortilha espanhola (de batata)",
+      "en": "Spanish potato omelette",
+      "es": "Tortilla de patatas"
+    }
+  },
+  {
+    "slug": "mixed-paella",
+    "category": "prepared",
+    "kcal": 130,
+    "protein_g": 7,
+    "carbs_g": 18,
+    "fat_g": 3.5,
+    "default_portion_g": 300,
+    "portions": [
+      {
+        "label_key": "portion",
+        "grams": 300
+      }
+    ],
+    "names": {
+      "pt-BR": "Paella mista",
+      "en": "Mixed paella",
+      "es": "Paella mixta"
+    }
+  },
+  {
+    "slug": "ham-croquettes",
+    "category": "prepared",
+    "kcal": 255,
+    "protein_g": 8,
+    "carbs_g": 22,
+    "fat_g": 15,
+    "default_portion_g": 60,
+    "portions": [
+      {
+        "label_key": "unit",
+        "grams": 30
+      }
+    ],
+    "names": {
+      "pt-BR": "Croquete de presunto",
+      "en": "Ham croquette",
+      "es": "Croquetas de jamón"
+    }
+  },
+  {
+    "slug": "gazpacho",
+    "category": "prepared",
+    "kcal": 36,
+    "protein_g": 1,
+    "carbs_g": 4,
+    "fat_g": 1.8,
+    "default_portion_g": 200,
+    "portions": [
+      {
+        "label_key": "glass",
+        "grams": 200
+      }
+    ],
+    "names": {
+      "pt-BR": "Gaspacho",
+      "en": "Gazpacho",
+      "es": "Gazpacho"
+    }
+  },
+  {
+    "slug": "serrano-ham",
+    "category": "protein",
+    "kcal": 241,
+    "protein_g": 31,
+    "carbs_g": 0.5,
+    "fat_g": 13,
+    "default_portion_g": 40,
+    "portions": [
+      {
+        "label_key": "slice",
+        "grams": 20
+      }
+    ],
+    "names": {
+      "pt-BR": "Presunto serrano",
+      "en": "Serrano ham",
+      "es": "Jamón serrano"
+    }
+  },
+  {
+    "slug": "iberian-ham",
+    "category": "protein",
+    "kcal": 298,
+    "protein_g": 34,
+    "carbs_g": 0.5,
+    "fat_g": 18,
+    "default_portion_g": 40,
+    "portions": [
+      {
+        "label_key": "slice",
+        "grams": 20
+      }
+    ],
+    "names": {
+      "pt-BR": "Presunto ibérico",
+      "en": "Iberian ham",
+      "es": "Jamón ibérico"
+    }
+  },
+  {
+    "slug": "tuna-empanada",
+    "category": "prepared",
+    "kcal": 261,
+    "protein_g": 9,
+    "carbs_g": 26,
+    "fat_g": 13.5,
+    "default_portion_g": 120,
+    "portions": [
+      {
+        "label_key": "slice",
+        "grams": 120
+      }
+    ],
+    "names": {
+      "pt-BR": "Empanada de atum",
+      "en": "Tuna empanada (Galician pie)",
+      "es": "Empanada de atún"
+    }
+  },
+  {
+    "slug": "asturian-fabada",
+    "category": "prepared",
+    "kcal": 138,
+    "protein_g": 6,
+    "carbs_g": 12,
+    "fat_g": 7,
+    "default_portion_g": 300,
+    "portions": [
+      {
+        "label_key": "portion",
+        "grams": 300
+      }
+    ],
+    "names": {
+      "pt-BR": "Fabada asturiana",
+      "en": "Asturian bean stew (fabada)",
+      "es": "Fabada asturiana"
+    }
+  },
+  {
+    "slug": "madrid-cocido",
+    "category": "prepared",
+    "kcal": 115,
+    "protein_g": 8,
+    "carbs_g": 9,
+    "fat_g": 5.5,
+    "default_portion_g": 300,
+    "portions": [
+      {
+        "label_key": "portion",
+        "grams": 300
+      }
+    ],
+    "names": {
+      "pt-BR": "Cozido madrileno",
+      "en": "Madrid chickpea stew (cocido)",
+      "es": "Cocido madrileño"
+    }
+  },
+  {
+    "slug": "stewed-lentils",
+    "category": "prepared",
+    "kcal": 120,
+    "protein_g": 7,
+    "carbs_g": 15,
+    "fat_g": 3.5,
+    "default_portion_g": 300,
+    "portions": [
+      {
+        "label_key": "portion",
+        "grams": 300
+      }
+    ],
+    "names": {
+      "pt-BR": "Lentilhas guisadas",
+      "en": "Stewed lentils",
+      "es": "Lentejas guisadas"
+    }
+  },
+  {
+    "slug": "russian-salad",
+    "category": "prepared",
+    "kcal": 153,
+    "protein_g": 3,
+    "carbs_g": 10,
+    "fat_g": 11,
+    "default_portion_g": 150,
+    "portions": [
+      {
+        "label_key": "portion",
+        "grams": 150
+      }
+    ],
+    "names": {
+      "pt-BR": "Salada russa (com maionese)",
+      "en": "Russian salad",
+      "es": "Ensaladilla rusa"
+    }
+  },
+  {
+    "slug": "meatballs-in-sauce",
+    "category": "prepared",
+    "kcal": 180,
+    "protein_g": 12,
+    "carbs_g": 6,
+    "fat_g": 12,
+    "default_portion_g": 200,
+    "portions": [
+      {
+        "label_key": "portion",
+        "grams": 200
+      }
+    ],
+    "names": {
+      "pt-BR": "Almôndegas ao molho",
+      "en": "Meatballs in sauce",
+      "es": "Albóndigas en salsa"
+    }
+  },
+  {
+    "slug": "cheese-pizza",
+    "category": "prepared",
+    "kcal": 267,
+    "protein_g": 11,
+    "carbs_g": 31,
+    "fat_g": 11,
+    "default_portion_g": 125,
+    "portions": [
+      {
+        "label_key": "slice",
+        "grams": 125
+      }
+    ],
+    "names": {
+      "pt-BR": "Pizza de mussarela",
+      "en": "Cheese pizza",
+      "es": "Pizza de queso"
+    }
+  },
+  {
+    "slug": "pepperoni-pizza",
+    "category": "prepared",
+    "kcal": 294,
+    "protein_g": 12,
+    "carbs_g": 33,
+    "fat_g": 13,
+    "default_portion_g": 140,
+    "portions": [
+      {
+        "label_key": "slice",
+        "grams": 140
+      }
+    ],
+    "names": {
+      "pt-BR": "Pizza de calabresa",
+      "en": "Pepperoni pizza",
+      "es": "Pizza de pepperoni"
+    }
+  },
+  {
+    "slug": "hamburger",
+    "category": "prepared",
+    "kcal": 258,
+    "protein_g": 13,
+    "carbs_g": 30,
+    "fat_g": 9.6,
+    "default_portion_g": 200,
+    "portions": [
+      {
+        "label_key": "unit",
+        "grams": 200
+      }
+    ],
+    "names": {
+      "pt-BR": "Hambúrguer (com pão)",
+      "en": "Hamburger",
+      "es": "Hamburguesa"
+    }
+  },
+  {
+    "slug": "cheeseburger",
+    "category": "prepared",
+    "kcal": 272,
+    "protein_g": 14,
+    "carbs_g": 27,
+    "fat_g": 12,
+    "default_portion_g": 220,
+    "portions": [
+      {
+        "label_key": "unit",
+        "grams": 220
+      }
+    ],
+    "names": {
+      "pt-BR": "Cheeseburger (x-burger)",
+      "en": "Cheeseburger",
+      "es": "Hamburguesa con queso"
+    }
+  },
+  {
+    "slug": "bolognese-lasagna",
+    "category": "prepared",
+    "kcal": 140,
+    "protein_g": 7.4,
+    "carbs_g": 14,
+    "fat_g": 6.1,
+    "default_portion_g": 250,
+    "portions": [
+      {
+        "label_key": "portion",
+        "grams": 250
+      }
+    ],
+    "names": {
+      "pt-BR": "Lasanha à bolonhesa",
+      "en": "Bolognese lasagna",
+      "es": "Lasaña boloñesa"
+    }
+  },
+  {
+    "slug": "bolognese-pasta",
+    "category": "prepared",
+    "kcal": 120,
+    "protein_g": 5.1,
+    "carbs_g": 18.6,
+    "fat_g": 2.9,
+    "default_portion_g": 250,
+    "portions": [
+      {
+        "label_key": "portion",
+        "grams": 250
+      }
+    ],
+    "names": {
+      "pt-BR": "Macarrão à bolonhesa",
+      "en": "Bolognese pasta",
+      "es": "Espaguetis a la boloñesa"
+    }
+  },
+  {
+    "slug": "mixed-kebab",
+    "category": "prepared",
+    "kcal": 215,
+    "protein_g": 12,
+    "carbs_g": 20,
+    "fat_g": 10,
+    "default_portion_g": 350,
+    "portions": [
+      {
+        "label_key": "unit",
+        "grams": 350
+      }
+    ],
+    "names": {
+      "pt-BR": "Kebab misto (dürüm)",
+      "en": "Mixed kebab wrap",
+      "es": "Kebab mixto (dürüm)"
+    }
+  },
+  {
+    "slug": "chicken-nuggets",
+    "category": "prepared",
+    "kcal": 295,
+    "protein_g": 15,
+    "carbs_g": 16,
+    "fat_g": 19,
+    "default_portion_g": 100,
+    "portions": [
+      {
+        "label_key": "unit",
+        "grams": 20
+      }
+    ],
+    "names": {
+      "pt-BR": "Nuggets de frango",
+      "en": "Chicken nuggets",
+      "es": "Nuggets de pollo"
+    }
+  },
+  {
+    "slug": "hot-dog",
+    "category": "prepared",
+    "kcal": 224,
+    "protein_g": 8,
+    "carbs_g": 24,
+    "fat_g": 10.5,
+    "default_portion_g": 130,
+    "portions": [
+      {
+        "label_key": "unit",
+        "grams": 130
+      }
+    ],
+    "names": {
+      "pt-BR": "Cachorro-quente",
+      "en": "Hot dog",
+      "es": "Perrito caliente"
+    }
+  },
+  {
+    "slug": "feijoada",
+    "category": "prepared",
+    "kcal": 117,
+    "protein_g": 8.7,
+    "carbs_g": 11.6,
+    "fat_g": 6.5,
+    "default_portion_g": 250,
+    "portions": [
+      {
+        "label_key": "portion",
+        "grams": 250
+      }
+    ],
+    "names": {
+      "pt-BR": "Feijoada",
+      "en": "Feijoada (Brazilian black bean stew)",
+      "es": "Feijoada (guiso brasileño)"
+    }
+  },
+  {
+    "slug": "fried-cheese-pastel",
+    "category": "prepared",
+    "kcal": 422,
+    "protein_g": 8.7,
+    "carbs_g": 48.1,
+    "fat_g": 22.7,
+    "default_portion_g": 100,
+    "portions": [
+      {
+        "label_key": "unit",
+        "grams": 100
+      }
+    ],
+    "names": {
+      "pt-BR": "Pastel de queijo frito",
+      "en": "Fried cheese pastel",
+      "es": "Pastel de queso frito"
+    }
+  },
+  {
+    "slug": "beef-stroganoff",
+    "category": "prepared",
+    "kcal": 173,
+    "protein_g": 15,
+    "carbs_g": 3.8,
+    "fat_g": 10.6,
+    "default_portion_g": 200,
+    "portions": [
+      {
+        "label_key": "portion",
+        "grams": 200
+      }
+    ],
+    "names": {
+      "pt-BR": "Estrogonofe de carne",
+      "en": "Beef stroganoff",
+      "es": "Strogonoff de ternera"
+    }
+  },
+  {
+    "slug": "chicken-stroganoff",
+    "category": "prepared",
+    "kcal": 157,
+    "protein_g": 17,
+    "carbs_g": 2.6,
+    "fat_g": 8.5,
+    "default_portion_g": 200,
+    "portions": [
+      {
+        "label_key": "portion",
+        "grams": 200
+      }
+    ],
+    "names": {
+      "pt-BR": "Estrogonofe de frango",
+      "en": "Chicken stroganoff",
+      "es": "Strogonoff de pollo"
+    }
+  },
+  {
+    "slug": "cuscuz-paulista",
+    "category": "prepared",
+    "kcal": 142,
+    "protein_g": 4.6,
+    "carbs_g": 22.5,
+    "fat_g": 4.2,
+    "default_portion_g": 150,
+    "portions": [
+      {
+        "label_key": "slice",
+        "grams": 150
+      }
+    ],
+    "names": {
+      "pt-BR": "Cuscuz paulista",
+      "en": "Cuscuz paulista (corn loaf)",
+      "es": "Cuscús paulista"
+    }
+  },
+  {
+    "slug": "corn-couscous",
+    "category": "carb",
+    "kcal": 113,
+    "protein_g": 2.2,
+    "carbs_g": 25.3,
+    "fat_g": 0.7,
+    "default_portion_g": 135,
+    "portions": [
+      {
+        "label_key": "portion",
+        "grams": 135
+      }
+    ],
+    "names": {
+      "pt-BR": "Cuscuz de milho cozido",
+      "en": "Cooked corn couscous",
+      "es": "Cuscús de maíz cocido"
+    }
+  },
+  {
+    "slug": "chicken-salpicao",
+    "category": "prepared",
+    "kcal": 148,
+    "protein_g": 14,
+    "carbs_g": 4.5,
+    "fat_g": 8.2,
+    "default_portion_g": 150,
+    "portions": [
+      {
+        "label_key": "portion",
+        "grams": 150
+      }
+    ],
+    "names": {
+      "pt-BR": "Salpicão de frango",
+      "en": "Chicken salpicão salad",
+      "es": "Salpicón de pollo"
+    }
+  },
+  {
+    "slug": "tropeiro-beans",
+    "category": "prepared",
+    "kcal": 152,
+    "protein_g": 11,
+    "carbs_g": 17,
+    "fat_g": 4.4,
+    "default_portion_g": 200,
+    "portions": [
+      {
+        "label_key": "portion",
+        "grams": 200
+      }
+    ],
+    "names": {
+      "pt-BR": "Feijão tropeiro",
+      "en": "Tropeiro beans",
+      "es": "Frijoles tropeiro"
+    }
+  },
+  {
+    "slug": "baiao-de-dois",
+    "category": "prepared",
+    "kcal": 136,
+    "protein_g": 6.9,
+    "carbs_g": 19.5,
+    "fat_g": 3.4,
+    "default_portion_g": 250,
+    "portions": [
+      {
+        "label_key": "portion",
+        "grams": 250
+      }
+    ],
+    "names": {
+      "pt-BR": "Baião de dois",
+      "en": "Baião de dois (rice and beans)",
+      "es": "Baião de dois (arroz con frijoles)"
+    }
+  },
+  {
+    "slug": "fried-coxinha",
+    "category": "prepared",
+    "kcal": 283,
+    "protein_g": 9.6,
+    "carbs_g": 34.5,
+    "fat_g": 11.8,
+    "default_portion_g": 90,
+    "portions": [
+      {
+        "label_key": "unit",
+        "grams": 90
+      }
+    ],
+    "names": {
+      "pt-BR": "Coxinha de frango frita",
+      "en": "Fried chicken coxinha",
+      "es": "Coxinha de pollo frita"
+    }
+  },
+  {
+    "slug": "fried-kibbeh",
+    "category": "prepared",
+    "kcal": 254,
+    "protein_g": 14.9,
+    "carbs_g": 12.3,
+    "fat_g": 15.8,
+    "default_portion_g": 100,
+    "portions": [
+      {
+        "label_key": "unit",
+        "grams": 100
+      }
+    ],
+    "names": {
+      "pt-BR": "Quibe frito",
+      "en": "Fried kibbeh",
+      "es": "Kibe frito"
+    }
+  },
+  {
+    "slug": "chocolate-cake",
+    "category": "sweet",
+    "kcal": 410,
+    "protein_g": 6,
+    "carbs_g": 54,
+    "fat_g": 18,
+    "default_portion_g": 60,
+    "portions": [
+      {
+        "label_key": "slice",
+        "grams": 60
+      }
+    ],
+    "names": {
+      "pt-BR": "Bolo de chocolate (fatia)",
+      "en": "Chocolate cake",
+      "es": "Bizcocho de chocolate"
+    }
+  },
+  {
+    "slug": "coconut-cake",
+    "category": "sweet",
+    "kcal": 333,
+    "protein_g": 5.7,
+    "carbs_g": 52.3,
+    "fat_g": 11.3,
+    "default_portion_g": 60,
+    "portions": [
+      {
+        "label_key": "slice",
+        "grams": 60
+      }
+    ],
+    "names": {
+      "pt-BR": "Bolo de coco (fatia)",
+      "en": "Coconut cake",
+      "es": "Bizcocho de coco"
+    }
+  },
+  {
+    "slug": "corn-cake",
+    "category": "sweet",
+    "kcal": 311,
+    "protein_g": 4.8,
+    "carbs_g": 45.1,
+    "fat_g": 12.4,
+    "default_portion_g": 60,
+    "portions": [
+      {
+        "label_key": "slice",
+        "grams": 60
+      }
+    ],
+    "names": {
+      "pt-BR": "Bolo de milho (fatia)",
+      "en": "Corn cake",
+      "es": "Bizcocho de maíz"
+    }
+  },
+  {
+    "slug": "cassava-cake",
+    "category": "sweet",
+    "kcal": 324,
+    "protein_g": 4.4,
+    "carbs_g": 47.9,
+    "fat_g": 12.7,
+    "default_portion_g": 60,
+    "portions": [
+      {
+        "label_key": "slice",
+        "grams": 60
+      }
+    ],
+    "names": {
+      "pt-BR": "Bolo de aipim (mandioca)",
+      "en": "Cassava cake",
+      "es": "Bizcocho de yuca"
+    }
+  }
 ]
