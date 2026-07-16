@@ -1,0 +1,2419 @@
+[
+  {
+    "slug": "tortilla-patatas-casera",
+    "servings": 4,
+    "tags": [
+      "veggie",
+      "budget"
+    ],
+    "names": {
+      "pt-BR": "Tortilha espanhola caseira",
+      "en": "Homemade Spanish omelette",
+      "es": "Tortilla de patatas casera"
+    },
+    "ingredients": [
+      {
+        "food": "potato",
+        "grams": 300
+      },
+      {
+        "food": "egg",
+        "grams": 200
+      },
+      {
+        "food": "onion",
+        "grams": 50
+      },
+      {
+        "food": "olive-oil",
+        "grams": 20
+      }
+    ]
+  },
+  {
+    "slug": "paella-de-pollo",
+    "servings": 3,
+    "tags": [
+      "budget"
+    ],
+    "names": {
+      "pt-BR": "Paella de frango",
+      "en": "Chicken paella",
+      "es": "Paella de pollo"
+    },
+    "ingredients": [
+      {
+        "food": "white-rice",
+        "grams": 400
+      },
+      {
+        "food": "chicken-thigh",
+        "grams": 250
+      },
+      {
+        "food": "bell-pepper",
+        "grams": 80
+      },
+      {
+        "food": "onion",
+        "grams": 60
+      },
+      {
+        "food": "garlic",
+        "grams": 5
+      },
+      {
+        "food": "olive-oil",
+        "grams": 20
+      }
+    ]
+  },
+  {
+    "slug": "paella-de-marisco",
+    "servings": 3,
+    "tags": [
+      "protein"
+    ],
+    "names": {
+      "pt-BR": "Paella de frutos do mar",
+      "en": "Seafood paella",
+      "es": "Paella de marisco"
+    },
+    "ingredients": [
+      {
+        "food": "white-rice",
+        "grams": 400
+      },
+      {
+        "food": "shrimp",
+        "grams": 200
+      },
+      {
+        "food": "hake",
+        "grams": 150
+      },
+      {
+        "food": "bell-pepper",
+        "grams": 80
+      },
+      {
+        "food": "onion",
+        "grams": 60
+      },
+      {
+        "food": "olive-oil",
+        "grams": 20
+      }
+    ]
+  },
+  {
+    "slug": "gazpacho-casero",
+    "servings": 4,
+    "tags": [
+      "veggie",
+      "quick"
+    ],
+    "names": {
+      "pt-BR": "Gaspacho caseiro",
+      "en": "Homemade gazpacho",
+      "es": "Gazpacho casero"
+    },
+    "ingredients": [
+      {
+        "food": "tomato",
+        "grams": 500
+      },
+      {
+        "food": "cucumber",
+        "grams": 100
+      },
+      {
+        "food": "bell-pepper",
+        "grams": 60
+      },
+      {
+        "food": "onion",
+        "grams": 40
+      },
+      {
+        "food": "garlic",
+        "grams": 5
+      },
+      {
+        "food": "olive-oil",
+        "grams": 30
+      }
+    ]
+  },
+  {
+    "slug": "lentejas-caseras",
+    "servings": 2,
+    "tags": [
+      "budget",
+      "veggie"
+    ],
+    "names": {
+      "pt-BR": "Lentilhas guisadas caseiras",
+      "en": "Homemade stewed lentils",
+      "es": "Lentejas guisadas caseras"
+    },
+    "ingredients": [
+      {
+        "food": "lentils",
+        "grams": 200
+      },
+      {
+        "food": "carrot",
+        "grams": 80
+      },
+      {
+        "food": "potato",
+        "grams": 100
+      },
+      {
+        "food": "onion",
+        "grams": 60
+      },
+      {
+        "food": "garlic",
+        "grams": 5
+      },
+      {
+        "food": "olive-oil",
+        "grams": 15
+      }
+    ]
+  },
+  {
+    "slug": "cocido-de-garbanzos",
+    "servings": 3,
+    "tags": [
+      "budget"
+    ],
+    "names": {
+      "pt-BR": "Cozido de grão-de-bico",
+      "en": "Chickpea stew (cocido)",
+      "es": "Cocido de garbanzos"
+    },
+    "ingredients": [
+      {
+        "food": "chickpeas",
+        "grams": 300
+      },
+      {
+        "food": "chicken-thigh",
+        "grams": 150
+      },
+      {
+        "food": "pork-sausage",
+        "grams": 80
+      },
+      {
+        "food": "carrot",
+        "grams": 100
+      },
+      {
+        "food": "potato",
+        "grams": 150
+      },
+      {
+        "food": "cabbage",
+        "grams": 100
+      }
+    ]
+  },
+  {
+    "slug": "fabada-casera",
+    "servings": 3,
+    "tags": [],
+    "names": {
+      "pt-BR": "Fabada caseira",
+      "en": "Homemade fabada",
+      "es": "Fabada casera"
+    },
+    "ingredients": [
+      {
+        "food": "white-beans",
+        "grams": 300
+      },
+      {
+        "food": "bacon",
+        "grams": 60
+      },
+      {
+        "food": "pork-sausage",
+        "grams": 100
+      },
+      {
+        "food": "onion",
+        "grams": 50
+      }
+    ]
+  },
+  {
+    "slug": "pisto-manchego",
+    "servings": 2,
+    "tags": [
+      "veggie"
+    ],
+    "names": {
+      "pt-BR": "Pisto manchego (refogado de legumes)",
+      "en": "Pisto (Spanish ratatouille)",
+      "es": "Pisto manchego"
+    },
+    "ingredients": [
+      {
+        "food": "zucchini",
+        "grams": 200
+      },
+      {
+        "food": "eggplant",
+        "grams": 150
+      },
+      {
+        "food": "bell-pepper",
+        "grams": 100
+      },
+      {
+        "food": "tomato",
+        "grams": 200
+      },
+      {
+        "food": "onion",
+        "grams": 80
+      },
+      {
+        "food": "olive-oil",
+        "grams": 25
+      }
+    ]
+  },
+  {
+    "slug": "pollo-al-ajillo",
+    "servings": 2,
+    "tags": [
+      "protein",
+      "quick"
+    ],
+    "names": {
+      "pt-BR": "Frango ao alho",
+      "en": "Garlic chicken",
+      "es": "Pollo al ajillo"
+    },
+    "ingredients": [
+      {
+        "food": "chicken-thigh",
+        "grams": 400
+      },
+      {
+        "food": "garlic",
+        "grams": 15
+      },
+      {
+        "food": "olive-oil",
+        "grams": 25
+      }
+    ]
+  },
+  {
+    "slug": "merluza-con-verduras",
+    "servings": 2,
+    "tags": [
+      "protein",
+      "quick"
+    ],
+    "names": {
+      "pt-BR": "Merluza grelhada com legumes",
+      "en": "Grilled hake with vegetables",
+      "es": "Merluza a la plancha con verduras"
+    },
+    "ingredients": [
+      {
+        "food": "hake",
+        "grams": 300
+      },
+      {
+        "food": "zucchini",
+        "grams": 150
+      },
+      {
+        "food": "carrot",
+        "grams": 100
+      },
+      {
+        "food": "olive-oil",
+        "grams": 15
+      }
+    ]
+  },
+  {
+    "slug": "dorada-al-horno",
+    "servings": 2,
+    "tags": [
+      "protein"
+    ],
+    "names": {
+      "pt-BR": "Dourada assada com batatas",
+      "en": "Baked gilthead bream",
+      "es": "Dorada al horno con patatas"
+    },
+    "ingredients": [
+      {
+        "food": "gilthead-bream",
+        "grams": 350
+      },
+      {
+        "food": "potato",
+        "grams": 200
+      },
+      {
+        "food": "onion",
+        "grams": 60
+      },
+      {
+        "food": "olive-oil",
+        "grams": 20
+      }
+    ]
+  },
+  {
+    "slug": "bacalao-con-tomate",
+    "servings": 2,
+    "tags": [
+      "protein"
+    ],
+    "names": {
+      "pt-BR": "Bacalhau com tomate",
+      "en": "Cod in tomato sauce",
+      "es": "Bacalao con tomate"
+    },
+    "ingredients": [
+      {
+        "food": "cod",
+        "grams": 300
+      },
+      {
+        "food": "tomato",
+        "grams": 250
+      },
+      {
+        "food": "onion",
+        "grams": 60
+      },
+      {
+        "food": "olive-oil",
+        "grams": 20
+      }
+    ]
+  },
+  {
+    "slug": "albondigas-caseras",
+    "servings": 3,
+    "tags": [
+      "protein"
+    ],
+    "names": {
+      "pt-BR": "Almôndegas caseiras ao molho",
+      "en": "Homemade meatballs in sauce",
+      "es": "Albóndigas caseras en salsa"
+    },
+    "ingredients": [
+      {
+        "food": "ground-beef",
+        "grams": 400
+      },
+      {
+        "food": "egg",
+        "grams": 50
+      },
+      {
+        "food": "bread",
+        "grams": 30
+      },
+      {
+        "food": "onion",
+        "grams": 60
+      },
+      {
+        "food": "tomato",
+        "grams": 200
+      },
+      {
+        "food": "olive-oil",
+        "grams": 15
+      }
+    ]
+  },
+  {
+    "slug": "pimientos-rellenos",
+    "servings": 2,
+    "tags": [],
+    "names": {
+      "pt-BR": "Pimentões recheados",
+      "en": "Stuffed bell peppers",
+      "es": "Pimientos rellenos"
+    },
+    "ingredients": [
+      {
+        "food": "bell-pepper",
+        "grams": 300
+      },
+      {
+        "food": "ground-beef",
+        "grams": 250
+      },
+      {
+        "food": "white-rice",
+        "grams": 100
+      },
+      {
+        "food": "onion",
+        "grams": 50
+      },
+      {
+        "food": "mozzarella",
+        "grams": 60
+      }
+    ]
+  },
+  {
+    "slug": "ensalada-mixta",
+    "servings": 2,
+    "tags": [
+      "quick",
+      "protein"
+    ],
+    "names": {
+      "pt-BR": "Salada mista com atum e ovo",
+      "en": "Mixed salad with tuna and egg",
+      "es": "Ensalada mixta con atún y huevo"
+    },
+    "ingredients": [
+      {
+        "food": "lettuce",
+        "grams": 150
+      },
+      {
+        "food": "tomato",
+        "grams": 150
+      },
+      {
+        "food": "onion",
+        "grams": 40
+      },
+      {
+        "food": "canned-tuna",
+        "grams": 80
+      },
+      {
+        "food": "boiled-egg",
+        "grams": 100
+      },
+      {
+        "food": "olive-oil",
+        "grams": 20
+      }
+    ]
+  },
+  {
+    "slug": "tortilla-francesa",
+    "servings": 1,
+    "tags": [
+      "quick",
+      "protein"
+    ],
+    "names": {
+      "pt-BR": "Omelete simples",
+      "en": "Plain omelette",
+      "es": "Tortilla francesa"
+    },
+    "ingredients": [
+      {
+        "food": "egg",
+        "grams": 150
+      },
+      {
+        "food": "olive-oil",
+        "grams": 5
+      }
+    ]
+  },
+  {
+    "slug": "revuelto-de-espinacas",
+    "servings": 1,
+    "tags": [
+      "quick",
+      "veggie"
+    ],
+    "names": {
+      "pt-BR": "Ovos mexidos com espinafre",
+      "en": "Scrambled eggs with spinach",
+      "es": "Revuelto de espinacas"
+    },
+    "ingredients": [
+      {
+        "food": "egg",
+        "grams": 150
+      },
+      {
+        "food": "spinach",
+        "grams": 100
+      },
+      {
+        "food": "olive-oil",
+        "grams": 10
+      }
+    ]
+  },
+  {
+    "slug": "garbanzos-con-espinacas",
+    "servings": 2,
+    "tags": [
+      "veggie",
+      "budget"
+    ],
+    "names": {
+      "pt-BR": "Grão-de-bico com espinafre",
+      "en": "Chickpeas with spinach",
+      "es": "Garbanzos con espinacas"
+    },
+    "ingredients": [
+      {
+        "food": "chickpeas",
+        "grams": 250
+      },
+      {
+        "food": "spinach",
+        "grams": 150
+      },
+      {
+        "food": "garlic",
+        "grams": 5
+      },
+      {
+        "food": "olive-oil",
+        "grams": 15
+      }
+    ]
+  },
+  {
+    "slug": "crema-de-calabacin",
+    "servings": 3,
+    "tags": [
+      "veggie"
+    ],
+    "names": {
+      "pt-BR": "Creme de abobrinha",
+      "en": "Zucchini cream soup",
+      "es": "Crema de calabacín"
+    },
+    "ingredients": [
+      {
+        "food": "zucchini",
+        "grams": 400
+      },
+      {
+        "food": "potato",
+        "grams": 150
+      },
+      {
+        "food": "onion",
+        "grams": 60
+      },
+      {
+        "food": "whole-milk",
+        "grams": 100
+      },
+      {
+        "food": "olive-oil",
+        "grams": 15
+      }
+    ]
+  },
+  {
+    "slug": "salmon-con-brocoli",
+    "servings": 2,
+    "tags": [
+      "protein",
+      "quick"
+    ],
+    "names": {
+      "pt-BR": "Salmão grelhado com brócolis",
+      "en": "Grilled salmon with broccoli",
+      "es": "Salmón a la plancha con brócoli"
+    },
+    "ingredients": [
+      {
+        "food": "salmon",
+        "grams": 250
+      },
+      {
+        "food": "broccoli",
+        "grams": 200
+      },
+      {
+        "food": "olive-oil",
+        "grams": 10
+      }
+    ]
+  },
+  {
+    "slug": "pollo-asado-con-patatas",
+    "servings": 3,
+    "tags": [
+      "budget"
+    ],
+    "names": {
+      "pt-BR": "Frango assado com batatas",
+      "en": "Roast chicken with potatoes",
+      "es": "Pollo asado con patatas"
+    },
+    "ingredients": [
+      {
+        "food": "chicken-thigh",
+        "grams": 500
+      },
+      {
+        "food": "potato",
+        "grams": 400
+      },
+      {
+        "food": "garlic",
+        "grams": 10
+      },
+      {
+        "food": "olive-oil",
+        "grams": 20
+      }
+    ]
+  },
+  {
+    "slug": "arroz-a-la-cubana",
+    "servings": 1,
+    "tags": [
+      "quick",
+      "budget"
+    ],
+    "names": {
+      "pt-BR": "Arroz à cubana",
+      "en": "Cuban-style rice",
+      "es": "Arroz a la cubana"
+    },
+    "ingredients": [
+      {
+        "food": "white-rice",
+        "grams": 200
+      },
+      {
+        "food": "fried-egg",
+        "grams": 60
+      },
+      {
+        "food": "tomato",
+        "grams": 150
+      },
+      {
+        "food": "banana",
+        "grams": 80
+      }
+    ]
+  },
+  {
+    "slug": "bizcocho-de-yogur",
+    "servings": 8,
+    "tags": [
+      "sweet"
+    ],
+    "names": {
+      "pt-BR": "Bolo de iogurte (bizcocho)",
+      "en": "Yogurt cake",
+      "es": "Bizcocho de yogur"
+    },
+    "ingredients": [
+      {
+        "food": "plain-yogurt",
+        "grams": 125
+      },
+      {
+        "food": "egg",
+        "grams": 150
+      },
+      {
+        "food": "sugar",
+        "grams": 120
+      },
+      {
+        "food": "wheat-flour",
+        "grams": 180
+      },
+      {
+        "food": "sunflower-oil",
+        "grams": 80
+      }
+    ]
+  },
+  {
+    "slug": "sandwich-mixto",
+    "servings": 1,
+    "tags": [
+      "quick"
+    ],
+    "names": {
+      "pt-BR": "Misto quente",
+      "en": "Ham and cheese toastie",
+      "es": "Sándwich mixto"
+    },
+    "ingredients": [
+      {
+        "food": "bread",
+        "grams": 80
+      },
+      {
+        "food": "ham",
+        "grams": 40
+      },
+      {
+        "food": "semi-cured-cheese",
+        "grams": 40
+      },
+      {
+        "food": "butter",
+        "grams": 10
+      }
+    ]
+  },
+  {
+    "slug": "arroz-feijao-bife",
+    "servings": 1,
+    "tags": [
+      "budget"
+    ],
+    "names": {
+      "pt-BR": "Arroz, feijão e bife",
+      "en": "Rice, beans and steak",
+      "es": "Arroz, frijoles y bistec"
+    },
+    "ingredients": [
+      {
+        "food": "white-rice",
+        "grams": 150
+      },
+      {
+        "food": "beans",
+        "grams": 140
+      },
+      {
+        "food": "lean-beef",
+        "grams": 120
+      },
+      {
+        "food": "olive-oil",
+        "grams": 5
+      }
+    ]
+  },
+  {
+    "slug": "estrogonofe-carne-caseiro",
+    "servings": 3,
+    "tags": [],
+    "names": {
+      "pt-BR": "Estrogonofe de carne caseiro",
+      "en": "Homemade beef stroganoff",
+      "es": "Strogonoff de ternera casero"
+    },
+    "ingredients": [
+      {
+        "food": "lean-beef",
+        "grams": 400
+      },
+      {
+        "food": "heavy-cream",
+        "grams": 200
+      },
+      {
+        "food": "tomato",
+        "grams": 100
+      },
+      {
+        "food": "onion",
+        "grams": 60
+      }
+    ]
+  },
+  {
+    "slug": "estrogonofe-frango-caseiro",
+    "servings": 3,
+    "tags": [
+      "protein"
+    ],
+    "names": {
+      "pt-BR": "Estrogonofe de frango caseiro",
+      "en": "Homemade chicken stroganoff",
+      "es": "Strogonoff de pollo casero"
+    },
+    "ingredients": [
+      {
+        "food": "chicken-breast",
+        "grams": 400
+      },
+      {
+        "food": "heavy-cream",
+        "grams": 200
+      },
+      {
+        "food": "tomato",
+        "grams": 100
+      },
+      {
+        "food": "onion",
+        "grams": 60
+      }
+    ]
+  },
+  {
+    "slug": "frango-grelhado-legumes",
+    "servings": 2,
+    "tags": [
+      "protein",
+      "quick"
+    ],
+    "names": {
+      "pt-BR": "Frango grelhado com legumes",
+      "en": "Grilled chicken with vegetables",
+      "es": "Pollo a la plancha con verduras"
+    },
+    "ingredients": [
+      {
+        "food": "chicken-breast",
+        "grams": 300
+      },
+      {
+        "food": "broccoli",
+        "grams": 150
+      },
+      {
+        "food": "carrot",
+        "grams": 100
+      },
+      {
+        "food": "zucchini",
+        "grams": 100
+      },
+      {
+        "food": "olive-oil",
+        "grams": 10
+      }
+    ]
+  },
+  {
+    "slug": "escondidinho-de-carne",
+    "servings": 3,
+    "tags": [],
+    "names": {
+      "pt-BR": "Escondidinho de carne",
+      "en": "Brazilian shepherd's pie (cassava)",
+      "es": "Pastel de yuca con carne"
+    },
+    "ingredients": [
+      {
+        "food": "cassava",
+        "grams": 400
+      },
+      {
+        "food": "ground-beef",
+        "grams": 300
+      },
+      {
+        "food": "mozzarella",
+        "grams": 80
+      },
+      {
+        "food": "onion",
+        "grams": 60
+      }
+    ]
+  },
+  {
+    "slug": "panqueca-de-carne",
+    "servings": 3,
+    "tags": [
+      "budget"
+    ],
+    "names": {
+      "pt-BR": "Panqueca de carne",
+      "en": "Meat-filled pancakes",
+      "es": "Panqueques de carne"
+    },
+    "ingredients": [
+      {
+        "food": "wheat-flour",
+        "grams": 120
+      },
+      {
+        "food": "egg",
+        "grams": 100
+      },
+      {
+        "food": "whole-milk",
+        "grams": 240
+      },
+      {
+        "food": "ground-beef",
+        "grams": 250
+      },
+      {
+        "food": "tomato",
+        "grams": 150
+      }
+    ]
+  },
+  {
+    "slug": "macarrao-bolonhesa-caseiro",
+    "servings": 3,
+    "tags": [
+      "budget"
+    ],
+    "names": {
+      "pt-BR": "Macarrão à bolonhesa caseiro",
+      "en": "Homemade bolognese pasta",
+      "es": "Pasta boloñesa casera"
+    },
+    "ingredients": [
+      {
+        "food": "pasta",
+        "grams": 250
+      },
+      {
+        "food": "ground-beef",
+        "grams": 250
+      },
+      {
+        "food": "tomato",
+        "grams": 250
+      },
+      {
+        "food": "onion",
+        "grams": 60
+      },
+      {
+        "food": "olive-oil",
+        "grams": 10
+      }
+    ]
+  },
+  {
+    "slug": "virado-de-ovo-couve",
+    "servings": 1,
+    "tags": [
+      "budget"
+    ],
+    "names": {
+      "pt-BR": "Virado de feijão com ovo e couve",
+      "en": "Bean mash with egg and collard greens",
+      "es": "Frijoles con huevo y col"
+    },
+    "ingredients": [
+      {
+        "food": "beans",
+        "grams": 150
+      },
+      {
+        "food": "cornmeal",
+        "grams": 30
+      },
+      {
+        "food": "collard-greens",
+        "grams": 80
+      },
+      {
+        "food": "fried-egg",
+        "grams": 60
+      },
+      {
+        "food": "bacon",
+        "grams": 30
+      }
+    ]
+  },
+  {
+    "slug": "cuscuz-com-ovo",
+    "servings": 1,
+    "tags": [
+      "quick",
+      "budget"
+    ],
+    "names": {
+      "pt-BR": "Cuscuz nordestino com ovo",
+      "en": "Corn couscous with egg",
+      "es": "Cuscús de maíz con huevo"
+    },
+    "ingredients": [
+      {
+        "food": "corn-couscous",
+        "grams": 150
+      },
+      {
+        "food": "butter",
+        "grams": 10
+      },
+      {
+        "food": "fried-egg",
+        "grams": 60
+      }
+    ]
+  },
+  {
+    "slug": "tapioca-de-queijo",
+    "servings": 1,
+    "tags": [
+      "quick"
+    ],
+    "names": {
+      "pt-BR": "Tapioca de queijo",
+      "en": "Cheese tapioca crepe",
+      "es": "Tapioca de queso"
+    },
+    "ingredients": [
+      {
+        "food": "tapioca-cooked",
+        "grams": 100
+      },
+      {
+        "food": "white-cheese",
+        "grams": 50
+      }
+    ]
+  },
+  {
+    "slug": "tapioca-de-frango",
+    "servings": 1,
+    "tags": [
+      "quick",
+      "protein"
+    ],
+    "names": {
+      "pt-BR": "Tapioca de frango com requeijão",
+      "en": "Chicken tapioca crepe",
+      "es": "Tapioca de pollo"
+    },
+    "ingredients": [
+      {
+        "food": "tapioca-cooked",
+        "grams": 100
+      },
+      {
+        "food": "chicken-breast",
+        "grams": 80
+      },
+      {
+        "food": "requeijao",
+        "grams": 20
+      }
+    ]
+  },
+  {
+    "slug": "omelete-de-queijo",
+    "servings": 1,
+    "tags": [
+      "quick",
+      "protein"
+    ],
+    "names": {
+      "pt-BR": "Omelete de queijo com tomate",
+      "en": "Cheese omelette with tomato",
+      "es": "Tortilla de queso con tomate"
+    },
+    "ingredients": [
+      {
+        "food": "egg",
+        "grams": 150
+      },
+      {
+        "food": "mozzarella",
+        "grams": 40
+      },
+      {
+        "food": "tomato",
+        "grams": 50
+      }
+    ]
+  },
+  {
+    "slug": "frango-xadrez",
+    "servings": 2,
+    "tags": [
+      "protein"
+    ],
+    "names": {
+      "pt-BR": "Frango xadrez",
+      "en": "Chicken stir-fry with peppers and peanuts",
+      "es": "Pollo salteado con pimientos y maní"
+    },
+    "ingredients": [
+      {
+        "food": "chicken-breast",
+        "grams": 300
+      },
+      {
+        "food": "bell-pepper",
+        "grams": 100
+      },
+      {
+        "food": "onion",
+        "grams": 80
+      },
+      {
+        "food": "peanut",
+        "grams": 30
+      }
+    ]
+  },
+  {
+    "slug": "picadinho-de-carne",
+    "servings": 2,
+    "tags": [],
+    "names": {
+      "pt-BR": "Picadinho de carne com legumes",
+      "en": "Beef stew with vegetables",
+      "es": "Guiso de ternera con verduras"
+    },
+    "ingredients": [
+      {
+        "food": "lean-beef",
+        "grams": 300
+      },
+      {
+        "food": "potato",
+        "grams": 150
+      },
+      {
+        "food": "carrot",
+        "grams": 100
+      },
+      {
+        "food": "tomato",
+        "grams": 100
+      },
+      {
+        "food": "onion",
+        "grams": 60
+      }
+    ]
+  },
+  {
+    "slug": "peixe-assado-legumes",
+    "servings": 2,
+    "tags": [
+      "protein"
+    ],
+    "names": {
+      "pt-BR": "Peixe assado com legumes",
+      "en": "Baked fish with vegetables",
+      "es": "Pescado al horno con verduras"
+    },
+    "ingredients": [
+      {
+        "food": "tilapia",
+        "grams": 350
+      },
+      {
+        "food": "potato",
+        "grams": 200
+      },
+      {
+        "food": "tomato",
+        "grams": 100
+      },
+      {
+        "food": "onion",
+        "grams": 60
+      },
+      {
+        "food": "olive-oil",
+        "grams": 15
+      }
+    ]
+  },
+  {
+    "slug": "arroz-de-forno",
+    "servings": 3,
+    "tags": [],
+    "names": {
+      "pt-BR": "Arroz de forno",
+      "en": "Baked rice casserole",
+      "es": "Arroz al horno"
+    },
+    "ingredients": [
+      {
+        "food": "white-rice",
+        "grams": 300
+      },
+      {
+        "food": "ham",
+        "grams": 60
+      },
+      {
+        "food": "mozzarella",
+        "grams": 80
+      },
+      {
+        "food": "tomato",
+        "grams": 100
+      },
+      {
+        "food": "heavy-cream",
+        "grams": 100
+      }
+    ]
+  },
+  {
+    "slug": "torta-liquidificador-frango",
+    "servings": 6,
+    "tags": [],
+    "names": {
+      "pt-BR": "Torta de liquidificador de frango",
+      "en": "Blender chicken pie",
+      "es": "Tarta rápida de pollo"
+    },
+    "ingredients": [
+      {
+        "food": "wheat-flour",
+        "grams": 200
+      },
+      {
+        "food": "egg",
+        "grams": 150
+      },
+      {
+        "food": "whole-milk",
+        "grams": 200
+      },
+      {
+        "food": "sunflower-oil",
+        "grams": 60
+      },
+      {
+        "food": "chicken-breast",
+        "grams": 250
+      },
+      {
+        "food": "tomato",
+        "grams": 100
+      }
+    ]
+  },
+  {
+    "slug": "pure-de-batata",
+    "servings": 3,
+    "tags": [
+      "veggie",
+      "budget"
+    ],
+    "names": {
+      "pt-BR": "Purê de batata",
+      "en": "Mashed potatoes",
+      "es": "Puré de patatas"
+    },
+    "ingredients": [
+      {
+        "food": "potato",
+        "grams": 400
+      },
+      {
+        "food": "whole-milk",
+        "grams": 100
+      },
+      {
+        "food": "butter",
+        "grams": 20
+      }
+    ]
+  },
+  {
+    "slug": "sopa-de-legumes",
+    "servings": 3,
+    "tags": [
+      "veggie",
+      "budget"
+    ],
+    "names": {
+      "pt-BR": "Sopa de legumes",
+      "en": "Vegetable soup",
+      "es": "Sopa de verduras"
+    },
+    "ingredients": [
+      {
+        "food": "potato",
+        "grams": 200
+      },
+      {
+        "food": "carrot",
+        "grams": 150
+      },
+      {
+        "food": "zucchini",
+        "grams": 150
+      },
+      {
+        "food": "onion",
+        "grams": 60
+      },
+      {
+        "food": "celery",
+        "grams": 50
+      }
+    ]
+  },
+  {
+    "slug": "caldo-verde",
+    "servings": 3,
+    "tags": [
+      "budget"
+    ],
+    "names": {
+      "pt-BR": "Caldo verde",
+      "en": "Portuguese green soup",
+      "es": "Caldo verde"
+    },
+    "ingredients": [
+      {
+        "food": "potato",
+        "grams": 300
+      },
+      {
+        "food": "collard-greens",
+        "grams": 100
+      },
+      {
+        "food": "pork-sausage",
+        "grams": 80
+      },
+      {
+        "food": "olive-oil",
+        "grams": 15
+      }
+    ]
+  },
+  {
+    "slug": "canja-de-galinha",
+    "servings": 3,
+    "tags": [
+      "budget"
+    ],
+    "names": {
+      "pt-BR": "Canja de galinha",
+      "en": "Chicken and rice soup",
+      "es": "Sopa de pollo con arroz"
+    },
+    "ingredients": [
+      {
+        "food": "white-rice",
+        "grams": 100
+      },
+      {
+        "food": "chicken-breast",
+        "grams": 200
+      },
+      {
+        "food": "carrot",
+        "grams": 100
+      },
+      {
+        "food": "potato",
+        "grams": 100
+      }
+    ]
+  },
+  {
+    "slug": "quibe-assado",
+    "servings": 4,
+    "tags": [
+      "protein"
+    ],
+    "names": {
+      "pt-BR": "Quibe assado",
+      "en": "Baked kibbeh",
+      "es": "Kibe al horno"
+    },
+    "ingredients": [
+      {
+        "food": "ground-beef",
+        "grams": 400
+      },
+      {
+        "food": "couscous",
+        "grams": 150
+      },
+      {
+        "food": "onion",
+        "grams": 80
+      }
+    ]
+  },
+  {
+    "slug": "esfiha-aberta-caseira",
+    "servings": 6,
+    "tags": [
+      "budget"
+    ],
+    "names": {
+      "pt-BR": "Esfiha aberta de carne",
+      "en": "Open beef esfiha",
+      "es": "Esfiha abierta de carne"
+    },
+    "ingredients": [
+      {
+        "food": "wheat-flour",
+        "grams": 300
+      },
+      {
+        "food": "ground-beef",
+        "grams": 250
+      },
+      {
+        "food": "onion",
+        "grams": 80
+      },
+      {
+        "food": "tomato",
+        "grams": 80
+      }
+    ]
+  },
+  {
+    "slug": "empadao-de-frango",
+    "servings": 8,
+    "tags": [],
+    "names": {
+      "pt-BR": "Empadão de frango",
+      "en": "Brazilian chicken pot pie",
+      "es": "Empanada de pollo brasileña"
+    },
+    "ingredients": [
+      {
+        "food": "wheat-flour",
+        "grams": 300
+      },
+      {
+        "food": "butter",
+        "grams": 150
+      },
+      {
+        "food": "chicken-breast",
+        "grams": 300
+      },
+      {
+        "food": "requeijao",
+        "grams": 100
+      },
+      {
+        "food": "tomato",
+        "grams": 80
+      }
+    ]
+  },
+  {
+    "slug": "pao-de-queijo-caseiro",
+    "servings": 8,
+    "tags": [
+      "quick"
+    ],
+    "names": {
+      "pt-BR": "Pão de queijo caseiro",
+      "en": "Homemade cheese bread",
+      "es": "Pan de queso casero"
+    },
+    "ingredients": [
+      {
+        "food": "tapioca-flour",
+        "grams": 250
+      },
+      {
+        "food": "parmesan",
+        "grams": 100
+      },
+      {
+        "food": "egg",
+        "grams": 100
+      },
+      {
+        "food": "whole-milk",
+        "grams": 100
+      },
+      {
+        "food": "sunflower-oil",
+        "grams": 50
+      }
+    ]
+  },
+  {
+    "slug": "bolo-cenoura-cobertura",
+    "servings": 10,
+    "tags": [
+      "sweet"
+    ],
+    "names": {
+      "pt-BR": "Bolo de cenoura com cobertura",
+      "en": "Carrot cake with chocolate topping",
+      "es": "Bizcocho de zanahoria con chocolate"
+    },
+    "ingredients": [
+      {
+        "food": "carrot",
+        "grams": 250
+      },
+      {
+        "food": "egg",
+        "grams": 150
+      },
+      {
+        "food": "sugar",
+        "grams": 180
+      },
+      {
+        "food": "wheat-flour",
+        "grams": 180
+      },
+      {
+        "food": "sunflower-oil",
+        "grams": 100
+      },
+      {
+        "food": "dark-chocolate",
+        "grams": 80
+      }
+    ]
+  },
+  {
+    "slug": "bolo-de-laranja",
+    "servings": 10,
+    "tags": [
+      "sweet"
+    ],
+    "names": {
+      "pt-BR": "Bolo de laranja",
+      "en": "Orange cake",
+      "es": "Bizcocho de naranja"
+    },
+    "ingredients": [
+      {
+        "food": "orange",
+        "grams": 200
+      },
+      {
+        "food": "egg",
+        "grams": 150
+      },
+      {
+        "food": "sugar",
+        "grams": 150
+      },
+      {
+        "food": "wheat-flour",
+        "grams": 200
+      },
+      {
+        "food": "sunflower-oil",
+        "grams": 80
+      }
+    ]
+  },
+  {
+    "slug": "bolo-de-fuba",
+    "servings": 10,
+    "tags": [
+      "sweet"
+    ],
+    "names": {
+      "pt-BR": "Bolo de fubá",
+      "en": "Cornmeal cake",
+      "es": "Bizcocho de fubá (maíz)"
+    },
+    "ingredients": [
+      {
+        "food": "cornmeal",
+        "grams": 150
+      },
+      {
+        "food": "wheat-flour",
+        "grams": 60
+      },
+      {
+        "food": "egg",
+        "grams": 150
+      },
+      {
+        "food": "sugar",
+        "grams": 150
+      },
+      {
+        "food": "whole-milk",
+        "grams": 200
+      },
+      {
+        "food": "sunflower-oil",
+        "grams": 80
+      }
+    ]
+  },
+  {
+    "slug": "bolo-de-milho-cremoso",
+    "servings": 8,
+    "tags": [
+      "sweet"
+    ],
+    "names": {
+      "pt-BR": "Bolo de milho cremoso",
+      "en": "Creamy corn cake",
+      "es": "Bizcocho cremoso de maíz"
+    },
+    "ingredients": [
+      {
+        "food": "corn",
+        "grams": 300
+      },
+      {
+        "food": "egg",
+        "grams": 150
+      },
+      {
+        "food": "sugar",
+        "grams": 120
+      },
+      {
+        "food": "whole-milk",
+        "grams": 150
+      },
+      {
+        "food": "butter",
+        "grams": 40
+      },
+      {
+        "food": "cornmeal",
+        "grams": 40
+      }
+    ]
+  },
+  {
+    "slug": "bolo-banana-aveia",
+    "servings": 8,
+    "tags": [
+      "sweet"
+    ],
+    "names": {
+      "pt-BR": "Bolo de banana com aveia",
+      "en": "Banana oat cake",
+      "es": "Bizcocho de plátano y avena"
+    },
+    "ingredients": [
+      {
+        "food": "banana",
+        "grams": 300
+      },
+      {
+        "food": "oats",
+        "grams": 120
+      },
+      {
+        "food": "egg",
+        "grams": 100
+      },
+      {
+        "food": "honey",
+        "grams": 40
+      }
+    ]
+  },
+  {
+    "slug": "bolo-chocolate-caseiro",
+    "servings": 10,
+    "tags": [
+      "sweet"
+    ],
+    "names": {
+      "pt-BR": "Bolo de chocolate caseiro",
+      "en": "Homemade chocolate cake",
+      "es": "Bizcocho de chocolate casero"
+    },
+    "ingredients": [
+      {
+        "food": "wheat-flour",
+        "grams": 180
+      },
+      {
+        "food": "sugar",
+        "grams": 160
+      },
+      {
+        "food": "egg",
+        "grams": 150
+      },
+      {
+        "food": "whole-milk",
+        "grams": 150
+      },
+      {
+        "food": "sunflower-oil",
+        "grams": 80
+      },
+      {
+        "food": "dark-chocolate",
+        "grams": 60
+      }
+    ]
+  },
+  {
+    "slug": "bolo-de-mandioca",
+    "servings": 8,
+    "tags": [
+      "sweet"
+    ],
+    "names": {
+      "pt-BR": "Bolo de mandioca",
+      "en": "Cassava cake",
+      "es": "Bizcocho de yuca"
+    },
+    "ingredients": [
+      {
+        "food": "cassava",
+        "grams": 300
+      },
+      {
+        "food": "egg",
+        "grams": 150
+      },
+      {
+        "food": "sugar",
+        "grams": 140
+      },
+      {
+        "food": "butter",
+        "grams": 50
+      },
+      {
+        "food": "whole-milk",
+        "grams": 100
+      }
+    ]
+  },
+  {
+    "slug": "bolo-formigueiro",
+    "servings": 10,
+    "tags": [
+      "sweet"
+    ],
+    "names": {
+      "pt-BR": "Bolo formigueiro",
+      "en": "Chocolate sprinkle cake",
+      "es": "Bizcocho con chispas de chocolate"
+    },
+    "ingredients": [
+      {
+        "food": "wheat-flour",
+        "grams": 200
+      },
+      {
+        "food": "sugar",
+        "grams": 150
+      },
+      {
+        "food": "egg",
+        "grams": 150
+      },
+      {
+        "food": "whole-milk",
+        "grams": 150
+      },
+      {
+        "food": "sunflower-oil",
+        "grams": 80
+      },
+      {
+        "food": "dark-chocolate",
+        "grams": 50
+      }
+    ]
+  },
+  {
+    "slug": "cuca-simples",
+    "servings": 10,
+    "tags": [
+      "sweet"
+    ],
+    "names": {
+      "pt-BR": "Cuca simples (farofa doce)",
+      "en": "Crumb cake (cuca)",
+      "es": "Bizcocho con streusel"
+    },
+    "ingredients": [
+      {
+        "food": "wheat-flour",
+        "grams": 250
+      },
+      {
+        "food": "sugar",
+        "grams": 150
+      },
+      {
+        "food": "egg",
+        "grams": 100
+      },
+      {
+        "food": "whole-milk",
+        "grams": 150
+      },
+      {
+        "food": "butter",
+        "grams": 80
+      }
+    ]
+  },
+  {
+    "slug": "panqueca-doce-banana",
+    "servings": 2,
+    "tags": [
+      "sweet",
+      "quick"
+    ],
+    "names": {
+      "pt-BR": "Panqueca doce de banana",
+      "en": "Sweet banana pancakes",
+      "es": "Panqueques dulces de plátano"
+    },
+    "ingredients": [
+      {
+        "food": "wheat-flour",
+        "grams": 100
+      },
+      {
+        "food": "egg",
+        "grams": 100
+      },
+      {
+        "food": "whole-milk",
+        "grams": 150
+      },
+      {
+        "food": "banana",
+        "grams": 150
+      },
+      {
+        "food": "honey",
+        "grams": 20
+      }
+    ]
+  },
+  {
+    "slug": "torrada-abacate-ovo",
+    "servings": 1,
+    "tags": [
+      "quick",
+      "veggie"
+    ],
+    "names": {
+      "pt-BR": "Torrada de abacate com ovo",
+      "en": "Avocado toast with egg",
+      "es": "Tostada de aguacate con huevo"
+    },
+    "ingredients": [
+      {
+        "food": "whole-wheat-bread",
+        "grams": 50
+      },
+      {
+        "food": "avocado",
+        "grams": 70
+      },
+      {
+        "food": "boiled-egg",
+        "grams": 60
+      }
+    ]
+  },
+  {
+    "slug": "vitamina-banana-aveia",
+    "servings": 1,
+    "tags": [
+      "quick",
+      "sweet"
+    ],
+    "names": {
+      "pt-BR": "Vitamina de banana com aveia",
+      "en": "Banana oat smoothie",
+      "es": "Batido de plátano y avena"
+    },
+    "ingredients": [
+      {
+        "food": "banana",
+        "grams": 120
+      },
+      {
+        "food": "oats",
+        "grams": 30
+      },
+      {
+        "food": "whole-milk",
+        "grams": 250
+      },
+      {
+        "food": "honey",
+        "grams": 10
+      }
+    ]
+  },
+  {
+    "slug": "crepioca",
+    "servings": 1,
+    "tags": [
+      "quick",
+      "protein"
+    ],
+    "names": {
+      "pt-BR": "Crepioca de queijo",
+      "en": "Cheese crepioca",
+      "es": "Crepioca de queso"
+    },
+    "ingredients": [
+      {
+        "food": "tapioca-flour",
+        "grams": 30
+      },
+      {
+        "food": "egg",
+        "grams": 100
+      },
+      {
+        "food": "white-cheese",
+        "grams": 30
+      }
+    ]
+  },
+  {
+    "slug": "sanduiche-natural-frango",
+    "servings": 1,
+    "tags": [
+      "quick",
+      "protein"
+    ],
+    "names": {
+      "pt-BR": "Sanduíche natural de frango",
+      "en": "Chicken salad sandwich",
+      "es": "Sándwich de pollo"
+    },
+    "ingredients": [
+      {
+        "food": "whole-wheat-bread",
+        "grams": 80
+      },
+      {
+        "food": "chicken-breast",
+        "grams": 100
+      },
+      {
+        "food": "plain-yogurt",
+        "grams": 30
+      },
+      {
+        "food": "carrot",
+        "grams": 30
+      },
+      {
+        "food": "lettuce",
+        "grams": 20
+      }
+    ]
+  },
+  {
+    "slug": "sanduiche-de-atum",
+    "servings": 1,
+    "tags": [
+      "quick",
+      "protein"
+    ],
+    "names": {
+      "pt-BR": "Sanduíche de atum",
+      "en": "Tuna sandwich",
+      "es": "Sándwich de atún"
+    },
+    "ingredients": [
+      {
+        "food": "bread",
+        "grams": 80
+      },
+      {
+        "food": "canned-tuna",
+        "grams": 80
+      },
+      {
+        "food": "plain-yogurt",
+        "grams": 30
+      },
+      {
+        "food": "tomato",
+        "grams": 50
+      }
+    ]
+  },
+  {
+    "slug": "omelete-de-claras",
+    "servings": 1,
+    "tags": [
+      "quick",
+      "protein"
+    ],
+    "names": {
+      "pt-BR": "Omelete de claras",
+      "en": "Egg white omelette",
+      "es": "Tortilla de claras"
+    },
+    "ingredients": [
+      {
+        "food": "egg-white",
+        "grams": 200
+      },
+      {
+        "food": "spinach",
+        "grams": 50
+      },
+      {
+        "food": "white-cheese",
+        "grams": 30
+      }
+    ]
+  },
+  {
+    "slug": "panqueca-aveia-whey",
+    "servings": 1,
+    "tags": [
+      "quick",
+      "protein",
+      "sweet"
+    ],
+    "names": {
+      "pt-BR": "Panqueca de aveia com whey",
+      "en": "Oat whey protein pancake",
+      "es": "Panqueque de avena con whey"
+    },
+    "ingredients": [
+      {
+        "food": "oats",
+        "grams": 60
+      },
+      {
+        "food": "whey-protein",
+        "grams": 30
+      },
+      {
+        "food": "egg",
+        "grams": 100
+      },
+      {
+        "food": "banana",
+        "grams": 80
+      }
+    ]
+  },
+  {
+    "slug": "shake-pos-treino",
+    "servings": 1,
+    "tags": [
+      "quick",
+      "protein"
+    ],
+    "names": {
+      "pt-BR": "Shake pós-treino",
+      "en": "Post-workout shake",
+      "es": "Batido post-entreno"
+    },
+    "ingredients": [
+      {
+        "food": "whey-protein",
+        "grams": 30
+      },
+      {
+        "food": "banana",
+        "grams": 120
+      },
+      {
+        "food": "oats",
+        "grams": 30
+      },
+      {
+        "food": "whole-milk",
+        "grams": 300
+      }
+    ]
+  },
+  {
+    "slug": "iogurte-granola-fruta",
+    "servings": 1,
+    "tags": [
+      "quick"
+    ],
+    "names": {
+      "pt-BR": "Iogurte grego com granola e morango",
+      "en": "Greek yogurt with granola and berries",
+      "es": "Yogur griego con granola y fresas"
+    },
+    "ingredients": [
+      {
+        "food": "greek-yogurt",
+        "grams": 170
+      },
+      {
+        "food": "granola",
+        "grams": 40
+      },
+      {
+        "food": "strawberry",
+        "grams": 100
+      }
+    ]
+  },
+  {
+    "slug": "ovos-mexidos-com-pao",
+    "servings": 1,
+    "tags": [
+      "quick",
+      "protein",
+      "budget"
+    ],
+    "names": {
+      "pt-BR": "Ovos mexidos com pão integral",
+      "en": "Scrambled eggs with wholegrain toast",
+      "es": "Huevos revueltos con pan integral"
+    },
+    "ingredients": [
+      {
+        "food": "egg",
+        "grams": 150
+      },
+      {
+        "food": "whole-wheat-bread",
+        "grams": 50
+      },
+      {
+        "food": "butter",
+        "grams": 10
+      }
+    ]
+  },
+  {
+    "slug": "salada-atum-grao-de-bico",
+    "servings": 1,
+    "tags": [
+      "quick",
+      "protein"
+    ],
+    "names": {
+      "pt-BR": "Salada de atum com grão-de-bico",
+      "en": "Tuna chickpea salad",
+      "es": "Ensalada de atún con garbanzos"
+    },
+    "ingredients": [
+      {
+        "food": "canned-tuna",
+        "grams": 120
+      },
+      {
+        "food": "chickpeas",
+        "grams": 150
+      },
+      {
+        "food": "tomato",
+        "grams": 100
+      },
+      {
+        "food": "onion",
+        "grams": 40
+      },
+      {
+        "food": "olive-oil",
+        "grams": 10
+      }
+    ]
+  },
+  {
+    "slug": "macarrao-turbinado",
+    "servings": 1,
+    "tags": [
+      "quick",
+      "budget"
+    ],
+    "names": {
+      "pt-BR": "Macarrão rápido turbinado (ovo + legumes)",
+      "en": "Quick pasta with egg and veggies",
+      "es": "Pasta rápida con huevo y verduras"
+    },
+    "ingredients": [
+      {
+        "food": "pasta",
+        "grams": 80
+      },
+      {
+        "food": "egg",
+        "grams": 100
+      },
+      {
+        "food": "broccoli",
+        "grams": 80
+      },
+      {
+        "food": "carrot",
+        "grams": 50
+      }
+    ]
+  },
+  {
+    "slug": "mingau-de-aveia",
+    "servings": 1,
+    "tags": [
+      "quick",
+      "sweet",
+      "budget"
+    ],
+    "names": {
+      "pt-BR": "Mingau de aveia",
+      "en": "Oatmeal porridge",
+      "es": "Gachas de avena"
+    },
+    "ingredients": [
+      {
+        "food": "oats",
+        "grams": 50
+      },
+      {
+        "food": "whole-milk",
+        "grams": 250
+      },
+      {
+        "food": "honey",
+        "grams": 15
+      },
+      {
+        "food": "banana",
+        "grams": 80
+      }
+    ]
+  },
+  {
+    "slug": "pao-pasta-amendoim-banana",
+    "servings": 1,
+    "tags": [
+      "quick",
+      "sweet"
+    ],
+    "names": {
+      "pt-BR": "Pão com pasta de amendoim e banana",
+      "en": "Peanut butter banana toast",
+      "es": "Pan con crema de maní y plátano"
+    },
+    "ingredients": [
+      {
+        "food": "bread",
+        "grams": 50
+      },
+      {
+        "food": "peanut-butter",
+        "grams": 20
+      },
+      {
+        "food": "banana",
+        "grams": 80
+      }
+    ]
+  },
+  {
+    "slug": "marmita-frango-batata-doce",
+    "servings": 1,
+    "tags": [
+      "quick",
+      "protein",
+      "budget"
+    ],
+    "names": {
+      "pt-BR": "Marmita fit: frango + batata-doce + brócolis",
+      "en": "Meal prep: chicken, sweet potato and broccoli",
+      "es": "Táper fit: pollo, boniato y brócoli"
+    },
+    "ingredients": [
+      {
+        "food": "chicken-breast",
+        "grams": 200
+      },
+      {
+        "food": "sweet-potato",
+        "grams": 250
+      },
+      {
+        "food": "broccoli",
+        "grams": 100
+      }
+    ]
+  },
+  {
+    "slug": "overnight-oats",
+    "servings": 1,
+    "tags": [
+      "quick",
+      "sweet"
+    ],
+    "names": {
+      "pt-BR": "Overnight oats (aveia de geladeira)",
+      "en": "Overnight oats",
+      "es": "Avena nocturna (overnight oats)"
+    },
+    "ingredients": [
+      {
+        "food": "oats",
+        "grams": 50
+      },
+      {
+        "food": "plain-yogurt",
+        "grams": 150
+      },
+      {
+        "food": "chia",
+        "grams": 10
+      },
+      {
+        "food": "strawberry",
+        "grams": 80
+      },
+      {
+        "food": "honey",
+        "grams": 10
+      }
+    ]
+  },
+  {
+    "slug": "bowl-quinoa-frango",
+    "servings": 1,
+    "tags": [
+      "protein"
+    ],
+    "names": {
+      "pt-BR": "Bowl de quinoa com frango e abacate",
+      "en": "Chicken quinoa bowl with avocado",
+      "es": "Bowl de quinoa con pollo y aguacate"
+    },
+    "ingredients": [
+      {
+        "food": "quinoa",
+        "grams": 80
+      },
+      {
+        "food": "chicken-breast",
+        "grams": 150
+      },
+      {
+        "food": "avocado",
+        "grams": 50
+      },
+      {
+        "food": "tomato",
+        "grams": 80
+      }
+    ]
+  }
+]

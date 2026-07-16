@@ -30,6 +30,7 @@ from ..schemas import (
     MacrosOut,
     MealGroupOut,
     MealPlanOut,
+    LibraryRecipeOut,
     RecipeIn,
     RecipeOut,
     SubstitutesOut,
@@ -47,6 +48,8 @@ from ..services.diet import (
     to_food_out,
 )
 from ..services.goals import compute_goals
+from ..services.recipes_library import adopt as adopt_library_recipe
+from ..services.recipes_library import list_library
 from ..services.recommend import meal_plan as compute_meal_plan
 from ..services.recommend import substitutes as compute_substitutes
 from ..services.recommend import suggest_gap
@@ -188,6 +191,25 @@ def list_recipes(user: CurrentUser, session: SessionDep) -> list[RecipeOut]:
         select(Recipe).where(Recipe.user_id == user.id).order_by(desc(Recipe.created_at))
     ).all()
     return [_recipe_out(session, r, user.locale) for r in recipes]
+
+
+@router.get("/recipes/library", response_model=list[LibraryRecipeOut])
+def recipes_library(
+    user: CurrentUser,
+    session: SessionDep,
+    tag: str | None = Query(default=None, max_length=20),
+) -> list[LibraryRecipeOut]:
+    """Biblioteca de receitas semente: macros calculados dos ingredientes do catalogo."""
+    return list_library(session, user, tag)
+
+
+@router.post("/me/recipes/from-library/{slug}", response_model=RecipeOut)
+def adopt_recipe(slug: str, user: CurrentUser, session: SessionDep) -> RecipeOut:
+    """Copia uma receita da biblioteca para as receitas do usuario (editavel)."""
+    recipe = adopt_library_recipe(session, user, slug)
+    if recipe is None:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, detail="RECIPE_NOT_FOUND")
+    return _recipe_out(session, recipe, user.locale)
 
 
 @router.post("/me/recipes", response_model=RecipeOut, status_code=status.HTTP_201_CREATED)

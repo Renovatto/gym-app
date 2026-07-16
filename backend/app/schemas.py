@@ -438,6 +438,25 @@ class DiaryDayOut(BaseModel):
     goals: MacrosOut | None
 
 
+# --- Biblioteca de receitas semente (fase 2) -------------------------------
+
+
+class LibraryIngredientOut(BaseModel):
+    name: str
+    grams: float
+
+
+class LibraryRecipeOut(BaseModel):
+    slug: str
+    name: str
+    # tags de perfil: protein | quick | veggie | sweet | budget (front faz o i18n)
+    tags: list[str]
+    servings: int
+    total: MacrosOut
+    per_serving: MacrosOut
+    ingredients: list[LibraryIngredientOut]
+
+
 # --- Recomendacao da dieta (motor de encaixe) -----------------------------
 
 

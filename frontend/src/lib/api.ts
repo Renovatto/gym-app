@@ -485,6 +485,16 @@ export interface FoodInput {
 	default_portion_g: number;
 }
 
+export interface LibraryRecipe {
+	slug: string;
+	name: string;
+	tags: string[];
+	servings: number;
+	total: Macros;
+	per_serving: Macros;
+	ingredients: { name: string; grams: number }[];
+}
+
 export interface RecipeInput {
 	name: string;
 	servings: number;
@@ -712,6 +722,10 @@ export const api = {
 	},
 	getRecentFoods: () => request<Food[]>('/me/foods/recent'),
 	createFood: (food: FoodInput) => request<Food>('/me/foods', { method: 'POST', body: food }),
+	getRecipeLibrary: (tag?: string) =>
+		request<LibraryRecipe[]>(`/recipes/library${tag ? `?tag=${tag}` : ''}`),
+	adoptLibraryRecipe: (slug: string) =>
+		request<Recipe>(`/me/recipes/from-library/${slug}`, { method: 'POST' }),
 	getRecipes: () => request<Recipe[]>('/me/recipes'),
 	createRecipe: (recipe: RecipeInput) =>
 		request<Recipe>('/me/recipes', { method: 'POST', body: recipe }),
