@@ -303,6 +303,8 @@
 	"meal_other": "Outros",
 	"add_meal": "Refeição",
 	"add_meal_title": "Adicionar refeição",
+	"meal_remove": "Remover refeição",
+	"meal_remove_confirm": "Remover esta refeição?",
 	"meal_chooser_title": "Qual refeição adicionar?",
 	"meal_custom_placeholder": "Personalizado (ex.: Café da tarde)",
 	"meal_other_hint": "lanche, ceia…",

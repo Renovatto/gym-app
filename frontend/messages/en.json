@@ -303,6 +303,8 @@
 	"meal_other": "Other",
 	"add_meal": "Meal",
 	"add_meal_title": "Add meal",
+	"meal_remove": "Remove meal",
+	"meal_remove_confirm": "Remove this meal?",
 	"meal_chooser_title": "Which meal to add?",
 	"meal_custom_placeholder": "Custom (e.g. Afternoon snack)",
 	"meal_other_hint": "snack, supper…",

@@ -38,7 +38,6 @@
 	// Cardapio consultivo (nutri): plano por refeicao, aberto por refeicao ou geral.
 	let mealPlan = $state<MealPlan | null>(null);
 	let expandedMeals = $state<Set<MealType>>(new Set());
-	let showAllPlan = $state(false);
 
 	// Trocar uma SUGESTAO por um equivalente: abre a lista de opcoes da mesma categoria.
 	let suggSubs = $state<Substitutes | null>(null);
@@ -309,6 +308,7 @@
 		dayMeals = loadDayState(day);
 		openMeal = null;
 		showMealChooser = false;
+		confirmingRemoveMeal = null;
 	});
 	function saveDayState(): void {
 		localStorage.setItem(DAY_STATE_KEY, JSON.stringify($state.snapshot(dayMeals)));
@@ -359,6 +359,19 @@
 	function mealDisplayLabel(meal: MealType): string {
 		if (meal === 'other' && dayMeals.customLabel) return dayMeals.customLabel;
 		return mealTypeLabel(meal);
+	}
+
+	// Remover um card adicionado por engano (so quando vazio; sempre com confirmacao).
+	// Refeicao com lancamentos nao remove: apague os itens primeiro.
+	let confirmingRemoveMeal = $state<MealType | null>(null);
+
+	function removeMealCard(meal: MealType): void {
+		dayMeals.added = dayMeals.added.filter((mt) => mt !== meal);
+		if (meal === 'other') dayMeals.customLabel = null;
+		saveDayState();
+		if (openMeal === meal) openMeal = null;
+		confirmingRemoveMeal = null;
+		showToast(m.toast_deleted());
 	}
 
 	function toggleMealOpen(meal: MealType): void {
@@ -431,7 +444,19 @@
 		return mealPlan?.meals.find((mp) => mp.meal_type === meal);
 	}
 	function isMealExpanded(meal: MealType): boolean {
-		return showAllPlan || expandedMeals.has(meal);
+		return expandedMeals.has(meal);
+	}
+	// refeicoes que tem sugestao da nutri (para o botao geral abrir/fechar todas)
+	const mealsWithPlan = $derived(
+		(mealPlan?.meals ?? []).filter((mp) => mp.suggestions.length > 0).map((mp) => mp.meal_type)
+	);
+	const allPlansOpen = $derived(
+		mealsWithPlan.length > 0 && mealsWithPlan.every((mt) => expandedMeals.has(mt))
+	);
+	// o botao geral apenas ENCHE/LIMPA o conjunto: assim o toggle individual sempre
+	// consegue fechar (antes um flag "mostrar tudo" prendia os paineis abertos)
+	function toggleAllPlans(): void {
+		expandedMeals = allPlansOpen ? new Set() : new Set(mealsWithPlan);
 	}
 	function toggleMealPlan(meal: MealType): void {
 		const next = new Set(expandedMeals);
@@ -642,12 +667,12 @@
 	{#if hasPlan}
 		<button
 			type="button"
-			onclick={() => (showAllPlan = !showAllPlan)}
+			onclick={toggleAllPlans}
 			class="mt-3 flex w-full items-center justify-center gap-2 rounded-2xl border-2 border-emerald-200 py-2.5 text-sm font-bold text-emerald-700 active:bg-emerald-50"
 		>
 			<svg viewBox="0 0 24 24" class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v6" /><path d="M9 3h6" /><path d="M7 9h10l-1.2 9.2A2 2 0 0 1 13.8 20h-3.6a2 2 0 0 1-2-1.8z" /></svg>
 			{m.nutri_plan()}
-			<svg viewBox="0 0 24 24" class="h-4 w-4 transition-transform {showAllPlan ? 'rotate-180' : ''}" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6" stroke-linecap="round" stroke-linejoin="round" /></svg>
+			<svg viewBox="0 0 24 24" class="h-4 w-4 transition-transform {allPlansOpen ? 'rotate-180' : ''}" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6" stroke-linecap="round" stroke-linejoin="round" /></svg>
 		</button>
 	{/if}
 
@@ -819,26 +844,58 @@
 					</div>
 				{/if}
 
-				<div class="mt-2 flex gap-2">
-					<button
-						type="button"
-						onclick={() => (addingToMeal = meal)}
-						class="flex h-11 flex-1 items-center justify-center rounded-2xl border-2 border-dashed border-emerald-200 text-sm font-bold text-emerald-700 active:bg-emerald-50"
-					>
-						+ {m.add_food()}
-					</button>
-					{#if !group || group.entries.length === 0}
+				{#if confirmingRemoveMeal === meal}
+					<!-- remover o card adicionado por engano: sempre com confirmacao -->
+					<div class="mt-2 flex items-center gap-2 rounded-2xl bg-red-50 p-2">
+						<span class="min-w-0 flex-1 pl-2 text-sm font-semibold text-red-700">{m.meal_remove_confirm()}</span>
 						<button
 							type="button"
-							aria-label={m.repeat_meal()}
-							title={m.repeat_meal()}
-							onclick={() => repeatMeal(meal)}
-							class="grid h-11 w-11 shrink-0 place-items-center rounded-2xl border-2 border-slate-200 text-slate-500 active:bg-slate-100"
+							onclick={() => removeMealCard(meal)}
+							class="h-10 shrink-0 rounded-xl bg-red-600 px-4 text-sm font-bold text-white active:bg-red-700"
 						>
-							<svg viewBox="0 0 24 24" class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4v6h6M20 20v-6h-6M20 8a8 8 0 00-14-3M4 16a8 8 0 0014 3" stroke-linecap="round" stroke-linejoin="round" /></svg>
+							{m.confirm_delete()}
 						</button>
-					{/if}
-				</div>
+						<button
+							type="button"
+							onclick={() => (confirmingRemoveMeal = null)}
+							class="h-10 shrink-0 rounded-xl px-3 text-sm font-semibold text-slate-500 active:bg-slate-100"
+						>
+							{m.cancel()}
+						</button>
+					</div>
+				{:else}
+					<div class="mt-2 flex gap-2">
+						<button
+							type="button"
+							onclick={() => (addingToMeal = meal)}
+							class="flex h-11 flex-1 items-center justify-center rounded-2xl border-2 border-dashed border-emerald-200 text-sm font-bold text-emerald-700 active:bg-emerald-50"
+						>
+							+ {m.add_food()}
+						</button>
+						{#if !group || group.entries.length === 0}
+							<button
+								type="button"
+								aria-label={m.repeat_meal()}
+								title={m.repeat_meal()}
+								onclick={() => repeatMeal(meal)}
+								class="grid h-11 w-11 shrink-0 place-items-center rounded-2xl border-2 border-slate-200 text-slate-500 active:bg-slate-100"
+							>
+								<svg viewBox="0 0 24 24" class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4v6h6M20 20v-6h-6M20 8a8 8 0 00-14-3M4 16a8 8 0 0014 3" stroke-linecap="round" stroke-linejoin="round" /></svg>
+							</button>
+							{#if dayMeals.added.includes(meal)}
+								<button
+									type="button"
+									aria-label={m.meal_remove()}
+									title={m.meal_remove()}
+									onclick={() => (confirmingRemoveMeal = meal)}
+									class="grid h-11 w-11 shrink-0 place-items-center rounded-2xl border-2 border-slate-200 text-slate-400 active:bg-red-50 active:text-red-500"
+								>
+									<svg viewBox="0 0 24 24" class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 7h16M9 7V5h6v2M6 7l1 13h10l1-13" stroke-linecap="round" stroke-linejoin="round" /></svg>
+								</button>
+							{/if}
+						{/if}
+					</div>
+				{/if}
 				</div>
 				{/if}
 			</section>

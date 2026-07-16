@@ -303,6 +303,8 @@
 	"meal_other": "Otros",
 	"add_meal": "Comida",
 	"add_meal_title": "Añadir comida",
+	"meal_remove": "Quitar comida",
+	"meal_remove_confirm": "¿Quitar esta comida?",
 	"meal_chooser_title": "¿Qué comida añadir?",
 	"meal_custom_placeholder": "Personalizada (ej.: Merienda)",
 	"meal_other_hint": "merienda, recena…",
