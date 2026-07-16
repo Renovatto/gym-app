@@ -13,12 +13,15 @@
 		meal,
 		day,
 		onClose,
-		onAdded
+		onAdded,
+		label = null
 	}: {
 		meal: MealType;
 		day: string;
 		onClose: () => void;
 		onAdded: () => void;
+		// rotulo customizado da refeicao (ex.: nome digitado no "Outros")
+		label?: string | null;
 	} = $props();
 
 	const nf = new Intl.NumberFormat(getLocale());
@@ -157,7 +160,7 @@
 		<div class="mb-4 flex items-center justify-between gap-2">
 			<div class="min-w-0">
 				<h1 class="text-xl font-bold">{m.add_food()}</h1>
-				<p class="text-sm text-slate-500">{mealTypeLabel(meal)}</p>
+				<p class="text-sm text-slate-500">{label ?? mealTypeLabel(meal)}</p>
 			</div>
 			<button
 				type="button"

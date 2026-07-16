@@ -21,8 +21,9 @@
 	import Spinner from '$lib/components/Spinner.svelte';
 	import CalendarModal from '$lib/components/CalendarModal.svelte';
 	import AddEntryModal from '$lib/components/AddEntryModal.svelte';
+	import { slide } from 'svelte/transition';
 	import { showToast } from '$lib/toast.svelte';
-	import { MEAL_TYPES, mealTypeLabel } from '$lib/labels';
+	import { mealTypeLabel } from '$lib/labels';
 	import { m } from '$lib/paraglide/messages';
 	import { getLocale } from '$lib/paraglide/runtime';
 
@@ -274,40 +275,94 @@
 		return diary?.meals.find((g) => g.meal_type === meal);
 	}
 
-	// Refeicoes extras (opcionais): pre-treino e ceia. Ficam escondidas ate o usuario
-	// adiciona-las (lembrado no dispositivo) ou terem algum lancamento no dia.
-	const EXTRA_MEALS: MealType[] = ['pre_workout', 'supper'];
+	// --- Refeicoes compactas ---
+	// Inicio do dia: so mini-cards "+ Nome". Tocar materializa o card completo.
+	// Materializada = tem lancamento no dia OU foi adicionada manualmente hoje.
+	// O estado do layout reseta por dia; nomes personalizados ficam num historico
+	// no aparelho para reutilizar sem digitar de novo.
+	const PRINCIPAL_MEALS: MealType[] = ['breakfast', 'lunch', 'dinner'];
+	const EXTRA_MEALS: MealType[] = ['snack', 'pre_workout', 'supper', 'other'];
 	const MEAL_ORDER: MealType[] = [
 		'breakfast', 'pre_workout', 'lunch', 'snack', 'dinner', 'supper', 'other'
 	];
-	const REVEALED_KEY = 'gymapp.diet.extraMeals';
-	function loadRevealed(): string[] {
+	const DAY_STATE_KEY = 'gymapp.diet.dayMeals';
+	const CUSTOM_HISTORY_KEY = 'gymapp.diet.customMealNames';
+
+	interface DayMealState {
+		day: string;
+		added: MealType[];
+		customLabel: string | null; // nome digitado para a refeicao "outros" do dia
+	}
+
+	function loadDayState(forDay: string): DayMealState {
 		try {
-			return JSON.parse(localStorage.getItem(REVEALED_KEY) ?? '[]');
+			const raw = JSON.parse(localStorage.getItem(DAY_STATE_KEY) ?? 'null') as DayMealState | null;
+			if (raw && raw.day === forDay) return raw;
+		} catch {
+			// estado corrompido: recomeca do zero
+		}
+		return { day: forDay, added: [], customLabel: null };
+	}
+	let dayMeals = $state<DayMealState>(loadDayState(localDay()));
+	// trocar o dia (setas/calendario) reseta o layout para o daquele dia
+	$effect(() => {
+		dayMeals = loadDayState(day);
+		openMeal = null;
+		showMealChooser = false;
+	});
+	function saveDayState(): void {
+		localStorage.setItem(DAY_STATE_KEY, JSON.stringify($state.snapshot(dayMeals)));
+	}
+
+	function loadCustomHistory(): string[] {
+		try {
+			return JSON.parse(localStorage.getItem(CUSTOM_HISTORY_KEY) ?? '[]');
 		} catch {
 			return [];
 		}
 	}
-	let revealedExtras = $state<Set<string>>(new Set(loadRevealed()));
+	let customHistory = $state<string[]>(loadCustomHistory());
+
 	let showMealChooser = $state(false);
+	let customMealName = $state('');
+	// acordeao: uma refeicao expandida por vez
+	let openMeal = $state<MealType | null>(null);
+
 	function mealHasEntries(meal: MealType): boolean {
 		const group = mealGroup(meal);
 		return !!group && group.entries.length > 0;
 	}
-	const mealsToShow = $derived(
-		MEAL_ORDER.filter(
-			(meal) => MEAL_TYPES.includes(meal) || revealedExtras.has(meal) || mealHasEntries(meal)
-		)
+	const materializedMeals = $derived(
+		MEAL_ORDER.filter((meal) => dayMeals.added.includes(meal) || mealHasEntries(meal))
 	);
-	const addableMeals = $derived(
-		EXTRA_MEALS.filter((meal) => !revealedExtras.has(meal) && !mealHasEntries(meal))
+	const miniPrincipals = $derived(
+		PRINCIPAL_MEALS.filter((meal) => !materializedMeals.includes(meal))
 	);
-	function revealMeal(meal: MealType): void {
-		const next = new Set(revealedExtras);
-		next.add(meal);
-		revealedExtras = next;
-		localStorage.setItem(REVEALED_KEY, JSON.stringify([...next]));
+	const chooserExtras = $derived(
+		EXTRA_MEALS.filter((meal) => !materializedMeals.includes(meal))
+	);
+
+	function addMealCard(meal: MealType, customLabel: string | null = null): void {
+		if (!dayMeals.added.includes(meal)) dayMeals.added = [...dayMeals.added, meal];
+		if (customLabel) {
+			dayMeals.customLabel = customLabel;
+			// historico: mais recente primeiro, sem repetidos, no maximo 8
+			customHistory = [customLabel, ...customHistory.filter((n) => n !== customLabel)].slice(0, 8);
+			localStorage.setItem(CUSTOM_HISTORY_KEY, JSON.stringify($state.snapshot(customHistory)));
+		}
+		saveDayState();
+		openMeal = meal;
 		showMealChooser = false;
+		customMealName = '';
+	}
+
+	function mealDisplayLabel(meal: MealType): string {
+		if (meal === 'other' && dayMeals.customLabel) return dayMeals.customLabel;
+		return mealTypeLabel(meal);
+	}
+
+	function toggleMealOpen(meal: MealType): void {
+		openMeal = openMeal === meal ? null : meal;
 	}
 
 	const dayLabel = $derived(
@@ -596,17 +651,106 @@
 		</button>
 	{/if}
 
-	<div class="mt-4 space-y-3">
-		{#each mealsToShow as meal (meal)}
+	<!-- inicio do dia: mini-cards das refeicoes principais + "Outros" fixo -->
+	{#if miniPrincipals.length > 0 || chooserExtras.length > 0}
+		<div class="mt-4 flex gap-2">
+			{#each miniPrincipals as meal (meal)}
+				{@const plan = mealPlanFor(meal)}
+				<button
+					type="button"
+					onclick={() => addMealCard(meal)}
+					class="min-w-0 flex-1 rounded-2xl border-2 border-dashed border-slate-200 bg-white px-1 py-2.5 text-center text-slate-500 active:border-emerald-400 active:text-emerald-700"
+				>
+					<span class="block text-lg leading-none font-extrabold">+</span>
+					<span class="mt-1 block truncate px-1 text-[11px] font-bold">{mealTypeLabel(meal)}</span>
+					{#if plan}
+						<span class="block text-[9px] text-slate-400">~{nf.format(Math.round(plan.target.kcal))} kcal</span>
+					{/if}
+				</button>
+			{/each}
+			{#if chooserExtras.length > 0}
+				<button
+					type="button"
+					onclick={() => (showMealChooser = !showMealChooser)}
+					class="min-w-0 flex-1 rounded-2xl border-2 border-emerald-100 bg-emerald-50 px-1 py-2.5 text-center text-emerald-700 active:bg-emerald-100"
+				>
+					<span class="block text-lg leading-none font-extrabold">+</span>
+					<span class="mt-1 block truncate px-1 text-[11px] font-bold">{mealTypeLabel('other')}</span>
+					<span class="block truncate text-[9px] text-emerald-600/70">{m.meal_other_hint()}</span>
+				</button>
+			{/if}
+		</div>
+	{/if}
+
+	<!-- escolha da refeicao extra: categorias + nome personalizado (com historico) -->
+	{#if showMealChooser}
+		<div class="mt-2 rounded-2xl bg-white p-3 shadow-sm" transition:slide={{ duration: 180 }}>
+			<p class="mb-2 text-[11px] font-bold tracking-wide text-slate-400 uppercase">{m.meal_chooser_title()}</p>
+			<div class="flex flex-wrap gap-1.5">
+				{#each chooserExtras as meal (meal)}
+					<button
+						type="button"
+						onclick={() => addMealCard(meal)}
+						class="rounded-full border-2 border-slate-200 px-3 py-1.5 text-sm font-semibold text-slate-600 active:border-emerald-400 active:text-emerald-700"
+					>
+						{mealTypeLabel(meal)}
+					</button>
+				{/each}
+			</div>
+			{#if chooserExtras.includes('other')}
+				{#if customHistory.length > 0}
+					<div class="mt-2 flex flex-wrap gap-1.5">
+						{#each customHistory as name (name)}
+							<button
+								type="button"
+								onclick={() => addMealCard('other', name)}
+								class="rounded-full bg-emerald-50 px-3 py-1.5 text-sm font-semibold text-emerald-700 active:bg-emerald-100"
+							>
+								{name}
+							</button>
+						{/each}
+					</div>
+				{/if}
+				<div class="mt-2 flex gap-2">
+					<input
+						bind:value={customMealName}
+						maxlength="24"
+						placeholder={m.meal_custom_placeholder()}
+						class="h-11 min-w-0 flex-1 rounded-2xl border-2 border-slate-200 bg-white px-3 text-sm outline-none focus:border-emerald-600"
+					/>
+					<button
+						type="button"
+						disabled={!customMealName.trim()}
+						onclick={() => addMealCard('other', customMealName.trim())}
+						class="h-11 shrink-0 rounded-2xl bg-emerald-600 px-4 text-sm font-bold text-white active:bg-emerald-700 disabled:opacity-50"
+					>
+						{m.supp_add()}
+					</button>
+				</div>
+			{/if}
+		</div>
+	{/if}
+
+	<div class="mt-3 space-y-3">
+		{#each materializedMeals as meal (meal)}
 			{@const group = mealGroup(meal)}
 			{@const plan = mealPlanFor(meal)}
-			<section class="rounded-3xl bg-white p-4 shadow-sm">
-				<div class="flex items-center justify-between">
-					<h2 class="font-bold text-slate-900">{mealTypeLabel(meal)}</h2>
-					<span class="text-sm font-semibold text-slate-400">
+			{@const isOpen = openMeal === meal}
+			<section class="overflow-hidden rounded-3xl bg-white shadow-sm">
+				<!-- cabecalho: toca para minimizar/expandir (acordeao: um aberto por vez) -->
+				<button
+					type="button"
+					onclick={() => toggleMealOpen(meal)}
+					class="flex w-full items-center gap-2 p-4 text-left"
+				>
+					<h2 class="min-w-0 flex-1 truncate font-bold text-slate-900">{mealDisplayLabel(meal)}</h2>
+					<span class="shrink-0 text-sm font-semibold text-slate-400">
 						{group ? nf.format(Math.round(group.subtotal.kcal)) : 0} kcal
 					</span>
-				</div>
+					<svg viewBox="0 0 24 24" class="h-5 w-5 shrink-0 text-slate-300 transition-transform {isOpen ? 'rotate-180' : ''}" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6" stroke-linecap="round" stroke-linejoin="round" /></svg>
+				</button>
+				{#if isOpen}
+				<div class="px-4 pb-4" transition:slide={{ duration: 200 }}>
 
 				{#if plan && plan.suggestions.length > 0}
 					<button
@@ -695,43 +839,11 @@
 						</button>
 					{/if}
 				</div>
+				</div>
+				{/if}
 			</section>
 		{/each}
 	</div>
-
-	{#if addableMeals.length > 0}
-		<div class="mt-3">
-			{#if showMealChooser}
-				<div class="flex flex-wrap items-center gap-2 rounded-2xl border-2 border-dashed border-slate-200 p-2">
-					{#each addableMeals as meal (meal)}
-						<button
-							type="button"
-							onclick={() => revealMeal(meal)}
-							class="rounded-xl bg-slate-100 px-3 py-2 text-sm font-semibold text-slate-700 active:bg-slate-200"
-						>
-							+ {mealTypeLabel(meal)}
-						</button>
-					{/each}
-					<button
-						type="button"
-						onclick={() => (showMealChooser = false)}
-						class="ml-auto px-2 text-sm font-semibold text-slate-400"
-					>
-						{m.cancel()}
-					</button>
-				</div>
-			{:else}
-				<button
-					type="button"
-					onclick={() => (showMealChooser = true)}
-					class="flex h-11 w-full items-center justify-center gap-1.5 rounded-2xl border-2 border-dashed border-slate-200 text-sm font-semibold text-slate-500 active:bg-slate-50"
-				>
-					<svg viewBox="0 0 24 24" class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14" stroke-linecap="round" /></svg>
-					{m.add_meal_title()}
-				</button>
-			{/if}
-		</div>
-	{/if}
 
 	{#if supplements && supplements.total > 0}
 		<section class="mt-4 rounded-3xl bg-white p-4 shadow-sm">
@@ -1195,6 +1307,7 @@
 	<AddEntryModal
 		meal={addingToMeal}
 		{day}
+		label={mealDisplayLabel(addingToMeal)}
 		onClose={() => (addingToMeal = null)}
 		onAdded={reloadSilent}
 	/>

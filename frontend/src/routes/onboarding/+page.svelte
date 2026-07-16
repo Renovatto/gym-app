@@ -5,6 +5,26 @@
 	import Stepper from '$lib/components/Stepper.svelte';
 	import { bootstrap } from '$lib/session.svelte';
 	import { m } from '$lib/paraglide/messages';
+	import { getLocale, setLocale, localStorageKey, type Locale } from '$lib/paraglide/runtime';
+	import { toBackendLocale } from '$lib/errors';
+
+	// Idioma e a PRIMEIRA pergunta do cadastro e o padrao e ingles: se o usuario
+	// ainda nao escolheu explicitamente (sem chave no localStorage), forca 'en'
+	// antes de tudo (setLocale recarrega a pagina ja em ingles, uma unica vez).
+	const hasExplicitLocale =
+		typeof localStorage !== 'undefined' && localStorage.getItem(localStorageKey) !== null;
+	if (!hasExplicitLocale && getLocale() !== 'en') {
+		setLocale('en');
+	}
+
+	let language = $state<Locale>(getLocale());
+
+	function pickLanguage(locale: Locale): void {
+		language = locale;
+		// persiste no perfil do usuario; a preferencia local vale mesmo se a API falhar
+		api.updateLocale(toBackendLocale(locale)).catch(() => {});
+		if (locale !== getLocale()) setLocale(locale); // recarrega ja no novo idioma
+	}
 
 	let step = $state(0);
 	let firstName = $state('');
@@ -19,10 +39,11 @@
 	let busy = $state(false);
 	let error = $state('');
 
-	const TOTAL_STEPS = 7;
+	const TOTAL_STEPS = 8;
 
 	const canAdvance = $derived(
 		[
+			language !== null,
 			firstName.trim() !== '',
 			sex !== null,
 			birthdate !== '',
@@ -73,6 +94,17 @@
 
 	<div class="flex-1">
 		{#if step === 0}
+			<h1 class="mb-6 text-2xl font-bold">{m.ob_language_title()}</h1>
+			<ChoiceChips
+				bind:value={language}
+				onselect={pickLanguage}
+				options={[
+					{ value: 'en' as Locale, label: 'English' },
+					{ value: 'pt-br' as Locale, label: 'Português (Brasil)' },
+					{ value: 'es' as Locale, label: 'Español' }
+				]}
+			/>
+		{:else if step === 1}
 			<h1 class="mb-6 text-2xl font-bold">{m.ob_name_title()}</h1>
 			<div class="space-y-3">
 				<input
@@ -90,7 +122,7 @@
 					class="h-14 w-full rounded-2xl border-2 border-slate-200 bg-white px-4 text-lg outline-none focus:border-emerald-600"
 				/>
 			</div>
-		{:else if step === 1}
+		{:else if step === 2}
 			<h1 class="mb-6 text-2xl font-bold">{m.ob_sex_title()}</h1>
 			<ChoiceChips
 				columns={2}
@@ -100,7 +132,7 @@
 					{ value: 'female', label: m.sex_female() }
 				]}
 			/>
-		{:else if step === 2}
+		{:else if step === 3}
 			<h1 class="mb-6 text-2xl font-bold">{m.ob_birthdate_title()}</h1>
 			<input
 				type="date"
@@ -108,7 +140,7 @@
 				max={new Date().toISOString().slice(0, 10)}
 				class="h-14 w-full rounded-2xl border-2 border-slate-200 bg-white px-4 text-lg outline-none focus:border-emerald-600"
 			/>
-		{:else if step === 3}
+		{:else if step === 4}
 			<h1 class="mb-6 text-2xl font-bold">{m.ob_measures_title()}</h1>
 			<div class="space-y-8">
 				<div>
@@ -120,7 +152,7 @@
 					<Stepper bind:value={weight} min={30} max={300} step={0.5} decimals={1} unit="kg" />
 				</div>
 			</div>
-		{:else if step === 4}
+		{:else if step === 5}
 			<h1 class="mb-6 text-2xl font-bold">{m.ob_activity_title()}</h1>
 			<ChoiceChips
 				bind:value={activity}
@@ -136,7 +168,7 @@
 					}
 				]}
 			/>
-		{:else if step === 5}
+		{:else if step === 6}
 			<h1 class="mb-6 text-2xl font-bold">{m.ob_objective_title()}</h1>
 			<ChoiceChips
 				bind:value={objective}
