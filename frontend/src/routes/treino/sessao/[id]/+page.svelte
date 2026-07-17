@@ -80,7 +80,7 @@
 		getAudioCtx();
 	}
 
-	function beep(): void {
+	function playTone(freq: number, durationSec: number, volume = 0.3): void {
 		const ctx = getAudioCtx();
 		if (!ctx) return;
 		try {
@@ -88,14 +88,22 @@
 			const gain = ctx.createGain();
 			osc.connect(gain);
 			gain.connect(ctx.destination);
-			osc.frequency.value = 880;
-			gain.gain.setValueAtTime(0.3, ctx.currentTime);
-			gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.5);
+			osc.frequency.value = freq;
+			gain.gain.setValueAtTime(volume, ctx.currentTime);
+			gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + durationSec);
 			osc.start();
-			osc.stop(ctx.currentTime + 0.5);
+			osc.stop(ctx.currentTime + durationSec);
 		} catch {
 			// áudio bloqueado: o toast ja da o retorno visual
 		}
+	}
+
+	// tique curto do countdown (ultimos 3s) e beep longo do fim ("beep, beep, biiiip")
+	function beepTick(): void {
+		playTone(800, 0.12);
+	}
+	function beep(): void {
+		playTone(1180, 0.6);
 	}
 
 	// Pede permissao de notificacao uma vez (a partir de um gesto do usuario: concluir
@@ -132,6 +140,7 @@
 		restEndsAtMs = Date.now() + seconds * 1000;
 		restActive = true;
 		restNotified = false;
+		countdownAt = -1;
 		saveRest();
 		ensureNotifyPermission();
 	}
@@ -165,6 +174,7 @@
 			restTotal = saved.total;
 			restActive = true;
 			restNotified = false;
+			countdownAt = -1;
 		} else {
 			if (now - saved.endsAt < 5 * 60 * 1000) showToast(m.rest_done_title());
 			clearRest();
@@ -195,14 +205,23 @@
 		}
 	}
 
-	// Um "tick" recalcula o relogio e checa o fim do descanso. Roda a cada 1s E ao
-	// voltar do segundo plano (visibilitychange), pra re-sincronizar na hora.
+	// Um "tick" recalcula o relogio, toca o countdown de preparacao (ultimos 3s) e checa
+	// o fim do descanso. Roda a cada 1s E ao voltar do 2o plano (visibilitychange).
+	let countdownAt = -1; // ultimo segundo em que tocamos o tique (evita repetir)
+
 	function tick(): void {
 		now = Date.now();
-		if (restActive && !restNotified && now >= restEndsAtMs) {
+		if (!restActive || restNotified) return;
+		const remaining = Math.max(0, Math.ceil((restEndsAtMs - now) / 1000));
+		// tique curto a cada segundo dos ultimos 3 (so em primeiro plano)
+		if (!document.hidden && remaining >= 1 && remaining <= 3 && remaining !== countdownAt) {
+			countdownAt = remaining;
+			beepTick();
+		}
+		if (now >= restEndsAtMs) {
 			restNotified = true;
 			restActive = false;
-			fireRestDone();
+			fireRestDone(); // beep longo + toast
 		}
 	}
 
