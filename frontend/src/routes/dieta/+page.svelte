@@ -614,7 +614,7 @@
 {#snippet recipeSuggestionCard(rs: RecipeSuggestion, meal: MealType)}
 	<div class="flex items-center gap-2 rounded-2xl border border-amber-200 bg-amber-50/50 px-3 py-2">
 		<span class="grid h-8 w-8 shrink-0 place-items-center rounded-lg bg-amber-100 text-amber-600">
-			<svg viewBox="0 0 24 24" class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v6M9 3h6M7 9h10l-1.2 9.2A2 2 0 0 1 13.8 20h-3.6a2 2 0 0 1-2-1.8z" /></svg>
+			<svg viewBox="0 0 24 24" class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 15a7 7 0 0 1 14 0" /><path d="M2 15h20" /><path d="M12 8V5" /><circle cx="12" cy="4" r="1" /></svg>
 		</span>
 		<div class="min-w-0 flex-1">
 			<p class="flex items-center gap-1 truncate text-sm font-semibold text-slate-800">
@@ -716,7 +716,7 @@
 		<section class="mt-3 rounded-3xl bg-emerald-50 p-4 ring-1 ring-emerald-100">
 			<div class="flex items-center gap-2.5">
 				<span class="grid h-8 w-8 shrink-0 place-items-center rounded-xl bg-emerald-600 text-white">
-					<svg viewBox="0 0 24 24" class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v6" /><path d="M9 3h6" /><path d="M7 9h10l-1.2 9.2A2 2 0 0 1 13.8 20h-3.6a2 2 0 0 1-2-1.8z" /></svg>
+					<svg viewBox="0 0 24 24" class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="8" y="2" width="8" height="4" rx="1" /><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2" /><path d="M12 11h4" /><path d="M12 16h4" /><path d="M8 11h.01" /><path d="M8 16h.01" /></svg>
 				</span>
 				<div class="min-w-0">
 					<p class="text-[11px] font-bold tracking-wide text-emerald-700 uppercase">{m.reco_title()}</p>
@@ -783,7 +783,7 @@
 			onclick={toggleAllPlans}
 			class="mt-3 flex w-full items-center justify-center gap-2 rounded-2xl border-2 border-emerald-200 py-2.5 text-sm font-bold text-emerald-700 active:bg-emerald-50"
 		>
-			<svg viewBox="0 0 24 24" class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v6" /><path d="M9 3h6" /><path d="M7 9h10l-1.2 9.2A2 2 0 0 1 13.8 20h-3.6a2 2 0 0 1-2-1.8z" /></svg>
+			<svg viewBox="0 0 24 24" class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="8" y="2" width="8" height="4" rx="1" /><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2" /><path d="M12 11h4" /><path d="M12 16h4" /><path d="M8 11h.01" /><path d="M8 16h.01" /></svg>
 			{m.nutri_plan()}
 			<svg viewBox="0 0 24 24" class="h-4 w-4 transition-transform {allPlansOpen ? 'rotate-180' : ''}" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6" stroke-linecap="round" stroke-linejoin="round" /></svg>
 		</button>
@@ -896,7 +896,7 @@
 						onclick={() => toggleMealPlan(meal)}
 						class="mt-1.5 flex w-full items-center gap-1.5 text-left text-xs font-semibold text-emerald-700"
 					>
-						<svg viewBox="0 0 24 24" class="h-3.5 w-3.5 shrink-0" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v6" /><path d="M9 3h6" /><path d="M7 9h10l-1.2 9.2A2 2 0 0 1 13.8 20h-3.6a2 2 0 0 1-2-1.8z" /></svg>
+						<svg viewBox="0 0 24 24" class="h-3.5 w-3.5 shrink-0" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="8" y="2" width="8" height="4" rx="1" /><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2" /><path d="M12 11h4" /><path d="M12 16h4" /><path d="M8 11h.01" /><path d="M8 16h.01" /></svg>
 						<span class="truncate">{m.nutri_suggestion()} · {m.meal_target({ kcal: nf.format(Math.round(plan.target.kcal)) })}</span>
 						<svg viewBox="0 0 24 24" class="ml-auto h-4 w-4 shrink-0 transition-transform {isMealExpanded(meal) ? 'rotate-180' : ''}" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6" stroke-linecap="round" stroke-linejoin="round" /></svg>
 					</button>

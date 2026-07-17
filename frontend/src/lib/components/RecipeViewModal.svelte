@@ -68,7 +68,7 @@
 				</button>
 				<div class="flex items-start gap-3 pr-10">
 					<span class="grid h-11 w-11 shrink-0 place-items-center rounded-2xl bg-amber-100 text-amber-600">
-						<svg viewBox="0 0 24 24" class="h-6 w-6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v6M9 3h6M7 9h10l-1.2 9.2A2 2 0 0 1 13.8 20h-3.6a2 2 0 0 1-2-1.8z" /></svg>
+						<svg viewBox="0 0 24 24" class="h-6 w-6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 15a7 7 0 0 1 14 0" /><path d="M2 15h20" /><path d="M12 8V5" /><circle cx="12" cy="4" r="1" /></svg>
 					</span>
 					<div class="min-w-0 flex-1">
 						<h2 class="flex items-center gap-1.5 text-lg leading-tight font-bold text-slate-900">
