@@ -4,6 +4,7 @@
 	import { goto } from '$app/navigation';
 	import favicon from '$lib/assets/favicon.svg';
 	import TabBar from '$lib/components/TabBar.svelte';
+	import FeedbackFab from '$lib/components/FeedbackFab.svelte';
 	import Toast from '$lib/components/Toast.svelte';
 	import { bootstrap, session } from '$lib/session.svelte';
 	import { initTheme } from '$lib/theme.svelte';
@@ -58,6 +59,7 @@
 			{@render children()}
 		</main>
 		{#if showTabBar}
+			<FeedbackFab />
 			<TabBar />
 		{/if}
 	{:else}

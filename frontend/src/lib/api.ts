@@ -38,6 +38,19 @@ export interface UserOut {
 	locale: string;
 	plan: 'free' | 'premium';
 	has_profile: boolean;
+	is_admin: boolean;
+}
+
+// modulos do feedback (o front faz o i18n dos rotulos)
+export type FeedbackModule = 'workout' | 'diet' | 'progress' | 'profile' | 'other';
+
+export interface FeedbackReport {
+	id: number;
+	module: string;
+	description: string;
+	read: boolean;
+	created_at: string;
+	user_email: string;
 }
 
 export type Sex = 'male' | 'female';
@@ -661,6 +674,12 @@ export const api = {
 			auth: false
 		}),
 	me: () => request<UserOut>('/me'),
+	// feedback / reportar problema
+	submitFeedback: (module: FeedbackModule, description: string) =>
+		request<FeedbackReport>('/me/feedback', { method: 'POST', body: { module, description } }),
+	getAdminFeedback: () => request<FeedbackReport[]>('/me/feedback/admin'),
+	markFeedbackRead: (id: number, read: boolean) =>
+		request<FeedbackReport>(`/me/feedback/admin/${id}/read`, { method: 'PATCH', body: { read } }),
 	updateLocale: (locale: string) =>
 		request<UserOut>('/me/locale', { method: 'PUT', body: { locale } }),
 	changePassword: (currentPassword: string, newPassword: string) =>

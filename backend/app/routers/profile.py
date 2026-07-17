@@ -1,7 +1,7 @@
 from fastapi import APIRouter, HTTPException, status
 from sqlmodel import desc, select
 
-from ..deps import CurrentUser, SessionDep
+from ..deps import CurrentUser, SessionDep, user_is_admin
 from ..models import Profile, User, WeightLog, WeightSource
 from ..schemas import (
     EmailChange,
@@ -43,6 +43,7 @@ def get_me(user: CurrentUser, session: SessionDep) -> UserOut:
         locale=user.locale,
         plan=user.plan,
         has_profile=profile is not None,
+        is_admin=user_is_admin(user),
     )
 
 

@@ -18,6 +18,10 @@ class Settings(BaseSettings):
         for host in ("localhost", "127.0.0.1")
         for port in range(5173, 5180)
     ]
+    # E-mails com acesso de administrador (ex.: ver os feedbacks). Definido por env
+    # (GYMAPP_ADMIN_EMAILS) em producao. Allowlist evita adicionar coluna is_admin na
+    # tabela users (que nao migraria sozinha no Postgres).
+    admin_emails: list[str] = []
 
     model_config = {"env_prefix": "GYMAPP_", "env_file": ".env"}
 

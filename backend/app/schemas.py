@@ -47,6 +47,26 @@ class UserOut(BaseModel):
     locale: str
     plan: Plan
     has_profile: bool
+    is_admin: bool = False
+
+
+class FeedbackIn(BaseModel):
+    # module: workout | diet | progress | profile | other (front faz o i18n)
+    module: str = Field(min_length=1, max_length=20)
+    description: str = Field(min_length=1, max_length=2000)
+
+
+class FeedbackOut(BaseModel):
+    id: int
+    module: str
+    description: str
+    read: bool
+    created_at: datetime
+    user_email: str  # so o admin ve a lista, entao expor o e-mail e ok aqui
+
+
+class FeedbackReadUpdate(BaseModel):
+    read: bool
 
 
 class ProfileIn(BaseModel):

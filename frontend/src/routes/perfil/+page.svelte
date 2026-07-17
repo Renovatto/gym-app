@@ -1,6 +1,13 @@
 <script lang="ts">
 	import { goto } from '$app/navigation';
-	import { api, ApiError, type ActivityLevel, type CutIntensity, type Objective } from '$lib/api';
+	import {
+		api,
+		ApiError,
+		type ActivityLevel,
+		type CutIntensity,
+		type FeedbackReport,
+		type Objective
+	} from '$lib/api';
 	import ChoiceChips from '$lib/components/ChoiceChips.svelte';
 	import Stepper from '$lib/components/Stepper.svelte';
 	import { bootstrap, session, signOut } from '$lib/session.svelte';
@@ -43,10 +50,49 @@
 		account: false,
 		data: false,
 		preferences: false,
-		privacy: false
+		privacy: false,
+		admin: false
 	});
 	function toggleGroup(key: string): void {
 		openGroups[key] = !openGroups[key];
+	}
+
+	// Admin (allowlist de e-mail): lista de feedbacks recebidos com lido/nao-lido + contador.
+	let feedbacks = $state<FeedbackReport[]>([]);
+	let feedbackLoaded = $state(false);
+	const unreadFeedback = $derived(feedbacks.filter((f) => !f.read).length);
+	const feedbackDateFmt = new Intl.DateTimeFormat(getLocale(), {
+		day: '2-digit',
+		month: '2-digit',
+		hour: '2-digit',
+		minute: '2-digit'
+	});
+
+	async function loadFeedback(): Promise<void> {
+		feedbacks = await api.getAdminFeedback();
+		feedbackLoaded = true;
+	}
+
+	// carrega ao entrar (se admin) para o contador aparecer mesmo com o grupo fechado
+	$effect(() => {
+		if (session.user?.is_admin && !feedbackLoaded) loadFeedback();
+	});
+
+	async function toggleFeedbackRead(f: FeedbackReport): Promise<void> {
+		const updated = await api.markFeedbackRead(f.id, !f.read);
+		feedbacks = feedbacks.map((x) => (x.id === f.id ? updated : x));
+	}
+
+	function feedbackModuleLabel(mod: string): string {
+		return (
+			{
+				workout: m.tab_workout(),
+				diet: m.tab_diet(),
+				progress: m.tab_progress(),
+				profile: m.tab_profile(),
+				other: m.feedback_other()
+			}[mod] ?? mod
+		);
 	}
 
 	// troca de e-mail (sem senha): mostra o e-mail atual; o lapis abre a edicao
@@ -497,6 +543,58 @@
 			</div>
 		{/if}
 	</section>
+
+	<!-- ADMIN: feedbacks recebidos (so aparece na allowlist de e-mail) -->
+	{#if session.user?.is_admin}
+		<section class="overflow-hidden rounded-3xl bg-white shadow-sm">
+			<button
+				type="button"
+				onclick={() => toggleGroup('admin')}
+				class="flex w-full items-center justify-between px-5 py-4 text-left"
+			>
+				<span class="flex items-center gap-2 font-bold text-slate-800">
+					{m.admin_feedback_title()}
+					{#if unreadFeedback > 0}
+						<span class="grid h-5 min-w-[20px] place-items-center rounded-full bg-emerald-600 px-1.5 text-xs font-bold text-white">{unreadFeedback}</span>
+					{/if}
+				</span>
+				<svg viewBox="0 0 24 24" class="h-5 w-5 text-slate-400 transition-transform {openGroups.admin ? 'rotate-180' : ''}" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6" stroke-linecap="round" stroke-linejoin="round" /></svg>
+			</button>
+			{#if openGroups.admin}
+				<div class="space-y-2 px-5 pb-5">
+					{#if !feedbackLoaded}
+						<div class="flex justify-center py-6">
+							<div class="h-6 w-6 animate-spin rounded-full border-4 border-emerald-600 border-t-transparent"></div>
+						</div>
+					{:else if feedbacks.length === 0}
+						<p class="rounded-2xl bg-slate-50 px-4 py-3 text-center text-sm text-slate-400">{m.feedback_empty()}</p>
+					{:else}
+						{#each feedbacks as f (f.id)}
+							<div class="rounded-2xl border-2 p-3 {f.read ? 'border-slate-100' : 'border-emerald-200 bg-emerald-50/40'}">
+								<div class="flex items-center justify-between gap-2">
+									<span class="text-xs font-bold text-emerald-700 uppercase">{feedbackModuleLabel(f.module)}</span>
+									<span class="text-xs text-slate-400">{feedbackDateFmt.format(new Date(f.created_at))}</span>
+								</div>
+								<p class="mt-1.5 text-sm whitespace-pre-wrap text-slate-700">{f.description}</p>
+								<div class="mt-2 flex items-center justify-between gap-2">
+									<span class="min-w-0 flex-1 truncate text-xs text-slate-400">{f.user_email}</span>
+									<button
+										type="button"
+										onclick={() => toggleFeedbackRead(f)}
+										class="shrink-0 rounded-lg px-2.5 py-1 text-xs font-bold {f.read
+											? 'text-slate-400 active:bg-slate-100'
+											: 'bg-emerald-100 text-emerald-700 active:bg-emerald-200'}"
+									>
+										{f.read ? m.feedback_mark_unread() : m.feedback_mark_read()}
+									</button>
+								</div>
+							</div>
+						{/each}
+					{/if}
+				</div>
+			{/if}
+		</section>
+	{/if}
 </div>
 
 <button

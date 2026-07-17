@@ -382,6 +382,22 @@ class Favorite(SQLModel, table=True):
     created_at: datetime = Field(default_factory=utcnow)
 
 
+class FeedbackReport(SQLModel, table=True):
+    """Feedback / relato de problema enviado por um usuario. Tabela nova (o create_all
+    cria sozinho no Postgres, sem migracao). 'module' e string livre (workout, diet,
+    progress, profile, other) para evitar a friccao de enum novo no Postgres. 'read'
+    marca se o admin ja leu."""
+
+    __tablename__ = "feedback_reports"
+
+    id: int | None = Field(default=None, primary_key=True)
+    user_id: int = Field(foreign_key="users.id", index=True, ondelete="CASCADE")
+    module: str = Field(index=True)  # treino/dieta/progresso/perfil/outro
+    description: str
+    read: bool = Field(default=False, index=True)
+    created_at: datetime = Field(default_factory=utcnow, index=True)
+
+
 class UserAchievement(SQLModel, table=True):
     """Conquista desbloqueada por um usuario. As definicoes das conquistas ficam em
     codigo (services/achievements.py); aqui guardamos so o que cada um ja desbloqueou."""
