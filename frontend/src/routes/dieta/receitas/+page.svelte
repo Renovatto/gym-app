@@ -27,6 +27,12 @@
 		recipes.filter((r) => searchMatches(r.name, term))
 	);
 
+	async function toggleRecipeFav(recipe: Recipe): Promise<void> {
+		const { favorite } = await api.toggleFavorite('recipe', recipe.id);
+		showToast(favorite ? m.toast_favorited() : m.toast_unfavorited());
+		await load(); // backend devolve favoritas primeiro (recarrega minhas + biblioteca)
+	}
+
 	// Biblioteca: filtro por tag e "adotar" (copia para as minhas receitas)
 	const TAGS = ['protein', 'quick', 'veggie', 'sweet', 'budget'] as const;
 	let activeTag = $state<string | null>(null);
@@ -103,22 +109,47 @@
 	{:else}
 		<div class="space-y-2">
 			{#each filteredMyRecipes as recipe (recipe.id)}
-				<a
-					href="/dieta/receita/{recipe.id}"
-					class="flex items-center justify-between rounded-2xl bg-white p-4 shadow-sm active:bg-slate-50"
-				>
-					<div class="min-w-0 flex-1">
-						<p class="truncate font-bold text-slate-900">{recipe.name}</p>
-						<p class="text-sm text-slate-500">
-							{recipe.ingredients.length}
-							{recipe.ingredients.length === 1 ? m.ingredient_singular() : m.ingredient_plural()}
-							· {nf.format(Math.round(recipe.per_serving.kcal))} kcal/{m.serving_singular()}
-						</p>
-					</div>
-					<span aria-label={m.edit()} title={m.edit()} class="grid h-9 w-9 shrink-0 place-items-center rounded-xl text-slate-400">
+				<div class="flex items-center gap-1 rounded-2xl bg-white p-2 shadow-sm">
+					<a
+						href="/dieta/receita/{recipe.id}"
+						class="flex min-w-0 flex-1 items-center rounded-xl p-2 active:bg-slate-50"
+					>
+						<div class="min-w-0 flex-1">
+							<p class="truncate font-bold text-slate-900">{recipe.name}</p>
+							<p class="text-sm text-slate-500">
+								{recipe.ingredients.length}
+								{recipe.ingredients.length === 1 ? m.ingredient_singular() : m.ingredient_plural()}
+								· {nf.format(Math.round(recipe.per_serving.kcal))} kcal/{m.serving_singular()}
+							</p>
+						</div>
+					</a>
+					<button
+						type="button"
+						aria-label={m.favorite_toggle()}
+						title={m.favorite_toggle()}
+						onclick={() => toggleRecipeFav(recipe)}
+						class="grid h-10 w-10 shrink-0 place-items-center rounded-xl active:bg-slate-100"
+					>
+						<svg
+							viewBox="0 0 24 24"
+							class="h-5 w-5 {recipe.is_favorite ? 'text-amber-400' : 'text-slate-300'}"
+							fill={recipe.is_favorite ? 'currentColor' : 'none'}
+							stroke="currentColor"
+							stroke-width="2"
+							stroke-linejoin="round"
+						>
+							<path d="M12 3l2.9 5.9 6.5.9-4.7 4.6 1.1 6.5L12 17.8 6.2 20.9l1.1-6.5L2.6 9.8l6.5-.9z" stroke-linecap="round" />
+						</svg>
+					</button>
+					<a
+						href="/dieta/receita/{recipe.id}"
+						aria-label={m.edit()}
+						title={m.edit()}
+						class="grid h-10 w-10 shrink-0 place-items-center rounded-xl text-slate-400 active:bg-slate-100"
+					>
 						<svg viewBox="0 0 24 24" class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9M16.5 3.5a2.1 2.1 0 013 3L7 19l-4 1 1-4z" /></svg>
-					</span>
-				</a>
+					</a>
+				</div>
 			{/each}
 		</div>
 	{/if}

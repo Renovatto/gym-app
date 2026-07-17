@@ -14,6 +14,7 @@ from sqlmodel import Session, select
 from ..models import Food, Recipe, RecipeIngredient, User
 from ..schemas import LibraryIngredientOut, LibraryRecipeOut, MacrosOut
 from .diet import food_macros, localized_food_name
+from .favorites import favorite_recipe_ids
 
 SEED_RECIPES_FILE = Path(__file__).resolve().parent.parent / "seed_recipes.json"
 
@@ -68,16 +69,29 @@ def _build_out(entry: dict, foods: dict[str, Food], locale: str) -> LibraryRecip
     )
 
 
+def _favorite_recipe_names(session: Session, user: User) -> set[str]:
+    """Nomes das receitas do usuario que ele marcou como favoritas. A biblioteca
+    casa por nome (a receita adotada leva o nome localizado da semente)."""
+    fav_ids = favorite_recipe_ids(session, user.id)
+    if not fav_ids:
+        return set()
+    my_recipes = session.exec(select(Recipe).where(Recipe.user_id == user.id)).all()
+    return {r.name for r in my_recipes if r.id in fav_ids}
+
+
 def list_library(session: Session, user: User, tag: str | None = None) -> list[LibraryRecipeOut]:
     foods = _global_foods_by_slug(session)
+    favorite_names = _favorite_recipe_names(session, user)
     out: list[LibraryRecipeOut] = []
     for entry in _load():
         if tag and tag not in entry["tags"]:
             continue
         built = _build_out(entry, foods, user.locale)
         if built is not None:
+            built.is_favorite = built.name in favorite_names
             out.append(built)
-    out.sort(key=lambda item: item.name.lower())
+    # favoritas primeiro, depois alfabetica
+    out.sort(key=lambda item: (not item.is_favorite, item.name.lower()))
     return out
 
 

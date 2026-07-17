@@ -64,13 +64,37 @@
 		loading = false;
 	}
 
-	// recentes carregam uma vez (mostrados quando não há busca)
+	// recentes e favoritos carregam uma vez (mostrados quando não há busca)
 	api.getRecentFoods().then((r) => (recentFoods = r));
+	let favoriteFoods = $state<Food[]>([]);
+	api.getFavoriteFoods().then((f) => (favoriteFoods = f));
+
+	// fonte unica da verdade da estrelinha dos alimentos (vale em todas as listas)
+	const favFoodIds = $derived(new Set(favoriteFoods.map((f) => f.id)));
 
 	$effect(() => {
 		if (tab === 'foods') loadFoods();
 		else loadRecipes();
 	});
+
+	async function toggleFoodFav(food: Food): Promise<void> {
+		const { favorite } = await api.toggleFavorite('food', food.id);
+		if (favorite) {
+			if (!favoriteFoods.some((f) => f.id === food.id)) {
+				favoriteFoods = [...favoriteFoods, { ...food, is_favorite: true }];
+			}
+			showToast(m.toast_favorited());
+		} else {
+			favoriteFoods = favoriteFoods.filter((f) => f.id !== food.id);
+			showToast(m.toast_unfavorited());
+		}
+	}
+
+	async function toggleRecipeFav(recipe: Recipe): Promise<void> {
+		const { favorite } = await api.toggleFavorite('recipe', recipe.id);
+		showToast(favorite ? m.toast_favorited() : m.toast_unfavorited());
+		await loadRecipes(); // backend ja devolve favoritas primeiro
+	}
 
 	function pickFood(food: Food): void {
 		selFood = food;
@@ -155,6 +179,44 @@
 	}
 </script>
 
+<!-- linha de alimento reutilizada em Favoritos, Recentes e Todos: toca no corpo
+	 para escolher a quantidade; toca na estrela so favorita (botoes irmaos) -->
+{#snippet foodRow(food: Food)}
+	<div class="flex items-center gap-1 rounded-2xl bg-white p-2 shadow-sm">
+		<button
+			type="button"
+			onclick={() => pickFood(food)}
+			class="flex min-w-0 flex-1 items-center justify-between rounded-xl p-1.5 text-left active:bg-slate-50"
+		>
+			<span class="min-w-0 flex-1">
+				<span class="block truncate font-semibold text-slate-900">{food.name}</span>
+				<span class="text-xs text-slate-500">{nf.format(food.kcal)} kcal / 100 g</span>
+			</span>
+			{#if food.is_custom}
+				<span class="ml-2 rounded bg-emerald-50 px-1.5 py-0.5 text-xs font-semibold text-emerald-600">{m.custom_tag()}</span>
+			{/if}
+		</button>
+		<button
+			type="button"
+			aria-label={m.favorite_toggle()}
+			title={m.favorite_toggle()}
+			onclick={() => toggleFoodFav(food)}
+			class="grid h-10 w-10 shrink-0 place-items-center rounded-xl active:bg-slate-100"
+		>
+			<svg
+				viewBox="0 0 24 24"
+				class="h-5 w-5 {favFoodIds.has(food.id) ? 'text-amber-400' : 'text-slate-300'}"
+				fill={favFoodIds.has(food.id) ? 'currentColor' : 'none'}
+				stroke="currentColor"
+				stroke-width="2"
+				stroke-linejoin="round"
+			>
+				<path d="M12 3l2.9 5.9 6.5.9-4.7 4.6 1.1 6.5L12 17.8 6.2 20.9l1.1-6.5L2.6 9.8l6.5-.9z" stroke-linecap="round" />
+			</svg>
+		</button>
+	</div>
+{/snippet}
+
 <div class="fixed inset-0 z-40 overflow-y-auto bg-slate-50">
 	<div class="mx-auto max-w-md px-4 pt-4 pb-24">
 		<div class="mb-4 flex items-center justify-between gap-2">
@@ -199,40 +261,29 @@
 					<div class="h-7 w-7 animate-spin rounded-full border-4 border-emerald-600 border-t-transparent"></div>
 				</div>
 			{:else}
+				{#if !searching && favoriteFoods.length > 0}
+					<p class="mb-2 flex items-center gap-1 text-xs font-bold text-amber-500 uppercase">
+						<svg viewBox="0 0 24 24" class="h-3.5 w-3.5" fill="currentColor"><path d="M12 3l2.9 5.9 6.5.9-4.7 4.6 1.1 6.5L12 17.8 6.2 20.9l1.1-6.5L2.6 9.8l6.5-.9z" /></svg>
+						{m.favorites_label()}
+					</p>
+					<div class="mb-4 space-y-2">
+						{#each favoriteFoods as food (food.id)}
+							{@render foodRow(food)}
+						{/each}
+					</div>
+				{/if}
 				{#if !searching && recentFoods.length > 0}
 					<p class="mb-2 text-xs font-bold text-slate-400 uppercase">{m.recent_label()}</p>
 					<div class="mb-4 space-y-2">
 						{#each recentFoods as food (food.id)}
-							<button
-								type="button"
-								onclick={() => pickFood(food)}
-								class="flex w-full items-center justify-between rounded-2xl bg-white p-3.5 text-left shadow-sm active:bg-slate-50"
-							>
-								<span class="min-w-0 flex-1">
-									<span class="block truncate font-semibold text-slate-900">{food.name}</span>
-									<span class="text-xs text-slate-500">{nf.format(food.kcal)} kcal / 100 g</span>
-								</span>
-								<svg viewBox="0 0 24 24" class="h-4 w-4 shrink-0 text-slate-300" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 8v4l3 2M21 12a9 9 0 11-18 0 9 9 0 0118 0z" stroke-linecap="round" stroke-linejoin="round" /></svg>
-							</button>
+							{@render foodRow(food)}
 						{/each}
 					</div>
 					<p class="mb-2 text-xs font-bold text-slate-400 uppercase">{m.all_foods_label()}</p>
 				{/if}
 				<div class="space-y-2">
 					{#each foods as food (food.id)}
-						<button
-							type="button"
-							onclick={() => pickFood(food)}
-							class="flex w-full items-center justify-between rounded-2xl bg-white p-3.5 text-left shadow-sm active:bg-slate-50"
-						>
-							<span class="min-w-0 flex-1">
-								<span class="block truncate font-semibold text-slate-900">{food.name}</span>
-								<span class="text-xs text-slate-500">{nf.format(food.kcal)} kcal / 100 g</span>
-							</span>
-							{#if food.is_custom}
-								<span class="ml-2 rounded bg-emerald-50 px-1.5 py-0.5 text-xs font-semibold text-emerald-600">{m.custom_tag()}</span>
-							{/if}
-						</button>
+						{@render foodRow(food)}
 					{/each}
 				</div>
 				<a href="/dieta/alimento/novo" class="mt-3 block text-center text-sm font-semibold text-emerald-700">
@@ -258,6 +309,24 @@
 									{nf.format(Math.round(recipe.per_serving.kcal))} kcal / {m.serving_singular()}
 								</span>
 							</span>
+						</button>
+						<button
+							type="button"
+							aria-label={m.favorite_toggle()}
+							title={m.favorite_toggle()}
+							onclick={() => toggleRecipeFav(recipe)}
+							class="grid h-10 w-10 shrink-0 place-items-center rounded-xl active:bg-slate-100"
+						>
+							<svg
+								viewBox="0 0 24 24"
+								class="h-5 w-5 {recipe.is_favorite ? 'text-amber-400' : 'text-slate-300'}"
+								fill={recipe.is_favorite ? 'currentColor' : 'none'}
+								stroke="currentColor"
+								stroke-width="2"
+								stroke-linejoin="round"
+							>
+								<path d="M12 3l2.9 5.9 6.5.9-4.7 4.6 1.1 6.5L12 17.8 6.2 20.9l1.1-6.5L2.6 9.8l6.5-.9z" stroke-linecap="round" />
+							</svg>
 						</button>
 						<a
 							href="/dieta/receita/{recipe.id}"

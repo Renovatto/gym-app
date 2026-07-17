@@ -7,6 +7,7 @@ from .models import (
     CutIntensity,
     Equipment,
     EntrySource,
+    FavoriteKind,
     ExerciseKind,
     ExerciseLevel,
     FoodCategory,
@@ -362,6 +363,7 @@ class FoodOut(BaseModel):
     default_portion_g: float
     portions: list[FoodPortionOut]
     is_custom: bool
+    is_favorite: bool = False
 
 
 class FoodIn(BaseModel):
@@ -399,6 +401,7 @@ class RecipeOut(BaseModel):
     ingredients: list[RecipeIngredientOut]
     total: MacrosOut
     per_serving: MacrosOut
+    is_favorite: bool = False
 
 
 class DiaryEntryIn(BaseModel):
@@ -412,6 +415,15 @@ class DiaryEntryIn(BaseModel):
 
 class DiaryEntryUpdate(BaseModel):
     quantity: float = Field(gt=0, le=5000)
+
+
+class DiaryFromLibraryIn(BaseModel):
+    """Adotar (idempotente) uma receita da biblioteca e ja lancar no diario, 1 toque."""
+
+    slug: str
+    entry_date: date
+    meal_type: MealType
+    quantity: float = Field(default=1, gt=0, le=50)  # porcoes
 
 
 class DiaryEntryOut(BaseModel):
@@ -455,6 +467,28 @@ class LibraryRecipeOut(BaseModel):
     total: MacrosOut
     per_serving: MacrosOut
     ingredients: list[LibraryIngredientOut]
+    # True quando o usuario ja adotou esta receita e a marcou como favorita
+    is_favorite: bool = False
+
+
+class RecipeSuggestionOut(BaseModel):
+    """Sugestao de receita da biblioteca para fechar a lacuna de uma refeicao/dia.
+    Adicionar (1 toque) adota a receita e lanca a porcao no diario."""
+
+    slug: str  # identifica a receita na biblioteca (para adotar + lancar)
+    name: str
+    tags: list[str]
+    macros: MacrosOut  # de UMA porcao (o que sera lancado)
+    is_favorite: bool = False
+
+
+class FavoriteToggleIn(BaseModel):
+    kind: FavoriteKind
+    ref_id: int  # food_id (kind=food) ou recipe_id (kind=recipe)
+
+
+class FavoriteToggleOut(BaseModel):
+    favorite: bool  # novo estado apos alternar
 
 
 # --- Recomendacao da dieta (motor de encaixe) -----------------------------
@@ -475,6 +509,7 @@ class DiaryGapOut(BaseModel):
     # protein | carbs | fat | calories | complete | no_goal
     primary: str
     suggestions: list[FoodSuggestionOut]
+    recipe_suggestions: list[RecipeSuggestionOut] = []
 
 
 class SubstituteSourceOut(BaseModel):
@@ -507,6 +542,7 @@ class MealPlanMealOut(BaseModel):
     remaining: MacrosOut  # lacuna adaptativa (alvo x consumido x sobra do dia)
     primary: str  # macro-alvo da refeicao: protein | carbs | fat | calories | complete
     suggestions: list[FoodSuggestionOut]
+    recipe_suggestions: list[RecipeSuggestionOut] = []
 
 
 class MealPlanOut(BaseModel):

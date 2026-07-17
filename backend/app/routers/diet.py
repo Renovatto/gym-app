@@ -7,6 +7,7 @@ from ..deps import CurrentUser, SessionDep
 from ..models import (
     DiaryEntry,
     EntrySource,
+    FavoriteKind,
     Food,
     FoodCategory,
     FoodTranslation,
@@ -21,10 +22,13 @@ from ..schemas import (
     DiaryEntryIn,
     DiaryEntryOut,
     DiaryEntryUpdate,
+    DiaryFromLibraryIn,
     DietAdherenceOut,
     DietPeriodOut,
     DiaryGapOut,
     ExternalFoodOut,
+    FavoriteToggleIn,
+    FavoriteToggleOut,
     FoodIn,
     FoodOut,
     MacrosOut,
@@ -47,6 +51,7 @@ from ..services.diet import (
     sum_macros,
     to_food_out,
 )
+from ..services.favorites import favorite_food_ids, favorite_recipe_ids, toggle_favorite
 from ..services.goals import compute_goals
 from ..services.recipes_library import adopt as adopt_library_recipe
 from ..services.recipes_library import list_library
@@ -75,6 +80,7 @@ def list_foods(
     foods = session.exec(query).all()
 
     term = normalize_search(q.strip())
+    fav_ids = favorite_food_ids(session, user.id)
     out = []
     for food in foods:
         name = localized_food_name(food, user.locale)
@@ -82,9 +88,23 @@ def list_foods(
             # também busca em qualquer idioma cadastrado (ex.: nome em inglês)
             if not any(term in normalize_search(t.name) for t in food.translations):
                 continue
-        out.append(to_food_out(food, user.locale))
-    out.sort(key=lambda f: f.name.lower())
+        out.append(to_food_out(food, user.locale, fav_ids))
+    # favoritos primeiro, depois alfabetica
+    out.sort(key=lambda f: (not f.is_favorite, f.name.lower()))
     return out[:limit]
+
+
+@router.get("/me/foods/favorites", response_model=list[FoodOut])
+def favorite_foods(user: CurrentUser, session: SessionDep) -> list[FoodOut]:
+    """Alimentos que o usuario marcou como favoritos (a estrelinha)."""
+    fav_ids = favorite_food_ids(session, user.id)
+    out = [
+        to_food_out(food, user.locale, fav_ids)
+        for food_id in fav_ids
+        if (food := _visible_food(session, food_id, user.id)) is not None
+    ]
+    out.sort(key=lambda f: f.name.lower())
+    return out
 
 
 @router.get("/me/foods/recent", response_model=list[FoodOut])
@@ -107,12 +127,29 @@ def recent_foods(
             seen.append(food_id)
         if len(seen) >= limit:
             break
+    fav_ids = favorite_food_ids(session, user.id)
     out = []
     for food_id in seen:
         food = _visible_food(session, food_id, user.id)
         if food is not None:
-            out.append(to_food_out(food, user.locale))
+            out.append(to_food_out(food, user.locale, fav_ids))
     return out
+
+
+@router.put("/me/favorites", response_model=FavoriteToggleOut)
+def toggle_favorite_endpoint(
+    data: FavoriteToggleIn, user: CurrentUser, session: SessionDep
+) -> FavoriteToggleOut:
+    """Liga/desliga a estrelinha de um alimento ou receita. Valida que o item existe
+    e pertence ao usuario (ou e global, no caso de alimento do catalogo)."""
+    if data.kind == FavoriteKind.food:
+        if _visible_food(session, data.ref_id, user.id) is None:
+            raise HTTPException(status.HTTP_404_NOT_FOUND, detail="FOOD_NOT_FOUND")
+    else:
+        if _get_owned_recipe_or_none(session, data.ref_id, user.id) is None:
+            raise HTTPException(status.HTTP_404_NOT_FOUND, detail="RECIPE_NOT_FOUND")
+    now_favorite = toggle_favorite(session, user.id, data.kind, data.ref_id)
+    return FavoriteToggleOut(favorite=now_favorite)
 
 
 @router.post("/me/foods", response_model=FoodOut, status_code=status.HTTP_201_CREATED)
@@ -173,7 +210,9 @@ def _visible_food(session: Session, food_id: int, user_id: int) -> Food | None:
     return food
 
 
-def _recipe_out(session: Session, recipe: Recipe, locale: str) -> RecipeOut:
+def _recipe_out(
+    session: Session, recipe: Recipe, locale: str, is_favorite: bool = False
+) -> RecipeOut:
     ings, total, per_serving = recipe_breakdown(session, recipe, locale)
     return RecipeOut(
         id=recipe.id,
@@ -182,7 +221,15 @@ def _recipe_out(session: Session, recipe: Recipe, locale: str) -> RecipeOut:
         ingredients=ings,
         total=total,
         per_serving=per_serving,
+        is_favorite=is_favorite,
     )
+
+
+def _get_owned_recipe_or_none(session: Session, recipe_id: int, user_id: int) -> Recipe | None:
+    recipe = session.get(Recipe, recipe_id)
+    if recipe is None or recipe.user_id != user_id:
+        return None
+    return recipe
 
 
 @router.get("/me/recipes", response_model=list[RecipeOut])
@@ -190,7 +237,11 @@ def list_recipes(user: CurrentUser, session: SessionDep) -> list[RecipeOut]:
     recipes = session.exec(
         select(Recipe).where(Recipe.user_id == user.id).order_by(desc(Recipe.created_at))
     ).all()
-    return [_recipe_out(session, r, user.locale) for r in recipes]
+    fav_ids = favorite_recipe_ids(session, user.id)
+    out = [_recipe_out(session, r, user.locale, r.id in fav_ids) for r in recipes]
+    # favoritas primeiro, mantendo a ordem por criacao dentro de cada grupo
+    out.sort(key=lambda r: not r.is_favorite)
+    return out
 
 
 @router.get("/recipes/library", response_model=list[LibraryRecipeOut])
@@ -210,6 +261,38 @@ def adopt_recipe(slug: str, user: CurrentUser, session: SessionDep) -> RecipeOut
     if recipe is None:
         raise HTTPException(status.HTTP_404_NOT_FOUND, detail="RECIPE_NOT_FOUND")
     return _recipe_out(session, recipe, user.locale)
+
+
+@router.post(
+    "/me/diary/from-library", response_model=DiaryEntryOut, status_code=status.HTTP_201_CREATED
+)
+def add_from_library(
+    data: DiaryFromLibraryIn, user: CurrentUser, session: SessionDep
+) -> DiaryEntryOut:
+    """1 toque: adota a receita da biblioteca (idempotente) e lanca a porcao no diario."""
+    recipe = adopt_library_recipe(session, user, data.slug)
+    if recipe is None:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, detail="RECIPE_NOT_FOUND")
+    macros, name = _entry_macros_and_name(
+        session, user.id, user.locale, EntrySource.recipe, None, recipe.id, data.quantity
+    )
+    entry = DiaryEntry(
+        user_id=user.id,
+        entry_date=data.entry_date,
+        meal_type=data.meal_type,
+        source=EntrySource.recipe,
+        recipe_id=recipe.id,
+        quantity=data.quantity,
+        name_snapshot=name,
+        kcal=macros.kcal,
+        protein_g=macros.protein_g,
+        carbs_g=macros.carbs_g,
+        fat_g=macros.fat_g,
+    )
+    session.add(entry)
+    session.commit()
+    session.refresh(entry)
+    return _entry_out(entry)
 
 
 @router.post("/me/recipes", response_model=RecipeOut, status_code=status.HTTP_201_CREATED)

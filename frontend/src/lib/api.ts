@@ -348,6 +348,7 @@ export interface Food {
 	default_portion_g: number;
 	portions: FoodPortion[];
 	is_custom: boolean;
+	is_favorite: boolean;
 }
 
 export interface RecipeIngredient {
@@ -364,6 +365,7 @@ export interface Recipe {
 	ingredients: RecipeIngredient[];
 	total: Macros;
 	per_serving: Macros;
+	is_favorite: boolean;
 }
 
 export interface DiaryEntry {
@@ -400,6 +402,15 @@ export interface FoodSuggestion {
 	macros: Macros;
 }
 
+// Sugestao de receita da biblioteca (adotar+lancar em 1 toque via slug).
+export interface RecipeSuggestion {
+	slug: string;
+	name: string;
+	tags: string[];
+	macros: Macros; // de UMA porcao
+	is_favorite: boolean;
+}
+
 export interface DiaryGap {
 	date: string;
 	goals: Macros | null;
@@ -407,6 +418,7 @@ export interface DiaryGap {
 	remaining: Macros | null;
 	primary: GapPrimary;
 	suggestions: FoodSuggestion[];
+	recipe_suggestions: RecipeSuggestion[];
 }
 
 export interface SubstituteItem {
@@ -429,6 +441,7 @@ export interface MealPlanMeal {
 	remaining: Macros;
 	primary: GapPrimary;
 	suggestions: FoodSuggestion[];
+	recipe_suggestions: RecipeSuggestion[];
 }
 
 export interface MealPlan {
@@ -493,7 +506,10 @@ export interface LibraryRecipe {
 	total: Macros;
 	per_serving: Macros;
 	ingredients: { name: string; grams: number }[];
+	is_favorite: boolean;
 }
+
+export type FavoriteKind = 'food' | 'recipe';
 
 export interface RecipeInput {
 	name: string;
@@ -721,6 +737,20 @@ export const api = {
 		return request<Food[]>(`/foods${qs ? `?${qs}` : ''}`);
 	},
 	getRecentFoods: () => request<Food[]>('/me/foods/recent'),
+	getFavoriteFoods: () => request<Food[]>('/me/foods/favorites'),
+	// Liga/desliga a estrelinha; retorna o novo estado (true = favorito).
+	toggleFavorite: (kind: FavoriteKind, refId: number) =>
+		request<{ favorite: boolean }>('/me/favorites', {
+			method: 'PUT',
+			body: { kind, ref_id: refId }
+		}),
+	// 1 toque: adota a receita da biblioteca e ja lanca no diario.
+	addDiaryFromLibrary: (input: {
+		slug: string;
+		entry_date: string;
+		meal_type: MealType;
+		quantity?: number;
+	}) => request<DiaryEntry>('/me/diary/from-library', { method: 'POST', body: input }),
 	createFood: (food: FoodInput) => request<Food>('/me/foods', { method: 'POST', body: food }),
 	getRecipeLibrary: (tag?: string) =>
 		request<LibraryRecipe[]>(`/recipes/library${tag ? `?tag=${tag}` : ''}`),

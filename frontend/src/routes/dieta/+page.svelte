@@ -9,6 +9,7 @@
 		type MealPlan,
 		type MealPlanMeal,
 		type MealType,
+		type RecipeSuggestion,
 		type SubstituteItem,
 		type Substitutes,
 		type Supplement,
@@ -409,6 +410,33 @@
 		}
 	}
 
+	// Sugestao de receita: 1 toque adota a receita da biblioteca e ja lanca a porcao.
+	async function addRecipeSuggestion(
+		rs: RecipeSuggestion,
+		meal: MealType = mealByTime()
+	): Promise<void> {
+		addBusy = true;
+		try {
+			await api.addDiaryFromLibrary({ slug: rs.slug, entry_date: day, meal_type: meal });
+			await load();
+			showToast(m.reco_added());
+		} finally {
+			addBusy = false;
+		}
+	}
+
+	function recipeTagLabel(tag: string): string {
+		return (
+			{
+				protein: m.tag_protein(),
+				quick: m.tag_quick(),
+				veggie: m.tag_veggie(),
+				sweet: m.tag_sweet(),
+				budget: m.tag_budget()
+			}[tag] ?? tag
+		);
+	}
+
 	// Abre os equivalentes de uma sugestao (guarda a refeicao alvo para adicionar depois).
 	async function openSuggestionSubs(s: FoodSuggestion, meal: MealType): Promise<void> {
 		loadingSuggSubs = true;
@@ -446,9 +474,11 @@
 	function isMealExpanded(meal: MealType): boolean {
 		return expandedMeals.has(meal);
 	}
-	// refeicoes que tem sugestao da nutri (para o botao geral abrir/fechar todas)
+	// refeicoes que tem sugestao da nutri (alimento ou receita) - p/ abrir/fechar todas
 	const mealsWithPlan = $derived(
-		(mealPlan?.meals ?? []).filter((mp) => mp.suggestions.length > 0).map((mp) => mp.meal_type)
+		(mealPlan?.meals ?? [])
+			.filter((mp) => mp.suggestions.length > 0 || mp.recipe_suggestions.length > 0)
+			.map((mp) => mp.meal_type)
 	);
 	const allPlansOpen = $derived(
 		mealsWithPlan.length > 0 && mealsWithPlan.every((mt) => expandedMeals.has(mt))
@@ -464,7 +494,10 @@
 		else next.add(meal);
 		expandedMeals = next;
 	}
-	const hasPlan = $derived(!!mealPlan && mealPlan.meals.some((mp) => mp.suggestions.length > 0));
+	const hasPlan = $derived(
+		!!mealPlan &&
+			mealPlan.meals.some((mp) => mp.suggestions.length > 0 || mp.recipe_suggestions.length > 0)
+	);
 
 	async function openSubstitutes(): Promise<void> {
 		if (!editing || editing.food_id === null) return;
@@ -537,6 +570,36 @@
 		load();
 	});
 </script>
+
+<!-- Sugestao de RECEITA (da biblioteca): borda ambar + icone de prato; "+ Adicionar"
+	 adota e lanca em 1 toque. Usada no "o que falta" e no cardapio por refeicao. -->
+{#snippet recipeSuggestionCard(rs: RecipeSuggestion, meal: MealType)}
+	<div class="flex items-center gap-2 rounded-2xl border border-amber-200 bg-amber-50/50 px-3 py-2">
+		<span class="grid h-8 w-8 shrink-0 place-items-center rounded-lg bg-amber-100 text-amber-600">
+			<svg viewBox="0 0 24 24" class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v6M9 3h6M7 9h10l-1.2 9.2A2 2 0 0 1 13.8 20h-3.6a2 2 0 0 1-2-1.8z" /></svg>
+		</span>
+		<div class="min-w-0 flex-1">
+			<p class="flex items-center gap-1 truncate text-sm font-semibold text-slate-800">
+				{#if rs.is_favorite}
+					<svg viewBox="0 0 24 24" class="h-3.5 w-3.5 shrink-0 text-amber-400" fill="currentColor"><path d="M12 3l2.9 5.9 6.5.9-4.7 4.6 1.1 6.5L12 17.8 6.2 20.9l1.1-6.5L2.6 9.8l6.5-.9z" /></svg>
+				{/if}
+				<span class="truncate">{rs.name}</span>
+			</p>
+			<p class="text-xs text-slate-500">
+				{nf.format(Math.round(rs.macros.kcal))} kcal · P {nf.format(Math.round(rs.macros.protein_g))}g
+				{#if rs.tags.length > 0}· {recipeTagLabel(rs.tags[0])}{/if}
+			</p>
+		</div>
+		<button
+			type="button"
+			disabled={addBusy}
+			onclick={() => addRecipeSuggestion(rs, meal)}
+			class="shrink-0 rounded-xl bg-amber-500 px-3 py-2 text-sm font-bold text-white active:bg-amber-600 disabled:opacity-50"
+		>
+			+ {m.reco_add()}
+		</button>
+	</div>
+{/snippet}
 
 <div class="mb-4 flex items-center justify-between gap-2">
 	<h1 class="text-2xl font-bold">{m.tab_diet()}</h1>
@@ -660,6 +723,9 @@
 						</button>
 					</div>
 				{/each}
+				{#each gap.recipe_suggestions as rs (rs.slug)}
+					{@render recipeSuggestionCard(rs, mealByTime())}
+				{/each}
 			</div>
 		</section>
 	{/if}
@@ -777,7 +843,7 @@
 				{#if isOpen}
 				<div class="px-4 pb-4" transition:slide={{ duration: 200 }}>
 
-				{#if plan && plan.suggestions.length > 0}
+				{#if plan && (plan.suggestions.length > 0 || plan.recipe_suggestions.length > 0)}
 					<button
 						type="button"
 						onclick={() => toggleMealPlan(meal)}
@@ -812,7 +878,7 @@
 					</div>
 				{/if}
 
-				{#if plan && isMealExpanded(meal) && plan.suggestions.length > 0}
+				{#if plan && isMealExpanded(meal) && (plan.suggestions.length > 0 || plan.recipe_suggestions.length > 0)}
 					<div class="mt-2 space-y-1.5 rounded-2xl bg-emerald-50 p-2">
 						{#each plan.suggestions as s (s.food.id)}
 							<div class="flex items-center gap-2 rounded-xl bg-white px-3 py-2">
@@ -840,6 +906,9 @@
 									+ {m.reco_add()}
 								</button>
 							</div>
+						{/each}
+						{#each plan.recipe_suggestions as rs (rs.slug)}
+							{@render recipeSuggestionCard(rs, meal)}
 						{/each}
 					</div>
 				{/if}

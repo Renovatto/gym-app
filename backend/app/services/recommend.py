@@ -24,6 +24,7 @@ from ..models import (
     MealType,
     Objective,
     Profile,
+    Recipe,
     User,
     WeightLog,
 )
@@ -33,13 +34,16 @@ from ..schemas import (
     MacrosOut,
     MealPlanMealOut,
     MealPlanOut,
+    RecipeSuggestionOut,
     SubstituteItemOut,
     SubstitutesOut,
     SubstituteSourceOut,
 )
 from .diet import food_macros, to_food_out
 from .dietplan import maintenance_override as _maintenance_override
+from .favorites import favorite_food_ids, favorite_recipe_ids
 from .goals import compute_goals
+from .recipes_library import list_library
 
 # Macro-ancora de cada categoria: o macro que a troca equivalente mantem igual.
 # Categorias mistas (bebida/outros) caem em calorias.
@@ -152,7 +156,7 @@ def _choose_primary(remaining: MacrosOut) -> tuple[str, str] | None:
 
 def _rank_suggestions(
     session: Session, user: User, remaining: MacrosOut, primary_attr: str,
-    freq: Counter, max_freq: int, limit: int,
+    freq: Counter, max_freq: int, limit: int, favorite_ids: set[int],
 ) -> list[FoodSuggestionOut]:
     """Ranqueia alimentos que fecham a lacuna informada (do dia ou de uma refeicao).
 
@@ -184,13 +188,80 @@ def _rank_suggestions(
         coverage = min(delivered / need, 1.0) if need > 0 else 0.0
         density_norm = density / max_density
         freq_bonus = (freq.get(food.id, 0) / max_freq) if max_freq else 0.0
-        score = coverage + 0.8 * density_norm + 0.2 * freq_bonus
+        # favorito e o sinal mais forte (voce DISSE que gosta); pesa acima da frequencia
+        fav_bonus = 0.5 if food.id in favorite_ids else 0.0
+        score = coverage + 0.8 * density_norm + 0.2 * freq_bonus + fav_bonus
         scored.append((score, food, portion, macros))
 
     scored.sort(key=lambda item: item[0], reverse=True)
     return [
-        FoodSuggestionOut(food=to_food_out(food, user.locale), grams=grams, macros=macros)
+        FoodSuggestionOut(
+            food=to_food_out(food, user.locale, favorite_ids), grams=grams, macros=macros
+        )
         for _, food, grams, macros in scored[:limit]
+    ]
+
+
+# Receita so entra como sugestao quando ainda falta bastante do dia/refeicao: lacuna
+# pequena e coisa de alimento (um item), nao de um prato inteiro.
+_MIN_RECIPE_KCAL_GAP = 250.0
+
+# Afinidade suave entre refeicao e tags de receita (bonus no ranking, nao filtro duro):
+# cafe/lanche puxam rapidas/doces; almoco/jantar puxam salgadas; pre-treino rapida+proteica.
+_MEAL_TAG_AFFINITY: dict[MealType, set[str]] = {
+    MealType.breakfast: {"quick", "sweet"},
+    MealType.snack: {"quick", "sweet"},
+    MealType.pre_workout: {"quick", "protein"},
+    MealType.supper: {"quick"},
+    MealType.lunch: {"protein", "budget", "veggie"},
+    MealType.dinner: {"protein", "budget", "veggie"},
+}
+
+
+def suggest_recipes(
+    session: Session, user: User, remaining: MacrosOut,
+    meal_type: MealType | None, limit: int = 2,
+) -> list[RecipeSuggestionOut]:
+    """Receitas da biblioteca que fecham a lacuna. Nota = cobertura do macro-alvo por
+    UMA porcao + encaixe calorico (penaliza estourar) + afinidade refeicao<->tag +
+    bonus se voce ja adotou/favoritou (a 'sua comida' aparece primeiro)."""
+    if remaining.kcal < _MIN_RECIPE_KCAL_GAP:
+        return []
+    chosen = _choose_primary(remaining)
+    primary_attr = chosen[0] if chosen else "kcal"
+    need = _attr(remaining, primary_attr)
+
+    library = list_library(session, user)  # ja traz per_serving, tags e is_favorite
+    adopted_names = {
+        r.name for r in session.exec(select(Recipe).where(Recipe.user_id == user.id)).all()
+    }
+    affinity = _MEAL_TAG_AFFINITY.get(meal_type, set()) if meal_type else set()
+
+    scored: list[tuple[float, object]] = []
+    for rec in library:
+        per = rec.per_serving
+        delivered = _attr(per, primary_attr)
+        if delivered <= 0:
+            continue
+        coverage = min(delivered / need, 1.0) if need > 0 else 0.0
+        # encaixe calorico: 1 se a porcao cabe no que falta; decai conforme estoura
+        if per.kcal <= remaining.kcal:
+            cal_fit = 1.0
+        else:
+            cal_fit = max(0.0, 1.0 - (per.kcal - remaining.kcal) / remaining.kcal)
+        affinity_bonus = 0.3 if affinity.intersection(rec.tags) else 0.0
+        # favorito > adotado > novidade (personalizacao)
+        adopt_bonus = 0.5 if rec.is_favorite else (0.25 if rec.name in adopted_names else 0.0)
+        score = coverage + 0.5 * cal_fit + affinity_bonus + adopt_bonus
+        scored.append((score, rec))
+
+    scored.sort(key=lambda item: item[0], reverse=True)
+    return [
+        RecipeSuggestionOut(
+            slug=rec.slug, name=rec.name, tags=rec.tags,
+            macros=rec.per_serving, is_favorite=rec.is_favorite,
+        )
+        for _, rec in scored[:limit]
     ]
 
 
@@ -215,10 +286,15 @@ def suggest_gap(session: Session, user: User, day: date, limit: int = 4) -> Diar
     primary_attr, primary_code = chosen
     freq = _food_frequency(session, user.id)
     max_freq = max(freq.values(), default=1)
-    suggestions = _rank_suggestions(session, user, remaining, primary_attr, freq, max_freq, limit)
+    fav_ids = favorite_food_ids(session, user.id)
+    suggestions = _rank_suggestions(
+        session, user, remaining, primary_attr, freq, max_freq, limit, fav_ids
+    )
+    # o gap e do dia inteiro (sem refeicao especifica): receitas sem afinidade de horario
+    recipe_suggestions = suggest_recipes(session, user, remaining, meal_type=None)
     return DiaryGapOut(
         date=day, goals=goals, consumed=consumed, remaining=remaining,
-        primary=primary_code, suggestions=suggestions,
+        primary=primary_code, suggestions=suggestions, recipe_suggestions=recipe_suggestions,
     )
 
 
@@ -298,6 +374,7 @@ def meal_plan(session: Session, user: User, day: date, limit: int = 3) -> MealPl
     remaining_day = _remaining(goals, _sum_entries(entries))
     freq = _food_frequency(session, user.id)
     max_freq = max(freq.values(), default=1)
+    fav_ids = favorite_food_ids(session, user.id)
 
     meals: list[MealPlanMealOut] = []
     for meal_type, share in shares.items():
@@ -306,10 +383,13 @@ def meal_plan(session: Session, user: User, day: date, limit: int = 3) -> MealPl
         meal_remaining = _bounded_remaining(target, consumed_meal, remaining_day)
         chosen = _choose_primary(meal_remaining)
         suggestions = (
-            _rank_suggestions(session, user, meal_remaining, chosen[0], freq, max_freq, limit)
+            _rank_suggestions(
+                session, user, meal_remaining, chosen[0], freq, max_freq, limit, fav_ids
+            )
             if chosen is not None
             else []
         )
+        recipe_suggestions = suggest_recipes(session, user, meal_remaining, meal_type)
         meals.append(
             MealPlanMealOut(
                 meal_type=meal_type,
@@ -318,6 +398,7 @@ def meal_plan(session: Session, user: User, day: date, limit: int = 3) -> MealPl
                 remaining=meal_remaining,
                 primary=chosen[1] if chosen else "complete",
                 suggestions=suggestions,
+                recipe_suggestions=recipe_suggestions,
             )
         )
     return MealPlanOut(date=day, goals=goals, meals=meals)
@@ -331,6 +412,7 @@ def substitutes(
     source_macros = food_macros(food, grams)
     source_anchor_value = _attr(source_macros, anchor)  # anchor pode ser 'kcal'
     freq = _food_frequency(session, user.id)
+    fav_ids = favorite_food_ids(session, user.id)
 
     ranked: list[tuple[float, Food, float, MacrosOut, float]] = []
     for cand in _visible_foods(session, user.id, category=food.category):
@@ -356,18 +438,21 @@ def substitutes(
         )
         if cand.user_id is not None or freq.get(cand.id):
             distance *= 0.85
+        if cand.id in fav_ids:  # favorito puxa mais forte que seu/frequente
+            distance *= 0.7
         ranked.append((distance, cand, cand_grams, cand_macros, kcal_delta))
 
     ranked.sort(key=lambda item: item[0])
     items = [
         SubstituteItemOut(
-            food=to_food_out(cand, user.locale), grams=grams_, macros=macros, kcal_delta=delta
+            food=to_food_out(cand, user.locale, fav_ids),
+            grams=grams_, macros=macros, kcal_delta=delta,
         )
         for _, cand, grams_, macros, delta in ranked[:limit]
     ]
     return SubstitutesOut(
         source=SubstituteSourceOut(
-            food=to_food_out(food, user.locale), grams=grams, macros=source_macros
+            food=to_food_out(food, user.locale, fav_ids), grams=grams, macros=source_macros
         ),
         anchor=_ANCHOR_CODE.get(anchor, "calories"),
         items=items,

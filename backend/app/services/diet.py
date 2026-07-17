@@ -17,7 +17,7 @@ def localized_food_name(food: Food, locale: str) -> str:
     )
 
 
-def to_food_out(food: Food, locale: str) -> FoodOut:
+def to_food_out(food: Food, locale: str, favorite_ids: set[int] | None = None) -> FoodOut:
     return FoodOut(
         id=food.id,
         slug=food.slug,
@@ -30,6 +30,7 @@ def to_food_out(food: Food, locale: str) -> FoodOut:
         default_portion_g=food.default_portion_g,
         portions=[FoodPortionOut(label_key=p.label_key, grams=p.grams) for p in food.portions],
         is_custom=food.user_id is not None,
+        is_favorite=favorite_ids is not None and food.id in favorite_ids,
     )
 
 

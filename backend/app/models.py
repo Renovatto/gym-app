@@ -273,6 +273,11 @@ class EntrySource(str, Enum):
     recipe = "recipe"
 
 
+class FavoriteKind(str, Enum):
+    food = "food"
+    recipe = "recipe"
+
+
 class Food(SQLModel, table=True):
     __tablename__ = "foods"
 
@@ -360,6 +365,21 @@ class DiaryEntry(SQLModel, table=True):
     carbs_g: float
     fat_g: float
     logged_at: datetime = Field(default_factory=utcnow)
+
+
+class Favorite(SQLModel, table=True):
+    """Alimento ou receita marcado como favorito pelo usuario (a estrelinha).
+    Tabela nova (nao coluna em foods/recipes) para o create_all criar sozinho no
+    Postgres de producao, sem migracao. ref_id = food_id quando kind=food,
+    recipe_id quando kind=recipe (receita ja adotada pelo usuario)."""
+
+    __tablename__ = "favorites"
+
+    id: int | None = Field(default=None, primary_key=True)
+    user_id: int = Field(foreign_key="users.id", index=True, ondelete="CASCADE")
+    kind: FavoriteKind = Field(index=True)
+    ref_id: int = Field(index=True)
+    created_at: datetime = Field(default_factory=utcnow)
 
 
 class UserAchievement(SQLModel, table=True):
