@@ -541,7 +541,7 @@
 									onclick={() => openVariation(routine.id)}
 									class="grid h-9 w-9 place-items-center rounded-full text-emerald-700 active:bg-emerald-50 disabled:opacity-50"
 								>
-									<svg viewBox="0 0 24 24" class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 17c5 0 5-10 11-10" /><path d="M4 7c5 0 5 10 11 10" /><path d="M12 4l3 3-3 3" /><path d="M12 20l3-3-3-3" /></svg>
+									<svg viewBox="0 0 24 24" class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4v6h6M20 20v-6h-6M20 8a8 8 0 00-14-3M4 16a8 8 0 0014 3" /></svg>
 								</button>
 							{/if}
 							<a

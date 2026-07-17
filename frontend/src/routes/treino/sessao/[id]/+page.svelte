@@ -35,9 +35,16 @@
 	// relógio único: tempo total da sessão + contagem do descanso
 	let startedAtMs = $state(0);
 	let now = $state(Date.now());
-	let restRemaining = $state(0);
-	let restTotal = $state(0);
+	// Descanso timestamp-based: guardamos o INSTANTE de fim (nao um contador). Assim,
+	// mesmo com a aba em segundo plano (setInterval estrangulado), o tempo restante e
+	// sempre calculado do relogio real e nunca desincroniza.
+	let restEndsAtMs = $state(0);
+	let restTotal = $state(0); // duracao em segundos (so para a barra de progresso)
 	let restActive = $state(false);
+	let restNotified = $state(false); // ja avisamos o fim deste descanso?
+	const restRemaining = $derived(
+		restActive ? Math.max(0, Math.ceil((restEndsAtMs - now) / 1000)) : 0
+	);
 
 	function formatTime(totalSeconds: number): string {
 		const s = Math.max(0, Math.floor(totalSeconds));
@@ -66,31 +73,67 @@
 		}
 	}
 
+	// Pede permissao de notificacao uma vez (a partir de um gesto do usuario: concluir
+	// uma serie). So assim conseguimos avisar quando o descanso acaba em segundo plano.
+	function ensureNotifyPermission(): void {
+		if ('Notification' in window && Notification.permission === 'default') {
+			Notification.requestPermission().catch(() => {});
+		}
+	}
+
 	function startRest(seconds: number): void {
 		restTotal = seconds;
-		restRemaining = seconds;
+		restEndsAtMs = Date.now() + seconds * 1000;
 		restActive = true;
+		restNotified = false;
+		ensureNotifyPermission();
 	}
 
 	function stopRest(): void {
 		restActive = false;
-		restRemaining = 0;
+		restNotified = true; // pulou/encerrou: nao dispara aviso atrasado
+	}
+
+	function addRestTime(seconds: number): void {
+		restEndsAtMs += seconds * 1000;
+		restTotal += seconds;
+	}
+
+	// Fim do descanso: vibra + bipe; e se a aba estiver em segundo plano, dispara uma
+	// notificacao (o bipe/vibracao nao tocam com o app oculto).
+	function fireRestDone(): void {
+		navigator.vibrate?.(400);
+		beep();
+		if (document.hidden && 'Notification' in window && Notification.permission === 'granted') {
+			try {
+				new Notification(m.rest_done_title(), { body: m.rest_done_body(), tag: 'gymapp-rest' });
+			} catch {
+				// notificacao bloqueada: sem problema, o tempo ja fica correto ao voltar
+			}
+		}
+	}
+
+	// Um "tick" recalcula o relogio e checa o fim do descanso. Roda a cada 1s E ao
+	// voltar do segundo plano (visibilitychange), pra re-sincronizar na hora.
+	function tick(): void {
+		now = Date.now();
+		if (restActive && !restNotified && now >= restEndsAtMs) {
+			restNotified = true;
+			restActive = false;
+			fireRestDone();
+		}
 	}
 
 	$effect(() => {
-		const timer = setInterval(() => {
-			now = Date.now();
-			if (restActive) {
-				restRemaining -= 1;
-				if (restRemaining <= 0) {
-					restActive = false;
-					restRemaining = 0;
-					navigator.vibrate?.(400);
-					beep();
-				}
-			}
-		}, 1000);
-		return () => clearInterval(timer);
+		const timer = setInterval(tick, 1000);
+		const onVisible = () => {
+			if (!document.hidden) tick();
+		};
+		document.addEventListener('visibilitychange', onVisible);
+		return () => {
+			clearInterval(timer);
+			document.removeEventListener('visibilitychange', onVisible);
+		};
 	});
 
 	async function load(): Promise<void> {
@@ -141,6 +184,22 @@
 			saving: false
 		});
 		block.collapsed = false;
+	}
+
+	// Excluir uma serie (adicionada por engano ou ja concluida). Sempre pergunta antes
+	// (confirmingDeleteSet guarda a linha armada) e confirma com toast.
+	let confirmingDeleteSet = $state<SetRow | null>(null);
+
+	async function removeSet(block: ExerciseBlock, row: SetRow): Promise<void> {
+		confirmingDeleteSet = null;
+		if (row.logId !== null) {
+			await api.deleteSet(sessionId, row.logId); // ja estava salva no servidor
+		}
+		const idx = block.sets.indexOf(row);
+		if (idx !== -1) block.sets.splice(idx, 1);
+		// renumera 1..n para nao deixar buraco na sequencia das series
+		block.sets.forEach((s, i) => (s.setNumber = i + 1));
+		showToast(m.set_deleted());
 	}
 
 	async function toggleSet(block: ExerciseBlock, row: SetRow): Promise<void> {
@@ -362,8 +421,27 @@
 				{#if !block.collapsed}
 					<div class="space-y-2" transition:slide={{ duration: 200 }}>
 						{#each block.sets as row (row.setNumber)}
-							{#if row.done}
-								<!-- série concluída: linha compacta; tocar no ✓ desfaz -->
+							{#if confirmingDeleteSet === row}
+								<!-- exclusao de serie: sempre pergunta antes -->
+								<div class="flex items-center gap-2 rounded-2xl bg-red-50 px-3 py-2">
+									<span class="min-w-0 flex-1 text-sm font-semibold text-red-700">{m.delete_set_confirm()}</span>
+									<button
+										type="button"
+										onclick={() => removeSet(block, row)}
+										class="shrink-0 rounded-xl bg-red-600 px-3 py-2 text-sm font-bold text-white active:bg-red-700"
+									>
+										{m.delete()}
+									</button>
+									<button
+										type="button"
+										onclick={() => (confirmingDeleteSet = null)}
+										class="shrink-0 rounded-xl px-2 py-2 text-sm font-bold text-slate-500 active:bg-slate-100"
+									>
+										{m.cancel()}
+									</button>
+								</div>
+							{:else if row.done}
+								<!-- série concluída: linha compacta; tocar no ✓ desfaz; lixeira exclui -->
 								<div class="flex items-center gap-2 rounded-2xl bg-emerald-50 px-2 py-1.5">
 									<span class="grid h-8 w-8 shrink-0 place-items-center rounded-lg bg-white/60 text-xs font-bold text-emerald-700">
 										{block.isCardio ? '♥' : row.setNumber}
@@ -375,6 +453,14 @@
 											{row.weight} kg × {row.reps}
 										{/if}
 									</span>
+									<button
+										type="button"
+										aria-label={m.delete()}
+										onclick={() => (confirmingDeleteSet = row)}
+										class="grid h-9 w-9 shrink-0 place-items-center rounded-xl text-emerald-700/50 active:bg-emerald-100"
+									>
+										<svg viewBox="0 0 24 24" class="h-[18px] w-[18px]" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h16M9 7V4h6v3M10 11v6M14 11v6M6 7l1 12a2 2 0 002 2h6a2 2 0 002-2l1-12" /></svg>
+									</button>
 									<button
 										type="button"
 										aria-label={m.done()}
@@ -394,6 +480,14 @@
 											<div class="min-w-0 flex-1">
 												<Stepper size="sm" bind:value={row.duration} min={1} max={300} step={1} unit={m.minutes_short()} />
 											</div>
+											<button
+												type="button"
+												aria-label={m.delete()}
+												onclick={() => (confirmingDeleteSet = row)}
+												class="grid h-9 w-9 shrink-0 place-items-center rounded-xl text-slate-400 active:bg-slate-100"
+											>
+												<svg viewBox="0 0 24 24" class="h-[18px] w-[18px]" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h16M9 7V4h6v3M10 11v6M14 11v6M6 7l1 12a2 2 0 002 2h6a2 2 0 002-2l1-12" /></svg>
+											</button>
 										{:else}
 											<span class="grid h-8 w-8 shrink-0 place-items-center rounded-lg bg-white text-xs font-bold text-slate-500">
 												{row.setNumber}
@@ -416,8 +510,8 @@
 										</button>
 									</div>
 									{#if !block.isCardio}
-										<!-- atalhos de peso: halter dentro de cada box + borda verde de destaque -->
-										<div class="mt-1.5 flex gap-1.5 pl-10">
+										<!-- atalhos de peso + excluir a serie (lixeira ao fim da linha) -->
+										<div class="mt-1.5 flex items-center gap-1.5 pl-10">
 											{#each quickWeights(block) as w (w)}
 												<button
 													type="button"
@@ -430,6 +524,14 @@
 													{w}
 												</button>
 											{/each}
+											<button
+												type="button"
+												aria-label={m.delete()}
+												onclick={() => (confirmingDeleteSet = row)}
+												class="grid h-7 w-7 shrink-0 place-items-center rounded-lg text-slate-400 active:bg-slate-200"
+											>
+												<svg viewBox="0 0 24 24" class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h16M9 7V4h6v3M10 11v6M14 11v6M6 7l1 12a2 2 0 002 2h6a2 2 0 002-2l1-12" /></svg>
+											</button>
 										</div>
 									{/if}
 								</div>
@@ -677,10 +779,7 @@
 			<div class="flex gap-2">
 				<button
 					type="button"
-					onclick={() => {
-						restRemaining += 30;
-						restTotal += 30;
-					}}
+					onclick={() => addRestTime(30)}
 					class="h-12 rounded-2xl bg-[#ffffff1f] px-4 font-bold active:bg-[#ffffff38]"
 				>
 					{m.plus_30s()}
