@@ -81,29 +81,78 @@
 		}
 	}
 
+	// Persistencia do descanso: o iOS Safari DESCARTA e recarrega a aba ao voltar do
+	// segundo plano, apagando o estado da memoria. Guardamos o instante de fim em
+	// localStorage para o descanso sobreviver ao reload e continuar exato.
+	function restKey(): string {
+		return `gymapp.rest.${sessionId}`;
+	}
+	function saveRest(): void {
+		try {
+			localStorage.setItem(restKey(), JSON.stringify({ endsAt: restEndsAtMs, total: restTotal }));
+		} catch {
+			// storage indisponivel: segue so em memoria
+		}
+	}
+	function clearRest(): void {
+		try {
+			localStorage.removeItem(restKey());
+		} catch {
+			// ignore
+		}
+	}
+
 	function startRest(seconds: number): void {
 		restTotal = seconds;
 		restEndsAtMs = Date.now() + seconds * 1000;
 		restActive = true;
 		restNotified = false;
+		saveRest();
 		ensureNotifyPermission();
 	}
 
 	function stopRest(): void {
 		restActive = false;
 		restNotified = true; // pulou/encerrou: nao dispara aviso atrasado
+		clearRest();
 	}
 
 	function addRestTime(seconds: number): void {
 		restEndsAtMs += seconds * 1000;
 		restTotal += seconds;
+		saveRest();
 	}
 
-	// Fim do descanso: vibra + bipe; e se a aba estiver em segundo plano, dispara uma
-	// notificacao (o bipe/vibracao nao tocam com o app oculto).
+	// Restaura o descanso apos um reload (retomada de aba no iOS). Se ainda corre,
+	// continua exato; se acabou ha pouco enquanto estava fora, avisa e limpa.
+	function restoreRest(): void {
+		now = Date.now();
+		let saved: { endsAt: number; total: number } | null = null;
+		try {
+			const raw = localStorage.getItem(restKey());
+			saved = raw ? JSON.parse(raw) : null;
+		} catch {
+			saved = null;
+		}
+		if (!saved) return;
+		if (saved.endsAt > now) {
+			restEndsAtMs = saved.endsAt;
+			restTotal = saved.total;
+			restActive = true;
+			restNotified = false;
+		} else {
+			if (now - saved.endsAt < 5 * 60 * 1000) showToast(m.rest_done_title());
+			clearRest();
+		}
+	}
+
+	// Fim do descanso: bipe (em primeiro plano) e, se a aba estiver oculta e a plataforma
+	// suportar, uma notificacao. iOS Safari (aba normal) nao tem Notification nem vibrate:
+	// nesse caso o tempo fica correto ao voltar (persistido) e avisamos via toast no retorno.
 	function fireRestDone(): void {
 		navigator.vibrate?.(400);
 		beep();
+		clearRest();
 		if (document.hidden && 'Notification' in window && Notification.permission === 'granted') {
 			try {
 				new Notification(m.rest_done_title(), { body: m.rest_done_body(), tag: 'gymapp-rest' });
@@ -137,6 +186,7 @@
 	});
 
 	async function load(): Promise<void> {
+		restoreRest(); // retoma o descanso persistido antes mesmo de buscar a sessao
 		const session = await api.getSession(sessionId);
 		routineName = session.routine_name ?? m.free_workout();
 		// backend envia UTC sem sufixo Z
