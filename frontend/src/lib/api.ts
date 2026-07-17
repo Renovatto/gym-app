@@ -511,6 +511,18 @@ export interface LibraryRecipe {
 
 export type FavoriteKind = 'food' | 'recipe';
 
+// Forma comum para a modal de visualizacao (read-only) de uma receita, servindo
+// tanto a biblioteca (LibraryRecipe) quanto as receitas do usuario (mapeadas).
+export interface RecipeView {
+	name: string;
+	tags: string[];
+	servings: number;
+	total: Macros;
+	per_serving: Macros;
+	ingredients: { name: string; grams: number }[];
+	is_favorite?: boolean;
+}
+
 export interface RecipeInput {
 	name: string;
 	servings: number;
@@ -754,6 +766,7 @@ export const api = {
 	createFood: (food: FoodInput) => request<Food>('/me/foods', { method: 'POST', body: food }),
 	getRecipeLibrary: (tag?: string) =>
 		request<LibraryRecipe[]>(`/recipes/library${tag ? `?tag=${tag}` : ''}`),
+	getLibraryRecipe: (slug: string) => request<LibraryRecipe>(`/recipes/library/${slug}`),
 	adoptLibraryRecipe: (slug: string) =>
 		request<Recipe>(`/me/recipes/from-library/${slug}`, { method: 'POST' }),
 	getRecipes: () => request<Recipe[]>('/me/recipes'),

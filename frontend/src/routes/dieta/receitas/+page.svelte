@@ -1,9 +1,24 @@
 <script lang="ts">
-	import { api, type LibraryRecipe, type Recipe } from '$lib/api';
+	import { api, type LibraryRecipe, type Recipe, type RecipeView } from '$lib/api';
+	import RecipeViewModal from '$lib/components/RecipeViewModal.svelte';
 	import { normalizeSearch, searchMatches } from '$lib/text';
 	import { showToast } from '$lib/toast.svelte';
 	import { m } from '$lib/paraglide/messages';
 	import { getLocale } from '$lib/paraglide/runtime';
+
+	// Visualizacao read-only: biblioteca ja tem a forma certa; minhas receitas mapeiam.
+	let viewRecipe = $state<RecipeView | null>(null);
+	function openMyRecipeView(recipe: Recipe): void {
+		viewRecipe = {
+			name: recipe.name,
+			tags: [],
+			servings: recipe.servings,
+			total: recipe.total,
+			per_serving: recipe.per_serving,
+			ingredients: recipe.ingredients.map((i) => ({ name: i.food.name, grams: i.grams })),
+			is_favorite: recipe.is_favorite
+		};
+	}
 
 	let recipes = $state<Recipe[]>([]);
 	let library = $state<LibraryRecipe[]>([]);
@@ -125,6 +140,15 @@
 					</a>
 					<button
 						type="button"
+						aria-label={m.recipe_view()}
+						title={m.recipe_view()}
+						onclick={() => openMyRecipeView(recipe)}
+						class="grid h-10 w-10 shrink-0 place-items-center rounded-xl text-amber-600 active:bg-amber-50"
+					>
+						<svg viewBox="0 0 24 24" class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7z" /><circle cx="12" cy="12" r="3" /></svg>
+					</button>
+					<button
+						type="button"
 						aria-label={m.favorite_toggle()}
 						title={m.favorite_toggle()}
 						onclick={() => toggleRecipeFav(recipe)}
@@ -204,6 +228,15 @@
 								· {recipe.ingredients.length} {recipe.ingredients.length === 1 ? m.ingredient_singular() : m.ingredient_plural()}
 							</p>
 						</div>
+						<button
+							type="button"
+							aria-label={m.recipe_view()}
+							title={m.recipe_view()}
+							onclick={() => (viewRecipe = recipe)}
+							class="grid h-9 w-9 shrink-0 place-items-center rounded-xl border-2 border-amber-200 text-amber-600 active:bg-amber-100"
+						>
+							<svg viewBox="0 0 24 24" class="h-4.5 w-4.5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7z" /><circle cx="12" cy="12" r="3" /></svg>
+						</button>
 						{#if owned}
 							<span class="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-emerald-100 text-emerald-700">
 								<svg viewBox="0 0 24 24" class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 13l4 4L19 7" /></svg>
@@ -225,4 +258,9 @@
 			</div>
 		</section>
 	{/if}
+{/if}
+
+<!-- Visualizacao read-only da receita (biblioteca ou minha) -->
+{#if viewRecipe}
+	<RecipeViewModal recipe={viewRecipe} onClose={() => (viewRecipe = null)} />
 {/if}

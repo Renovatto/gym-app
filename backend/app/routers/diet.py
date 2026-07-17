@@ -54,6 +54,7 @@ from ..services.diet import (
 from ..services.favorites import favorite_food_ids, favorite_recipe_ids, toggle_favorite
 from ..services.goals import compute_goals
 from ..services.recipes_library import adopt as adopt_library_recipe
+from ..services.recipes_library import get_one as get_library_recipe
 from ..services.recipes_library import list_library
 from ..services.recommend import meal_plan as compute_meal_plan
 from ..services.recommend import substitutes as compute_substitutes
@@ -252,6 +253,15 @@ def recipes_library(
 ) -> list[LibraryRecipeOut]:
     """Biblioteca de receitas semente: macros calculados dos ingredientes do catalogo."""
     return list_library(session, user, tag)
+
+
+@router.get("/recipes/library/{slug}", response_model=LibraryRecipeOut)
+def library_recipe_detail(slug: str, user: CurrentUser, session: SessionDep) -> LibraryRecipeOut:
+    """Detalhe de uma receita da biblioteca (ingredientes + macros) para visualizar."""
+    recipe = get_library_recipe(session, user, slug)
+    if recipe is None:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, detail="RECIPE_NOT_FOUND")
+    return recipe
 
 
 @router.post("/me/recipes/from-library/{slug}", response_model=RecipeOut)

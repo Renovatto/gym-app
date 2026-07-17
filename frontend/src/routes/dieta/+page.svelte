@@ -10,6 +10,7 @@
 		type MealPlanMeal,
 		type MealType,
 		type RecipeSuggestion,
+		type RecipeView,
 		type SubstituteItem,
 		type Substitutes,
 		type Supplement,
@@ -22,6 +23,7 @@
 	import Spinner from '$lib/components/Spinner.svelte';
 	import CalendarModal from '$lib/components/CalendarModal.svelte';
 	import AddEntryModal from '$lib/components/AddEntryModal.svelte';
+	import RecipeViewModal from '$lib/components/RecipeViewModal.svelte';
 	import { slide } from 'svelte/transition';
 	import { showToast } from '$lib/toast.svelte';
 	import { mealTypeLabel } from '$lib/labels';
@@ -411,18 +413,54 @@
 	}
 
 	// Sugestao de receita: 1 toque adota a receita da biblioteca e ja lanca a porcao.
-	async function addRecipeSuggestion(
-		rs: RecipeSuggestion,
-		meal: MealType = mealByTime()
-	): Promise<void> {
+	async function addRecipeBySlug(slug: string, meal: MealType): Promise<void> {
 		addBusy = true;
 		try {
-			await api.addDiaryFromLibrary({ slug: rs.slug, entry_date: day, meal_type: meal });
+			await api.addDiaryFromLibrary({ slug, entry_date: day, meal_type: meal });
 			await load();
 			showToast(m.reco_added());
 		} finally {
 			addBusy = false;
 		}
+	}
+
+	async function addRecipeSuggestion(
+		rs: RecipeSuggestion,
+		meal: MealType = mealByTime()
+	): Promise<void> {
+		await addRecipeBySlug(rs.slug, meal);
+	}
+
+	// Visualizacao read-only da receita antes de incluir (icone de olho no card).
+	let viewRecipe = $state<RecipeView | null>(null);
+	let viewLoading = $state(false);
+	let viewOpen = $state(false);
+	let viewSlug = $state<string | null>(null);
+	let viewMeal = $state<MealType | null>(null);
+
+	async function openRecipeView(rs: RecipeSuggestion, meal: MealType): Promise<void> {
+		viewOpen = true;
+		viewLoading = true;
+		viewSlug = rs.slug;
+		viewMeal = meal;
+		try {
+			viewRecipe = await api.getLibraryRecipe(rs.slug);
+		} finally {
+			viewLoading = false;
+		}
+	}
+
+	function closeRecipeView(): void {
+		viewOpen = false;
+		viewRecipe = null;
+		viewSlug = null;
+		viewMeal = null;
+	}
+
+	async function addFromView(): Promise<void> {
+		if (!viewSlug || viewMeal === null) return;
+		await addRecipeBySlug(viewSlug, viewMeal);
+		closeRecipeView();
 	}
 
 	function recipeTagLabel(tag: string): string {
@@ -590,6 +628,15 @@
 				{#if rs.tags.length > 0}· {recipeTagLabel(rs.tags[0])}{/if}
 			</p>
 		</div>
+		<button
+			type="button"
+			aria-label={m.recipe_view()}
+			title={m.recipe_view()}
+			onclick={() => openRecipeView(rs, meal)}
+			class="grid h-9 w-9 shrink-0 place-items-center rounded-xl border-2 border-amber-200 text-amber-600 active:bg-amber-100"
+		>
+			<svg viewBox="0 0 24 24" class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7z" /><circle cx="12" cy="12" r="3" /></svg>
+		</button>
 		<button
 			type="button"
 			disabled={addBusy}
@@ -1436,5 +1483,17 @@
 		label={mealDisplayLabel(addingToMeal)}
 		onClose={() => (addingToMeal = null)}
 		onAdded={reloadSilent}
+	/>
+{/if}
+
+<!-- Visualizar a receita sugerida antes de incluir (read-only) -->
+{#if viewOpen}
+	<RecipeViewModal
+		recipe={viewRecipe}
+		loading={viewLoading}
+		onClose={closeRecipeView}
+		actionLabel={m.add_to_meal()}
+		onAction={addFromView}
+		actionBusy={addBusy}
 	/>
 {/if}

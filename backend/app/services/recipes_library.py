@@ -95,6 +95,19 @@ def list_library(session: Session, user: User, tag: str | None = None) -> list[L
     return out
 
 
+def get_one(session: Session, user: User, slug: str) -> LibraryRecipeOut | None:
+    """Uma receita da biblioteca com detalhe completo (ingredientes + macros), para
+    a visualizacao read-only antes de incluir."""
+    entry = next((e for e in _load() if e["slug"] == slug), None)
+    if entry is None:
+        return None
+    built = _build_out(entry, _global_foods_by_slug(session), user.locale)
+    if built is None:
+        return None
+    built.is_favorite = built.name in _favorite_recipe_names(session, user)
+    return built
+
+
 def adopt(session: Session, user: User, slug: str) -> Recipe | None:
     """Copia a receita da biblioteca para as receitas do usuario (idempotente:
     se ja existir uma receita dele com o mesmo nome, devolve a existente)."""
