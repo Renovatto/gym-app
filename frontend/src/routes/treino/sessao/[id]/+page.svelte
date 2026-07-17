@@ -56,9 +56,34 @@
 
 	const elapsed = $derived(startedAtMs > 0 ? (now - startedAtMs) / 1000 : 0);
 
-	function beep(): void {
+	// Um unico AudioContext, DESTRAVADO num gesto do usuario (tocar no ✓). Sem esse
+	// destravamento, os navegadores mobile mantem o contexto suspenso e o bipe nao toca,
+	// mesmo em primeiro plano. Por isso reusamos o mesmo contexto e o retomamos no gesto.
+	let audioCtx: AudioContext | null = null;
+
+	function getAudioCtx(): AudioContext | null {
 		try {
-			const ctx = new AudioContext();
+			if (!audioCtx) {
+				const Ctor = window.AudioContext ?? (window as unknown as { webkitAudioContext?: typeof AudioContext }).webkitAudioContext;
+				if (!Ctor) return null;
+				audioCtx = new Ctor();
+			}
+			if (audioCtx.state === 'suspended') void audioCtx.resume();
+			return audioCtx;
+		} catch {
+			return null;
+		}
+	}
+
+	// Chamado dentro de um gesto (toque no ✓) para liberar o audio no mobile.
+	function unlockAudio(): void {
+		getAudioCtx();
+	}
+
+	function beep(): void {
+		const ctx = getAudioCtx();
+		if (!ctx) return;
+		try {
 			const osc = ctx.createOscillator();
 			const gain = ctx.createGain();
 			osc.connect(gain);
@@ -69,7 +94,7 @@
 			osc.start();
 			osc.stop(ctx.currentTime + 0.5);
 		} catch {
-			// áudio bloqueado: vibração já cobre
+			// áudio bloqueado: o toast ja da o retorno visual
 		}
 	}
 
@@ -149,15 +174,23 @@
 	// Fim do descanso: bipe (em primeiro plano) e, se a aba estiver oculta e a plataforma
 	// suportar, uma notificacao. iOS Safari (aba normal) nao tem Notification nem vibrate:
 	// nesse caso o tempo fica correto ao voltar (persistido) e avisamos via toast no retorno.
+	let pendingRestDoneToast = false; // acabou com a aba oculta: avisa ao voltar
+
 	function fireRestDone(): void {
 		navigator.vibrate?.(400);
 		beep();
 		clearRest();
-		if (document.hidden && 'Notification' in window && Notification.permission === 'granted') {
-			try {
-				new Notification(m.rest_done_title(), { body: m.rest_done_body(), tag: 'gymapp-rest' });
-			} catch {
-				// notificacao bloqueada: sem problema, o tempo ja fica correto ao voltar
+		if (!document.hidden) {
+			// primeiro plano: toast e o sinal visual garantido (o bipe pode falhar)
+			showToast(m.rest_done_title());
+		} else {
+			pendingRestDoneToast = true; // mostra o toast quando a aba voltar a ficar visivel
+			if ('Notification' in window && Notification.permission === 'granted') {
+				try {
+					new Notification(m.rest_done_title(), { body: m.rest_done_body(), tag: 'gymapp-rest' });
+				} catch {
+					// notificacao bloqueada: o toast no retorno cobre
+				}
 			}
 		}
 	}
@@ -176,7 +209,13 @@
 	$effect(() => {
 		const timer = setInterval(tick, 1000);
 		const onVisible = () => {
-			if (!document.hidden) tick();
+			if (document.hidden) return;
+			// se o descanso acabou enquanto a aba estava oculta (sem reload), avisa agora
+			if (pendingRestDoneToast) {
+				pendingRestDoneToast = false;
+				showToast(m.rest_done_title());
+			}
+			tick();
 		};
 		document.addEventListener('visibilitychange', onVisible);
 		return () => {
@@ -254,6 +293,7 @@
 
 	async function toggleSet(block: ExerciseBlock, row: SetRow): Promise<void> {
 		if (row.saving) return;
+		unlockAudio(); // gesto do usuario: libera o audio para o bipe do fim do descanso
 		row.saving = true;
 		try {
 			if (!row.done) {
