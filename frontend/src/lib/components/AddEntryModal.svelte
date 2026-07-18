@@ -52,10 +52,21 @@
 		qtyMode === 'portion' && selPortion ? count * selPortion.grams : grams
 	);
 
-	async function loadFoods(): Promise<void> {
+	// Guarda contra respostas fora de ordem: cada busca ganha um token; quando a resposta
+	// volta, so aplica se ainda for a MAIS RECENTE. Sem isso, ao digitar rapido as
+	// respostas chegam embaralhadas e uma antiga (vazia/errada) sobrescreve a nova (o "loop").
+	let searchToken = 0;
+
+	async function loadFoods(q: string): Promise<void> {
+		const token = ++searchToken;
 		loading = true;
-		foods = await api.getFoods(query);
-		loading = false;
+		try {
+			const result = await api.getFoods(q);
+			if (token !== searchToken) return; // resposta velha: descarta
+			foods = result;
+		} finally {
+			if (token === searchToken) loading = false;
+		}
 	}
 
 	async function loadRecipes(): Promise<void> {
@@ -73,8 +84,15 @@
 	const favFoodIds = $derived(new Set(favoriteFoods.map((f) => f.id)));
 
 	$effect(() => {
-		if (tab === 'foods') loadFoods();
-		else loadRecipes();
+		if (tab !== 'foods') {
+			loadRecipes();
+			return;
+		}
+		// debounce: so busca ~250ms depois que voce para de digitar; a limpeza cancela a
+		// busca anterior a cada tecla, evitando uma rajada de requisicoes concorrentes.
+		const q = query;
+		const handle = setTimeout(() => loadFoods(q), 250);
+		return () => clearTimeout(handle);
 	});
 
 	async function toggleFoodFav(food: Food): Promise<void> {
