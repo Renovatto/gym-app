@@ -24,6 +24,25 @@ input {
 }
 
 /*
+ * Input de data (nascimento): no iOS/Safari o controle nativo ignora parte do box
+ * model e "escapa" do cartao (largura intrinseca + valor desalinhado). appearance:none
+ * faz ele respeitar width/padding como um input normal; min-width:0 impede o estouro;
+ * o pseudo-elemento do valor fica alinhado a esquerda e sem margem propria.
+ */
+input[type='date'] {
+	-webkit-appearance: none;
+	appearance: none;
+	min-width: 0;
+}
+input[type='date']::-webkit-date-and-time-value {
+	text-align: left;
+	margin: 0;
+}
+input[type='date']::-webkit-calendar-picker-indicator {
+	margin-left: auto;
+}
+
+/*
  * Modo escuro por troca de tokens: os componentes usam a paleta neutra
  * (white/slate) e os tons claros de acento (emerald-50 etc.); aqui eles são
  * remapeados quando <html class="dark">. Tons médios (emerald-600, sky-500…)
