@@ -261,13 +261,19 @@
 		showToast(m.toast_deleted());
 	}
 
+	// Repetir o dia anterior copia varios lancamentos de uma vez: sempre confirma antes.
+	let confirmingRepeatDay = $state(false);
+	let confirmingRepeatMeal = $state<MealType | null>(null);
+
 	async function repeatPrevious(): Promise<void> {
+		confirmingRepeatDay = false;
 		await api.copyPreviousDay(day, shiftDay(day, -1));
 		await load();
 		showToast(m.day_copied());
 	}
 
 	async function repeatMeal(meal: MealType): Promise<void> {
+		confirmingRepeatMeal = null;
 		await api.copyPreviousDay(day, shiftDay(day, -1), meal);
 		await load();
 		showToast(m.day_copied());
@@ -979,6 +985,25 @@
 							{m.cancel()}
 						</button>
 					</div>
+				{:else if confirmingRepeatMeal === meal}
+					<!-- repetir esta refeicao do dia anterior: confirma antes -->
+					<div class="mt-2 flex items-center gap-2 rounded-2xl bg-emerald-50 p-2">
+						<span class="min-w-0 flex-1 pl-2 text-sm font-semibold text-emerald-800">{m.repeat_meal_confirm()}</span>
+						<button
+							type="button"
+							onclick={() => repeatMeal(meal)}
+							class="h-10 shrink-0 rounded-xl bg-emerald-600 px-4 text-sm font-bold text-white active:bg-emerald-700"
+						>
+							{m.confirm()}
+						</button>
+						<button
+							type="button"
+							onclick={() => (confirmingRepeatMeal = null)}
+							class="h-10 shrink-0 rounded-xl px-3 text-sm font-semibold text-slate-500 active:bg-slate-100"
+						>
+							{m.cancel()}
+						</button>
+					</div>
 				{:else}
 					<div class="mt-2 flex gap-2">
 						<button
@@ -993,7 +1018,7 @@
 								type="button"
 								aria-label={m.repeat_meal()}
 								title={m.repeat_meal()}
-								onclick={() => repeatMeal(meal)}
+								onclick={() => (confirmingRepeatMeal = meal)}
 								class="grid h-11 w-11 shrink-0 place-items-center rounded-2xl border-2 border-slate-200 text-slate-500 active:bg-slate-100"
 							>
 								<svg viewBox="0 0 24 24" class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v5h5" /><path d="M3.05 13A9 9 0 1 0 6 5.3L3 8" /><path d="M12 7v5l3 2" /></svg>
@@ -1077,14 +1102,35 @@
 	{/if}
 
 	{#if isEmpty}
-		<button
-			type="button"
-			onclick={repeatPrevious}
-			class="mt-4 flex h-12 w-full items-center justify-center gap-2 rounded-2xl border-2 border-slate-200 bg-white font-semibold text-slate-700 active:bg-slate-100"
-		>
-			<svg viewBox="0 0 24 24" class="h-5 w-5 text-slate-500" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v5h5" /><path d="M3.05 13A9 9 0 1 0 6 5.3L3 8" /><path d="M12 7v5l3 2" /></svg>
-			{m.repeat_previous_day()}
-		</button>
+		{#if confirmingRepeatDay}
+			<!-- repetir TODO o dia anterior (copia varias refeicoes): confirma antes -->
+			<div class="mt-4 flex items-center gap-2 rounded-2xl bg-emerald-50 p-2">
+				<span class="min-w-0 flex-1 pl-2 text-sm font-semibold text-emerald-800">{m.repeat_day_confirm()}</span>
+				<button
+					type="button"
+					onclick={repeatPrevious}
+					class="h-11 shrink-0 rounded-xl bg-emerald-600 px-4 text-sm font-bold text-white active:bg-emerald-700"
+				>
+					{m.confirm()}
+				</button>
+				<button
+					type="button"
+					onclick={() => (confirmingRepeatDay = false)}
+					class="h-11 shrink-0 rounded-xl px-3 text-sm font-semibold text-slate-500 active:bg-slate-100"
+				>
+					{m.cancel()}
+				</button>
+			</div>
+		{:else}
+			<button
+				type="button"
+				onclick={() => (confirmingRepeatDay = true)}
+				class="mt-4 flex h-12 w-full items-center justify-center gap-2 rounded-2xl border-2 border-slate-200 bg-white font-semibold text-slate-700 active:bg-slate-100"
+			>
+				<svg viewBox="0 0 24 24" class="h-5 w-5 text-slate-500" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v5h5" /><path d="M3.05 13A9 9 0 1 0 6 5.3L3 8" /><path d="M12 7v5l3 2" /></svg>
+				{m.repeat_previous_day()}
+			</button>
+		{/if}
 	{/if}
 
 	<a
