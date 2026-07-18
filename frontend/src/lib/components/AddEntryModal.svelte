@@ -269,11 +269,24 @@
 		</div>
 
 		{#if tab === 'foods'}
-			<input
-				bind:value={query}
-				placeholder={m.search_food()}
-				class="mb-3 h-12 w-full rounded-2xl border-2 border-slate-200 bg-white px-4 outline-none focus:border-emerald-600"
-			/>
+			<div class="relative mb-3">
+				<input
+					bind:value={query}
+					placeholder={m.search_food()}
+					class="h-12 w-full rounded-2xl border-2 border-slate-200 bg-white pr-11 pl-4 outline-none focus:border-emerald-600"
+				/>
+				{#if query}
+					<button
+						type="button"
+						aria-label={m.clear()}
+						title={m.clear()}
+						onclick={() => (query = '')}
+						class="absolute top-1/2 right-2 grid h-8 w-8 -translate-y-1/2 place-items-center rounded-full text-slate-400 active:bg-slate-100"
+					>
+						<svg viewBox="0 0 24 24" class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18" /></svg>
+					</button>
+				{/if}
+			</div>
 			{#if loading}
 				<div class="flex justify-center py-10">
 					<div class="h-7 w-7 animate-spin rounded-full border-4 border-emerald-600 border-t-transparent"></div>

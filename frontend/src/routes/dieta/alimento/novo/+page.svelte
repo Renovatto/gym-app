@@ -99,12 +99,25 @@
 <div class="mt-3 rounded-2xl bg-white p-4 shadow-sm">
 	<p class="mb-2 text-sm font-semibold text-slate-600">{m.ext_search_title()}</p>
 	<div class="flex gap-2">
-		<input
-			bind:value={extQuery}
-			onkeydown={(e) => e.key === 'Enter' && searchExternal()}
-			placeholder={m.food_name_placeholder()}
-			class="h-11 min-w-0 flex-1 rounded-2xl border-2 border-slate-200 bg-white px-3 text-sm outline-none focus:border-emerald-600"
-		/>
+		<div class="relative min-w-0 flex-1">
+			<input
+				bind:value={extQuery}
+				onkeydown={(e) => e.key === 'Enter' && searchExternal()}
+				placeholder={m.food_name_placeholder()}
+				class="h-11 w-full rounded-2xl border-2 border-slate-200 bg-white pr-10 pl-3 text-sm outline-none focus:border-emerald-600"
+			/>
+			{#if extQuery}
+				<button
+					type="button"
+					aria-label={m.clear()}
+					title={m.clear()}
+					onclick={() => (extQuery = '')}
+					class="absolute top-1/2 right-1.5 grid h-7 w-7 -translate-y-1/2 place-items-center rounded-full text-slate-400 active:bg-slate-100"
+				>
+					<svg viewBox="0 0 24 24" class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18" /></svg>
+				</button>
+			{/if}
+		</div>
 		<button
 			type="button"
 			disabled={extSearching || extQuery.trim().length < 2}
