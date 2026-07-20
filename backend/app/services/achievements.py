@@ -31,16 +31,62 @@ ACHIEVEMENTS: list[AchievementDef] = [
     AchievementDef("workouts_10", "\U0001f3cb️", "workout", "total_workouts", 10),
     AchievementDef("workouts_25", "\U0001f4aa", "workout", "total_workouts", 25),
     AchievementDef("workouts_50", "\U0001f947", "workout", "total_workouts", 50),
+    AchievementDef("workouts_100", "\U0001f451", "workout", "total_workouts", 100),
+    AchievementDef("workouts_200", "\U0001f3c6", "workout", "total_workouts", 200),
     AchievementDef("full_week", "\U0001f4c5", "streak", "best_week_workouts", FULL_WEEK_GOAL),
     AchievementDef("streak_3", "\U0001f525", "streak", "weekly_streak", 3),
     AchievementDef("streak_8", "\U0001f31f", "streak", "weekly_streak", 8),
+    AchievementDef("streak_12", "\U00002604️", "streak", "weekly_streak", 12),
     AchievementDef("first_weigh_in", "⚖️", "weight", "weigh_ins", 1),
     AchievementDef("weigh_ins_10", "\U0001f4c8", "weight", "weigh_ins", 10),
+    AchievementDef("weigh_ins_25", "\U0001f4ca", "weight", "weigh_ins", 25),
+    AchievementDef("weigh_ins_50", "\U0001f3af", "weight", "weigh_ins", 50),
     AchievementDef("lost_1kg", "\U0001f4c9", "weight", "weight_lost_kg", 1),
     AchievementDef("lost_5kg", "\U0001f389", "weight", "weight_lost_kg", 5),
+    AchievementDef("lost_10kg", "\U0001f680", "weight", "weight_lost_kg", 10),
     AchievementDef("first_diet_log", "\U0001f34e", "diet", "diet_days", 1),
     AchievementDef("diet_days_7", "\U0001f957", "diet", "diet_days", 7),
+    AchievementDef("diet_days_30", "\U0001f37d️", "diet", "diet_days", 30),
+    AchievementDef("diet_days_100", "\U0001f3f5️", "diet", "diet_days", 100),
 ]
+
+# Conquistas cuja meta e alta o bastante para merecer uma celebracao "de marco grande"
+# (mais efeitos) em vez da celebracao padrao da categoria.
+MILESTONE_CODES: frozenset[str] = frozenset(
+    {"workouts_100", "workouts_200", "streak_12", "weigh_ins_50", "lost_10kg", "diet_days_100"}
+)
+
+
+@dataclass(frozen=True)
+class TitleTier:
+    code: str  # chave para o nome traduzido no frontend (titleContent.ts)
+    goal: float  # total_workouts necessario para alcancar este nivel
+
+
+# Titulo evolutivo: escada fixa baseada SO em total_workouts (comportamento, nunca peso).
+# Texto fixo por nivel (nao combinavel) - mais facil de manter qualidade nos 3 idiomas.
+TITLE_TIERS: list[TitleTier] = [
+    TitleTier("beginner", 0),
+    TitleTier("committed", 5),
+    TitleTier("consistent", 15),
+    TitleTier("dedicated", 30),
+    TitleTier("warrior", 50),
+    TitleTier("veteran", 75),
+    TitleTier("master", 100),
+    TitleTier("legend", 200),
+]
+
+
+def compute_title(stats: dict[str, float]) -> tuple[int, float, float | None]:
+    """Retorna (indice do nivel atual, total_workouts, meta do PROXIMO nivel ou None
+    se ja esta no topo) - usado para o titulo evolutivo e a barra de progresso dele."""
+    total = stats.get("total_workouts", 0)
+    idx = 0
+    for i, tier in enumerate(TITLE_TIERS):
+        if total >= tier.goal:
+            idx = i
+    next_goal = TITLE_TIERS[idx + 1].goal if idx + 1 < len(TITLE_TIERS) else None
+    return idx, total, next_goal
 
 
 def _week_key(day: date) -> tuple[int, int]:

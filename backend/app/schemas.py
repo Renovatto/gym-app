@@ -198,6 +198,10 @@ class AchievementsOut(BaseModel):
     weekly_streak: int
     workouts_this_week: int
     newly_unlocked: list[str]  # desbloqueadas nesta consulta (para celebrar na tela)
+    # Titulo evolutivo (escada fixa por total de treinos - nunca peso/corpo).
+    title_tier: int  # indice na escada (0 = iniciante)
+    title_progress_current: float  # total de treinos atual
+    title_progress_next: float | None  # meta do PROXIMO nivel (None = ja no topo)
 
 
 class CoachNote(BaseModel):

@@ -9,7 +9,7 @@ from sqlmodel import asc, desc, select
 from ..deps import CurrentUser, SessionDep
 from ..models import DiaryEntry, UserAchievement, WeightLog, WorkoutSession
 from ..schemas import AchievementOut, AchievementsOut
-from ..services.achievements import ACHIEVEMENTS, build_stats, is_unlocked
+from ..services.achievements import ACHIEVEMENTS, build_stats, compute_title, is_unlocked
 
 router = APIRouter(prefix="/me/achievements", tags=["achievements"])
 
@@ -89,9 +89,14 @@ def list_achievements(
         and d.isocalendar().week == current_week.week
     )
 
+    title_tier, title_current, title_next = compute_title(stats)
+
     return AchievementsOut(
         achievements=out,
         weekly_streak=int(stats["weekly_streak"]),
         workouts_this_week=workouts_this_week,
         newly_unlocked=newly_unlocked,
+        title_tier=title_tier,
+        title_progress_current=title_current,
+        title_progress_next=title_next,
     )
