@@ -3,7 +3,9 @@
 	import {
 		api,
 		ApiError,
+		localDay,
 		type ActivityLevel,
+		type AchievementsResult,
 		type CutIntensity,
 		type FeedbackReport,
 		type Objective
@@ -12,10 +14,15 @@
 	import Stepper from '$lib/components/Stepper.svelte';
 	import { bootstrap, session, signOut } from '$lib/session.svelte';
 	import { showToast } from '$lib/toast.svelte';
+	import { titleIcon, titleName } from '$lib/titleContent';
 	import { m } from '$lib/paraglide/messages';
 	import { getLocale, setLocale, type Locale } from '$lib/paraglide/runtime';
 	import { setTheme, theme, type ThemePref } from '$lib/theme.svelte';
 	import { errorMessage, toBackendLocale } from '$lib/errors';
+
+	// Titulo evolutivo (nunca ligado a peso/corpo, so a total de treinos).
+	let achievements = $state<AchievementsResult | null>(null);
+	api.getAchievements(localDay(), new Date().getTimezoneOffset()).then((a) => (achievements = a));
 
 	let firstName = $state(session.profile?.first_name ?? '');
 	let lastName = $state(session.profile?.last_name ?? '');
@@ -212,6 +219,31 @@
 </script>
 
 <h1 class="mb-4 text-2xl font-bold">{m.tab_profile()}</h1>
+
+{#if achievements}
+	<a
+		href="/conquistas"
+		class="mb-4 flex items-center gap-3 rounded-3xl bg-white p-4 shadow-sm active:bg-slate-50"
+	>
+		<span class="grid h-12 w-12 shrink-0 place-items-center rounded-2xl bg-emerald-50 text-2xl">
+			{titleIcon(achievements.title_tier)}
+		</span>
+		<div class="min-w-0 flex-1">
+			<p class="font-bold text-slate-900">{titleName(getLocale(), achievements.title_tier)}</p>
+			{#if achievements.title_progress_next !== null}
+				<div class="mt-1.5 h-1.5 overflow-hidden rounded-full bg-slate-100">
+					<div
+						class="h-full rounded-full bg-emerald-500"
+						style="width: {Math.min(100, (achievements.title_progress_current / achievements.title_progress_next) * 100)}%"
+					></div>
+				</div>
+			{:else}
+				<p class="mt-0.5 text-xs text-slate-400">{m.title_max_level()}</p>
+			{/if}
+		</div>
+		<svg viewBox="0 0 24 24" class="h-5 w-5 shrink-0 text-slate-300" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 6l6 6-6 6" stroke-linecap="round" stroke-linejoin="round" /></svg>
+	</a>
+{/if}
 
 <a
 	href="/guia"

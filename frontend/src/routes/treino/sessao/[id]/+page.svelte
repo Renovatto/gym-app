@@ -5,6 +5,7 @@
 	import { api, localDay, type Exercise, type RoutineItem } from '$lib/api';
 	import ExercisePhotoModal from '$lib/components/ExercisePhotoModal.svelte';
 	import Stepper from '$lib/components/Stepper.svelte';
+	import { triggerAchievementCelebrations } from '$lib/celebrationTrigger';
 	import { showToast } from '$lib/toast.svelte';
 	import { m } from '$lib/paraglide/messages';
 
@@ -358,10 +359,13 @@
 		try {
 			await api.finishSession(sessionId);
 			showToast(m.workout_finished_in({ time: formatTime(elapsed) }));
-			// avalia conquistas: se desbloqueou algo novo com este treino, celebra
+			// avalia conquistas: se desbloqueou algo novo (ou subiu de nivel) com este
+			// treino, celebra com a animacao cheia (fica na fila e continua na proxima
+			// tela, o overlay e global). So cai no toast simples se nada de especial rolou.
 			try {
 				const result = await api.getAchievements(localDay(), new Date().getTimezoneOffset());
-				if (result.newly_unlocked.length > 0) {
+				const celebrated = triggerAchievementCelebrations(result);
+				if (!celebrated && result.newly_unlocked.length > 0) {
 					setTimeout(() => showToast(m.achievement_unlocked()), 2600);
 				}
 			} catch {

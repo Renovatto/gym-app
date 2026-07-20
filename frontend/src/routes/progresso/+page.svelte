@@ -26,6 +26,10 @@
 	let adaptive = $state<AdaptiveTdee | null>(null);
 	let adherence = $state<DietAdherence | null>(null);
 	let achievements = $state<AchievementsResult | null>(null);
+	// Pontinho de "quase la": alguma conquista bloqueada com 80%+ de progresso.
+	const hasCloseAchievement = $derived(
+		achievements?.achievements.some((a) => !a.unlocked && a.progress_current / a.progress_goal >= 0.8) ?? false
+	);
 	let newWeight = $state(session.profile?.weight_kg ?? 75);
 	let busy = $state(false);
 	let adding = $state(false);
@@ -183,13 +187,18 @@
 		class="mb-4 flex items-center justify-between rounded-3xl bg-white p-4 shadow-sm active:bg-slate-50"
 	>
 		<div class="flex items-center gap-3">
-			<span class="text-3xl">🔥</span>
+			<span class="relative text-3xl">
+				🔥
+				{#if hasCloseAchievement}
+					<span class="absolute -top-0.5 -right-0.5 h-2.5 w-2.5 rounded-full bg-emerald-500 ring-2 ring-white"></span>
+				{/if}
+			</span>
 			<div>
 				<p class="text-lg font-black text-slate-900">
 					{achievements.weekly_streak}
 					<span class="text-sm font-semibold text-slate-500">{m.weeks_streak()}</span>
 				</p>
-				<p class="text-xs text-slate-500">{m.see_achievements()}</p>
+				<p class="text-xs text-slate-500">{hasCloseAchievement ? m.almost_there_label() + ' · ' : ''}{m.see_achievements()}</p>
 			</div>
 		</div>
 		<svg viewBox="0 0 24 24" class="h-5 w-5 text-slate-300" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 6l6 6-6 6" stroke-linecap="round" stroke-linejoin="round" /></svg>

@@ -10,6 +10,8 @@
 	import { session } from '$lib/session.svelte';
 	import WaterCard from '$lib/components/WaterCard.svelte';
 	import MacroSummary from '$lib/components/MacroSummary.svelte';
+	import { celebrate } from '$lib/celebration.svelte';
+	import { POOL_BIRTHDAY, POOL_HOLIDAY, pickRandom } from '$lib/celebrationDefs';
 	import { m } from '$lib/paraglide/messages';
 	import { getLocale } from '$lib/paraglide/runtime';
 
@@ -98,6 +100,69 @@
 		const d = new Date(birthdate + 'T12:00:00');
 		const today = new Date();
 		return d.getMonth() === today.getMonth() && d.getDate() === today.getDate();
+	});
+
+	// Pascoa: data movel, calculada pelo algoritmo de Computus (Meeus/Jones/Butcher).
+	function computeEasterDate(year: number): { month: number; day: number } {
+		const a = year % 19;
+		const b = Math.floor(year / 100);
+		const c = year % 100;
+		const d = Math.floor(b / 4);
+		const e = b % 4;
+		const f = Math.floor((b + 8) / 25);
+		const g = Math.floor((b - f + 1) / 3);
+		const h = (19 * a + b - d - g + 15) % 30;
+		const i = Math.floor(c / 4);
+		const k = c % 4;
+		const l = (32 + 2 * e + 2 * i - h - k) % 7;
+		const mm = Math.floor((a + 11 * h + 22 * l) / 451);
+		const month = Math.floor((h + l - 7 * mm + 114) / 31);
+		const day = ((h + l - 7 * mm + 114) % 31) + 1;
+		return { month, day };
+	}
+
+	// Feriados mundiais (so os universais, sem feriados locais/regionais).
+	type HolidayCode = 'natal' | 'ano-novo' | 'pascoa' | 'halloween';
+	const holidayCode = $derived.by((): HolidayCode | null => {
+		const today = new Date();
+		const month = today.getMonth() + 1, day = today.getDate();
+		if (month === 12 && day === 25) return 'natal';
+		if (month === 1 && day === 1) return 'ano-novo';
+		if (month === 10 && day === 31) return 'halloween';
+		const easter = computeEasterDate(today.getFullYear());
+		if (month === easter.month && day === easter.day) return 'pascoa';
+		return null;
+	});
+
+	const HOLIDAY_CONTENT: Record<HolidayCode, { kicker: string; emoji: string; title: string; desc: string }> = {
+		natal: { kicker: m.holiday_natal_kicker(), emoji: '🎄', title: m.holiday_natal_title(), desc: m.holiday_natal_desc() },
+		'ano-novo': { kicker: m.holiday_ano_novo_kicker(), emoji: '🎇', title: m.holiday_ano_novo_title(), desc: m.holiday_ano_novo_desc() },
+		pascoa: { kicker: m.holiday_pascoa_kicker(), emoji: '🐰', title: m.holiday_pascoa_title(), desc: m.holiday_pascoa_desc() },
+		halloween: { kicker: m.holiday_halloween_kicker(), emoji: '🎃', title: m.holiday_halloween_title(), desc: m.holiday_halloween_desc() }
+	};
+
+	// Celebracao cheia UMA vez por dia (aniversario tem prioridade sobre feriado; o
+	// banner estatico abaixo continua aparecendo o dia inteiro independente disso).
+	$effect(() => {
+		if (!session.profile) return;
+		const day = localDay();
+		if (isBirthday) {
+			const key = `gymapp.birthdayCelebrated.${day}`;
+			if (localStorage.getItem(key)) return;
+			localStorage.setItem(key, '1');
+			celebrate(pickRandom(POOL_BIRTHDAY), {
+				kicker: m.birthday_kicker(),
+				emoji: '🎂',
+				title: firstName ? m.birthday_title_named({ name: firstName }) : m.birthday_title(),
+				desc: m.birthday_message()
+			});
+		} else if (holidayCode) {
+			const key = `gymapp.holidayCelebrated.${day}`;
+			if (localStorage.getItem(key)) return;
+			localStorage.setItem(key, '1');
+			const def = POOL_HOLIDAY.find((d) => d.slug === holidayCode);
+			if (def) celebrate(def, HOLIDAY_CONTENT[holidayCode]);
+		}
 	});
 </script>
 

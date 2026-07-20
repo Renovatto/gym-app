@@ -6,6 +6,7 @@
 	import TabBar from '$lib/components/TabBar.svelte';
 	import FeedbackFab from '$lib/components/FeedbackFab.svelte';
 	import Toast from '$lib/components/Toast.svelte';
+	import CelebrationOverlay from '$lib/components/CelebrationOverlay.svelte';
 	import { bootstrap, session } from '$lib/session.svelte';
 	import { initTheme } from '$lib/theme.svelte';
 
@@ -52,6 +53,7 @@
 <svelte:head><link rel="icon" href={favicon} /></svelte:head>
 
 <Toast />
+<CelebrationOverlay />
 
 <div class="min-h-dvh bg-slate-50 text-slate-900">
 	{#if session.loaded || isPublic}

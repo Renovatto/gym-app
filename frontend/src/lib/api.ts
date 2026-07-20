@@ -285,6 +285,10 @@ export interface AchievementsResult {
 	weekly_streak: number;
 	workouts_this_week: number;
 	newly_unlocked: string[];
+	// Titulo evolutivo (escada fixa por total de treinos - nunca peso/corpo).
+	title_tier: number;
+	title_progress_current: number;
+	title_progress_next: number | null;
 }
 
 // Dica do coach por regras (code traduzido no frontend; severity define a cor).
