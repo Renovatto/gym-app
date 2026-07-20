@@ -794,6 +794,9 @@ export const api = {
 		quantity?: number;
 	}) => request<DiaryEntry>('/me/diary/from-library', { method: 'POST', body: input }),
 	createFood: (food: FoodInput) => request<Food>('/me/foods', { method: 'POST', body: food }),
+	updateFood: (id: number, food: FoodInput) =>
+		request<Food>(`/me/foods/${id}`, { method: 'PUT', body: food }),
+	deleteFood: (id: number) => request<void>(`/me/foods/${id}`, { method: 'DELETE' }),
 	getRecipeLibrary: (tag?: string) =>
 		request<LibraryRecipe[]>(`/recipes/library${tag ? `?tag=${tag}` : ''}`),
 	getLibraryRecipe: (slug: string) => request<LibraryRecipe>(`/recipes/library/${slug}`),

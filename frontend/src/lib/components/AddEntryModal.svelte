@@ -74,6 +74,22 @@
 		qtyMode === 'portion' && selPortion ? count * selPortion.grams : grams
 	);
 
+	// Receita: por PORCOES (direto) ou por GRAMAS (mesma ideia do alimento). O peso de
+	// 1 porcao e a soma dos ingredientes / numero de porcoes - ja vem no proprio Recipe,
+	// sem precisar de nada novo no backend.
+	let recipeQtyMode = $state<'servings' | 'grams'>('servings');
+	let recipeGrams = $state(100);
+	const recipeGramsPerServing = $derived(
+		selRecipe && selRecipe.servings > 0
+			? selRecipe.ingredients.reduce((sum, i) => sum + i.grams, 0) / selRecipe.servings
+			: 0
+	);
+	const effectiveServings = $derived(
+		recipeQtyMode === 'grams' && recipeGramsPerServing > 0
+			? recipeGrams / recipeGramsPerServing
+			: servings
+	);
+
 	// Guarda contra respostas fora de ordem: cada busca ganha um token; quando a resposta
 	// volta, so aplica se ainda for a MAIS RECENTE. Sem isso, ao digitar rapido as
 	// respostas chegam embaralhadas e uma antiga (vazia/errada) sobrescreve a nova (o "loop").
@@ -198,6 +214,10 @@
 	function pickRecipe(recipe: Recipe): void {
 		selRecipe = recipe;
 		servings = 1;
+		recipeQtyMode = 'servings';
+		const totalG = recipe.ingredients.reduce((sum, i) => sum + i.grams, 0);
+		const perServingG = recipe.servings > 0 ? totalG / recipe.servings : 0;
+		recipeGrams = Math.round(perServingG) || 100;
 	}
 
 	const foodPreview = $derived(
@@ -213,10 +233,10 @@
 	const recipePreview = $derived(
 		selRecipe
 			? {
-					kcal: selRecipe.per_serving.kcal * servings,
-					protein: selRecipe.per_serving.protein_g * servings,
-					carbs: selRecipe.per_serving.carbs_g * servings,
-					fat: selRecipe.per_serving.fat_g * servings
+					kcal: selRecipe.per_serving.kcal * effectiveServings,
+					protein: selRecipe.per_serving.protein_g * effectiveServings,
+					carbs: selRecipe.per_serving.carbs_g * effectiveServings,
+					fat: selRecipe.per_serving.fat_g * effectiveServings
 				}
 			: null
 	);
@@ -251,7 +271,7 @@
 				meal_type: meal,
 				source: 'recipe',
 				recipe_id: selRecipe.id,
-				quantity: servings
+				quantity: effectiveServings
 			});
 			showToast(m.toast_added());
 			selRecipe = null;
@@ -280,6 +300,19 @@
 				<span class="ml-2 rounded bg-emerald-50 px-1.5 py-0.5 text-xs font-semibold text-emerald-600">{m.custom_tag()}</span>
 			{/if}
 		</button>
+		{#if food.is_custom}
+			<a
+				href="/dieta/alimento/{food.id}"
+				aria-label={m.edit_food()}
+				title={m.edit_food()}
+				class="grid h-10 w-10 shrink-0 place-items-center rounded-xl text-slate-400 active:bg-slate-100"
+			>
+				<svg viewBox="0 0 24 24" class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+					<path d="M12 20h9" />
+					<path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z" />
+				</svg>
+			</a>
+		{/if}
 		<button
 			type="button"
 			aria-label={m.favorite_toggle()}
@@ -593,8 +626,35 @@
 			onkeydown={() => {}}
 		>
 			<h2 class="text-lg font-bold text-slate-900">{selRecipe.name}</h2>
-			<p class="mb-4 text-sm text-slate-500">{m.how_many_servings()}</p>
-			<Stepper bind:value={servings} min={1} max={20} step={1} unit={m.serving_plural()} />
+
+			{#if recipeGramsPerServing > 0}
+				<div class="mt-3 mb-2 flex flex-wrap gap-2">
+					<button
+						type="button"
+						onclick={() => (recipeQtyMode = 'servings')}
+						class="rounded-full border-2 px-3 py-1.5 text-sm font-semibold {recipeQtyMode === 'servings' ? 'border-emerald-600 bg-emerald-50 text-emerald-800' : 'border-slate-200 text-slate-600'}"
+					>
+						{m.by_servings()}
+					</button>
+					<button
+						type="button"
+						onclick={() => (recipeQtyMode = 'grams')}
+						class="rounded-full border-2 px-3 py-1.5 text-sm font-semibold {recipeQtyMode === 'grams' ? 'border-emerald-600 bg-emerald-50 text-emerald-800' : 'border-slate-200 text-slate-600'}"
+					>
+						{m.by_grams()}
+					</button>
+				</div>
+			{/if}
+
+			{#if recipeQtyMode === 'grams' && recipeGramsPerServing > 0}
+				<p class="mb-1 text-center text-xs text-slate-400">
+					{m.recipe_grams_equiv({ servings: nf.format(Math.round(effectiveServings * 100) / 100) })}
+				</p>
+				<Stepper bind:value={recipeGrams} min={5} max={5000} step={5} unit="g" />
+			{:else}
+				<p class="mb-4 text-sm text-slate-500">{m.how_many_servings()}</p>
+				<Stepper bind:value={servings} min={1} max={20} step={1} unit={m.serving_plural()} />
+			{/if}
 			{#if recipePreview}
 				<div class="mt-4 flex justify-around rounded-2xl bg-slate-50 py-3 text-center">
 					<div><p class="text-lg font-bold">{nf.format(Math.round(recipePreview.kcal))}</p><p class="text-xs text-slate-400">kcal</p></div>

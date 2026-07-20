@@ -180,6 +180,54 @@ def create_food(data: FoodIn, user: CurrentUser, session: SessionDep) -> FoodOut
     return to_food_out(food, user.locale)
 
 
+@router.put("/me/foods/{food_id}", response_model=FoodOut)
+def update_food(food_id: int, data: FoodIn, user: CurrentUser, session: SessionDep) -> FoodOut:
+    """So o dono pode editar (nunca um alimento global do catalogo)."""
+    food = session.get(Food, food_id)
+    if food is None or food.user_id != user.id:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, detail="FOOD_NOT_FOUND")
+    food.category = data.category
+    food.kcal = data.kcal
+    food.protein_g = data.protein_g
+    food.carbs_g = data.carbs_g
+    food.fat_g = data.fat_g
+    food.default_portion_g = data.default_portion_g
+    session.add(food)
+    translation = session.exec(
+        select(FoodTranslation)
+        .where(FoodTranslation.food_id == food.id)
+        .where(FoodTranslation.locale == user.locale)
+    ).first()
+    if translation is not None:
+        translation.name = data.name.strip()
+        session.add(translation)
+    else:
+        session.add(FoodTranslation(food_id=food.id, locale=user.locale, name=data.name.strip()))
+    session.commit()
+    session.refresh(food)
+    fav_ids = favorite_food_ids(session, user.id)
+    return to_food_out(food, user.locale, fav_ids)
+
+
+@router.delete("/me/foods/{food_id}", status_code=status.HTTP_204_NO_CONTENT)
+def delete_food(food_id: int, user: CurrentUser, session: SessionDep) -> None:
+    food = session.get(Food, food_id)
+    if food is None or food.user_id != user.id:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, detail="FOOD_NOT_FOUND")
+    # nao deixa excluir se estiver em uso (receita ou historico do diario) - evita
+    # violar a FK no Postgres com um erro cru; a mensagem aqui e clara e traduzivel.
+    in_recipe = session.exec(
+        select(RecipeIngredient).where(RecipeIngredient.food_id == food_id)
+    ).first()
+    if in_recipe is not None:
+        raise HTTPException(status.HTTP_400_BAD_REQUEST, detail="FOOD_IN_USE_RECIPE")
+    in_diary = session.exec(select(DiaryEntry).where(DiaryEntry.food_id == food_id)).first()
+    if in_diary is not None:
+        raise HTTPException(status.HTTP_400_BAD_REQUEST, detail="FOOD_IN_USE_DIARY")
+    session.delete(food)
+    session.commit()
+
+
 @router.get("/me/foods/{food_id}/substitutes", response_model=SubstitutesOut)
 def food_substitutes(
     food_id: int,

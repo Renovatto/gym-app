@@ -24,6 +24,15 @@
 	let picking = $state(false);
 	let busy = $state(false);
 
+	// Rendimento: por PORCOES (direto, como sempre foi) ou por PESO por porcao (g) -
+	// nesse modo, o numero de porcoes e derivado do peso total / peso por porcao.
+	// O peso total ja e a soma dos ingredientes, sem precisar de nada novo no backend.
+	let yieldMode = $state<'servings' | 'grams'>('servings');
+	let servingGrams = $state(150);
+	const totalGrams = $derived(ingredients.reduce((sum, i) => sum + i.grams, 0));
+	const derivedServings = $derived(Math.max(1, Math.round(totalGrams / Math.max(servingGrams, 1))));
+	const effectiveServings = $derived(yieldMode === 'grams' ? derivedServings : servings);
+
 	async function load(): Promise<void> {
 		if (isNew) {
 			name = '';
@@ -35,6 +44,9 @@
 				name = recipe.name;
 				servings = recipe.servings;
 				ingredients = recipe.ingredients.map((i) => ({ food: i.food, grams: i.grams }));
+				// ponto de partida sensato se o usuario trocar para o modo "peso por porcao"
+				const total = ingredients.reduce((sum, i) => sum + i.grams, 0);
+				servingGrams = Math.max(1, Math.round(total / Math.max(recipe.servings, 1)));
 			}
 		}
 		loading = false;
@@ -69,10 +81,10 @@
 		)
 	);
 	const perServing = $derived({
-		kcal: total.kcal / Math.max(servings, 1),
-		protein: total.protein / Math.max(servings, 1),
-		carbs: total.carbs / Math.max(servings, 1),
-		fat: total.fat / Math.max(servings, 1)
+		kcal: total.kcal / Math.max(effectiveServings, 1),
+		protein: total.protein / Math.max(effectiveServings, 1),
+		carbs: total.carbs / Math.max(effectiveServings, 1),
+		fat: total.fat / Math.max(effectiveServings, 1)
 	});
 
 	const canSave = $derived(name.trim().length > 0 && ingredients.length > 0);
@@ -82,7 +94,7 @@
 		busy = true;
 		const payload = {
 			name: name.trim(),
-			servings,
+			servings: effectiveServings,
 			ingredients: ingredients.map((i) => ({ food_id: i.food.id, grams: i.grams }))
 		};
 		try {
@@ -143,8 +155,40 @@
 	/>
 
 	<div class="mt-3 rounded-2xl bg-white p-4 shadow-sm">
-		<p class="mb-2 text-sm font-semibold text-slate-600">{m.servings_label()}</p>
-		<Stepper bind:value={servings} min={1} max={50} />
+		<div class="mb-2 flex items-center justify-between gap-2">
+			<p class="text-sm font-semibold text-slate-600">{m.servings_label()}</p>
+			<div class="flex gap-1 rounded-full bg-slate-100 p-0.5">
+				<button
+					type="button"
+					onclick={() => (yieldMode = 'servings')}
+					class="rounded-full px-3 py-1 text-xs font-bold {yieldMode === 'servings' ? 'bg-white text-emerald-700 shadow-sm' : 'text-slate-500'}"
+				>
+					{m.yield_by_servings()}
+				</button>
+				<button
+					type="button"
+					onclick={() => (yieldMode = 'grams')}
+					class="rounded-full px-3 py-1 text-xs font-bold {yieldMode === 'grams' ? 'bg-white text-emerald-700 shadow-sm' : 'text-slate-500'}"
+				>
+					{m.yield_by_grams()}
+				</button>
+			</div>
+		</div>
+
+		{#if yieldMode === 'servings'}
+			<Stepper bind:value={servings} min={1} max={50} />
+		{:else}
+			<Stepper bind:value={servingGrams} min={5} max={2000} step={5} unit="g" />
+			<p class="mt-2 text-xs text-slate-400">
+				{m.yield_grams_hint({ servings: nf.format(derivedServings) })}
+			</p>
+		{/if}
+
+		{#if totalGrams > 0}
+			<p class="mt-2 text-xs font-medium text-slate-400">
+				{m.recipe_total_weight({ grams: nf.format(totalGrams) })}
+			</p>
+		{/if}
 	</div>
 
 	<div class="mt-3 space-y-2">
