@@ -73,9 +73,15 @@ def list_foods(
     session: SessionDep,
     q: str = Query(default="", max_length=60),
     category: FoodCategory | None = Query(default=None),
+    # scope=mine filtra so os alimentos criados pelo proprio usuario (a etiqueta "meu"),
+    # que sem isso podiam ficar fora do corte de "limit" quando o catalogo global e grande.
+    scope: str | None = Query(default=None, pattern=r"^(mine)$"),
     limit: int = Query(default=60, ge=1, le=200),
+    offset: int = Query(default=0, ge=0),
 ) -> list[FoodOut]:
     query = select(Food).where((Food.user_id.is_(None)) | (Food.user_id == user.id))
+    if scope == "mine":
+        query = query.where(Food.user_id == user.id)
     if category is not None:
         query = query.where(Food.category == category)
     foods = session.exec(query).all()
@@ -92,7 +98,7 @@ def list_foods(
         out.append(to_food_out(food, user.locale, fav_ids))
     # favoritos primeiro, depois alfabetica
     out.sort(key=lambda f: (not f.is_favorite, f.name.lower()))
-    return out[:limit]
+    return out[offset : offset + limit]
 
 
 @router.get("/me/foods/favorites", response_model=list[FoodOut])

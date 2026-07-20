@@ -760,10 +760,17 @@ export const api = {
 	getAchievements: (day: string, tzOffset: number) =>
 		request<AchievementsResult>(`/me/achievements?day=${day}&tz_offset=${tzOffset}`),
 	// dieta
-	getFoods: (q = '', category?: FoodCategory) => {
+	getFoods: (
+		q = '',
+		category?: FoodCategory,
+		opts?: { scope?: 'mine'; limit?: number; offset?: number }
+	) => {
 		const params = new URLSearchParams();
 		if (q) params.set('q', q);
 		if (category) params.set('category', category);
+		if (opts?.scope) params.set('scope', opts.scope);
+		if (opts?.limit) params.set('limit', String(opts.limit));
+		if (opts?.offset) params.set('offset', String(opts.offset));
 		const qs = params.toString();
 		return request<Food[]>(`/foods${qs ? `?${qs}` : ''}`);
 	},

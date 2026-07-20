@@ -3,6 +3,7 @@
 	import Stepper from '$lib/components/Stepper.svelte';
 	import { showToast } from '$lib/toast.svelte';
 	import { mealTypeLabel, portionLabel } from '$lib/labels';
+	import { normalizeSearch, searchMatches } from '$lib/text';
 	import { m } from '$lib/paraglide/messages';
 	import { getLocale } from '$lib/paraglide/runtime';
 
@@ -36,6 +37,27 @@
 
 	const searching = $derived(query.trim().length > 0);
 
+	// Filtro de escopo da lista de alimentos. 'default' preserva o comportamento de
+	// sempre (favoritos + recentes + catalogo); os outros mostram so aquela categoria.
+	const FOOD_SCOPES = ['default', 'mine', 'favorites', 'recent'] as const;
+	type FoodScope = (typeof FOOD_SCOPES)[number];
+	let foodScope = $state<FoodScope>('default');
+
+	function foodScopeLabel(scope: FoodScope): string {
+		return {
+			default: m.food_scope_default(),
+			mine: m.food_scope_mine(),
+			favorites: m.food_scope_favorites(),
+			recent: m.food_scope_recent()
+		}[scope];
+	}
+
+	// 'default'/'mine' vem paginado do backend; 'favorites'/'recent' ja tem tudo
+	// carregado (listas curtas) e so filtramos pelo texto no cliente.
+	const PAGE_SIZE = 60;
+	let foodsHasMore = $state(true);
+	let loadingMore = $state(false);
+
 	// item selecionado para lançar
 	let selFood = $state<Food | null>(null);
 	let selRecipe = $state<Recipe | null>(null);
@@ -57,15 +79,52 @@
 	// respostas chegam embaralhadas e uma antiga (vazia/errada) sobrescreve a nova (o "loop").
 	let searchToken = 0;
 
-	async function loadFoods(q: string): Promise<void> {
+	// Carrega a 1a pagina (reset) da lista paginada ('default' ou 'mine'). As outras
+	// duas escopos (favoritos/recentes) nao passam por aqui - sao filtradas no cliente.
+	async function loadFoods(q: string, scope: FoodScope): Promise<void> {
 		const token = ++searchToken;
 		loading = true;
 		try {
-			const result = await api.getFoods(q);
+			const result = await api.getFoods(q, undefined, {
+				scope: scope === 'mine' ? 'mine' : undefined,
+				limit: PAGE_SIZE,
+				offset: 0
+			});
 			if (token !== searchToken) return; // resposta velha: descarta
 			foods = result;
+			foodsHasMore = result.length === PAGE_SIZE;
 		} finally {
 			if (token === searchToken) loading = false;
+		}
+	}
+
+	// Rolagem infinita: busca a proxima pagina e acrescenta. Guardado pelo mesmo
+	// token do loadFoods - se uma nova busca/reset comecar enquanto isso carrega,
+	// a resposta desta pagina antiga e descartada (evita duplicar/misturar listas).
+	async function loadMoreFoods(q: string, scope: FoodScope): Promise<void> {
+		if (!foodsHasMore || loadingMore || loading) return;
+		const token = searchToken;
+		loadingMore = true;
+		try {
+			const result = await api.getFoods(q, undefined, {
+				scope: scope === 'mine' ? 'mine' : undefined,
+				limit: PAGE_SIZE,
+				offset: foods.length
+			});
+			if (token !== searchToken) return;
+			foods = [...foods, ...result];
+			foodsHasMore = result.length === PAGE_SIZE;
+		} finally {
+			if (token === searchToken) loadingMore = false;
+		}
+	}
+
+	// Dispara a proxima pagina quando a rolagem chega perto do fim da modal.
+	function handleScroll(e: Event): void {
+		if (tab !== 'foods' || foodScope === 'favorites' || foodScope === 'recent') return;
+		const el = e.currentTarget as HTMLElement;
+		if (el.scrollHeight - el.scrollTop - el.clientHeight < 400) {
+			loadMoreFoods(query, foodScope);
 		}
 	}
 
@@ -82,16 +141,23 @@
 
 	// fonte unica da verdade da estrelinha dos alimentos (vale em todas as listas)
 	const favFoodIds = $derived(new Set(favoriteFoods.map((f) => f.id)));
+	const scopedTerm = $derived(normalizeSearch(query));
+	const filteredFavoriteFoods = $derived(
+		favoriteFoods.filter((f) => searchMatches(f.name, scopedTerm))
+	);
+	const filteredRecentFoods = $derived(recentFoods.filter((f) => searchMatches(f.name, scopedTerm)));
 
 	$effect(() => {
 		if (tab !== 'foods') {
 			loadRecipes();
 			return;
 		}
+		if (foodScope === 'favorites' || foodScope === 'recent') return; // filtrado no cliente, sem fetch
 		// debounce: so busca ~250ms depois que voce para de digitar; a limpeza cancela a
 		// busca anterior a cada tecla, evitando uma rajada de requisicoes concorrentes.
 		const q = query;
-		const handle = setTimeout(() => loadFoods(q), 250);
+		const scope = foodScope;
+		const handle = setTimeout(() => loadFoods(q, scope), 250);
 		return () => clearTimeout(handle);
 	});
 
@@ -235,7 +301,18 @@
 	</div>
 {/snippet}
 
-<div class="fixed inset-0 z-40 overflow-y-auto bg-slate-50">
+<!-- rodape da lista paginada: spinner ao carregar mais, ou aviso de fim -->
+{#snippet loadMoreStatus()}
+	{#if loadingMore}
+		<div class="flex justify-center py-4">
+			<div class="h-5 w-5 animate-spin rounded-full border-4 border-emerald-600 border-t-transparent"></div>
+		</div>
+	{:else if !foodsHasMore && foods.length > 0}
+		<p class="py-3 text-center text-xs text-slate-400">{m.food_list_end()}</p>
+	{/if}
+{/snippet}
+
+<div class="fixed inset-0 z-40 overflow-y-auto bg-slate-50" onscroll={handleScroll}>
 	<div class="mx-auto max-w-md px-4 pt-4 pb-24">
 		<div class="mb-4 flex items-center justify-between gap-2">
 			<div class="min-w-0">
@@ -287,11 +364,27 @@
 					</button>
 				{/if}
 			</div>
+
+			<!-- filtro de escopo: Padrao preserva exatamente o comportamento de sempre -->
+			<div class="mb-3 flex gap-1.5 overflow-x-auto">
+				{#each FOOD_SCOPES as scope (scope)}
+					<button
+						type="button"
+						onclick={() => (foodScope = scope)}
+						class="shrink-0 rounded-full border-2 px-3 py-1.5 text-xs font-bold {foodScope === scope
+							? 'border-emerald-600 bg-emerald-50 text-emerald-800'
+							: 'border-slate-200 text-slate-500'}"
+					>
+						{foodScopeLabel(scope)}
+					</button>
+				{/each}
+			</div>
+
 			{#if loading}
 				<div class="flex justify-center py-10">
 					<div class="h-7 w-7 animate-spin rounded-full border-4 border-emerald-600 border-t-transparent"></div>
 				</div>
-			{:else}
+			{:else if foodScope === 'default'}
 				{#if !searching && favoriteFoods.length > 0}
 					<p class="mb-2 flex items-center gap-1 text-xs font-bold text-amber-500 uppercase">
 						<svg viewBox="0 0 24 24" class="h-3.5 w-3.5" fill="currentColor"><path d="M12 3l2.9 5.9 6.5.9-4.7 4.6 1.1 6.5L12 17.8 6.2 20.9l1.1-6.5L2.6 9.8l6.5-.9z" /></svg>
@@ -317,9 +410,41 @@
 						{@render foodRow(food)}
 					{/each}
 				</div>
+				{@render loadMoreStatus()}
 				<a href="/dieta/alimento/novo" class="mt-3 block text-center text-sm font-semibold text-emerald-700">
 					{m.create_food()}
 				</a>
+			{:else if foodScope === 'mine'}
+				{#if foods.length === 0}
+					<p class="rounded-2xl bg-white px-4 py-3 text-center text-sm text-slate-400 shadow-sm">{m.food_scope_empty()}</p>
+				{/if}
+				<div class="space-y-2">
+					{#each foods as food (food.id)}
+						{@render foodRow(food)}
+					{/each}
+				</div>
+				{@render loadMoreStatus()}
+				<a href="/dieta/alimento/novo" class="mt-3 block text-center text-sm font-semibold text-emerald-700">
+					{m.create_food()}
+				</a>
+			{:else if foodScope === 'favorites'}
+				{#if filteredFavoriteFoods.length === 0}
+					<p class="rounded-2xl bg-white px-4 py-3 text-center text-sm text-slate-400 shadow-sm">{m.food_scope_empty()}</p>
+				{/if}
+				<div class="space-y-2">
+					{#each filteredFavoriteFoods as food (food.id)}
+						{@render foodRow(food)}
+					{/each}
+				</div>
+			{:else}
+				{#if filteredRecentFoods.length === 0}
+					<p class="rounded-2xl bg-white px-4 py-3 text-center text-sm text-slate-400 shadow-sm">{m.food_scope_empty()}</p>
+				{/if}
+				<div class="space-y-2">
+					{#each filteredRecentFoods as food (food.id)}
+						{@render foodRow(food)}
+					{/each}
+				</div>
 			{/if}
 		{:else if loading}
 			<div class="flex justify-center py-10">
