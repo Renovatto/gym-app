@@ -88,6 +88,26 @@
 		return byCode[adaptive.message_code] ?? byCode.ESTIMATE_READY;
 	});
 
+	// Meta atual ja bate com a sugerida -> a manutencao real ja foi adotada.
+	const goalAlreadyAdopted = $derived(
+		!!adaptive?.has_enough_data && adaptive.current_target_kcal === adaptive.suggested_target_kcal
+	);
+	let adoptingGoal = $state(false);
+
+	// Adota a manutencao real medida: renova o periodo da dieta com ela como base,
+	// substituindo a formula (mesma acao que existe em Dieta > Periodo da dieta).
+	async function adoptSuggestedGoal(): Promise<void> {
+		if (!adaptive || adoptingGoal) return;
+		adoptingGoal = true;
+		try {
+			await api.renewDietPeriod(localDay(), adaptive.estimated_maintenance_kcal ?? undefined);
+			adaptive = await api.getAdaptiveTdee(localDay(), new Date().getTimezoneOffset());
+			showToast(m.diet_period_renewed());
+		} finally {
+			adoptingGoal = false;
+		}
+	}
+
 	// Monta o payload da pesagem: peso obrigatorio + campos da balanca preenchidos.
 	// Campos vazios ou invalidos sao ignorados (ficam nulos no banco).
 	function buildWeighIn(): WeighInInput {
@@ -317,6 +337,23 @@
 					{adaptiveMessage.text}
 				</div>
 			{/if}
+
+			{#if goalAlreadyAdopted}
+				<p class="mt-3 flex items-center gap-1.5 text-xs font-semibold text-emerald-600">
+					<svg viewBox="0 0 24 24" class="h-4 w-4 shrink-0" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 13l4 4L19 7" stroke-linecap="round" stroke-linejoin="round" /></svg>
+					{m.adaptive_already_adopted()}
+				</p>
+			{:else}
+				<button
+					type="button"
+					disabled={adoptingGoal}
+					onclick={adoptSuggestedGoal}
+					class="mt-3 h-12 w-full rounded-2xl bg-emerald-600 text-sm font-bold text-white active:bg-emerald-700 disabled:opacity-50"
+				>
+					{m.adaptive_adopt_button()}
+				</button>
+			{/if}
+
 			<p class="mt-2 text-xs text-slate-400">{m.adaptive_footnote()}</p>
 		{/if}
 	</section>

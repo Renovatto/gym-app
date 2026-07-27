@@ -497,6 +497,8 @@
 	"adaptive_stalled": "Peso estancado. Baja a la meta sugerida para volver a perder grasa.",
 	"adaptive_too_fast": "Pérdida demasiado rápida. Sube un poco las calorías para preservar músculo.",
 	"adaptive_estimate_ready": "Estimación lista.",
+	"adaptive_adopt_button": "Adoptar meta sugerida",
+	"adaptive_already_adopted": "Tu meta actual ya usa este mantenimiento real medido.",
 	"this_week": "Esta semana",
 	"workouts_label": "Entrenamientos",
 	"volume_label": "Volumen total",

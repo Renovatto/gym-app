@@ -497,6 +497,8 @@
 	"adaptive_stalled": "Weight stalled. Lower to the suggested goal to start losing fat again.",
 	"adaptive_too_fast": "Losing too fast. Raise calories a bit to preserve muscle.",
 	"adaptive_estimate_ready": "Estimate ready.",
+	"adaptive_adopt_button": "Adopt suggested goal",
+	"adaptive_already_adopted": "Your current goal already uses this measured real maintenance.",
 	"this_week": "This week",
 	"workouts_label": "Workouts",
 	"volume_label": "Total volume",
