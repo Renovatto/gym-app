@@ -76,16 +76,17 @@
 		if (obj === 'recomp') return m.objective_recomp();
 		return m.objective_maintain();
 	}
-	async function openPeriodModal(): Promise<void> {
+	function openPeriodModal(): void {
+		// periodAdaptive ja vem fresco do reloadSilent (mesma origem do badge do card)
 		showPeriodModal = true;
-		periodAdaptive = null;
-		try {
-			// a sugestao de adotar a manutencao medida vem do TDEE adaptativo
-			periodAdaptive = await api.getAdaptiveTdee(day, new Date().getTimezoneOffset());
-		} catch {
-			// extra: sem ela ainda da pra renovar reiniciando o periodo
-		}
 	}
+
+	// Meta sugerida difere da atual -> tem informacao nova do TDEE adaptativo para ver.
+	const hasNewSuggestion = $derived(
+		!!periodAdaptive?.has_enough_data &&
+			periodAdaptive.suggested_target_kcal !== null &&
+			periodAdaptive.suggested_target_kcal !== periodAdaptive.current_target_kcal
+	);
 	async function renewPeriod(adopt: boolean): Promise<void> {
 		if (periodBusy) return;
 		periodBusy = true;
@@ -185,6 +186,12 @@
 			api.getSupplements(day),
 			api.getDietPeriod(day)
 		]);
+		try {
+			// alimenta o badge de "nova sugestao" do card de Periodo da dieta
+			periodAdaptive = await api.getAdaptiveTdee(day, new Date().getTimezoneOffset());
+		} catch {
+			// extra: sem dados suficientes ainda, o card fica sem badge
+		}
 	}
 
 	async function load(): Promise<void> {
@@ -698,22 +705,29 @@
 			onclick={openPeriodModal}
 			class="mt-3 flex w-full items-center gap-2.5 rounded-2xl border px-3 py-2.5 text-left {dietPeriod.due
 				? 'border-amber-200 bg-amber-50'
-				: 'border-slate-200 bg-white'}"
+				: hasNewSuggestion
+					? 'border-emerald-200 bg-emerald-50'
+					: 'border-slate-200 bg-white'}"
 		>
-			<svg viewBox="0 0 24 24" class="h-5 w-5 shrink-0 {dietPeriod.due ? 'text-amber-600' : 'text-slate-400'}" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="17" rx="2" /><path d="M3 9h18M8 2v4M16 2v4" stroke-linecap="round" /></svg>
+			<svg viewBox="0 0 24 24" class="h-5 w-5 shrink-0 {dietPeriod.due ? 'text-amber-600' : hasNewSuggestion ? 'text-emerald-600' : 'text-slate-400'}" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="17" rx="2" /><path d="M3 9h18M8 2v4M16 2v4" stroke-linecap="round" /></svg>
 			<span class="min-w-0 flex-1">
-				<span class="block text-sm font-semibold {dietPeriod.due ? 'text-amber-800' : 'text-slate-700'}">
+				<span class="block text-sm font-semibold {dietPeriod.due ? 'text-amber-800' : hasNewSuggestion ? 'text-emerald-800' : 'text-slate-700'}">
 					{m.diet_period_label()}
 				</span>
-				<span class="block truncate text-xs {dietPeriod.due ? 'text-amber-600' : 'text-slate-500'}">
+				<span class="block truncate text-xs {dietPeriod.due ? 'text-amber-600' : hasNewSuggestion ? 'text-emerald-600' : 'text-slate-500'}">
 					{#if dietPeriod.due}
 						{m.diet_period_due()}
+					{:else if hasNewSuggestion}
+						{m.diet_period_new_suggestion()}
 					{:else}
 						{m.diet_period_review({ date: fmtPeriodDate(dietPeriod.review_on) })}
 					{/if}
 					· {objectiveLabel(dietPeriod.objective)}
 				</span>
 			</span>
+			{#if hasNewSuggestion}
+				<span class="grid h-5 min-w-[20px] shrink-0 place-items-center rounded-full bg-emerald-600 px-1.5 text-xs font-bold text-white">1</span>
+			{/if}
 			<svg viewBox="0 0 24 24" class="h-5 w-5 shrink-0 text-slate-300" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 6l6 6-6 6" stroke-linecap="round" stroke-linejoin="round" /></svg>
 		</button>
 	{/if}
