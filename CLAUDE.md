@@ -54,6 +54,13 @@ documentadas para o usuario na area de consulta. Nao espalhe formula por varios 
   nunca fica sem retorno visual de que a acao funcionou.
 - **Toda exclusao pede confirmacao antes.** Nenhum delete acontece direto no clique: sempre
   ha um passo de confirmacao (inline ou modal) antes de executar. Vale para o app inteiro.
+- **Acao de impacto tambem pede confirmacao antes, nao so exclusao.** Qualquer botao que
+  troque algo usado no app inteiro dali em diante (ex.: adotar a manutencao medida no lugar
+  da formula, renovar/reiniciar um periodo, substituir uma meta) segue o mesmo padrao de
+  confirmacao da exclusao (inline: mostra a pergunta + "Confirmar"/"Cancelar" antes de
+  chamar a API). Nao vale para toggles leves e reversiveis em 1 toque (favoritar, marcar
+  suplemento tomado, marcar serie feita) - esses ja tem feedback pelo proprio estado visual
+  ou pelo toast, e confirmar cada um so atrapalharia o uso.
 
 ## Padroes ja adotados no projeto (nao reinventar)
 

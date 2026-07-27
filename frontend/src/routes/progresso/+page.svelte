@@ -93,11 +93,14 @@
 		!!adaptive?.has_enough_data && adaptive.current_target_kcal === adaptive.suggested_target_kcal
 	);
 	let adoptingGoal = $state(false);
+	let confirmingAdoptGoal = $state(false);
 
 	// Adota a manutencao real medida: renova o periodo da dieta com ela como base,
 	// substituindo a formula (mesma acao que existe em Dieta > Periodo da dieta).
+	// Muda a meta calorica usada no app inteiro dai em diante, entao sempre confirma antes.
 	async function adoptSuggestedGoal(): Promise<void> {
 		if (!adaptive || adoptingGoal) return;
+		confirmingAdoptGoal = false;
 		adoptingGoal = true;
 		try {
 			await api.renewDietPeriod(localDay(), adaptive.estimated_maintenance_kcal ?? undefined);
@@ -343,12 +346,30 @@
 					<svg viewBox="0 0 24 24" class="h-4 w-4 shrink-0" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 13l4 4L19 7" stroke-linecap="round" stroke-linejoin="round" /></svg>
 					{m.adaptive_already_adopted()}
 				</p>
+			{:else if confirmingAdoptGoal}
+				<div class="mt-3 flex items-center gap-2 rounded-2xl bg-emerald-50 p-2">
+					<span class="min-w-0 flex-1 pl-2 text-xs font-semibold text-emerald-800">{m.adaptive_adopt_confirm()}</span>
+					<button
+						type="button"
+						disabled={adoptingGoal}
+						onclick={adoptSuggestedGoal}
+						class="h-11 shrink-0 rounded-xl bg-emerald-600 px-4 text-sm font-bold text-white active:bg-emerald-700 disabled:opacity-50"
+					>
+						{m.confirm()}
+					</button>
+					<button
+						type="button"
+						onclick={() => (confirmingAdoptGoal = false)}
+						class="h-11 shrink-0 rounded-xl px-3 text-sm font-semibold text-slate-500 active:bg-slate-100"
+					>
+						{m.cancel()}
+					</button>
+				</div>
 			{:else}
 				<button
 					type="button"
-					disabled={adoptingGoal}
-					onclick={adoptSuggestedGoal}
-					class="mt-3 h-12 w-full rounded-2xl bg-emerald-600 text-sm font-bold text-white active:bg-emerald-700 disabled:opacity-50"
+					onclick={() => (confirmingAdoptGoal = true)}
+					class="mt-3 h-12 w-full rounded-2xl bg-emerald-600 text-sm font-bold text-white active:bg-emerald-700"
 				>
 					{m.adaptive_adopt_button()}
 				</button>

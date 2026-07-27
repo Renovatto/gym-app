@@ -66,9 +66,15 @@
 	let showPeriodModal = $state(false);
 	let periodAdaptive = $state<AdaptiveTdee | null>(null);
 	let periodBusy = $state(false);
+	// qual renovacao esta pedindo confirmacao (nenhuma delas dispara direto no clique)
+	let confirmingRenew = $state<'adopt' | 'restart' | null>(null);
 	const pdf = new Intl.DateTimeFormat(getLocale(), { day: '2-digit', month: 'short' });
 	function fmtPeriodDate(iso: string): string {
 		return pdf.format(new Date(iso + 'T12:00:00'));
+	}
+	function closePeriodModal(): void {
+		showPeriodModal = false;
+		confirmingRenew = null;
 	}
 	function objectiveLabel(obj: string): string {
 		if (obj === 'gain_muscle') return m.objective_gain_muscle();
@@ -89,6 +95,7 @@
 	);
 	async function renewPeriod(adopt: boolean): Promise<void> {
 		if (periodBusy) return;
+		confirmingRenew = null;
 		periodBusy = true;
 		try {
 			const kcal = adopt ? (periodAdaptive?.estimated_maintenance_kcal ?? undefined) : undefined;
@@ -1337,8 +1344,8 @@
 		class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
 		role="button"
 		tabindex="-1"
-		onclick={() => (showPeriodModal = false)}
-		onkeydown={(e) => e.key === 'Escape' && (showPeriodModal = false)}
+		onclick={closePeriodModal}
+		onkeydown={(e) => e.key === 'Escape' && closePeriodModal()}
 	>
 		<div
 			class="w-full max-w-md rounded-3xl bg-white p-5"
@@ -1355,7 +1362,7 @@
 				<button
 					type="button"
 					aria-label={m.close()}
-					onclick={() => (showPeriodModal = false)}
+					onclick={closePeriodModal}
 					class="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-slate-100 text-slate-500 active:bg-slate-200"
 				>
 					<svg viewBox="0 0 24 24" class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 6l12 12M18 6L6 18" stroke-linecap="round" /></svg>
@@ -1390,26 +1397,69 @@
 					<p class="text-sm font-semibold text-emerald-800">
 						{m.diet_period_measured({ kcal: nf.format(periodAdaptive.estimated_maintenance_kcal) })}
 					</p>
-					<button
-						type="button"
-						disabled={periodBusy}
-						onclick={() => renewPeriod(true)}
-						class="mt-2 flex h-11 w-full items-center justify-center gap-2 rounded-2xl bg-emerald-600 font-bold text-white active:bg-emerald-700 disabled:opacity-50"
-					>
-						{#if periodBusy}<Spinner class="h-5 w-5" />{/if}
-						{m.diet_period_renew_adopt()}
-					</button>
+					{#if confirmingRenew === 'adopt'}
+						<div class="mt-2 flex items-center gap-2 rounded-xl bg-white p-1.5">
+							<span class="min-w-0 flex-1 pl-1.5 text-xs font-semibold text-emerald-800">{m.diet_period_renew_confirm()}</span>
+							<button
+								type="button"
+								disabled={periodBusy}
+								onclick={() => renewPeriod(true)}
+								class="flex h-10 shrink-0 items-center justify-center gap-1.5 rounded-lg bg-emerald-600 px-3 text-sm font-bold text-white active:bg-emerald-700 disabled:opacity-50"
+							>
+								{#if periodBusy}<Spinner class="h-4 w-4" />{/if}
+								{m.confirm()}
+							</button>
+							<button
+								type="button"
+								onclick={() => (confirmingRenew = null)}
+								class="h-10 shrink-0 rounded-lg px-2 text-sm font-semibold text-slate-500 active:bg-slate-100"
+							>
+								{m.cancel()}
+							</button>
+						</div>
+					{:else}
+						<button
+							type="button"
+							disabled={periodBusy}
+							onclick={() => (confirmingRenew = 'adopt')}
+							class="mt-2 flex h-11 w-full items-center justify-center gap-2 rounded-2xl bg-emerald-600 font-bold text-white active:bg-emerald-700 disabled:opacity-50"
+						>
+							{m.diet_period_renew_adopt()}
+						</button>
+					{/if}
 				</div>
 			{/if}
 
-			<button
-				type="button"
-				disabled={periodBusy}
-				onclick={() => renewPeriod(false)}
-				class="mt-2 flex h-11 w-full items-center justify-center rounded-2xl border-2 border-slate-200 font-semibold text-slate-600 active:bg-slate-50 disabled:opacity-50"
-			>
-				{m.diet_period_renew_restart()}
-			</button>
+			{#if confirmingRenew === 'restart'}
+				<div class="mt-2 flex items-center gap-2 rounded-xl bg-slate-50 p-1.5">
+					<span class="min-w-0 flex-1 pl-1.5 text-xs font-semibold text-slate-600">{m.diet_period_renew_confirm()}</span>
+					<button
+						type="button"
+						disabled={periodBusy}
+						onclick={() => renewPeriod(false)}
+						class="flex h-10 shrink-0 items-center justify-center gap-1.5 rounded-lg bg-slate-700 px-3 text-sm font-bold text-white active:bg-slate-800 disabled:opacity-50"
+					>
+						{#if periodBusy}<Spinner class="h-4 w-4" />{/if}
+						{m.confirm()}
+					</button>
+					<button
+						type="button"
+						onclick={() => (confirmingRenew = null)}
+						class="h-10 shrink-0 rounded-lg px-2 text-sm font-semibold text-slate-500 active:bg-slate-100"
+					>
+						{m.cancel()}
+					</button>
+				</div>
+			{:else}
+				<button
+					type="button"
+					disabled={periodBusy}
+					onclick={() => (confirmingRenew = 'restart')}
+					class="mt-2 flex h-11 w-full items-center justify-center rounded-2xl border-2 border-slate-200 font-semibold text-slate-600 active:bg-slate-50 disabled:opacity-50"
+				>
+					{m.diet_period_renew_restart()}
+				</button>
+			{/if}
 		</div>
 	</div>
 {/if}
