@@ -30,19 +30,114 @@
 		celebrateAchievement(ach, locale);
 	}
 
+	function roundRectPath(ctx: CanvasRenderingContext2D, x: number, y: number, w: number, h: number, r: number): void {
+		ctx.beginPath();
+		ctx.moveTo(x + r, y);
+		ctx.arcTo(x + w, y, x + w, y + h, r);
+		ctx.arcTo(x + w, y + h, x, y + h, r);
+		ctx.arcTo(x, y + h, x, y, r);
+		ctx.arcTo(x, y, x + w, y, r);
+		ctx.closePath();
+	}
+
+	// Quebra de linha manual (Canvas nao tem isso nativo): mede palavra a palavra e
+	// so pula linha quando estoura a largura disponivel.
+	function wrapCanvasText(
+		ctx: CanvasRenderingContext2D, text: string, cx: number, y: number, maxWidth: number, lineHeight: number
+	): void {
+		const words = text.split(' ');
+		let line = '';
+		let cursorY = y;
+		for (const word of words) {
+			const test = line ? `${line} ${word}` : word;
+			if (ctx.measureText(test).width > maxWidth && line) {
+				ctx.fillText(line, cx, cursorY);
+				line = word;
+				cursorY += lineHeight;
+			} else {
+				line = test;
+			}
+		}
+		if (line) ctx.fillText(line, cx, cursorY);
+	}
+
+	// Gera a imagem da medalha (nao existe um arquivo real por conquista - o "icone"
+	// e so um emoji - entao desenhamos um cartao com ele em destaque pra ter algo
+	// visual de verdade pra compartilhar, nao so texto).
+	async function buildAchievementImage(ach: AchievementItem): Promise<Blob> {
+		const text = achievementText(locale, ach.code);
+		const size = 800;
+		const canvas = document.createElement('canvas');
+		canvas.width = size;
+		canvas.height = size;
+		const ctx = canvas.getContext('2d');
+		if (!ctx) throw new Error('canvas unsupported');
+
+		const bg = ctx.createLinearGradient(0, 0, size, size);
+		bg.addColorStop(0, '#059669');
+		bg.addColorStop(1, '#065f46');
+		ctx.fillStyle = bg;
+		ctx.fillRect(0, 0, size, size);
+
+		ctx.textAlign = 'center';
+		ctx.fillStyle = 'rgba(255,255,255,0.85)';
+		ctx.font = '700 30px system-ui, sans-serif';
+		ctx.fillText(m.achievement_unlocked_kicker().toUpperCase(), size / 2, 90);
+
+		const cardY = 150;
+		const cardH = size - cardY - 56;
+		roundRectPath(ctx, 56, cardY, size - 112, cardH, 44);
+		ctx.fillStyle = '#ffffff';
+		ctx.fill();
+
+		ctx.font = '170px system-ui, sans-serif';
+		ctx.fillText(ach.icon, size / 2, cardY + 190);
+
+		ctx.fillStyle = '#0f172a';
+		ctx.font = '800 48px system-ui, sans-serif';
+		ctx.fillText(text.name, size / 2, cardY + 270);
+
+		ctx.fillStyle = '#475569';
+		ctx.font = '500 28px system-ui, sans-serif';
+		wrapCanvasText(ctx, text.description, size / 2, cardY + 330, size - 240, 38);
+
+		ctx.fillStyle = '#94a3b8';
+		ctx.font = '700 24px system-ui, sans-serif';
+		ctx.fillText(m.app_name(), size / 2, size - 88);
+
+		return new Promise((resolve, reject) => {
+			canvas.toBlob((blob) => (blob ? resolve(blob) : reject(new Error('toBlob failed'))), 'image/png');
+		});
+	}
+
 	async function shareAchievement(ach: AchievementItem): Promise<void> {
 		const text = achievementText(locale, ach.code);
 		const message = m.achievement_share_text({ name: text.name, description: text.description, app: m.app_name() });
-		if (navigator.share) {
-			try {
-				await navigator.share({ text: message });
-			} catch {
-				// usuario cancelou o compartilhamento nativo - nao e um erro
+		try {
+			const blob = await buildAchievementImage(ach);
+			const file = new File([blob], `conquista-${ach.code}.png`, { type: 'image/png' });
+			if (navigator.canShare?.({ files: [file] })) {
+				await navigator.share({ files: [file], text: message });
+				return;
 			}
-			return;
+			if (navigator.share) {
+				await navigator.share({ text: message });
+				return;
+			}
+			// Sem Web Share API (ex.: desktop): baixa a imagem e copia o texto junto
+			const url = URL.createObjectURL(blob);
+			const a = document.createElement('a');
+			a.href = url;
+			a.download = file.name;
+			a.click();
+			URL.revokeObjectURL(url);
+			await navigator.clipboard.writeText(message);
+			showToast(m.achievement_share_copied());
+		} catch (err) {
+			if (err instanceof DOMException && err.name === 'AbortError') return; // usuario cancelou o share nativo
+			await navigator.clipboard.writeText(message).catch(() => {});
+			showToast(m.achievement_share_copied());
 		}
-		await navigator.clipboard.writeText(message);
-		showToast(m.achievement_share_copied());
 	}
 
 	// "Quase la": a conquista NAO desbloqueada mais perto da meta (cria antecipacao).
@@ -161,22 +256,24 @@
 				</p>
 				{#if ach.unlocked}
 					<p class="mt-0.5 text-xs text-slate-500">{text.description}</p>
-					<div class="mt-2.5 grid grid-cols-2 gap-1.5">
+					<div class="mt-2.5 flex items-center justify-center gap-2">
 						<button
 							type="button"
+							aria-label={m.achievement_view_again()}
+							title={m.achievement_view_again()}
 							onclick={() => viewAgain(ach)}
-							class="flex items-center justify-center gap-1 rounded-xl bg-emerald-50 px-2 py-1.5 text-[11px] font-bold text-emerald-700 active:bg-emerald-100"
+							class="grid h-9 w-9 place-items-center rounded-xl bg-emerald-50 text-emerald-700 active:bg-emerald-100"
 						>
-							<svg viewBox="0 0 24 24" class="h-3.5 w-3.5" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4v6h6M20 20v-6h-6M20 8a8 8 0 00-14-3M4 16a8 8 0 0014 3" stroke-linecap="round" stroke-linejoin="round" /></svg>
-							{m.achievement_view_again()}
+							<svg viewBox="0 0 24 24" class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4v6h6M20 20v-6h-6M20 8a8 8 0 00-14-3M4 16a8 8 0 0014 3" stroke-linecap="round" stroke-linejoin="round" /></svg>
 						</button>
 						<button
 							type="button"
+							aria-label={m.achievement_share()}
+							title={m.achievement_share()}
 							onclick={() => shareAchievement(ach)}
-							class="flex items-center justify-center gap-1 rounded-xl bg-slate-100 px-2 py-1.5 text-[11px] font-bold text-slate-600 active:bg-slate-200"
+							class="grid h-9 w-9 place-items-center rounded-xl bg-slate-100 text-slate-600 active:bg-slate-200"
 						>
-							<svg viewBox="0 0 24 24" class="h-3.5 w-3.5" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 12v7a2 2 0 002 2h12a2 2 0 002-2v-7M16 6l-4-4-4 4M12 2v13" stroke-linecap="round" stroke-linejoin="round" /></svg>
-							{m.achievement_share()}
+							<svg viewBox="0 0 24 24" class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 12v7a2 2 0 002 2h12a2 2 0 002-2v-7M16 6l-4-4-4 4M12 2v13" stroke-linecap="round" stroke-linejoin="round" /></svg>
 						</button>
 					</div>
 				{:else}

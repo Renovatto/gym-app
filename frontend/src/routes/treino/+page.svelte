@@ -253,7 +253,7 @@
 <button
 	type="button"
 	onclick={() => (showLogActivity = true)}
-	class="mb-4 flex h-11 w-full items-center justify-center rounded-2xl border-2 border-dashed border-emerald-200 text-sm font-bold text-emerald-700 active:bg-emerald-50"
+	class="mb-4 flex h-11 w-full items-center justify-center rounded-2xl border-2 border-dashed border-emerald-300 bg-white text-sm font-bold text-emerald-700 shadow-sm active:bg-emerald-50"
 >
 	{m.activity_cta()}
 </button>
