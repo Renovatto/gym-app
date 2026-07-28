@@ -447,6 +447,19 @@
 				</div>
 				<div class="ce-title" bind:this={titleEl}>{current.content.title}</div>
 				<div class="ce-desc">{current.content.desc}</div>
+				{#if current.content.onShare}
+					<button
+						type="button"
+						class="ce-share"
+						onclick={(e) => {
+							e.stopPropagation();
+							current?.content.onShare?.();
+						}}
+					>
+						<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12v7a2 2 0 002 2h12a2 2 0 002-2v-7M16 6l-4-4-4 4M12 2v13" /></svg>
+						{m.achievement_share()}
+					</button>
+				{/if}
 			</div>
 			<div class="ce-flash"></div>
 			<button type="button" class="ce-close" aria-label={m.close()} onclick={skip}>
@@ -528,6 +541,13 @@
 	.ce-ring, .ce-ring2 { position: absolute; inset: -10px; border-radius: 50%; border: 3px solid var(--sk-kick); opacity: 0; }
 	.ce-title { font-size: 19px; font-weight: 850; letter-spacing: -0.02em; color: var(--sk-ink); opacity: 0; max-width: 100%; animation: ceRiseUp 0.65s ease-out 0.2s both; }
 	.ce-desc { font-size: 13px; color: var(--sk-sub); max-width: 25ch; opacity: 0; animation: ceRiseUp 0.65s ease-out 0.32s both; }
+	.ce-share {
+		margin-top: 6px; display: flex; align-items: center; gap: 6px; padding: 9px 18px;
+		border-radius: 999px; border: none; cursor: pointer; font-size: 13px; font-weight: 800;
+		color: var(--sk-ink); background: rgb(255 255 255 / 0.28);
+		opacity: 0; animation: ceRiseUp 0.65s ease-out 0.42s both;
+	}
+	.ce-share svg { width: 15px; height: 15px; }
 	@keyframes ceRiseUp { from { transform: translateY(14px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
 	@keyframes cePopSoft { from { transform: scale(0.6); opacity: 0; } to { transform: scale(1); opacity: 1; } }
 
@@ -609,7 +629,7 @@
 
 	@media (prefers-reduced-motion: reduce) {
 		.ce-stage, .ce-stage * { animation: none !important; }
-		.ce-kicker, .ce-medal-wrap, .ce-title, .ce-desc { opacity: 1 !important; }
+		.ce-kicker, .ce-medal-wrap, .ce-title, .ce-desc, .ce-share { opacity: 1 !important; }
 		.ce-rays, .ce-aurora, .ce-domfx { display: none; }
 	}
 </style>

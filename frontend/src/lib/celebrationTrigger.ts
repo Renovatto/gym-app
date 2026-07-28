@@ -19,10 +19,11 @@ import type { AchievementItem, AchievementsResult } from './api';
 
 const TITLE_TIER_SEEN_KEY = 'gymapp.titleTierSeen';
 
-/** Dispara a celebracao cheia de uma conquista JA desbloqueada, sob demanda (botao
- * "ver de novo" em /conquistas) - mesma selecao de pool/conteudo do desbloqueio
- * original, so que reutilizavel para qualquer item unlocked, nao so o mais recente. */
-export function celebrateAchievement(item: AchievementItem, locale: Locale): void {
+/** Dispara a celebracao cheia de uma conquista JA desbloqueada, sob demanda (toque
+ * direto na medalha em /conquistas) - mesma selecao de pool/conteudo do desbloqueio
+ * original, so que reutilizavel para qualquer item unlocked, nao so o mais recente.
+ * onShare: quando informado, a overlay mostra o botao de compartilhar. */
+export function celebrateAchievement(item: AchievementItem, locale: Locale, onShare?: () => void): void {
 	const text = achievementText(locale, item.code);
 	const pool = MILESTONE_CODES.has(item.code)
 		? POOL_MILESTONE
@@ -34,7 +35,8 @@ export function celebrateAchievement(item: AchievementItem, locale: Locale): voi
 		emoji: item.icon,
 		title: text.name,
 		desc: text.description,
-		number: item.progress_goal
+		number: item.progress_goal,
+		onShare
 	});
 }
 

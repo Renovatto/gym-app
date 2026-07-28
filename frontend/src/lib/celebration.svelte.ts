@@ -10,6 +10,9 @@ export interface CelebrationContent {
 	desc: string;
 	// numero exibido em animacoes com contador/numero gigante (streak, marco, nivel).
 	number?: number;
+	// quando presente, a overlay mostra um botao de compartilhar (so faz sentido pra
+	// conquista - subiu de nivel/aniversario/feriado nao passam isso).
+	onShare?: () => void;
 }
 
 export interface CelebrationItem {

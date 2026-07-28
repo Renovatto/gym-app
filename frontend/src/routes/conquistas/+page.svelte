@@ -26,22 +26,17 @@
 
 	const unlockedCount = $derived(data ? data.achievements.filter((a) => a.unlocked).length : 0);
 
-	// Medalha aberta: toca no card pra ver em destaque - so la dentro (com espaco de
-	// sobra) ficam os botoes de rever/compartilhar, em vez de lotar o grid inteiro.
+	// Medalha ainda bloqueada: toca no card pra ver o progresso em destaque. Medalha
+	// desbloqueada nao usa esta modal - toca e ja abre direto a animacao de celebracao
+	// (poupa um clique), com o botao de compartilhar dentro da propria animacao.
 	let openedAchievement = $state<AchievementItem | null>(null);
 
-	function viewAgain(ach: AchievementItem): void {
-		celebrateAchievement(ach, locale);
-	}
-
-	function roundRectPath(ctx: CanvasRenderingContext2D, x: number, y: number, w: number, h: number, r: number): void {
-		ctx.beginPath();
-		ctx.moveTo(x + r, y);
-		ctx.arcTo(x + w, y, x + w, y + h, r);
-		ctx.arcTo(x + w, y + h, x, y + h, r);
-		ctx.arcTo(x, y + h, x, y, r);
-		ctx.arcTo(x, y, x + w, y, r);
-		ctx.closePath();
+	function openAchievement(ach: AchievementItem): void {
+		if (ach.unlocked) {
+			celebrateAchievement(ach, locale, () => shareAchievement(ach));
+		} else {
+			openedAchievement = ach;
+		}
 	}
 
 	// Quebra de linha manual (Canvas nao tem isso nativo): mede palavra a palavra e
@@ -66,11 +61,11 @@
 	}
 
 	// Gera a imagem da medalha (nao existe um arquivo real por conquista - o "icone"
-	// e so um emoji - entao desenhamos um cartao com ele em destaque pra ter algo
-	// visual de verdade pra compartilhar, nao so texto).
+	// e so um emoji). Desenha uma MEDALHA de verdade (fita + aro dourado + disco),
+	// nao um cartao branco generico - a 1a versao parecia print de tela, nao troco.
 	async function buildAchievementImage(ach: AchievementItem): Promise<Blob> {
 		const text = achievementText(locale, ach.code);
-		const size = 800;
+		const size = 900;
 		const canvas = document.createElement('canvas');
 		canvas.width = size;
 		canvas.height = size;
@@ -78,36 +73,83 @@
 		if (!ctx) throw new Error('canvas unsupported');
 
 		const bg = ctx.createLinearGradient(0, 0, size, size);
-		bg.addColorStop(0, '#059669');
-		bg.addColorStop(1, '#065f46');
+		bg.addColorStop(0, '#10b981');
+		bg.addColorStop(0.55, '#047857');
+		bg.addColorStop(1, '#064e3b');
 		ctx.fillStyle = bg;
+		ctx.fillRect(0, 0, size, size);
+
+		const medalCx = size / 2;
+		const medalCy = 330;
+		const outerR = 190;
+
+		// brilho suave atras da medalha
+		const glow = ctx.createRadialGradient(medalCx, medalCy, 40, medalCx, medalCy, outerR + 120);
+		glow.addColorStop(0, 'rgba(255,255,255,0.28)');
+		glow.addColorStop(1, 'rgba(255,255,255,0)');
+		ctx.fillStyle = glow;
 		ctx.fillRect(0, 0, size, size);
 
 		ctx.textAlign = 'center';
 		ctx.fillStyle = 'rgba(255,255,255,0.85)';
-		ctx.font = '700 30px system-ui, sans-serif';
-		ctx.fillText(m.achievement_unlocked_kicker().toUpperCase(), size / 2, 90);
+		ctx.font = '700 26px system-ui, sans-serif';
+		ctx.fillText(m.achievement_unlocked_kicker().toUpperCase(), size / 2, 80);
 
-		const cardY = 150;
-		const cardH = size - cardY - 56;
-		roundRectPath(ctx, 56, cardY, size - 112, cardH, 44);
-		ctx.fillStyle = '#ffffff';
+		// fita da medalha (2 tiras atras do disco, levemente abertas em V)
+		ctx.save();
+		ctx.translate(medalCx - 55, medalCy + 70);
+		ctx.rotate(-0.18);
+		ctx.fillStyle = '#f59e0b';
+		ctx.fillRect(-40, 0, 80, 230);
+		ctx.restore();
+		ctx.save();
+		ctx.translate(medalCx + 55, medalCy + 70);
+		ctx.rotate(0.18);
+		ctx.fillStyle = '#d97706';
+		ctx.fillRect(-40, 0, 80, 230);
+		ctx.restore();
+
+		// aro dourado
+		ctx.beginPath();
+		ctx.arc(medalCx, medalCy, outerR, 0, Math.PI * 2);
+		const ring = ctx.createLinearGradient(medalCx - outerR, medalCy - outerR, medalCx + outerR, medalCy + outerR);
+		ring.addColorStop(0, '#fde68a');
+		ring.addColorStop(0.5, '#f59e0b');
+		ring.addColorStop(1, '#b45309');
+		ctx.fillStyle = ring;
 		ctx.fill();
 
-		ctx.font = '170px system-ui, sans-serif';
-		ctx.fillText(ach.icon, size / 2, cardY + 190);
+		// disco interno
+		ctx.beginPath();
+		ctx.arc(medalCx, medalCy, outerR - 22, 0, Math.PI * 2);
+		ctx.fillStyle = '#fffbeb';
+		ctx.fill();
 
-		ctx.fillStyle = '#0f172a';
-		ctx.font = '800 48px system-ui, sans-serif';
-		ctx.fillText(text.name, size / 2, cardY + 270);
+		// emoji da conquista, centralizado no disco
+		ctx.textBaseline = 'middle';
+		ctx.font = '190px system-ui, sans-serif';
+		ctx.fillText(ach.icon, medalCx, medalCy + 8);
+		ctx.textBaseline = 'alphabetic';
 
-		ctx.fillStyle = '#475569';
+		// brilho (reflexo) no canto superior do disco
+		ctx.beginPath();
+		ctx.arc(medalCx, medalCy, outerR - 22, Math.PI * 1.1, Math.PI * 1.55);
+		ctx.lineWidth = 14;
+		ctx.strokeStyle = 'rgba(255,255,255,0.6)';
+		ctx.stroke();
+
+		// nome e descricao, fora do disco/fita, direto no fundo
+		ctx.fillStyle = '#ffffff';
+		ctx.font = '800 50px system-ui, sans-serif';
+		ctx.fillText(text.name, size / 2, 700);
+
+		ctx.fillStyle = 'rgba(255,255,255,0.85)';
 		ctx.font = '500 28px system-ui, sans-serif';
-		wrapCanvasText(ctx, text.description, size / 2, cardY + 330, size - 240, 38);
+		wrapCanvasText(ctx, text.description, size / 2, 750, size - 220, 36);
 
-		ctx.fillStyle = '#94a3b8';
+		ctx.fillStyle = 'rgba(255,255,255,0.6)';
 		ctx.font = '700 24px system-ui, sans-serif';
-		ctx.fillText(m.app_name(), size / 2, size - 88);
+		ctx.fillText(m.app_name().toUpperCase(), size / 2, size - 50);
 
 		return new Promise((resolve, reject) => {
 			canvas.toBlob((blob) => (blob ? resolve(blob) : reject(new Error('toBlob failed'))), 'image/png');
@@ -252,7 +294,7 @@
 			{@const pct = Math.min(100, (ach.progress_current / ach.progress_goal) * 100)}
 			<button
 				type="button"
-				onclick={() => (openedAchievement = ach)}
+				onclick={() => openAchievement(ach)}
 				class="rounded-3xl border-2 p-4 text-center transition-colors
 					{ach.unlocked ? 'border-emerald-200 bg-white active:bg-emerald-50' : 'border-slate-100 bg-slate-50 active:bg-slate-100'}"
 			>
@@ -273,8 +315,8 @@
 	</div>
 {/if}
 
-<!-- Medalha aberta: icone grande + acoes (ver de novo/compartilhar) so aqui, igual
-	 ao padrao de "abrir o badge" (ex. Duolingo) em vez de botoes no card pequeno -->
+<!-- Medalha ainda bloqueada, so o progresso em destaque (desbloqueada abre a
+	 celebracao direto, ver openAchievement) -->
 {#if openedAchievement}
 	{@const opened = openedAchievement}
 	{@const openedText = achievementText(locale, opened.code)}
@@ -293,36 +335,12 @@
 			onclick={(e) => e.stopPropagation()}
 			onkeydown={() => {}}
 		>
-			<span class="text-7xl {opened.unlocked ? '' : 'opacity-30 grayscale'}">{opened.icon}</span>
-			<p class="mt-3 text-lg font-black {opened.unlocked ? 'text-slate-900' : 'text-slate-400'}">
-				{openedText.name}
-			</p>
-			{#if opened.unlocked}
-				<p class="mt-1.5 text-sm text-slate-500">{openedText.description}</p>
-				<div class="mt-5 flex gap-2">
-					<button
-						type="button"
-						onclick={() => viewAgain(opened)}
-						class="flex h-11 flex-1 items-center justify-center gap-1.5 rounded-2xl bg-emerald-50 text-sm font-bold text-emerald-700 active:bg-emerald-100"
-					>
-						<svg viewBox="0 0 24 24" class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4v6h6M20 20v-6h-6M20 8a8 8 0 00-14-3M4 16a8 8 0 0014 3" stroke-linecap="round" stroke-linejoin="round" /></svg>
-						{m.achievement_view_again()}
-					</button>
-					<button
-						type="button"
-						onclick={() => shareAchievement(opened)}
-						class="flex h-11 flex-1 items-center justify-center gap-1.5 rounded-2xl bg-slate-100 text-sm font-bold text-slate-600 active:bg-slate-200"
-					>
-						<svg viewBox="0 0 24 24" class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 12v7a2 2 0 002 2h12a2 2 0 002-2v-7M16 6l-4-4-4 4M12 2v13" stroke-linecap="round" stroke-linejoin="round" /></svg>
-						{m.achievement_share()}
-					</button>
-				</div>
-			{:else}
-				<div class="mt-3 h-2 overflow-hidden rounded-full bg-slate-100">
-					<div class="h-full rounded-full bg-emerald-500" style="width: {openedPct}%"></div>
-				</div>
-				<p class="mt-1.5 text-xs text-slate-400">{opened.progress_current}/{opened.progress_goal}</p>
-			{/if}
+			<span class="text-7xl opacity-30 grayscale">{opened.icon}</span>
+			<p class="mt-3 text-lg font-black text-slate-400">{openedText.name}</p>
+			<div class="mt-3 h-2 overflow-hidden rounded-full bg-slate-100">
+				<div class="h-full rounded-full bg-emerald-500" style="width: {openedPct}%"></div>
+			</div>
+			<p class="mt-1.5 text-xs text-slate-400">{opened.progress_current}/{opened.progress_goal}</p>
 			<button
 				type="button"
 				onclick={() => (openedAchievement = null)}
