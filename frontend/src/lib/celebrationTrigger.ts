@@ -14,10 +14,29 @@ import {
 import { achievementText } from './achievementsContent';
 import { titleIcon, titleName } from './titleContent';
 import { m } from './paraglide/messages';
-import { getLocale } from './paraglide/runtime';
-import type { AchievementsResult } from './api';
+import { getLocale, type Locale } from './paraglide/runtime';
+import type { AchievementItem, AchievementsResult } from './api';
 
 const TITLE_TIER_SEEN_KEY = 'gymapp.titleTierSeen';
+
+/** Dispara a celebracao cheia de uma conquista JA desbloqueada, sob demanda (botao
+ * "ver de novo" em /conquistas) - mesma selecao de pool/conteudo do desbloqueio
+ * original, so que reutilizavel para qualquer item unlocked, nao so o mais recente. */
+export function celebrateAchievement(item: AchievementItem, locale: Locale): void {
+	const text = achievementText(locale, item.code);
+	const pool = MILESTONE_CODES.has(item.code)
+		? POOL_MILESTONE
+		: item.category === 'streak'
+			? POOL_STREAK
+			: POOL_GENERAL;
+	celebrate(pickRandom(pool), {
+		kicker: m.achievement_unlocked_kicker(),
+		emoji: item.icon,
+		title: text.name,
+		desc: text.description,
+		number: item.progress_goal
+	});
+}
 
 /** Avalia um resultado fresco de /me/achievements e dispara a celebracao adequada.
  * Retorna true se algo foi disparado (o chamador pode pular o toast generico nesse caso). */
@@ -49,19 +68,7 @@ export function triggerAchievementCelebrations(data: AchievementsResult): boolea
 		const code = data.newly_unlocked[0];
 		const item = data.achievements.find((a) => a.code === code);
 		if (!item) return false;
-		const text = achievementText(locale, code);
-		const pool = MILESTONE_CODES.has(code)
-			? POOL_MILESTONE
-			: item.category === 'streak'
-				? POOL_STREAK
-				: POOL_GENERAL;
-		celebrate(pickRandom(pool), {
-			kicker: m.achievement_unlocked_kicker(),
-			emoji: item.icon,
-			title: text.name,
-			desc: text.description,
-			number: item.progress_goal
-		});
+		celebrateAchievement(item, locale);
 		return true;
 	}
 	return false;

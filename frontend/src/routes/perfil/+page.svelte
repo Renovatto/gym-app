@@ -15,6 +15,7 @@
 	import { bootstrap, session, signOut } from '$lib/session.svelte';
 	import { showToast } from '$lib/toast.svelte';
 	import { titleIcon, titleName } from '$lib/titleContent';
+	import { triggerAchievementCelebrations } from '$lib/celebrationTrigger';
 	import { m } from '$lib/paraglide/messages';
 	import { getLocale, setLocale, type Locale } from '$lib/paraglide/runtime';
 	import { setTheme, theme, type ThemePref } from '$lib/theme.svelte';
@@ -22,7 +23,12 @@
 
 	// Titulo evolutivo (nunca ligado a peso/corpo, so a total de treinos).
 	let achievements = $state<AchievementsResult | null>(null);
-	api.getAchievements(localDay(), new Date().getTimezoneOffset()).then((a) => (achievements = a));
+	api.getAchievements(localDay(), new Date().getTimezoneOffset()).then((a) => {
+		achievements = a;
+		// mesmo motivo do /progresso: newly_unlocked so vem uma vez, quem buscar
+		// primeiro precisa celebrar, senao o desbloqueio passa em branco pro sempre.
+		triggerAchievementCelebrations(a);
+	});
 
 	let firstName = $state(session.profile?.first_name ?? '');
 	let lastName = $state(session.profile?.last_name ?? '');

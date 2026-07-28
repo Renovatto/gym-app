@@ -247,7 +247,9 @@
 
 <!-- Atividade avulsa: yoga, corrida, bike etc. fora do treino de academia. So
 	 registro/historico por enquanto - nao entra na meta calorica do dia (o fator
-	 de atividade do TDEE ja embute o exercicio medio, ver services/goals.py). -->
+	 de atividade do TDEE ja embute o exercicio medio, ver services/goals.py). O
+	 botao fica no topo (acao rapida); o resultado do dia fica la embaixo, junto
+	 do historico de treino. -->
 <section class="mb-4 rounded-3xl bg-white p-4 shadow-sm">
 	<button
 		type="button"
@@ -256,49 +258,6 @@
 	>
 		{m.activity_cta()}
 	</button>
-	{#if todayActivities.length > 0}
-		<div class="mt-3 flex items-center justify-between rounded-2xl bg-slate-900 px-4 py-3">
-			<span class="text-xs font-bold tracking-wide text-slate-300 uppercase">{m.activity_today_total()}</span>
-			<span class="text-lg font-black text-white">+{nf.format(Math.round(activityKcalTotal))} kcal</span>
-		</div>
-		<div class="mt-2 divide-y divide-slate-100">
-			{#each todayActivities as activity (activity.id)}
-				<div class="flex items-center gap-2 py-2">
-					<div class="min-w-0 flex-1">
-						<p class="truncate text-sm font-semibold text-slate-800">{activityKindLabel(activity.kind)}</p>
-						<p class="text-xs text-slate-500">
-							{activity.time_of_day} · {activity.duration_min} min · {nf.format(Math.round(activity.kcal))} kcal
-						</p>
-					</div>
-					{#if confirmingDeleteActivity === activity.id}
-						<button
-							type="button"
-							onclick={() => deleteActivityEntry(activity.id)}
-							class="shrink-0 rounded-xl bg-red-600 px-3 py-1.5 text-xs font-bold text-white active:bg-red-700"
-						>
-							{m.confirm_delete()}
-						</button>
-						<button
-							type="button"
-							onclick={() => (confirmingDeleteActivity = null)}
-							class="shrink-0 rounded-xl px-2 py-1.5 text-xs font-semibold text-slate-500"
-						>
-							{m.cancel()}
-						</button>
-					{:else}
-						<button
-							type="button"
-							aria-label={m.confirm_delete()}
-							onclick={() => (confirmingDeleteActivity = activity.id)}
-							class="grid h-8 w-8 shrink-0 place-items-center rounded-lg text-slate-300 active:bg-slate-100 active:text-red-500"
-						>
-							<svg viewBox="0 0 24 24" class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 7h16M9 7V5h6v2M6 7l1 13h10l1-13" stroke-linecap="round" stroke-linejoin="round" /></svg>
-						</button>
-					{/if}
-				</div>
-			{/each}
-		</div>
-	{/if}
 </section>
 
 {#if showLogActivity}
@@ -786,6 +745,53 @@
 								type="button"
 								aria-label={m.confirm_delete()}
 								onclick={() => (confirmingDeleteHistory = session.id)}
+								class="grid h-8 w-8 shrink-0 place-items-center rounded-lg text-slate-300 active:bg-slate-100 active:text-red-500"
+							>
+								<svg viewBox="0 0 24 24" class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 7h16M9 7V5h6v2M6 7l1 13h10l1-13" stroke-linecap="round" stroke-linejoin="round" /></svg>
+							</button>
+						{/if}
+					</div>
+				{/each}
+			</div>
+		</section>
+	{/if}
+
+	<!-- Atividades avulsas de hoje: fica junto do historico de treino, no final da tela -->
+	{#if todayActivities.length > 0}
+		<section class="mt-6">
+			<div class="mb-2 flex items-center justify-between rounded-2xl bg-slate-900 px-4 py-3">
+				<span class="text-xs font-bold tracking-wide text-slate-300 uppercase">{m.activity_today_total()}</span>
+				<span class="text-lg font-black text-white">+{nf.format(Math.round(activityKcalTotal))} kcal</span>
+			</div>
+			<div class="overflow-hidden rounded-3xl bg-white shadow-sm">
+				{#each todayActivities as activity, i (activity.id)}
+					<div class="flex items-center gap-2 px-5 py-3.5 {i > 0 ? 'border-t border-slate-100' : ''}">
+						<div class="min-w-0 flex-1">
+							<p class="truncate font-semibold text-slate-900">{activityKindLabel(activity.kind)}</p>
+							<p class="text-sm text-slate-500">
+								{activity.time_of_day} · {activity.duration_min} min · {nf.format(Math.round(activity.kcal))} kcal
+							</p>
+						</div>
+						{#if confirmingDeleteActivity === activity.id}
+							<button
+								type="button"
+								onclick={() => deleteActivityEntry(activity.id)}
+								class="shrink-0 rounded-xl bg-red-600 px-3 py-1.5 text-xs font-bold text-white active:bg-red-700"
+							>
+								{m.confirm_delete()}
+							</button>
+							<button
+								type="button"
+								onclick={() => (confirmingDeleteActivity = null)}
+								class="shrink-0 rounded-xl px-2 py-1.5 text-xs font-semibold text-slate-500"
+							>
+								{m.cancel()}
+							</button>
+						{:else}
+							<button
+								type="button"
+								aria-label={m.confirm_delete()}
+								onclick={() => (confirmingDeleteActivity = activity.id)}
 								class="grid h-8 w-8 shrink-0 place-items-center rounded-lg text-slate-300 active:bg-slate-100 active:text-red-500"
 							>
 								<svg viewBox="0 0 24 24" class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 7h16M9 7V5h6v2M6 7l1 13h10l1-13" stroke-linecap="round" stroke-linejoin="round" /></svg>

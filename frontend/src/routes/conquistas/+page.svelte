@@ -1,8 +1,8 @@
 <script lang="ts">
-	import { api, localDay, type AchievementsResult } from '$lib/api';
+	import { api, localDay, type AchievementItem, type AchievementsResult } from '$lib/api';
 	import { achievementText } from '$lib/achievementsContent';
 	import { titleIcon, titleName } from '$lib/titleContent';
-	import { triggerAchievementCelebrations } from '$lib/celebrationTrigger';
+	import { celebrateAchievement, triggerAchievementCelebrations } from '$lib/celebrationTrigger';
 	import { showToast } from '$lib/toast.svelte';
 	import { m } from '$lib/paraglide/messages';
 	import { getLocale } from '$lib/paraglide/runtime';
@@ -25,6 +25,25 @@
 	}
 
 	const unlockedCount = $derived(data ? data.achievements.filter((a) => a.unlocked).length : 0);
+
+	function viewAgain(ach: AchievementItem): void {
+		celebrateAchievement(ach, locale);
+	}
+
+	async function shareAchievement(ach: AchievementItem): Promise<void> {
+		const text = achievementText(locale, ach.code);
+		const message = m.achievement_share_text({ name: text.name, description: text.description, app: m.app_name() });
+		if (navigator.share) {
+			try {
+				await navigator.share({ text: message });
+			} catch {
+				// usuario cancelou o compartilhamento nativo - nao e um erro
+			}
+			return;
+		}
+		await navigator.clipboard.writeText(message);
+		showToast(m.achievement_share_copied());
+	}
 
 	// "Quase la": a conquista NAO desbloqueada mais perto da meta (cria antecipacao).
 	const closestToUnlock = $derived.by(() => {
@@ -142,6 +161,24 @@
 				</p>
 				{#if ach.unlocked}
 					<p class="mt-0.5 text-xs text-slate-500">{text.description}</p>
+					<div class="mt-2.5 grid grid-cols-2 gap-1.5">
+						<button
+							type="button"
+							onclick={() => viewAgain(ach)}
+							class="flex items-center justify-center gap-1 rounded-xl bg-emerald-50 px-2 py-1.5 text-[11px] font-bold text-emerald-700 active:bg-emerald-100"
+						>
+							<svg viewBox="0 0 24 24" class="h-3.5 w-3.5" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4v6h6M20 20v-6h-6M20 8a8 8 0 00-14-3M4 16a8 8 0 0014 3" stroke-linecap="round" stroke-linejoin="round" /></svg>
+							{m.achievement_view_again()}
+						</button>
+						<button
+							type="button"
+							onclick={() => shareAchievement(ach)}
+							class="flex items-center justify-center gap-1 rounded-xl bg-slate-100 px-2 py-1.5 text-[11px] font-bold text-slate-600 active:bg-slate-200"
+						>
+							<svg viewBox="0 0 24 24" class="h-3.5 w-3.5" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 12v7a2 2 0 002 2h12a2 2 0 002-2v-7M16 6l-4-4-4 4M12 2v13" stroke-linecap="round" stroke-linejoin="round" /></svg>
+							{m.achievement_share()}
+						</button>
+					</div>
 				{:else}
 					<div class="mt-2 h-1.5 overflow-hidden rounded-full bg-slate-200">
 						<div class="h-full rounded-full bg-emerald-500" style="width: {pct}%"></div>

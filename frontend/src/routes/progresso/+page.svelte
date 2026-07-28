@@ -18,6 +18,7 @@
 	import { page } from '$app/state';
 	import { bootstrap, session } from '$lib/session.svelte';
 	import { showToast } from '$lib/toast.svelte';
+	import { triggerAchievementCelebrations } from '$lib/celebrationTrigger';
 	import { m } from '$lib/paraglide/messages';
 	import { getLocale } from '$lib/paraglide/runtime';
 
@@ -68,6 +69,10 @@
 		if (history.current_kg !== null) newWeight = history.current_kg;
 		week = await api.getWeekSummary(localDay(), tzOffset);
 		achievements = await api.getAchievements(localDay(), tzOffset);
+		// A conquista pode ter sido desbloqueada agora mesmo (newly_unlocked so vem
+		// UMA vez, na 1a chamada apos o desbloqueio) - se essa tela for a primeira a
+		// buscar, tem que celebrar aqui tambem, senao o sinal se perde pra sempre.
+		triggerAchievementCelebrations(achievements);
 		// TDEE adaptativo e aderencia so fazem sentido com o modulo de dieta ligado
 		if (dietOn) {
 			adaptive = await api.getAdaptiveTdee(localDay(), tzOffset);

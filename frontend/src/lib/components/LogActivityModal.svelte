@@ -96,12 +96,14 @@
 			</button>
 		</div>
 
-		<div class="grid grid-cols-3 gap-2">
+		<!-- Carrossel horizontal (nao grade fixa) - igual ao prototipo aprovado, cabe
+			 mais opcao sem quebrar linha e desliza com o dedo. -->
+		<div class="flex gap-2 overflow-x-auto pb-1">
 			{#each ACTIVITY_KINDS as k (k)}
 				<button
 					type="button"
 					onclick={() => (kind = k)}
-					class="flex aspect-square flex-col items-center justify-center gap-1.5 rounded-2xl border-2 {kind === k
+					class="flex aspect-square w-20 shrink-0 flex-col items-center justify-center gap-1.5 rounded-2xl border-2 {kind === k
 						? 'border-emerald-600 bg-emerald-50 text-emerald-700'
 						: 'border-slate-200 bg-white text-slate-600 active:bg-slate-50'}"
 				>
