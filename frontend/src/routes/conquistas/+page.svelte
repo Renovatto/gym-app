@@ -26,6 +26,10 @@
 
 	const unlockedCount = $derived(data ? data.achievements.filter((a) => a.unlocked).length : 0);
 
+	// Medalha aberta: toca no card pra ver em destaque - so la dentro (com espaco de
+	// sobra) ficam os botoes de rever/compartilhar, em vez de lotar o grid inteiro.
+	let openedAchievement = $state<AchievementItem | null>(null);
+
 	function viewAgain(ach: AchievementItem): void {
 		celebrateAchievement(ach, locale);
 	}
@@ -246,9 +250,11 @@
 		{#each data.achievements as ach (ach.code)}
 			{@const text = achievementText(locale, ach.code)}
 			{@const pct = Math.min(100, (ach.progress_current / ach.progress_goal) * 100)}
-			<div
+			<button
+				type="button"
+				onclick={() => (openedAchievement = ach)}
 				class="rounded-3xl border-2 p-4 text-center transition-colors
-					{ach.unlocked ? 'border-emerald-200 bg-white' : 'border-slate-100 bg-slate-50'}"
+					{ach.unlocked ? 'border-emerald-200 bg-white active:bg-emerald-50' : 'border-slate-100 bg-slate-50 active:bg-slate-100'}"
 			>
 				<span class="text-4xl {ach.unlocked ? '' : 'opacity-30 grayscale'}">{ach.icon}</span>
 				<p class="mt-2 text-sm font-bold {ach.unlocked ? 'text-slate-900' : 'text-slate-400'}">
@@ -256,33 +262,74 @@
 				</p>
 				{#if ach.unlocked}
 					<p class="mt-0.5 text-xs text-slate-500">{text.description}</p>
-					<div class="mt-2.5 flex items-center justify-center gap-2">
-						<button
-							type="button"
-							aria-label={m.achievement_view_again()}
-							title={m.achievement_view_again()}
-							onclick={() => viewAgain(ach)}
-							class="grid h-9 w-9 place-items-center rounded-xl bg-emerald-50 text-emerald-700 active:bg-emerald-100"
-						>
-							<svg viewBox="0 0 24 24" class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4v6h6M20 20v-6h-6M20 8a8 8 0 00-14-3M4 16a8 8 0 0014 3" stroke-linecap="round" stroke-linejoin="round" /></svg>
-						</button>
-						<button
-							type="button"
-							aria-label={m.achievement_share()}
-							title={m.achievement_share()}
-							onclick={() => shareAchievement(ach)}
-							class="grid h-9 w-9 place-items-center rounded-xl bg-slate-100 text-slate-600 active:bg-slate-200"
-						>
-							<svg viewBox="0 0 24 24" class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 12v7a2 2 0 002 2h12a2 2 0 002-2v-7M16 6l-4-4-4 4M12 2v13" stroke-linecap="round" stroke-linejoin="round" /></svg>
-						</button>
-					</div>
 				{:else}
 					<div class="mt-2 h-1.5 overflow-hidden rounded-full bg-slate-200">
 						<div class="h-full rounded-full bg-emerald-500" style="width: {pct}%"></div>
 					</div>
 					<p class="mt-1 text-xs text-slate-400">{ach.progress_current}/{ach.progress_goal}</p>
 				{/if}
-			</div>
+			</button>
 		{/each}
+	</div>
+{/if}
+
+<!-- Medalha aberta: icone grande + acoes (ver de novo/compartilhar) so aqui, igual
+	 ao padrao de "abrir o badge" (ex. Duolingo) em vez de botoes no card pequeno -->
+{#if openedAchievement}
+	{@const opened = openedAchievement}
+	{@const openedText = achievementText(locale, opened.code)}
+	{@const openedPct = Math.min(100, (opened.progress_current / opened.progress_goal) * 100)}
+	<div
+		class="fixed inset-0 z-40 flex items-center justify-center bg-black/50 p-4"
+		role="button"
+		tabindex="-1"
+		onclick={() => (openedAchievement = null)}
+		onkeydown={(e) => e.key === 'Escape' && (openedAchievement = null)}
+	>
+		<div
+			class="w-full max-w-sm rounded-3xl bg-white p-6 text-center"
+			role="dialog"
+			tabindex="-1"
+			onclick={(e) => e.stopPropagation()}
+			onkeydown={() => {}}
+		>
+			<span class="text-7xl {opened.unlocked ? '' : 'opacity-30 grayscale'}">{opened.icon}</span>
+			<p class="mt-3 text-lg font-black {opened.unlocked ? 'text-slate-900' : 'text-slate-400'}">
+				{openedText.name}
+			</p>
+			{#if opened.unlocked}
+				<p class="mt-1.5 text-sm text-slate-500">{openedText.description}</p>
+				<div class="mt-5 flex gap-2">
+					<button
+						type="button"
+						onclick={() => viewAgain(opened)}
+						class="flex h-11 flex-1 items-center justify-center gap-1.5 rounded-2xl bg-emerald-50 text-sm font-bold text-emerald-700 active:bg-emerald-100"
+					>
+						<svg viewBox="0 0 24 24" class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4v6h6M20 20v-6h-6M20 8a8 8 0 00-14-3M4 16a8 8 0 0014 3" stroke-linecap="round" stroke-linejoin="round" /></svg>
+						{m.achievement_view_again()}
+					</button>
+					<button
+						type="button"
+						onclick={() => shareAchievement(opened)}
+						class="flex h-11 flex-1 items-center justify-center gap-1.5 rounded-2xl bg-slate-100 text-sm font-bold text-slate-600 active:bg-slate-200"
+					>
+						<svg viewBox="0 0 24 24" class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 12v7a2 2 0 002 2h12a2 2 0 002-2v-7M16 6l-4-4-4 4M12 2v13" stroke-linecap="round" stroke-linejoin="round" /></svg>
+						{m.achievement_share()}
+					</button>
+				</div>
+			{:else}
+				<div class="mt-3 h-2 overflow-hidden rounded-full bg-slate-100">
+					<div class="h-full rounded-full bg-emerald-500" style="width: {openedPct}%"></div>
+				</div>
+				<p class="mt-1.5 text-xs text-slate-400">{opened.progress_current}/{opened.progress_goal}</p>
+			{/if}
+			<button
+				type="button"
+				onclick={() => (openedAchievement = null)}
+				class="mt-5 text-sm font-semibold text-slate-400"
+			>
+				{m.close()}
+			</button>
+		</div>
 	</div>
 {/if}

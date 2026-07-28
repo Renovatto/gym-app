@@ -253,8 +253,9 @@
 <button
 	type="button"
 	onclick={() => (showLogActivity = true)}
-	class="mb-4 flex h-11 w-full items-center justify-center rounded-2xl border-2 border-dashed border-emerald-300 bg-white text-sm font-bold text-emerald-700 shadow-sm active:bg-emerald-50"
+	class="mb-4 flex w-full items-center justify-center gap-2 rounded-2xl border-2 border-dashed border-slate-300 bg-white py-3 text-sm font-bold text-slate-700 active:bg-slate-50"
 >
+	<svg viewBox="0 0 24 24" class="h-4.5 w-4.5 text-slate-500" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12h4l2 6 4-14 2 8h6" /></svg>
 	{m.activity_cta()}
 </button>
 
