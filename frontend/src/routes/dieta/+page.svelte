@@ -198,7 +198,7 @@
 	async function reloadSilent(): Promise<void> {
 		[diary, gap, mealPlan, supplements, dietPeriod] = await Promise.all([
 			api.getDiary(day),
-			api.getDiaryGap(day),
+			api.getDiaryGap(day, 4, mealByTime()),
 			api.getMealPlan(day),
 			api.getSupplements(day),
 			api.getDietPeriod(day)

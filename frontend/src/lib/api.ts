@@ -872,8 +872,10 @@ export const api = {
 		request<Recipe>(`/me/recipes/${id}`, { method: 'PUT', body: recipe }),
 	deleteRecipe: (id: number) => request<void>(`/me/recipes/${id}`, { method: 'DELETE' }),
 	getDiary: (day: string) => request<DiaryDay>(`/me/diary?day=${day}`),
-	getDiaryGap: (day: string, limit = 4) =>
-		request<DiaryGap>(`/me/diary/gap?day=${day}&limit=${limit}`),
+	getDiaryGap: (day: string, limit = 4, mealType?: MealType) =>
+		request<DiaryGap>(
+			`/me/diary/gap?day=${day}&limit=${limit}${mealType ? `&meal_type=${mealType}` : ''}`
+		),
 	getBuildMeal: (day: string, haveFoodIds: number[], mealType?: MealType) => {
 		const params = new URLSearchParams({ day });
 		haveFoodIds.forEach((id) => params.append('have', String(id)));

@@ -490,9 +490,10 @@ def diary_gap(
     session: SessionDep,
     day: date = Query(..., description="Dia local do cliente (YYYY-MM-DD)"),
     limit: int = Query(default=4, ge=1, le=8),
+    meal_type: MealType | None = Query(default=None),
 ) -> DiaryGapOut:
     """O que falta pra fechar as metas do dia + alimentos que encaixam na lacuna."""
-    return suggest_gap(session, user, day, limit)
+    return suggest_gap(session, user, day, limit, meal_type)
 
 
 @router.get("/me/diary/meal-plan", response_model=MealPlanOut)

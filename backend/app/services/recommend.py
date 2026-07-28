@@ -13,7 +13,7 @@ Todo alimento guarda valores por 100 g; a porcao e sempre em gramas.
 """
 
 from collections import Counter
-from datetime import date
+from datetime import date, timedelta
 
 from sqlmodel import desc, select
 from sqlmodel import Session
@@ -73,6 +73,11 @@ _MIN_PROTEIN_GAP = 5.0  # g
 _MIN_MACRO_GAP = 5.0  # g (carbo/gordura)
 _MIN_KCAL_GAP = 60.0  # kcal
 
+# Janela de "recente" pro ranking de frequencia: reflete o habito ATUAL (o que a
+# pessoa realmente tem comido), nao a dieta de meses/anos atras - um alimento comido
+# 20x ha 1 ano nao deveria pesar mais que um comido 3x essa semana.
+_RECENT_DAYS = 60
+
 # "Montar refeicao com o que tenho em casa": itens basicos que quase toda cozinha tem,
 # contam como "tem" automaticamente (senao quase nenhuma receita bateria 100%).
 _STAPLE_SLUGS: set[str] = {
@@ -112,13 +117,32 @@ def _staple_food_ids(session: Session) -> set[int]:
     return set(rows)
 
 
-def _food_frequency(session: Session, user_id: int) -> Counter:
-    """Quantas vezes o usuario ja lancou cada alimento (para personalizar o ranking)."""
+def _food_frequency(session: Session, user_id: int, today: date) -> Counter:
+    """Quantas vezes o usuario lancou cada alimento nos ultimos _RECENT_DAYS dias
+    (para personalizar o ranking pelo habito atual, ver _RECENT_DAYS)."""
+    since = today - timedelta(days=_RECENT_DAYS)
     rows = session.exec(
         select(DiaryEntry.food_id)
         .where(DiaryEntry.user_id == user_id)
         .where(DiaryEntry.source == EntrySource.food)
         .where(DiaryEntry.food_id.is_not(None))
+        .where(DiaryEntry.entry_date >= since)
+    ).all()
+    return Counter(fid for fid in rows if fid is not None)
+
+
+def _meal_food_frequency(session: Session, user_id: int, meal_type: MealType, today: date) -> Counter:
+    """Como _food_frequency, mas so conta lancamentos NAQUELE tipo de refeicao - o
+    sinal que realmente evita sugestao fora de hora (ex.: camarao no cafe da manha):
+    um alimento so pesa aqui se a pessoa MESMA ja comeu ele nesse horario antes."""
+    since = today - timedelta(days=_RECENT_DAYS)
+    rows = session.exec(
+        select(DiaryEntry.food_id)
+        .where(DiaryEntry.user_id == user_id)
+        .where(DiaryEntry.source == EntrySource.food)
+        .where(DiaryEntry.food_id.is_not(None))
+        .where(DiaryEntry.meal_type == meal_type)
+        .where(DiaryEntry.entry_date >= since)
     ).all()
     return Counter(fid for fid in rows if fid is not None)
 
@@ -180,6 +204,7 @@ def _rank_suggestions(
     session: Session, user: User, remaining: MacrosOut, primary_attr: str,
     freq: Counter, max_freq: int, limit: int, favorite_ids: set[int],
     restrict_ids: set[int] | None = None,
+    meal_freq: Counter | None = None, max_meal_freq: int = 0,
 ) -> list[FoodSuggestionOut]:
     """Ranqueia alimentos que fecham a lacuna informada (do dia ou de uma refeicao).
 
@@ -189,7 +214,13 @@ def _rank_suggestions(
 
     restrict_ids: quando informado, so considera esses alimentos (usado por
     'montar refeicao com o que tenho' pra restringir ao que a pessoa selecionou);
-    None mantem o comportamento de sempre (todo o catalogo visivel)."""
+    None mantem o comportamento de sempre (todo o catalogo visivel).
+
+    meal_freq/max_meal_freq: quantas vezes a PROPRIA pessoa ja comeu cada alimento
+    NAQUELE tipo de refeicao (ver _meal_food_frequency) - pesa mais que a frequencia
+    geral (freq) porque e o sinal mais direto de "isso faz sentido nesse horario pra
+    mim", sem inventar regra generica de categoria (evita sugestao fora de hora, ex.
+    camarao no cafe da manha, sem bloquear quem realmente come assim)."""
     need = _attr(remaining, primary_attr)
     candidates: list[tuple[Food, float, MacrosOut, float, float]] = []
     for food in _visible_foods(session, user.id):
@@ -217,9 +248,10 @@ def _rank_suggestions(
         coverage = min(delivered / need, 1.0) if need > 0 else 0.0
         density_norm = density / max_density
         freq_bonus = (freq.get(food.id, 0) / max_freq) if max_freq else 0.0
+        meal_freq_bonus = (meal_freq.get(food.id, 0) / max_meal_freq) if meal_freq and max_meal_freq else 0.0
         # favorito e o sinal mais forte (voce DISSE que gosta); pesa acima da frequencia
         fav_bonus = 0.5 if food.id in favorite_ids else 0.0
-        score = coverage + 0.8 * density_norm + 0.2 * freq_bonus + fav_bonus
+        score = coverage + 0.8 * density_norm + 0.2 * freq_bonus + 1.5 * meal_freq_bonus + fav_bonus
         scored.append((score, food, portion, macros))
 
     scored.sort(key=lambda item: item[0], reverse=True)
@@ -294,8 +326,16 @@ def suggest_recipes(
     ]
 
 
-def suggest_gap(session: Session, user: User, day: date, limit: int = 4) -> DiaryGapOut:
-    """O que falta hoje + alimentos que fecham a lacuna (motor reativo)."""
+def suggest_gap(
+    session: Session, user: User, day: date, limit: int = 4, meal_type: MealType | None = None,
+) -> DiaryGapOut:
+    """O que falta hoje + alimentos que fecham a lacuna (motor reativo).
+
+    meal_type: refeicao "do horario agora" (o cliente ja calcula isso pra saber onde
+    o botao de adicionar lanca por padrao) - quando informado, empurra o ranking pro
+    que a pessoa costuma comer NAQUELE horario (ver _meal_food_frequency), deixando a
+    sugestao mais realista sem travar quem quer ver o dia inteiro (None = comportamento
+    de sempre, sem vies de horario)."""
     goals = _daily_target(session, user.id)
     consumed = _consumed(session, user.id, day)
     if goals is None:
@@ -313,14 +353,19 @@ def suggest_gap(session: Session, user: User, day: date, limit: int = 4) -> Diar
             primary="complete", suggestions=[],
         )
     primary_attr, primary_code = chosen
-    freq = _food_frequency(session, user.id)
+    freq = _food_frequency(session, user.id, day)
     max_freq = max(freq.values(), default=1)
     fav_ids = favorite_food_ids(session, user.id)
+    meal_freq, max_meal_freq = None, 0
+    if meal_type is not None:
+        meal_freq = _meal_food_frequency(session, user.id, meal_type, day)
+        max_meal_freq = max(meal_freq.values(), default=0)
     suggestions = _rank_suggestions(
-        session, user, remaining, primary_attr, freq, max_freq, limit, fav_ids
+        session, user, remaining, primary_attr, freq, max_freq, limit, fav_ids,
+        meal_freq=meal_freq, max_meal_freq=max_meal_freq,
     )
-    # o gap e do dia inteiro (sem refeicao especifica): receitas sem afinidade de horario
-    recipe_suggestions = suggest_recipes(session, user, remaining, meal_type=None)
+    # receita usa a afinidade de tag existente quando ha horario; sem horario, sem afinidade
+    recipe_suggestions = suggest_recipes(session, user, remaining, meal_type=meal_type)
     return DiaryGapOut(
         date=day, goals=goals, consumed=consumed, remaining=remaining,
         primary=primary_code, suggestions=suggestions, recipe_suggestions=recipe_suggestions,
@@ -412,13 +457,18 @@ def build_meal(
 
     have_set = set(have_ids)
     staple_ids = _staple_food_ids(session)
-    freq = _food_frequency(session, user.id)
+    freq = _food_frequency(session, user.id, day)
     max_freq = max(freq.values(), default=1)
     fav_ids = favorite_food_ids(session, user.id)
+    meal_freq, max_meal_freq = None, 0
+    if meal_type is not None:
+        meal_freq = _meal_food_frequency(session, user.id, meal_type, day)
+        max_meal_freq = max(meal_freq.values(), default=0)
 
     food_matches = _rank_suggestions(
         session, user, remaining, chosen[0], freq, max_freq, limit, fav_ids,
         restrict_ids=have_set | staple_ids,
+        meal_freq=meal_freq, max_meal_freq=max_meal_freq,
     )
     recipe_matches = match_pantry_recipes(session, user, remaining, have_set, meal_type, limit)
     return BuildMealOut(
@@ -501,7 +551,7 @@ def meal_plan(session: Session, user: User, day: date, limit: int = 3) -> MealPl
         ).all()
     )
     remaining_day = _remaining(goals, _sum_entries(entries))
-    freq = _food_frequency(session, user.id)
+    freq = _food_frequency(session, user.id, day)
     max_freq = max(freq.values(), default=1)
     fav_ids = favorite_food_ids(session, user.id)
 
@@ -511,9 +561,12 @@ def meal_plan(session: Session, user: User, day: date, limit: int = 3) -> MealPl
         consumed_meal = _sum_entries([e for e in entries if e.meal_type == meal_type])
         meal_remaining = _bounded_remaining(target, consumed_meal, remaining_day)
         chosen = _choose_primary(meal_remaining)
+        meal_freq = _meal_food_frequency(session, user.id, meal_type, day)
+        max_meal_freq = max(meal_freq.values(), default=0)
         suggestions = (
             _rank_suggestions(
-                session, user, meal_remaining, chosen[0], freq, max_freq, limit, fav_ids
+                session, user, meal_remaining, chosen[0], freq, max_freq, limit, fav_ids,
+                meal_freq=meal_freq, max_meal_freq=max_meal_freq,
             )
             if chosen is not None
             else []
@@ -540,7 +593,7 @@ def substitutes(
     anchor = _CATEGORY_ANCHOR.get(food.category, "kcal")
     source_macros = food_macros(food, grams)
     source_anchor_value = _attr(source_macros, anchor)  # anchor pode ser 'kcal'
-    freq = _food_frequency(session, user.id)
+    freq = _food_frequency(session, user.id, date.today())
     fav_ids = favorite_food_ids(session, user.id)
 
     ranked: list[tuple[float, Food, float, MacrosOut, float]] = []
