@@ -243,6 +243,42 @@ class SetLog(SQLModel, table=True):
     session: WorkoutSession = Relationship(back_populates="sets")
 
 
+class StandaloneActivityKind(str, Enum):
+    """Atividade avulsa fora do treino de academia (sem rotina/exercicios cadastrados)."""
+
+    running = "running"
+    cycling = "cycling"
+    walking = "walking"
+    yoga = "yoga"
+    pilates = "pilates"
+    boxing = "boxing"
+    swimming = "swimming"
+    dance = "dance"
+    other = "other"
+
+
+class ActivityIntensity(str, Enum):
+    light = "light"
+    moderate = "moderate"
+    hard = "hard"
+
+
+class StandaloneActivity(SQLModel, table=True):
+    __tablename__ = "standalone_activities"
+
+    id: int | None = Field(default=None, primary_key=True)
+    user_id: int = Field(foreign_key="users.id", index=True, ondelete="CASCADE")
+    entry_date: date = Field(index=True)  # dia local informado pelo cliente, mesmo padrao do diario
+    time_of_day: str  # "HH:MM" local, so para exibicao
+    kind: StandaloneActivityKind
+    duration_min: int
+    intensity: ActivityIntensity
+    distance_km: float | None = Field(default=None)
+    kcal: float  # estimado por MET (services/activities.py) ou ajustado a mao
+    kcal_is_manual: bool = Field(default=False)
+    created_at: datetime = Field(default_factory=utcnow)
+
+
 class FoodCategory(str, Enum):
     protein = "protein"
     carb = "carb"

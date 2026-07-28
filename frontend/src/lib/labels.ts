@@ -1,4 +1,11 @@
-import type { Equipment, ExerciseLevel, MealType, MuscleGroup } from '$lib/api';
+import type {
+	ActivityIntensity,
+	Equipment,
+	ExerciseLevel,
+	MealType,
+	MuscleGroup,
+	StandaloneActivityKind
+} from '$lib/api';
 import { m } from '$lib/paraglide/messages';
 
 export const MEAL_TYPES: MealType[] = ['breakfast', 'lunch', 'snack', 'dinner', 'other'];
@@ -31,6 +38,44 @@ export function portionLabel(labelKey: string, grams: number): string {
 			portion: m.portion_portion()
 		}[labelKey] ?? labelKey;
 	return `${word} (${grams} g)`;
+}
+
+export const ACTIVITY_KINDS: StandaloneActivityKind[] = [
+	'running',
+	'cycling',
+	'walking',
+	'yoga',
+	'pilates',
+	'boxing',
+	'swimming',
+	'dance',
+	'other'
+];
+
+// Atividades onde faz sentido informar distancia - mesmo criterio de
+// DISTANCE_KINDS em backend/app/services/activities.py (so exibicao aqui).
+export const ACTIVITY_DISTANCE_KINDS: StandaloneActivityKind[] = ['running', 'cycling', 'walking', 'swimming'];
+
+export function activityKindLabel(kind: StandaloneActivityKind): string {
+	return {
+		running: m.activity_kind_running(),
+		cycling: m.activity_kind_cycling(),
+		walking: m.activity_kind_walking(),
+		yoga: m.activity_kind_yoga(),
+		pilates: m.activity_kind_pilates(),
+		boxing: m.activity_kind_boxing(),
+		swimming: m.activity_kind_swimming(),
+		dance: m.activity_kind_dance(),
+		other: m.activity_kind_other()
+	}[kind];
+}
+
+export function activityIntensityLabel(intensity: ActivityIntensity): string {
+	return {
+		light: m.activity_intensity_light(),
+		moderate: m.activity_intensity_moderate(),
+		hard: m.activity_intensity_hard()
+	}[intensity];
 }
 
 export function muscleGroupLabel(group: MuscleGroup): string {

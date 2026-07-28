@@ -8,6 +8,7 @@ from .db import init_db
 from .routers import (
     account,
     achievements,
+    activities,
     auth,
     coach,
     diet,
@@ -61,6 +62,7 @@ app.include_router(achievements.router)
 app.include_router(feedback.router)
 app.include_router(account.router)
 app.include_router(supplements.router)
+app.include_router(activities.router)
 
 
 @app.get("/health")

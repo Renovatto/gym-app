@@ -3,6 +3,7 @@ from datetime import date, datetime
 from pydantic import BaseModel, ConfigDict, EmailStr, Field
 
 from .models import (
+    ActivityIntensity,
     ActivityLevel,
     CutIntensity,
     Equipment,
@@ -16,6 +17,7 @@ from .models import (
     Objective,
     Plan,
     Sex,
+    StandaloneActivityKind,
     WeightSource,
 )
 
@@ -148,6 +150,34 @@ class WeightHistoryOut(BaseModel):
     delta_kg: float | None
     # ultimo weigh-in que trouxe composicao corporal (para o painel de composicao)
     latest_body_composition: WeightLogOut | None = None
+
+
+class ActivityEstimateOut(BaseModel):
+    kcal: float
+
+
+class StandaloneActivityIn(BaseModel):
+    entry_date: date
+    time_of_day: str = Field(pattern=r"^([01]\d|2[0-3]):[0-5]\d$")
+    kind: StandaloneActivityKind
+    duration_min: int = Field(gt=0, le=600)
+    intensity: ActivityIntensity
+    distance_km: float | None = Field(default=None, gt=0, le=300)
+    kcal: float | None = Field(default=None, ge=0, le=5000)  # None = usa a estimativa automatica
+
+
+class StandaloneActivityOut(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: int
+    entry_date: date
+    time_of_day: str
+    kind: StandaloneActivityKind
+    duration_min: int
+    intensity: ActivityIntensity
+    distance_km: float | None
+    kcal: float
+    kcal_is_manual: bool
 
 
 class WaterLogIn(BaseModel):

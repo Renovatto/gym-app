@@ -341,6 +341,40 @@ export type MealType =
 	| 'other';
 export type EntrySource = 'food' | 'recipe';
 
+export type StandaloneActivityKind =
+	| 'running'
+	| 'cycling'
+	| 'walking'
+	| 'yoga'
+	| 'pilates'
+	| 'boxing'
+	| 'swimming'
+	| 'dance'
+	| 'other';
+export type ActivityIntensity = 'light' | 'moderate' | 'hard';
+
+export interface StandaloneActivity {
+	id: number;
+	entry_date: string;
+	time_of_day: string;
+	kind: StandaloneActivityKind;
+	duration_min: number;
+	intensity: ActivityIntensity;
+	distance_km: number | null;
+	kcal: number;
+	kcal_is_manual: boolean;
+}
+
+export interface StandaloneActivityInput {
+	entry_date: string;
+	time_of_day: string;
+	kind: StandaloneActivityKind;
+	duration_min: number;
+	intensity: ActivityIntensity;
+	distance_km?: number | null;
+	kcal?: number | null;
+}
+
 export interface Macros {
 	kcal: number;
 	protein_g: number;
@@ -727,6 +761,14 @@ export const api = {
 	addWater: (amount_ml: number) =>
 		request<WaterLog>('/me/water', { method: 'POST', body: { amount_ml } }),
 	deleteWater: (id: number) => request<void>(`/me/water/${id}`, { method: 'DELETE' }),
+	getActivityEstimate: (kind: StandaloneActivityKind, intensity: ActivityIntensity, durationMin: number) =>
+		request<{ kcal: number }>(
+			`/me/activities/estimate?kind=${kind}&intensity=${intensity}&duration_min=${durationMin}`
+		),
+	getActivities: (day: string) => request<StandaloneActivity[]>(`/me/activities?day=${day}`),
+	addActivity: (activity: StandaloneActivityInput) =>
+		request<StandaloneActivity>('/me/activities', { method: 'POST', body: activity }),
+	deleteActivity: (id: number) => request<void>(`/me/activities/${id}`, { method: 'DELETE' }),
 	// treino
 	getExercises: (
 		muscleGroup?: MuscleGroup,

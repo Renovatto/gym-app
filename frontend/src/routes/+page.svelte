@@ -5,6 +5,7 @@
 		type CoachResult,
 		type DiaryDay,
 		type GoalsOut,
+		type WeightHistory,
 		type WorkoutSession
 	} from '$lib/api';
 	import { session } from '$lib/session.svelte';
@@ -19,6 +20,7 @@
 	let diary = $state<DiaryDay | null>(null);
 	let activeSession = $state<WorkoutSession | null>(null);
 	let coach = $state<CoachResult | null>(null);
+	let weightHistory = $state<WeightHistory | null>(null);
 	// Modal de info: mesmo componente para IMC (detalhado, com tabela) e TDEE/BMR
 	// (rapido, 1-2 frases) - consistencia de interacao entre os 3 cards.
 	let infoModal = $state<'bmi' | 'tdee' | 'bmr' | null>(null);
@@ -30,6 +32,7 @@
 			api.getGoals().then((g) => (goals = g));
 			api.getActiveSession().then((s) => (activeSession = s));
 			api.getCoach(localDay(), new Date().getTimezoneOffset()).then((c) => (coach = c));
+			api.getWeightHistory().then((w) => (weightHistory = w));
 			if (dietOn) api.getDiary(localDay()).then((d) => (diary = d));
 		}
 	});
@@ -63,6 +66,60 @@
 				? 'border-amber-200'
 				: 'border-red-200'
 	);
+
+	// Barra visual do IMC (4 faixas). Dominio 14-42 e so para desenhar a barra
+	// (fora disso a marca encosta na ponta); as faixas usam os mesmos limiares do
+	// backend (bmi_category), nunca recalculadas aqui - so mapeamos o codigo ja
+	// classificado para uma cor/carinha, igual ja fazemos para o selo de texto.
+	const BMI_GAUGE_DOMAIN_MIN = 14;
+	const BMI_GAUGE_DOMAIN_MAX = 42;
+	const BMI_GAUGE_ZONES = [
+		{ key: 'low', from: BMI_GAUGE_DOMAIN_MIN, to: 18.5, bar: 'bg-sky-400', ring: 'border-sky-400' },
+		{ key: 'healthy', from: 18.5, to: 25, bar: 'bg-emerald-400', ring: 'border-emerald-400' },
+		{ key: 'high', from: 25, to: 30, bar: 'bg-amber-400', ring: 'border-amber-400' },
+		{ key: 'obese', from: 30, to: BMI_GAUGE_DOMAIN_MAX, bar: 'bg-red-400', ring: 'border-red-400' }
+	] as const;
+	const BMI_GAUGE_EMOJI: Record<string, string> = { low: '🙁', healthy: '🙂', high: '😕', obese: '😟' };
+	const BMI_GAUGE_ZONE_LABELS: Record<string, string> = {
+		low: m.bmi_cat_underweight_label(),
+		healthy: m.bmi_cat_normal_label(),
+		high: m.bmi_cat_overweight_label(),
+		obese: m.bmi_zone_obese_label()
+	};
+	const BMI_GAUGE_ZONE_BY_CATEGORY: Record<string, (typeof BMI_GAUGE_ZONES)[number]> = {
+		underweight: BMI_GAUGE_ZONES[0],
+		normal: BMI_GAUGE_ZONES[1],
+		overweight: BMI_GAUGE_ZONES[2],
+		obese_1: BMI_GAUGE_ZONES[3],
+		obese_2: BMI_GAUGE_ZONES[3],
+		obese_3: BMI_GAUGE_ZONES[3]
+	};
+	function bmiGaugePct(value: number): number {
+		const clamped = Math.min(BMI_GAUGE_DOMAIN_MAX, Math.max(BMI_GAUGE_DOMAIN_MIN, value));
+		return ((clamped - BMI_GAUGE_DOMAIN_MIN) / (BMI_GAUGE_DOMAIN_MAX - BMI_GAUGE_DOMAIN_MIN)) * 100;
+	}
+	const bmiGaugeZone = $derived(
+		goals ? BMI_GAUGE_ZONE_BY_CATEGORY[goals.bmi_category] : BMI_GAUGE_ZONES[1]
+	);
+	const bmiGaugeMarkerPct = $derived(goals ? bmiGaugePct(goals.bmi) : 50);
+
+	const shortDf = new Intl.DateTimeFormat(getLocale(), { day: '2-digit', month: '2-digit' });
+
+	// Tendencia do IMC: ultima pesagem vs a anterior (nao o inicio do historico,
+	// que ja e outro dado mostrado em Progresso). IMC = peso / altura^2; como a
+	// altura nao muda entre as duas pesagens, a variacao do IMC e proporcional
+	// a variacao do peso.
+	const bmiTrend = $derived.by(() => {
+		const logs = weightHistory?.logs;
+		const heightCm = session.profile?.height_cm;
+		if (!logs || logs.length < 2 || !heightCm) return null;
+		const prev = logs[logs.length - 2];
+		const latest = logs[logs.length - 1];
+		const heightM = heightCm / 100;
+		const rawDelta = (latest.weight_kg - prev.weight_kg) / (heightM * heightM);
+		const deltaBmi = Math.round(rawDelta * 10) / 10;
+		return { deltaBmi, prevDate: shortDf.format(new Date(prev.logged_at)) };
+	});
 
 	// Texto traduzido de cada dica do coach (por codigo).
 	function coachNoteText(code: string): string {
@@ -298,6 +355,45 @@
 				<span class="text-xs font-bold text-slate-400">{bmiInfo.label}</span>
 			{/if}
 		</div>
+
+		<!-- Barra de faixas do IMC + marcador com carinha (muda por faixa: baixo, saudavel, alto, obeso) -->
+		<div class="relative mt-3">
+			<div class="flex h-1.5 w-full overflow-hidden rounded-full bg-slate-100">
+				{#each BMI_GAUGE_ZONES as zone (zone.key)}
+					<div
+						class="h-full {zone.bar}"
+						style="width:{(bmiGaugePct(zone.to) - bmiGaugePct(zone.from)).toFixed(2)}%"
+					></div>
+				{/each}
+			</div>
+			<div
+				class="absolute top-1/2 grid h-6 w-6 -translate-x-1/2 -translate-y-1/2 place-items-center rounded-full border-2 bg-white text-sm shadow-sm {bmiGaugeZone.ring}"
+				style="left:{bmiGaugeMarkerPct}%"
+			>
+				{BMI_GAUGE_EMOJI[bmiGaugeZone.key]}
+			</div>
+		</div>
+		<div class="mt-2 flex text-[9px] font-bold text-slate-300">
+			{#each BMI_GAUGE_ZONES as zone (zone.key)}
+				<span class="flex-1 text-center {bmiGaugeZone.key === zone.key ? 'text-slate-600' : ''}">
+					{BMI_GAUGE_ZONE_LABELS[zone.key]}
+				</span>
+			{/each}
+		</div>
+
+		{#if bmiTrend}
+			<p class="mt-2 text-[11px] font-semibold text-slate-400">
+				{#if bmiTrend.deltaBmi === 0}
+					{m.bmi_trend_stable({ date: bmiTrend.prevDate })}
+				{:else}
+					{m.bmi_trend_change({
+						delta: (bmiTrend.deltaBmi > 0 ? '+' : '') + nf.format(bmiTrend.deltaBmi),
+						date: bmiTrend.prevDate
+					})}
+				{/if}
+			</p>
+		{/if}
+
 		{#if bmiInfo}
 			<p class="mt-2 rounded-2xl px-3 py-2 text-xs font-semibold {bmiToneClass}">
 				{bmiInfo.text}

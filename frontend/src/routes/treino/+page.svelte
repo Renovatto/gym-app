@@ -9,11 +9,14 @@
 		type RoutinePeriodization,
 		type RoutineVariation,
 		type SessionSummary,
+		type StandaloneActivity,
 		type WorkoutDayDetail,
 		type WorkoutSession
 	} from '$lib/api';
 	import CalendarModal from '$lib/components/CalendarModal.svelte';
 	import ExercisePhotoModal from '$lib/components/ExercisePhotoModal.svelte';
+	import LogActivityModal from '$lib/components/LogActivityModal.svelte';
+	import { activityKindLabel } from '$lib/labels';
 	import { showToast } from '$lib/toast.svelte';
 	import { m } from '$lib/paraglide/messages';
 	import { getLocale } from '$lib/paraglide/runtime';
@@ -32,7 +35,23 @@
 	let sessions = $state<SessionSummary[]>([]);
 	let activeSession = $state<WorkoutSession | null>(null);
 	let periodization = $state<RoutinePeriodization[]>([]);
+	let todayActivities = $state<StandaloneActivity[]>([]);
 	let loading = $state(true);
+
+	let showLogActivity = $state(false);
+	let confirmingDeleteActivity = $state<number | null>(null);
+	const activityKcalTotal = $derived(todayActivities.reduce((sum, a) => sum + a.kcal, 0));
+
+	async function reloadActivities(): Promise<void> {
+		todayActivities = await api.getActivities(localDay());
+	}
+
+	async function deleteActivityEntry(id: number): Promise<void> {
+		confirmingDeleteActivity = null;
+		await api.deleteActivity(id);
+		await reloadActivities();
+		showToast(m.toast_deleted());
+	}
 
 	// Explorar uma rotina (leitura) antes de iniciar: fotos e alvos de cada exercicio.
 	let previewRoutine = $state<Routine | null>(null);
@@ -122,11 +141,12 @@
 	const nf = new Intl.NumberFormat(getLocale());
 
 	async function load(): Promise<void> {
-		[routines, sessions, activeSession, periodization] = await Promise.all([
+		[routines, sessions, activeSession, periodization, todayActivities] = await Promise.all([
 			api.getRoutines(),
 			api.getSessions(),
 			api.getActiveSession(),
-			api.getTrainingPeriodization(localDay())
+			api.getTrainingPeriodization(localDay()),
+			api.getActivities(localDay())
 		]);
 		loading = false;
 	}
@@ -224,6 +244,70 @@
 		</a>
 	</div>
 </div>
+
+<!-- Atividade avulsa: yoga, corrida, bike etc. fora do treino de academia. So
+	 registro/historico por enquanto - nao entra na meta calorica do dia (o fator
+	 de atividade do TDEE ja embute o exercicio medio, ver services/goals.py). -->
+<section class="mb-4 rounded-3xl bg-white p-4 shadow-sm">
+	{#if todayActivities.length > 0}
+		<div class="mb-3 flex items-center justify-between">
+			<span class="text-xs font-bold text-slate-500 uppercase">{m.activity_today_total()}</span>
+			<span class="text-sm font-black text-emerald-700">+{nf.format(Math.round(activityKcalTotal))} kcal</span>
+		</div>
+		<div class="mb-3 divide-y divide-slate-100 border-b border-slate-100">
+			{#each todayActivities as activity (activity.id)}
+				<div class="flex items-center gap-2 py-2">
+					<div class="min-w-0 flex-1">
+						<p class="truncate text-sm font-semibold text-slate-800">{activityKindLabel(activity.kind)}</p>
+						<p class="text-xs text-slate-500">
+							{activity.time_of_day} · {activity.duration_min} min · {nf.format(Math.round(activity.kcal))} kcal
+						</p>
+					</div>
+					{#if confirmingDeleteActivity === activity.id}
+						<button
+							type="button"
+							onclick={() => deleteActivityEntry(activity.id)}
+							class="shrink-0 rounded-xl bg-red-600 px-3 py-1.5 text-xs font-bold text-white active:bg-red-700"
+						>
+							{m.confirm_delete()}
+						</button>
+						<button
+							type="button"
+							onclick={() => (confirmingDeleteActivity = null)}
+							class="shrink-0 rounded-xl px-2 py-1.5 text-xs font-semibold text-slate-500"
+						>
+							{m.cancel()}
+						</button>
+					{:else}
+						<button
+							type="button"
+							aria-label={m.confirm_delete()}
+							onclick={() => (confirmingDeleteActivity = activity.id)}
+							class="grid h-8 w-8 shrink-0 place-items-center rounded-lg text-slate-300 active:bg-slate-100 active:text-red-500"
+						>
+							<svg viewBox="0 0 24 24" class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 7h16M9 7V5h6v2M6 7l1 13h10l1-13" stroke-linecap="round" stroke-linejoin="round" /></svg>
+						</button>
+					{/if}
+				</div>
+			{/each}
+		</div>
+	{/if}
+	<button
+		type="button"
+		onclick={() => (showLogActivity = true)}
+		class="flex h-11 w-full items-center justify-center rounded-2xl border-2 border-dashed border-emerald-200 text-sm font-bold text-emerald-700 active:bg-emerald-50"
+	>
+		{m.activity_cta()}
+	</button>
+</section>
+
+{#if showLogActivity}
+	<LogActivityModal
+		day={localDay()}
+		onClose={() => (showLogActivity = false)}
+		onAdded={reloadActivities}
+	/>
+{/if}
 
 {#if dueRoutine}
 	<div class="mb-4 flex items-start gap-3 rounded-3xl border-2 border-amber-200 bg-amber-50 p-4">
