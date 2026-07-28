@@ -438,6 +438,27 @@ export interface DiaryGap {
 	recipe_suggestions: RecipeSuggestion[];
 }
 
+// "Montar refeicao com o que tenho em casa": receita da biblioteca que da pra
+// cozinhar com o que foi selecionado (+ itens basicos). quantity ja vem escalado.
+export interface PantryRecipeMatch {
+	slug: string;
+	name: string;
+	tags: string[];
+	quantity: number;
+	macros: Macros;
+	is_favorite: boolean;
+	match_ratio: number; // 0..1
+	missing: string[]; // nomes localizados do que falta
+}
+
+export interface BuildMeal {
+	date: string;
+	remaining: Macros | null;
+	primary: GapPrimary;
+	recipe_matches: PantryRecipeMatch[];
+	food_matches: FoodSuggestion[];
+}
+
 export interface SubstituteItem {
 	food: Food;
 	grams: number;
@@ -522,7 +543,7 @@ export interface LibraryRecipe {
 	servings: number;
 	total: Macros;
 	per_serving: Macros;
-	ingredients: { name: string; grams: number }[];
+	ingredients: { name: string; grams: number; macros: Macros }[];
 	is_favorite: boolean;
 }
 
@@ -536,7 +557,7 @@ export interface RecipeView {
 	servings: number;
 	total: Macros;
 	per_serving: Macros;
-	ingredients: { name: string; grams: number }[];
+	ingredients: { name: string; grams: number; macros: Macros }[];
 	is_favorite?: boolean;
 }
 
@@ -811,6 +832,12 @@ export const api = {
 	getDiary: (day: string) => request<DiaryDay>(`/me/diary?day=${day}`),
 	getDiaryGap: (day: string, limit = 4) =>
 		request<DiaryGap>(`/me/diary/gap?day=${day}&limit=${limit}`),
+	getBuildMeal: (day: string, haveFoodIds: number[], mealType?: MealType) => {
+		const params = new URLSearchParams({ day });
+		haveFoodIds.forEach((id) => params.append('have', String(id)));
+		if (mealType) params.set('meal_type', mealType);
+		return request<BuildMeal>(`/me/diary/build-meal?${params.toString()}`);
+	},
 	getSubstitutes: (foodId: number, grams: number, limit = 6) =>
 		request<Substitutes>(`/me/foods/${foodId}/substitutes?grams=${grams}&limit=${limit}`),
 	getMealPlan: (day: string, limit = 3) =>

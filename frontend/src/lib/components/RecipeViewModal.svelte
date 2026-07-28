@@ -1,5 +1,6 @@
 <script lang="ts">
 	import type { RecipeView } from '$lib/api';
+	import MacroBreakdown from '$lib/components/MacroBreakdown.svelte';
 	import { m } from '$lib/paraglide/messages';
 	import { getLocale } from '$lib/paraglide/runtime';
 
@@ -120,7 +121,15 @@
 				<ul class="divide-y divide-slate-100">
 					{#each recipe.ingredients as ing (ing.name)}
 						<li class="flex items-center justify-between gap-3 py-2.5">
-							<span class="min-w-0 flex-1 truncate text-sm text-slate-700">{ing.name}</span>
+							<span class="min-w-0 flex-1">
+								<span class="block truncate text-sm text-slate-700">{ing.name}</span>
+								<MacroBreakdown
+									protein_g={ing.macros.protein_g}
+									carbs_g={ing.macros.carbs_g}
+									fat_g={ing.macros.fat_g}
+									class="text-[11px] text-slate-400"
+								/>
+							</span>
 							<span class="shrink-0 text-sm font-semibold text-slate-500 tabular-nums">{nf.format(ing.grams)} g</span>
 						</li>
 					{/each}

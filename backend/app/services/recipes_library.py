@@ -55,7 +55,9 @@ def _build_out(entry: dict, foods: dict[str, Food], locale: str) -> LibraryRecip
         total["carbs_g"] += macros.carbs_g
         total["fat_g"] += macros.fat_g
         ingredients.append(
-            LibraryIngredientOut(name=localized_food_name(food, locale), grams=ing["grams"])
+            LibraryIngredientOut(
+                name=localized_food_name(food, locale), grams=ing["grams"], macros=macros
+            )
         )
     servings = max(entry["servings"], 1)
     return LibraryRecipeOut(
@@ -67,6 +69,27 @@ def _build_out(entry: dict, foods: dict[str, Food], locale: str) -> LibraryRecip
         per_serving=MacrosOut(**{k: _round1(v / servings) for k, v in total.items()}),
         ingredients=ingredients,
     )
+
+
+def library_ingredient_food_ids_map(session: Session) -> dict[str, list[int]]:
+    """slug -> ids dos alimentos, na mesma ordem de entry['ingredients']. So inclui
+    receitas cujo catalogo resolve 100% (mesmo criterio de _build_out: ingrediente sem
+    match no catalogo tira a receita do mapa, nao quebra). Uma unica query pro catalogo
+    global (nao uma por receita) - pensado para "montar refeicao com o que tenho",
+    que precisa checar as 76 receitas da biblioteca numa unica requisicao."""
+    foods = _global_foods_by_slug(session)
+    out: dict[str, list[int]] = {}
+    for entry in _load():
+        ids: list[int] = []
+        for ing in entry["ingredients"]:
+            food = foods.get(ing["food"])
+            if food is None:
+                ids = []
+                break
+            ids.append(food.id)
+        if ids:
+            out[entry["slug"]] = ids
+    return out
 
 
 def _favorite_recipe_names(session: Session, user: User) -> set[str]:

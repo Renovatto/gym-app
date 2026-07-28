@@ -1,10 +1,12 @@
 """Motor de recomendacao da dieta (deterministico e explicavel).
 
-Duas portas, o mesmo motor:
+Tres portas, o mesmo motor:
   - suggest_gap: dado o alvo do dia e o que ja foi comido, sugere alimentos que
     fecham a lacuna (proteina primeiro, o macro que mais importa pro objetivo).
   - substitutes: troca um alimento por equivalentes da mesma categoria, ajustando
     a porcao para igualar o macro-ancora da categoria e mostrando a diferenca de kcal.
+  - build_meal: dado o que a pessoa diz que tem em casa (+ itens basicos), monta
+    receitas/alimentos que fecham a lacuna com o que e de fato possivel cozinhar agora.
 
 Regra de ouro: escolhe/combina alimentos REAIS do catalogo; nunca inventa macro.
 Todo alimento guarda valores por 100 g; a porcao e sempre em gramas.
@@ -29,11 +31,13 @@ from ..models import (
     WeightLog,
 )
 from ..schemas import (
+    BuildMealOut,
     DiaryGapOut,
     FoodSuggestionOut,
     MacrosOut,
     MealPlanMealOut,
     MealPlanOut,
+    PantryRecipeMatchOut,
     RecipeSuggestionOut,
     SubstituteItemOut,
     SubstitutesOut,
@@ -43,7 +47,7 @@ from .diet import food_macros, to_food_out
 from .dietplan import maintenance_override as _maintenance_override
 from .favorites import favorite_food_ids, favorite_recipe_ids
 from .goals import compute_goals
-from .recipes_library import list_library
+from .recipes_library import library_ingredient_food_ids_map, list_library
 
 # Macro-ancora de cada categoria: o macro que a troca equivalente mantem igual.
 # Categorias mistas (bebida/outros) caem em calorias.
@@ -69,6 +73,16 @@ _MIN_PROTEIN_GAP = 5.0  # g
 _MIN_MACRO_GAP = 5.0  # g (carbo/gordura)
 _MIN_KCAL_GAP = 60.0  # kcal
 
+# "Montar refeicao com o que tenho em casa": itens basicos que quase toda cozinha tem,
+# contam como "tem" automaticamente (senao quase nenhuma receita bateria 100%).
+_STAPLE_SLUGS: set[str] = {
+    "olive-oil", "sunflower-oil", "coconut-oil", "butter",
+    "garlic", "onion", "salt", "sugar",
+}
+# Abaixo deste tanto de ingredientes NAO-basicos presentes, a receita nem aparece -
+# realismo importa mais que "e mais gostosa" aqui (a reclamacao era sugestao irreal).
+_MIN_PANTRY_MATCH_RATIO = 0.34
+
 
 def _attr(obj: object, name: str) -> float:
     """Le protein_g/carbs_g/fat_g/kcal de um Food ou de um MacrosOut (mesmos nomes)."""
@@ -88,6 +102,14 @@ def _visible_foods(
     if category is not None:
         query = query.where(Food.category == category)
     return list(session.exec(query).all())
+
+
+def _staple_food_ids(session: Session) -> set[int]:
+    """Ids globais dos itens basicos (ver _STAPLE_SLUGS) - sempre contam como 'tem'."""
+    rows = session.exec(
+        select(Food.id).where(Food.user_id.is_(None)).where(Food.slug.in_(_STAPLE_SLUGS))
+    ).all()
+    return set(rows)
 
 
 def _food_frequency(session: Session, user_id: int) -> Counter:
@@ -157,15 +179,22 @@ def _choose_primary(remaining: MacrosOut) -> tuple[str, str] | None:
 def _rank_suggestions(
     session: Session, user: User, remaining: MacrosOut, primary_attr: str,
     freq: Counter, max_freq: int, limit: int, favorite_ids: set[int],
+    restrict_ids: set[int] | None = None,
 ) -> list[FoodSuggestionOut]:
     """Ranqueia alimentos que fecham a lacuna informada (do dia ou de uma refeicao).
 
     Cada sugestao usa uma PORCAO NATURAL do alimento (a porcao padrao), nunca uma
     quantidade absurda pra fechar sozinha - o usuario vai somando itens. Ainda limita
-    pela caloria que cabe (no fim do dia/refeicao, porcoes menores)."""
+    pela caloria que cabe (no fim do dia/refeicao, porcoes menores).
+
+    restrict_ids: quando informado, so considera esses alimentos (usado por
+    'montar refeicao com o que tenho' pra restringir ao que a pessoa selecionou);
+    None mantem o comportamento de sempre (todo o catalogo visivel)."""
     need = _attr(remaining, primary_attr)
     candidates: list[tuple[Food, float, MacrosOut, float, float]] = []
     for food in _visible_foods(session, user.id):
+        if restrict_ids is not None and food.id not in restrict_ids:
+            continue
         if _attr(food, primary_attr) <= 0:
             continue  # nao ajuda a fechar o macro-alvo
         portion = food.default_portion_g or 100.0
@@ -295,6 +324,106 @@ def suggest_gap(session: Session, user: User, day: date, limit: int = 4) -> Diar
     return DiaryGapOut(
         date=day, goals=goals, consumed=consumed, remaining=remaining,
         primary=primary_code, suggestions=suggestions, recipe_suggestions=recipe_suggestions,
+    )
+
+
+def match_pantry_recipes(
+    session: Session, user: User, remaining: MacrosOut, have_ids: set[int],
+    meal_type: MealType | None, limit: int = 6,
+) -> list[PantryRecipeMatchOut]:
+    """Receitas da biblioteca que da pra cozinhar com o que a pessoa tem (+ basicos).
+
+    match_ratio = fracao dos ingredientes NAO-basicos presentes em have_ids; receitas
+    abaixo de _MIN_PANTRY_MATCH_RATIO nem entram (corte duro, nao so desconto de nota -
+    "da pra fazer" importa mais que "e mais gostosa" nesta porta do motor). Dentro do
+    corte, o peso do match_ratio no score (2.0) e maior que a soma de todos os outros
+    bonus possiveis (~1.6), entao nenhuma combinacao de afinidade/favorito derruba uma
+    receita 100%-compativel abaixo de uma parcial."""
+    staple_ids = _staple_food_ids(session)
+    ingredient_ids_by_slug = library_ingredient_food_ids_map(session)
+    library = list_library(session, user)
+    chosen = _choose_primary(remaining)
+    primary_attr = chosen[0] if chosen else "kcal"
+    need = _attr(remaining, primary_attr)
+    affinity = _MEAL_TAG_AFFINITY.get(meal_type, set()) if meal_type else set()
+
+    scored: list[tuple[float, object, float, MacrosOut, float, list[str]]] = []
+    for rec in library:
+        food_ids = ingredient_ids_by_slug.get(rec.slug)
+        if food_ids is None:
+            continue  # ingrediente sumiu do catalogo (mesmo criterio de list_library)
+
+        non_staple = [
+            (idx, fid) for idx, fid in enumerate(food_ids) if fid not in staple_ids
+        ]
+        if not non_staple:
+            match_ratio, missing_idx = 1.0, []  # receita so tem basico (raro, ex.: molho)
+        else:
+            missing_idx = [idx for idx, fid in non_staple if fid not in have_ids]
+            match_ratio = 1 - len(missing_idx) / len(non_staple)
+        if match_ratio < _MIN_PANTRY_MATCH_RATIO:
+            continue
+        missing_names = [rec.ingredients[idx].name for idx in missing_idx]
+
+        per = rec.per_serving
+        delivered = _attr(per, primary_attr)
+        # Escala a PORCAO (nao so pontua): entre 0.5x e 3x, arredondado a cada 0.5,
+        # limitada tanto pelo macro-alvo quanto pela caloria que ainda cabe no dia.
+        by_need = (need / delivered) if (need > 0 and delivered > 0) else 1.0
+        by_kcal = (remaining.kcal / per.kcal) if per.kcal > 0 else 1.0
+        quantity = round(max(0.5, min(by_need, by_kcal, 3.0)) * 2) / 2
+        macros = _scale(per, quantity)
+
+        coverage = min(_attr(macros, primary_attr) / need, 1.0) if need > 0 else 0.0
+        if macros.kcal <= remaining.kcal:
+            cal_fit = 1.0
+        else:
+            cal_fit = max(0.0, 1.0 - (macros.kcal - remaining.kcal) / remaining.kcal)
+        affinity_bonus = 0.3 if affinity.intersection(rec.tags) else 0.0
+        fav_bonus = 0.5 if rec.is_favorite else 0.0
+        score = match_ratio * 2.0 + coverage * 0.5 + cal_fit * 0.3 + affinity_bonus + fav_bonus
+        scored.append((score, rec, quantity, macros, match_ratio, missing_names))
+
+    scored.sort(key=lambda item: item[0], reverse=True)
+    return [
+        PantryRecipeMatchOut(
+            slug=rec.slug, name=rec.name, tags=rec.tags, quantity=quantity, macros=macros,
+            is_favorite=rec.is_favorite, match_ratio=round(match_ratio, 2), missing=missing_names,
+        )
+        for _, rec, quantity, macros, match_ratio, missing_names in scored[:limit]
+    ]
+
+
+def build_meal(
+    session: Session, user: User, day: date, have_ids: list[int],
+    meal_type: MealType | None = None, limit: int = 6,
+) -> BuildMealOut:
+    """'Montar refeicao com o que tenho em casa': terceira porta do motor, ao lado de
+    suggest_gap/substitutes. Mesmos codigos de estado que o card do dia ja usa
+    (no_goal/complete) - nao inventa um terceiro estado so pra esta tela."""
+    goals = _daily_target(session, user.id)
+    consumed = _consumed(session, user.id, day)
+    if goals is None:
+        return BuildMealOut(date=day, remaining=None, primary="no_goal")
+    remaining = _remaining(goals, consumed)
+    chosen = _choose_primary(remaining)
+    if chosen is None:
+        return BuildMealOut(date=day, remaining=remaining, primary="complete")
+
+    have_set = set(have_ids)
+    staple_ids = _staple_food_ids(session)
+    freq = _food_frequency(session, user.id)
+    max_freq = max(freq.values(), default=1)
+    fav_ids = favorite_food_ids(session, user.id)
+
+    food_matches = _rank_suggestions(
+        session, user, remaining, chosen[0], freq, max_freq, limit, fav_ids,
+        restrict_ids=have_set | staple_ids,
+    )
+    recipe_matches = match_pantry_recipes(session, user, remaining, have_set, meal_type, limit)
+    return BuildMealOut(
+        date=day, remaining=remaining, primary=chosen[1],
+        recipe_matches=recipe_matches, food_matches=food_matches,
     )
 
 

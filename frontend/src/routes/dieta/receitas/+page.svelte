@@ -15,7 +15,7 @@
 			servings: recipe.servings,
 			total: recipe.total,
 			per_serving: recipe.per_serving,
-			ingredients: recipe.ingredients.map((i) => ({ name: i.food.name, grams: i.grams })),
+			ingredients: recipe.ingredients.map((i) => ({ name: i.food.name, grams: i.grams, macros: i.macros })),
 			is_favorite: recipe.is_favorite
 		};
 	}

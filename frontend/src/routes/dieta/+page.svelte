@@ -23,7 +23,9 @@
 	import Spinner from '$lib/components/Spinner.svelte';
 	import CalendarModal from '$lib/components/CalendarModal.svelte';
 	import AddEntryModal from '$lib/components/AddEntryModal.svelte';
+	import BuildMealModal from '$lib/components/BuildMealModal.svelte';
 	import RecipeViewModal from '$lib/components/RecipeViewModal.svelte';
+	import MacroBreakdown from '$lib/components/MacroBreakdown.svelte';
 	import { slide } from 'svelte/transition';
 	import { showToast } from '$lib/toast.svelte';
 	import { mealTypeLabel } from '$lib/labels';
@@ -171,6 +173,14 @@
 			? Math.round((editing.macros.kcal / editing.quantity) * editQty)
 			: 0
 	);
+	const editPreviewMacros = $derived.by(() => {
+		const factor = editing && editing.quantity > 0 ? editQty / editing.quantity : 0;
+		return {
+			protein_g: (editing?.macros.protein_g ?? 0) * factor,
+			carbs_g: (editing?.macros.carbs_g ?? 0) * factor,
+			fat_g: (editing?.macros.fat_g ?? 0) * factor
+		};
+	});
 
 	const nf = new Intl.NumberFormat(getLocale());
 	const df = new Intl.DateTimeFormat(getLocale(), { weekday: 'short', day: '2-digit', month: 'short' });
@@ -209,6 +219,7 @@
 
 	// Modal de adicionar alimento/receita (fica aberta para lancar varios itens).
 	let addingToMeal = $state<MealType | null>(null);
+	let showBuildMeal = $state(false);
 
 	// Marca/desmarca o suplemento no dia (feedback imediato pelo check, sem toast).
 	async function toggleSupplement(s: Supplement): Promise<void> {
@@ -804,6 +815,17 @@
 		</section>
 	{/if}
 
+	{#if gap && gap.primary !== 'no_goal' && gap.primary !== 'complete'}
+		<button
+			type="button"
+			onclick={() => (showBuildMeal = true)}
+			class="mt-3 flex w-full items-center justify-center gap-2 rounded-2xl border-2 border-dashed border-slate-300 bg-white py-3 text-sm font-bold text-slate-700 active:bg-slate-50"
+		>
+			<svg viewBox="0 0 24 24" class="h-4.5 w-4.5 text-slate-500" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9h18l-1.5 10.5a2 2 0 0 1-2 1.5H6.5a2 2 0 0 1-2-1.5L3 9Z" /><path d="M8 9V6a4 4 0 0 1 8 0v3" /></svg>
+			{m.pantry_cta()}
+		</button>
+	{/if}
+
 	{#if hasPlan}
 		<button
 			type="button"
@@ -1217,7 +1239,13 @@
 					{m.back()}
 				</button>
 			{:else}
-				<p class="mb-4 text-sm text-slate-500">{editPreview} kcal</p>
+				<p class="mb-1 text-sm text-slate-500">{editPreview} kcal</p>
+				<MacroBreakdown
+					protein_g={editPreviewMacros.protein_g}
+					carbs_g={editPreviewMacros.carbs_g}
+					fat_g={editPreviewMacros.fat_g}
+					class="mb-4 text-xs text-slate-400"
+				/>
 				{#if editing.source === 'recipe'}
 					<Stepper bind:value={editQty} min={1} max={20} step={1} unit={m.serving_plural()} />
 				{:else}
@@ -1593,6 +1621,17 @@
 		{day}
 		label={mealDisplayLabel(addingToMeal)}
 		onClose={() => (addingToMeal = null)}
+		onAdded={reloadSilent}
+	/>
+{/if}
+
+<!-- Montar refeicao com o que tem em casa: seleciona alimentos e ve na hora o que
+	 da pra cozinhar (receitas + alimentos avulsos), sem etapa de "ver sugestoes" -->
+{#if showBuildMeal}
+	<BuildMealModal
+		{day}
+		meal={mealByTime()}
+		onClose={() => (showBuildMeal = false)}
 		onAdded={reloadSilent}
 	/>
 {/if}

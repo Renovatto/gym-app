@@ -18,6 +18,7 @@ from ..models import (
     WeightLog,
 )
 from ..schemas import (
+    BuildMealOut,
     DiaryDayOut,
     DiaryEntryIn,
     DiaryEntryOut,
@@ -56,6 +57,7 @@ from ..services.goals import compute_goals
 from ..services.recipes_library import adopt as adopt_library_recipe
 from ..services.recipes_library import get_one as get_library_recipe
 from ..services.recipes_library import list_library
+from ..services.recommend import build_meal as compute_build_meal
 from ..services.recommend import meal_plan as compute_meal_plan
 from ..services.recommend import substitutes as compute_substitutes
 from ..services.recommend import suggest_gap
@@ -502,6 +504,23 @@ def diary_meal_plan(
 ) -> MealPlanOut:
     """Cardapio consultivo: por refeicao, o alvo recomendado + sugestoes que fecham."""
     return compute_meal_plan(session, user, day, limit)
+
+
+@router.get("/me/diary/build-meal", response_model=BuildMealOut)
+def diary_build_meal(
+    user: CurrentUser,
+    session: SessionDep,
+    day: date = Query(..., description="Dia local do cliente (YYYY-MM-DD)"),
+    have: list[int] = Query(default=[], description="Ids dos alimentos que a pessoa tem em casa"),
+    meal_type: MealType | None = Query(default=None),
+    limit: int = Query(default=6, ge=1, le=12),
+) -> BuildMealOut:
+    """'Montar refeicao com o que tenho em casa': receitas que da pra cozinhar +
+    alimentos avulsos que fecham a lacuna do dia, dado o que a pessoa diz que tem."""
+    # ids invalidos/de outro usuario sao ignorados em silencio (tela "ao vivo": um id
+    # que ficou obsoleto no estado do cliente nao deve travar a busca com 404).
+    safe_have = [fid for fid in have if _visible_food(session, fid, user.id) is not None]
+    return compute_build_meal(session, user, day, safe_have, meal_type, limit)
 
 
 @router.get("/me/diet/adherence", response_model=DietAdherenceOut)

@@ -480,6 +480,7 @@ class DiaryDayOut(BaseModel):
 class LibraryIngredientOut(BaseModel):
     name: str
     grams: float
+    macros: MacrosOut
 
 
 class LibraryRecipeOut(BaseModel):
@@ -534,6 +535,33 @@ class DiaryGapOut(BaseModel):
     primary: str
     suggestions: list[FoodSuggestionOut]
     recipe_suggestions: list[RecipeSuggestionOut] = []
+
+
+class PantryRecipeMatchOut(BaseModel):
+    """Receita da biblioteca que da pra fazer com o que a pessoa tem em casa (mais os
+    itens basicos, sempre disponiveis). quantity ja vem escalado (porcoes fracionarias)
+    para fechar a lacuna do dia - o mesmo campo aceito por DiaryFromLibraryIn.quantity."""
+
+    slug: str
+    name: str
+    tags: list[str]
+    quantity: float
+    macros: MacrosOut  # ja escalado por quantity
+    is_favorite: bool = False
+    match_ratio: float  # 0..1, sobre os ingredientes NAO-basicos da receita
+    missing: list[str] = []  # nomes localizados dos ingredientes que faltam
+
+
+class BuildMealOut(BaseModel):
+    """Resultado de 'montar refeicao com o que tenho em casa': receitas que da pra
+    cozinhar + alimentos avulsos que fecham a lacuna do dia, dado o que a pessoa
+    informou que tem (mesmos codigos de primary/no_goal/complete de DiaryGapOut)."""
+
+    date: date
+    remaining: MacrosOut | None
+    primary: str
+    recipe_matches: list[PantryRecipeMatchOut] = []
+    food_matches: list[FoodSuggestionOut] = []
 
 
 class SubstituteSourceOut(BaseModel):
