@@ -28,6 +28,26 @@
 	const showsDistance = $derived(ACTIVITY_DISTANCE_KINDS.includes(kind));
 	const INTENSITIES: ActivityIntensity[] = ['light', 'moderate', 'hard'];
 
+	// Selecionado: fundo leve + borda/texto na cor - mesmo tratamento visual do
+	// prototipo aprovado (nao preenchido solido, senao o icone perde contraste).
+	const INTENSITY_STYLES: Record<ActivityIntensity, string> = {
+		light: 'border-green-300 bg-green-50 text-green-700',
+		moderate: 'border-amber-300 bg-amber-50 text-amber-800',
+		hard: 'border-red-300 bg-red-50 text-red-800'
+	};
+
+	const ACTIVITY_ICON_PATHS: Record<StandaloneActivityKind, string> = {
+		running: 'M13 17l-2-5-3 2-3-6M4 20l4-9 4 3 4-9 4 5',
+		cycling: 'M5 18a3 3 0 100-6 3 3 0 000 6zM19 18a3 3 0 100-6 3 3 0 000 6zM5 15l4-7h4l3 7M9 8h4',
+		walking: 'M13 4a1 1 0 100 2 1 1 0 000-2zM9 20l2-6 2 2 1 4M8 12l2-3 3 1 2 4',
+		yoga: 'M12 4a1 1 0 100 2 1 1 0 000-2zM7 20l3-6 2 2 2-2 3 6M9 12l1-3h4l1 3',
+		pilates: 'M4 12h16M8 6l4 6-4 6M16 6l-4 6 4 6',
+		boxing: 'M6 14l4-4 4 4 4-8M6 18h12',
+		swimming: 'M3 16c1.5 1 3 1 4.5 0s3-1 4.5 0 3 1 4.5 0 3-1 4.5 0M8 10l8-4 2 4-8 4z',
+		dance: 'M12 3a1 1 0 100 2 1 1 0 000-2zM9 21l2-6-2-2 1-4 4 1 3 4-3 2 1 5',
+		other: 'M12 8v4l3 3M12 21a9 9 0 100-18 9 9 0 000 18z'
+	};
+
 	let estimateToken = 0;
 	$effect(() => {
 		if (kcalTouched) return;
@@ -76,16 +96,27 @@
 			</button>
 		</div>
 
-		<div class="flex flex-wrap gap-1.5">
+		<div class="grid grid-cols-3 gap-2">
 			{#each ACTIVITY_KINDS as k (k)}
 				<button
 					type="button"
 					onclick={() => (kind = k)}
-					class="rounded-full border-2 px-3 py-1.5 text-xs font-bold {kind === k
-						? 'border-emerald-600 bg-emerald-600 text-white'
-						: 'border-slate-200 bg-white text-slate-700 active:bg-slate-100'}"
+					class="flex aspect-square flex-col items-center justify-center gap-1.5 rounded-2xl border-2 {kind === k
+						? 'border-emerald-600 bg-emerald-50 text-emerald-700'
+						: 'border-slate-200 bg-white text-slate-600 active:bg-slate-50'}"
 				>
-					{activityKindLabel(k)}
+					<svg
+						viewBox="0 0 24 24"
+						class="h-7 w-7"
+						fill="none"
+						stroke="currentColor"
+						stroke-width="1.8"
+						stroke-linecap="round"
+						stroke-linejoin="round"
+					>
+						<path d={ACTIVITY_ICON_PATHS[k]} />
+					</svg>
+					<span class="text-[11px] font-bold">{activityKindLabel(k)}</span>
 				</button>
 			{/each}
 		</div>
@@ -115,9 +146,9 @@
 					<button
 						type="button"
 						onclick={() => (intensity = level)}
-						class="h-10 rounded-xl text-sm font-bold {intensity === level
-							? 'bg-emerald-600 text-white'
-							: 'bg-white text-slate-600'}"
+						class="h-11 rounded-xl border-2 text-sm font-bold {intensity === level
+							? INTENSITY_STYLES[level]
+							: 'border-slate-200 bg-white text-slate-600'}"
 					>
 						{activityIntensityLabel(level)}
 					</button>

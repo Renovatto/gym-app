@@ -249,12 +249,19 @@
 	 registro/historico por enquanto - nao entra na meta calorica do dia (o fator
 	 de atividade do TDEE ja embute o exercicio medio, ver services/goals.py). -->
 <section class="mb-4 rounded-3xl bg-white p-4 shadow-sm">
+	<button
+		type="button"
+		onclick={() => (showLogActivity = true)}
+		class="flex h-11 w-full items-center justify-center rounded-2xl border-2 border-dashed border-emerald-200 text-sm font-bold text-emerald-700 active:bg-emerald-50"
+	>
+		{m.activity_cta()}
+	</button>
 	{#if todayActivities.length > 0}
-		<div class="mb-3 flex items-center justify-between">
-			<span class="text-xs font-bold text-slate-500 uppercase">{m.activity_today_total()}</span>
-			<span class="text-sm font-black text-emerald-700">+{nf.format(Math.round(activityKcalTotal))} kcal</span>
+		<div class="mt-3 flex items-center justify-between rounded-2xl bg-slate-900 px-4 py-3">
+			<span class="text-xs font-bold tracking-wide text-slate-300 uppercase">{m.activity_today_total()}</span>
+			<span class="text-lg font-black text-white">+{nf.format(Math.round(activityKcalTotal))} kcal</span>
 		</div>
-		<div class="mb-3 divide-y divide-slate-100 border-b border-slate-100">
+		<div class="mt-2 divide-y divide-slate-100">
 			{#each todayActivities as activity (activity.id)}
 				<div class="flex items-center gap-2 py-2">
 					<div class="min-w-0 flex-1">
@@ -292,13 +299,6 @@
 			{/each}
 		</div>
 	{/if}
-	<button
-		type="button"
-		onclick={() => (showLogActivity = true)}
-		class="flex h-11 w-full items-center justify-center rounded-2xl border-2 border-dashed border-emerald-200 text-sm font-bold text-emerald-700 active:bg-emerald-50"
-	>
-		{m.activity_cta()}
-	</button>
 </section>
 
 {#if showLogActivity}
