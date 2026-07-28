@@ -311,6 +311,8 @@
 	"reco_gap_calories": "Faltam {kcal} kcal",
 	"reco_add": "Adicionar",
 	"reco_added": "Adicionado ao diário ✓",
+	"gap_suggestions_show": "Ver sugestões ({n})",
+	"gap_suggestions_hide": "Ocultar sugestões",
 	"pantry_cta": "Montar refeição com o que tenho",
 	"pantry_title": "O que você tem?",
 	"pantry_selected_label": "Selecionados",

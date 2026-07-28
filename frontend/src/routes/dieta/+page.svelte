@@ -604,6 +604,12 @@
 	const showGap = $derived(
 		!!gap && gap.suggestions.length > 0 && gap.primary !== 'no_goal' && gap.primary !== 'complete'
 	);
+	// Acordeao: a lista de sugestoes (alimentos/receitas) comeca oculta - o card mostra
+	// so o resumo do que falta, sem lotar a tela; o toque no destaque abre a lista.
+	let showGapSuggestions = $state(false);
+	const gapSuggestionCount = $derived(
+		gap ? gap.suggestions.length + gap.recipe_suggestions.length : 0
+	);
 
 	const gapHeadline = $derived.by(() => {
 		if (!gap || !gap.remaining) return '';
@@ -782,36 +788,46 @@
 					</div>
 				</div>
 			{/if}
-			<div class="mt-3 space-y-2">
-				{#each gap.suggestions as s (s.food.id)}
-					<div class="flex items-center gap-2 rounded-2xl bg-white px-3 py-2">
-						<div class="min-w-0 flex-1">
-							<p class="truncate text-sm font-semibold text-slate-800">{s.food.name}</p>
-							<p class="text-xs text-slate-500">{suggestionHint(s)}</p>
+			<button
+				type="button"
+				onclick={() => (showGapSuggestions = !showGapSuggestions)}
+				class="mt-3 flex w-full items-center justify-center gap-2 rounded-2xl bg-emerald-600 py-2.5 text-sm font-bold text-white shadow-sm active:bg-emerald-700"
+			>
+				{showGapSuggestions ? m.gap_suggestions_hide() : m.gap_suggestions_show({ n: gapSuggestionCount })}
+				<svg viewBox="0 0 24 24" class="h-4 w-4 transition-transform {showGapSuggestions ? 'rotate-180' : ''}" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6" stroke-linecap="round" stroke-linejoin="round" /></svg>
+			</button>
+			{#if showGapSuggestions}
+				<div class="mt-2 space-y-2">
+					{#each gap.suggestions as s (s.food.id)}
+						<div class="flex items-center gap-2 rounded-2xl bg-white px-3 py-2">
+							<div class="min-w-0 flex-1">
+								<p class="truncate text-sm font-semibold text-slate-800">{s.food.name}</p>
+								<p class="text-xs text-slate-500">{suggestionHint(s)}</p>
+							</div>
+							<button
+								type="button"
+								aria-label={m.sub_action()}
+								disabled={loadingSuggSubs}
+								onclick={() => openSuggestionSubs(s, mealByTime())}
+								class="grid h-9 w-9 shrink-0 place-items-center rounded-xl border-2 border-slate-200 text-slate-500 active:bg-slate-100 disabled:opacity-50"
+							>
+								<svg viewBox="0 0 24 24" class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 18h1.4c1.3 0 2.5-.6 3.3-1.7l6.1-8.6c.7-1.1 2-1.7 3.3-1.7H22" /><path d="m18 2 4 4-4 4" /><path d="M2 6h1.9c1.5 0 2.9.9 3.6 2.2" /><path d="M22 18h-5.9c-1.3 0-2.6-.7-3.3-1.8l-.5-.8" /><path d="m18 14 4 4-4 4" /></svg>
+							</button>
+							<button
+								type="button"
+								disabled={addBusy}
+								onclick={() => addSuggestion(s)}
+								class="shrink-0 rounded-xl bg-emerald-600 px-3 py-2 text-sm font-bold text-white active:bg-emerald-700 disabled:opacity-50"
+							>
+								+ {m.reco_add()}
+							</button>
 						</div>
-						<button
-							type="button"
-							aria-label={m.sub_action()}
-							disabled={loadingSuggSubs}
-							onclick={() => openSuggestionSubs(s, mealByTime())}
-							class="grid h-9 w-9 shrink-0 place-items-center rounded-xl border-2 border-slate-200 text-slate-500 active:bg-slate-100 disabled:opacity-50"
-						>
-							<svg viewBox="0 0 24 24" class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 18h1.4c1.3 0 2.5-.6 3.3-1.7l6.1-8.6c.7-1.1 2-1.7 3.3-1.7H22" /><path d="m18 2 4 4-4 4" /><path d="M2 6h1.9c1.5 0 2.9.9 3.6 2.2" /><path d="M22 18h-5.9c-1.3 0-2.6-.7-3.3-1.8l-.5-.8" /><path d="m18 14 4 4-4 4" /></svg>
-						</button>
-						<button
-							type="button"
-							disabled={addBusy}
-							onclick={() => addSuggestion(s)}
-							class="shrink-0 rounded-xl bg-emerald-600 px-3 py-2 text-sm font-bold text-white active:bg-emerald-700 disabled:opacity-50"
-						>
-							+ {m.reco_add()}
-						</button>
-					</div>
-				{/each}
-				{#each gap.recipe_suggestions as rs (rs.slug)}
-					{@render recipeSuggestionCard(rs, mealByTime())}
-				{/each}
-			</div>
+					{/each}
+					{#each gap.recipe_suggestions as rs (rs.slug)}
+						{@render recipeSuggestionCard(rs, mealByTime())}
+					{/each}
+				</div>
+			{/if}
 		</section>
 	{/if}
 
