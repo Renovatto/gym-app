@@ -3,6 +3,7 @@
 	import { achievementText } from '$lib/achievementsContent';
 	import { titleIcon, titleName } from '$lib/titleContent';
 	import { celebrateAchievement, triggerAchievementCelebrations } from '$lib/celebrationTrigger';
+	import { scenePalette } from '$lib/celebrationDefs';
 	import { showToast } from '$lib/toast.svelte';
 	import { m } from '$lib/paraglide/messages';
 	import { getLocale } from '$lib/paraglide/runtime';
@@ -33,7 +34,7 @@
 
 	function openAchievement(ach: AchievementItem): void {
 		if (ach.unlocked) {
-			celebrateAchievement(ach, locale, () => shareAchievement(ach));
+			celebrateAchievement(ach, locale, (scene) => shareAchievement(ach, scene));
 		} else {
 			openedAchievement = ach;
 		}
@@ -61,10 +62,12 @@
 	}
 
 	// Gera a imagem da medalha (nao existe um arquivo real por conquista - o "icone"
-	// e so um emoji). Desenha uma MEDALHA de verdade (fita + aro dourado + disco),
-	// nao um cartao branco generico - a 1a versao parecia print de tela, nao troco.
-	async function buildAchievementImage(ach: AchievementItem): Promise<Blob> {
+	// e so um emoji). Desenha uma MEDALHA de verdade (fita + aro dourado + disco) nas
+	// cores do CENARIO sorteado para a animacao, para a imagem sair da mesma familia
+	// visual da celebracao que a pessoa acabou de ver (ver SCENE_PALETTE).
+	async function buildAchievementImage(ach: AchievementItem, scene: string): Promise<Blob> {
 		const text = achievementText(locale, ach.code);
+		const palette = scenePalette(scene);
 		const size = 900;
 		const canvas = document.createElement('canvas');
 		canvas.width = size;
@@ -72,10 +75,10 @@
 		const ctx = canvas.getContext('2d');
 		if (!ctx) throw new Error('canvas unsupported');
 
-		const bg = ctx.createLinearGradient(0, 0, size, size);
-		bg.addColorStop(0, '#10b981');
-		bg.addColorStop(0.55, '#047857');
-		bg.addColorStop(1, '#064e3b');
+		// mesmo sentido do gradiente do cenario em CSS: claro no topo, escuro embaixo
+		const bg = ctx.createLinearGradient(0, 0, 0, size);
+		bg.addColorStop(0, palette.from);
+		bg.addColorStop(1, palette.to);
 		ctx.fillStyle = bg;
 		ctx.fillRect(0, 0, size, size);
 
@@ -90,8 +93,19 @@
 		ctx.fillStyle = glow;
 		ctx.fillRect(0, 0, size, size);
 
+		// aneis em volta da medalha, como os .ce-ring da animacao (na cor de destaque)
+		ctx.strokeStyle = palette.kick;
+		for (const [radius, alpha] of [[outerR + 26, 0.55] as const, [outerR + 58, 0.25] as const]) {
+			ctx.globalAlpha = alpha;
+			ctx.lineWidth = 4;
+			ctx.beginPath();
+			ctx.arc(medalCx, medalCy, radius, 0, Math.PI * 2);
+			ctx.stroke();
+		}
+		ctx.globalAlpha = 1;
+
 		ctx.textAlign = 'center';
-		ctx.fillStyle = 'rgba(255,255,255,0.85)';
+		ctx.fillStyle = palette.kick;
 		ctx.font = '700 26px system-ui, sans-serif';
 		ctx.fillText(m.achievement_unlocked_kicker().toUpperCase(), size / 2, 80);
 
@@ -138,29 +152,31 @@
 		ctx.strokeStyle = 'rgba(255,255,255,0.6)';
 		ctx.stroke();
 
-		// nome e descricao, fora do disco/fita, direto no fundo
-		ctx.fillStyle = '#ffffff';
+		// nome e descricao, fora do disco/fita, direto no fundo (cores do cenario)
+		ctx.fillStyle = palette.ink;
 		ctx.font = '800 50px system-ui, sans-serif';
 		ctx.fillText(text.name, size / 2, 700);
 
-		ctx.fillStyle = 'rgba(255,255,255,0.85)';
+		ctx.fillStyle = palette.sub;
 		ctx.font = '500 28px system-ui, sans-serif';
 		wrapCanvasText(ctx, text.description, size / 2, 750, size - 220, 36);
 
-		ctx.fillStyle = 'rgba(255,255,255,0.6)';
+		ctx.globalAlpha = 0.7;
+		ctx.fillStyle = palette.sub;
 		ctx.font = '700 24px system-ui, sans-serif';
 		ctx.fillText(m.app_name().toUpperCase(), size / 2, size - 50);
+		ctx.globalAlpha = 1;
 
 		return new Promise((resolve, reject) => {
 			canvas.toBlob((blob) => (blob ? resolve(blob) : reject(new Error('toBlob failed'))), 'image/png');
 		});
 	}
 
-	async function shareAchievement(ach: AchievementItem): Promise<void> {
+	async function shareAchievement(ach: AchievementItem, scene: string): Promise<void> {
 		const text = achievementText(locale, ach.code);
 		const message = m.achievement_share_text({ name: text.name, description: text.description, app: m.app_name() });
 		try {
-			const blob = await buildAchievementImage(ach);
+			const blob = await buildAchievementImage(ach, scene);
 			const file = new File([blob], `conquista-${ach.code}.png`, { type: 'image/png' });
 			if (navigator.canShare?.({ files: [file] })) {
 				await navigator.share({ files: [file], text: message });

@@ -80,6 +80,39 @@ export function pickRandom<T>(list: T[]): T {
 	return list[(Math.random() * list.length) | 0];
 }
 
+/** Paleta de cada cenario para desenho em CANVAS (imagem de compartilhar a medalha).
+ * Espelha os cenarios em CSS do CelebrationOverlay: 'from'/'to' sao as duas pontas do
+ * gradiente de fundo, 'ink' e o titulo, 'sub' a descricao e 'kick' o texto de topo e
+ * os aneis em volta da medalha. Existe separado porque a versao CSS mora em variaveis
+ * do componente (--sk-bg etc.) e nao da pra ler do JS - ao mudar um cenario la, mude
+ * aqui tambem para a imagem continuar da mesma familia visual da animacao. */
+export interface ScenePalette {
+	from: string;
+	to: string;
+	ink: string;
+	sub: string;
+	kick: string;
+}
+
+export const SCENE_PALETTE: Record<string, ScenePalette> = {
+	paper: { from: '#f6faf7', to: '#dde7e0', ink: '#17211c', sub: '#5a6a60', kick: '#047857' },
+	gold: { from: '#fff6da', to: '#e9a92c', ink: '#3d2b05', sub: '#6d5210', kick: '#8a5800' },
+	night: { from: '#1a2150', to: '#0a0e2a', ink: '#ffffff', sub: '#b9c2ea', kick: '#ffd166' },
+	violet: { from: '#542a8f', to: '#22093f', ink: '#fdf4ff', sub: '#d9bcf7', kick: '#f0abfc' },
+	fire: { from: '#8a2d0e', to: '#2e0a06', ink: '#fff7ed', sub: '#fdc99b', kick: '#fbbf24' },
+	sky: { from: '#eaf4ff', to: '#bcd8f5', ink: '#12294f', sub: '#42618f', kick: '#1d4ed8' },
+	mint: { from: '#eafcf2', to: '#bfeed5', ink: '#083b2b', sub: '#256a52', kick: '#047857' },
+	sunset: { from: '#ff8b3d', to: '#b32964', ink: '#ffffff', sub: '#ffe3ea', kick: '#ffe45e' },
+	slate: { from: '#2b3950', to: '#131c2b', ink: '#f2f6fb', sub: '#9fb0c6', kick: '#34d399' },
+	frost: { from: '#24507e', to: '#0b1a30', ink: '#f0f7ff', sub: '#aecbe9', kick: '#fca5a5' },
+	bloom: { from: '#ffe3ee', to: '#fff3c4', ink: '#2c2233', sub: '#6c5c74', kick: '#db2777' },
+	spooky: { from: '#d3590f', to: '#2a0a3d', ink: '#fff7ed', sub: '#f3bd9c', kick: '#facc15' }
+};
+
+export function scenePalette(scene: string): ScenePalette {
+	return SCENE_PALETTE[scene] ?? SCENE_PALETTE.gold;
+}
+
 // Espelha MILESTONE_CODES do backend (services/achievements.py): conquistas de meta
 // alta que merecem a celebracao "de marco grande" em vez da celebracao padrao.
 export const MILESTONE_CODES = new Set([

@@ -22,8 +22,11 @@ const TITLE_TIER_SEEN_KEY = 'gymapp.titleTierSeen';
 /** Dispara a celebracao cheia de uma conquista JA desbloqueada, sob demanda (toque
  * direto na medalha em /conquistas) - mesma selecao de pool/conteudo do desbloqueio
  * original, so que reutilizavel para qualquer item unlocked, nao so o mais recente.
- * onShare: quando informado, a overlay mostra o botao de compartilhar. */
-export function celebrateAchievement(item: AchievementItem, locale: Locale, onShare?: () => void): void {
+ * onShare: quando informado, a overlay mostra o botao de compartilhar (e devolve o
+ * cenario sorteado, pra imagem gerada sair nas cores da animacao que a pessoa viu). */
+export function celebrateAchievement(
+	item: AchievementItem, locale: Locale, onShare?: (scene: string) => void
+): void {
 	const text = achievementText(locale, item.code);
 	const pool = MILESTONE_CODES.has(item.code)
 		? POOL_MILESTONE
