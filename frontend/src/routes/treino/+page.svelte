@@ -250,15 +250,13 @@
 	 de atividade do TDEE ja embute o exercicio medio, ver services/goals.py). O
 	 botao fica no topo (acao rapida); o resultado do dia fica la embaixo, junto
 	 do historico de treino. -->
-<section class="mb-4 rounded-3xl bg-white p-4 shadow-sm">
-	<button
-		type="button"
-		onclick={() => (showLogActivity = true)}
-		class="flex h-11 w-full items-center justify-center rounded-2xl border-2 border-dashed border-emerald-200 text-sm font-bold text-emerald-700 active:bg-emerald-50"
-	>
-		{m.activity_cta()}
-	</button>
-</section>
+<button
+	type="button"
+	onclick={() => (showLogActivity = true)}
+	class="mb-4 flex h-11 w-full items-center justify-center rounded-2xl border-2 border-dashed border-emerald-200 text-sm font-bold text-emerald-700 active:bg-emerald-50"
+>
+	{m.activity_cta()}
+</button>
 
 {#if showLogActivity}
 	<LogActivityModal
