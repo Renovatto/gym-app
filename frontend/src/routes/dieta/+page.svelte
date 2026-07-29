@@ -314,12 +314,12 @@
 	// O estado do layout reseta por dia; nomes personalizados ficam num historico
 	// no aparelho para reutilizar sem digitar de novo.
 	const PRINCIPAL_MEALS: MealType[] = ['breakfast', 'lunch', 'dinner'];
-	const EXTRA_MEALS: MealType[] = ['snack', 'pre_workout', 'supper', 'other'];
+	const EXTRA_MEALS: MealType[] = ['snack', 'pre_workout', 'post_workout', 'supper', 'other'];
 	// Ordem em que os cards aparecem. E preferencia GERAL da pessoa (vale para todos
 	// os dias), nao estado do dia: quem lanca o jantar antes do lanche quer essa
 	// ordem amanha tambem. Comeca na sequencia cronologica classica.
 	const DEFAULT_MEAL_ORDER: MealType[] = [
-		'breakfast', 'pre_workout', 'lunch', 'snack', 'dinner', 'supper', 'other'
+		'breakfast', 'pre_workout', 'post_workout', 'lunch', 'snack', 'dinner', 'supper', 'other'
 	];
 	const MEAL_ORDER_KEY = 'gymapp.diet.mealOrder';
 	const DAY_STATE_KEY = 'gymapp.diet.dayMeals';
@@ -330,6 +330,7 @@
 	const MEAL_ICON_PATHS: Record<MealType, string> = {
 		breakfast: 'M12 2v3M4.9 7.9l2.1 2.1M19.1 7.9l-2.1 2.1M2 18h20M6.5 18a5.5 5.5 0 0 1 11 0',
 		pre_workout: 'M6.5 7v10M17.5 7v10M3.5 9.5v5M20.5 9.5v5M6.5 12h11',
+		post_workout: 'M9 2.5h6v3H9zM9.5 5.5h5l1 13a2.5 2.5 0 0 1-2.5 2.5h-2a2.5 2.5 0 0 1-2.5-2.5zM9.2 12h6.1',
 		lunch: 'M7 3v6a2 2 0 1 0 4 0V3M9 11v10M17.5 3c-1.6 1.2-2.3 3-2.3 5.2 0 1.7.9 2.8 2.3 2.8v10',
 		snack: 'M12 8.5c-1-1-2.8-1.6-4.4-.6C5.8 9 5.3 11.2 6.2 14c.9 2.8 2.4 5.5 3.8 5.5.8 0 1.2-.4 2-.4s1.2.4 2 .4c1.4 0 2.9-2.7 3.8-5.5.9-2.8.4-5-1.4-6.1-1.6-1-3.4-.4-4.4.6ZM12 8.5V5.5M12 5.5c0-1.4 1-2.5 2.5-2.5',
 		dinner: 'M20 14.5A8.5 8.5 0 0 1 9.5 4a8.5 8.5 0 1 0 10.5 10.5Z',
@@ -340,6 +341,7 @@
 	const MEAL_ICON_TINTS: Record<MealType, string> = {
 		breakfast: 'bg-amber-100 text-amber-600',
 		pre_workout: 'bg-violet-100 text-violet-600',
+		post_workout: 'bg-rose-100 text-rose-600',
 		lunch: 'bg-sky-100 text-sky-600',
 		snack: 'bg-lime-100 text-lime-600',
 		dinner: 'bg-indigo-100 text-indigo-600',

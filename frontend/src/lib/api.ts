@@ -334,6 +334,7 @@ export type FoodCategory =
 export type MealType =
 	| 'breakfast'
 	| 'pre_workout'
+	| 'post_workout'
 	| 'lunch'
 	| 'snack'
 	| 'dinner'
@@ -352,6 +353,39 @@ export type StandaloneActivityKind =
 	| 'dance'
 	| 'other';
 export type ActivityIntensity = 'light' | 'moderate' | 'hard';
+
+// --- Compartilhar entre contas -------------------------------------------
+export type ConnectionStatus = 'pending' | 'accepted' | 'blocked';
+export type SharedItemKind = 'recipe' | 'food';
+
+export interface Connection {
+	id: number;
+	person_name: string;
+	person_email: string;
+	status: ConnectionStatus;
+	// quem convidou: define se a tela mostra aceitar/recusar ou "convite enviado"
+	i_invited: boolean;
+	created_at: string;
+}
+
+export interface ShareOffer {
+	id: number;
+	item_kind: SharedItemKind;
+	item_name: string;
+	from_name: string;
+	created_at: string;
+}
+
+export interface ShareItemRef {
+	item_kind: SharedItemKind;
+	item_id: number;
+}
+
+export interface ReceivedItem {
+	item_kind: SharedItemKind;
+	item_id: number;
+	from_name: string;
+}
 
 export interface StandaloneActivity {
 	id: number;
@@ -765,6 +799,25 @@ export const api = {
 		request<{ kcal: number }>(
 			`/me/activities/estimate?kind=${kind}&intensity=${intensity}&duration_min=${durationMin}`
 		),
+	// compartilhar entre contas: conexao, oferta e o que ja foi aceito
+	getConnections: () => request<Connection[]>('/me/sharing/connections'),
+	inviteConnection: (email: string) =>
+		request<Connection>('/me/sharing/connections', { method: 'POST', body: { email } }),
+	acceptConnection: (id: number) =>
+		request<Connection>(`/me/sharing/connections/${id}/accept`, { method: 'POST' }),
+	removeConnection: (id: number) =>
+		request<void>(`/me/sharing/connections/${id}`, { method: 'DELETE' }),
+	getShareOffers: () => request<ShareOffer[]>('/me/sharing/offers'),
+	createShareOffers: (connectionId: number, items: ShareItemRef[]) =>
+		request<ShareOffer[]>('/me/sharing/offers', {
+			method: 'POST',
+			body: { connection_id: connectionId, items }
+		}),
+	acceptShareOffer: (id: number) =>
+		request<ReceivedItem>(`/me/sharing/offers/${id}/accept`, { method: 'POST' }),
+	declineShareOffer: (id: number) =>
+		request<void>(`/me/sharing/offers/${id}/decline`, { method: 'POST' }),
+	getReceivedItems: () => request<ReceivedItem[]>('/me/sharing/received'),
 	getActivities: (day: string) => request<StandaloneActivity[]>(`/me/activities?day=${day}`),
 	// dias que tem atividade avulsa, para marcar no calendario de treino
 	getActivityDays: () => request<string[]>('/me/activities/days'),

@@ -252,6 +252,19 @@
 {/if}
 
 <a
+	href="/perfil/conexoes"
+	class="mb-3 flex items-center justify-between rounded-3xl bg-white p-4 shadow-sm active:bg-slate-50"
+>
+	<div class="flex items-center gap-3">
+		<span class="grid h-10 w-10 place-items-center rounded-2xl bg-emerald-50 text-emerald-600">
+			<svg viewBox="0 0 24 24" class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" /><circle cx="9" cy="7" r="4" /><path d="M22 21v-2a4 4 0 0 0-3-3.9M16 3.1a4 4 0 0 1 0 7.8" /></svg>
+		</span>
+		<span class="font-semibold text-slate-800">{m.sharing_title()}</span>
+	</div>
+	<svg viewBox="0 0 24 24" class="h-5 w-5 text-slate-300" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 6l6 6-6 6" stroke-linecap="round" stroke-linejoin="round" /></svg>
+</a>
+
+<a
 	href="/guia"
 	class="mb-4 flex items-center justify-between rounded-3xl bg-white p-4 shadow-sm active:bg-slate-50"
 >

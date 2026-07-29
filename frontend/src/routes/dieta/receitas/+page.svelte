@@ -1,6 +1,16 @@
 <script lang="ts">
-	import { api, type LibraryRecipe, type Recipe, type RecipeView } from '$lib/api';
+	import {
+		ApiError,
+		api,
+		type Connection,
+		type LibraryRecipe,
+		type ReceivedItem,
+		type Recipe,
+		type RecipeView,
+		type ShareOffer
+	} from '$lib/api';
 	import RecipeViewModal from '$lib/components/RecipeViewModal.svelte';
+	import { errorMessage } from '$lib/errors';
 	import { normalizeSearch, searchMatches } from '$lib/text';
 	import { showToast } from '$lib/toast.svelte';
 	import { m } from '$lib/paraglide/messages';
@@ -25,9 +35,118 @@
 	let loading = $state(true);
 	const nf = new Intl.NumberFormat(getLocale());
 
+	// --- Compartilhar entre contas -------------------------------------------
+	let connections = $state<Connection[]>([]);
+	let offers = $state<ShareOffer[]>([]);
+	let received = $state<ReceivedItem[]>([]);
+
+	const partners = $derived(connections.filter((c) => c.status === 'accepted'));
+	// receita copiada de alguem -> nome de quem mandou (o selo "de Ana" na linha)
+	const receivedFrom = $derived(
+		new Map(received.filter((r) => r.item_kind === 'recipe').map((r) => [r.item_id, r.from_name]))
+	);
+
+	async function loadSharing(): Promise<void> {
+		[connections, offers, received] = await Promise.all([
+			api.getConnections(),
+			api.getShareOffers(),
+			api.getReceivedItems()
+		]);
+	}
+
 	async function load(): Promise<void> {
 		[recipes, library] = await Promise.all([api.getRecipes(), api.getRecipeLibrary()]);
+		await loadSharing();
 		loading = false;
+	}
+
+	// A pilula tem dois estados de proposito: com contador ela avisa que tem coisa
+	// esperando aceite (e abre a caixa de entrada); sem contador ela e so um filtro.
+	let showInbox = $state(false);
+	let onlyReceived = $state(false);
+	let answering = $state<number | null>(null);
+
+	function tapReceivedPill(): void {
+		if (offers.length > 0) {
+			showInbox = true;
+			return;
+		}
+		onlyReceived = !onlyReceived;
+	}
+
+	async function acceptOffer(offer: ShareOffer): Promise<void> {
+		answering = offer.id;
+		try {
+			await api.acceptShareOffer(offer.id);
+			await load();
+			showToast(m.sharing_added_toast());
+			if (offers.length === 0) showInbox = false;
+		} catch (e) {
+			showToast(errorMessage(e instanceof ApiError ? e.code : 'GENERIC_ERROR'));
+			await loadSharing();
+		} finally {
+			answering = null;
+		}
+	}
+
+	async function declineOffer(offer: ShareOffer): Promise<void> {
+		answering = offer.id;
+		try {
+			await api.declineShareOffer(offer.id);
+			await loadSharing();
+			showToast(m.sharing_dismissed_toast());
+			if (offers.length === 0) showInbox = false;
+		} finally {
+			answering = null;
+		}
+	}
+
+	// Selecao multipla: mandar as receitas todas de uma vez e o caso do primeiro dia.
+	let selecting = $state(false);
+	let selectedIds = $state<number[]>([]);
+	let pickingPartner = $state(false);
+	let sending = $state(false);
+
+	function toggleSelected(id: number): void {
+		selectedIds = selectedIds.includes(id)
+			? selectedIds.filter((x) => x !== id)
+			: [...selectedIds, id];
+	}
+
+	function startSelecting(): void {
+		selecting = true;
+		selectedIds = [];
+	}
+
+	function cancelSelecting(): void {
+		selecting = false;
+		selectedIds = [];
+		pickingPartner = false;
+	}
+
+	function confirmShare(): void {
+		// com um parceiro so nao ha o que escolher: vai direto
+		if (partners.length === 1) {
+			shareWith(partners[0]);
+			return;
+		}
+		pickingPartner = true;
+	}
+
+	async function shareWith(partner: Connection): Promise<void> {
+		sending = true;
+		try {
+			await api.createShareOffers(
+				partner.id,
+				selectedIds.map((id) => ({ item_kind: 'recipe' as const, item_id: id }))
+			);
+			cancelSelecting();
+			showToast(m.sharing_sent_toast({ name: partner.person_name }));
+		} catch (e) {
+			showToast(errorMessage(e instanceof ApiError ? e.code : 'GENERIC_ERROR'));
+		} finally {
+			sending = false;
+		}
 	}
 
 	$effect(() => {
@@ -39,7 +158,9 @@
 	let query = $state('');
 	const term = $derived(normalizeSearch(query));
 	const filteredMyRecipes = $derived(
-		recipes.filter((r) => searchMatches(r.name, term))
+		recipes.filter(
+			(r) => searchMatches(r.name, term) && (!onlyReceived || receivedFrom.has(r.id))
+		)
 	);
 
 	async function toggleRecipeFav(recipe: Recipe): Promise<void> {
@@ -96,7 +217,20 @@
 			<path d="M15 6l-6 6 6 6" stroke-linecap="round" stroke-linejoin="round" />
 		</svg>
 	</a>
-	<h1 class="text-2xl font-bold">{m.my_recipes()}</h1>
+	<h1 class="min-w-0 flex-1 truncate text-2xl font-bold">{m.my_recipes()}</h1>
+	{#if !loading && partners.length > 0 && recipes.length > 0}
+		<button
+			type="button"
+			aria-label={m.sharing_share_action()}
+			title={m.sharing_share_action()}
+			onclick={() => (selecting ? cancelSelecting() : startSelecting())}
+			class="grid h-10 w-10 shrink-0 place-items-center rounded-full shadow-sm {selecting
+				? 'bg-emerald-600 text-white'
+				: 'bg-white text-slate-500 active:bg-slate-100'}"
+		>
+			<svg viewBox="0 0 24 24" class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3" /><circle cx="6" cy="12" r="3" /><circle cx="18" cy="19" r="3" /><path d="M8.6 13.5l6.8 4M15.4 6.5l-6.8 4" /></svg>
+		</button>
+	{/if}
 </div>
 
 {#if loading}
@@ -125,6 +259,38 @@
 		{/if}
 	</div>
 
+	<!-- Pilula "Recebidas": com contador ela avisa que tem coisa esperando aceite e
+		 abre a caixa de entrada; sem contador, e so um filtro da lista. -->
+	{#if offers.length > 0 || received.length > 0}
+		<div class="mb-3 flex gap-2">
+			<button
+				type="button"
+				onclick={() => (onlyReceived = false)}
+				class="rounded-full px-4 py-2 text-sm font-bold {onlyReceived
+					? 'bg-white text-slate-500 shadow-sm'
+					: 'bg-slate-900 text-white'}"
+			>
+				{m.filter_all()}
+			</button>
+			<button
+				type="button"
+				onclick={tapReceivedPill}
+				class="flex items-center gap-2 rounded-full px-4 py-2 text-sm font-bold {offers.length > 0
+					? 'bg-rose-50 text-rose-700 ring-2 ring-rose-200'
+					: onlyReceived
+						? 'bg-slate-900 text-white'
+						: 'bg-white text-slate-500 shadow-sm'}"
+			>
+				{m.sharing_received_pill()}
+				{#if offers.length > 0}
+					<span class="grid h-5 min-w-5 place-items-center rounded-full bg-rose-600 px-1.5 text-[11px] text-white">
+						{offers.length}
+					</span>
+				{/if}
+			</button>
+		</div>
+	{/if}
+
 	{#if recipes.length === 0}
 		<div class="rounded-3xl border-2 border-dashed border-slate-200 p-8 text-center">
 			<p class="font-semibold text-slate-600">{m.no_recipes_title()}</p>
@@ -135,7 +301,37 @@
 	{:else}
 		<div class="space-y-2">
 			{#each filteredMyRecipes as recipe (recipe.id)}
-				<div class="flex items-center gap-1 rounded-2xl bg-white p-1.5 shadow-sm">
+				{@const sharedBy = receivedFrom.get(recipe.id)}
+				{@const isSelected = selectedIds.includes(recipe.id)}
+				<div
+					class="flex items-center gap-1 rounded-2xl bg-white p-1.5 shadow-sm {selecting && isSelected
+						? 'ring-2 ring-emerald-500'
+						: ''}"
+				>
+					{#if selecting}
+						<button
+							type="button"
+							aria-label={recipe.name}
+							onclick={() => toggleSelected(recipe.id)}
+							class="flex min-w-0 flex-1 items-center gap-2.5 rounded-xl p-2 text-left active:bg-slate-50"
+						>
+							<span
+								class="grid h-6 w-6 shrink-0 place-items-center rounded-lg border-2 {isSelected
+									? 'border-emerald-600 bg-emerald-600 text-white'
+									: 'border-slate-300'}"
+							>
+								{#if isSelected}
+									<svg viewBox="0 0 24 24" class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="3"><path d="M5 12l5 5L19 7" stroke-linecap="round" stroke-linejoin="round" /></svg>
+								{/if}
+							</span>
+							<div class="min-w-0 flex-1">
+								<p class="truncate font-bold text-slate-900">{recipe.name}</p>
+								<p class="truncate text-sm text-slate-500">
+									{nf.format(Math.round(recipe.per_serving.kcal))} kcal/{m.serving_singular()}
+								</p>
+							</div>
+						</button>
+					{:else}
 					<a
 						href="/dieta/receita/{recipe.id}"
 						class="flex min-w-0 flex-1 items-center rounded-xl p-2 active:bg-slate-50"
@@ -147,9 +343,16 @@
 								{recipe.ingredients.length === 1 ? m.ingredient_singular() : m.ingredient_plural()}
 								· {nf.format(Math.round(recipe.per_serving.kcal))} kcal/{m.serving_singular()}
 							</p>
+							<!-- a origem e um fato, nao um estado: o selo fica mesmo depois de editar -->
+							{#if sharedBy}
+								<span class="mt-1 inline-block rounded-full bg-rose-50 px-2 py-0.5 text-[10px] font-bold text-rose-700">
+									{m.sharing_from({ name: sharedBy })}
+								</span>
+							{/if}
 						</div>
 					</a>
-					<!-- grupo de acoes: alvos de toque maiores (h-11) e bem juntos (gap-0) -->
+					<!-- grupo de acoes: alvos de toque maiores (h-11) e bem juntos (gap-0).
+						 No modo de selecao ele sai: a linha inteira e um alvo de escolha. -->
 					<div class="flex shrink-0 items-center">
 						<button
 							type="button"
@@ -187,17 +390,20 @@
 							<svg viewBox="0 0 24 24" class="h-[22px] w-[22px]" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9M16.5 3.5a2.1 2.1 0 013 3L7 19l-4 1 1-4z" /></svg>
 						</a>
 					</div>
+					{/if}
 				</div>
 			{/each}
 		</div>
 	{/if}
 
-	<a
-		href="/dieta/receita/nova"
-		class="mt-4 flex h-14 w-full items-center justify-center rounded-2xl bg-emerald-600 text-lg font-bold text-white active:bg-emerald-700"
-	>
-		+ {m.create_recipe()}
-	</a>
+	{#if !selecting}
+		<a
+			href="/dieta/receita/nova"
+			class="mt-4 flex h-14 w-full items-center justify-center rounded-2xl bg-emerald-600 text-lg font-bold text-white active:bg-emerald-700"
+		>
+			+ {m.create_recipe()}
+		</a>
+	{/if}
 
 	<!-- Biblioteca de receitas semente: macros calculados dos ingredientes do catalogo -->
 	{#if library.length > 0}
@@ -277,4 +483,129 @@
 <!-- Visualizacao read-only da receita (biblioteca ou minha) -->
 {#if viewRecipe}
 	<RecipeViewModal recipe={viewRecipe} onClose={() => (viewRecipe = null)} />
+{/if}
+
+<!-- Barra fixa do modo de selecao: fica no rodape para o polegar alcancar -->
+{#if selecting}
+	<div class="fixed inset-x-0 bottom-0 z-40 border-t border-slate-200 bg-white/95 p-4 backdrop-blur">
+		<div class="mx-auto flex max-w-md items-center gap-2">
+			<span class="min-w-0 flex-1 truncate text-sm font-bold text-slate-600">
+				{m.sharing_selected_count({ count: selectedIds.length })}
+			</span>
+			<button
+				type="button"
+				onclick={cancelSelecting}
+				class="h-11 shrink-0 rounded-xl px-3 text-sm font-semibold text-slate-500 active:bg-slate-100"
+			>
+				{m.cancel()}
+			</button>
+			<button
+				type="button"
+				disabled={selectedIds.length === 0 || sending}
+				onclick={confirmShare}
+				class="h-11 shrink-0 rounded-xl bg-emerald-600 px-5 text-sm font-bold text-white active:bg-emerald-700 disabled:opacity-40"
+			>
+				{m.sharing_share_action()}
+			</button>
+		</div>
+	</div>
+{/if}
+
+<!-- Com mais de uma conexao, escolher para quem vai -->
+{#if pickingPartner}
+	<div
+		class="fixed inset-0 z-50 flex items-end justify-center bg-black/50 p-4"
+		role="button"
+		tabindex="-1"
+		onclick={() => (pickingPartner = false)}
+		onkeydown={(e) => e.key === 'Escape' && (pickingPartner = false)}
+	>
+		<div
+			class="w-full max-w-md rounded-3xl bg-white p-5"
+			role="dialog"
+			tabindex="-1"
+			onclick={(e) => e.stopPropagation()}
+			onkeydown={() => {}}
+		>
+			<p class="mb-3 font-bold text-slate-900">{m.sharing_share_action()}</p>
+			<div class="space-y-2">
+				{#each partners as partner (partner.id)}
+					<button
+						type="button"
+						disabled={sending}
+						onclick={() => shareWith(partner)}
+						class="flex w-full items-center gap-3 rounded-2xl bg-slate-50 p-3 text-left active:bg-slate-100 disabled:opacity-50"
+					>
+						<span class="min-w-0 flex-1 truncate font-semibold text-slate-800">
+							{partner.person_name}
+						</span>
+						<svg viewBox="0 0 24 24" class="h-5 w-5 shrink-0 text-slate-300" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 6l6 6-6 6" stroke-linecap="round" stroke-linejoin="round" /></svg>
+					</button>
+				{/each}
+			</div>
+		</div>
+	</div>
+{/if}
+
+<!-- Caixa de entrada: nada entra na conta sem a pessoa aceitar -->
+{#if showInbox}
+	<div
+		class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
+		role="button"
+		tabindex="-1"
+		onclick={() => (showInbox = false)}
+		onkeydown={(e) => e.key === 'Escape' && (showInbox = false)}
+	>
+		<div
+			class="max-h-[90dvh] w-full max-w-md overflow-y-auto rounded-3xl bg-white p-5"
+			role="dialog"
+			tabindex="-1"
+			onclick={(e) => e.stopPropagation()}
+			onkeydown={() => {}}
+		>
+			<div class="mb-3 flex items-start justify-between gap-2">
+				<h2 class="text-lg font-bold text-slate-900">{m.sharing_inbox_title()}</h2>
+				<button
+					type="button"
+					aria-label={m.close()}
+					onclick={() => (showInbox = false)}
+					class="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-slate-100 text-slate-500 active:bg-slate-200"
+				>
+					<svg viewBox="0 0 24 24" class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 6l12 12M18 6L6 18" stroke-linecap="round" /></svg>
+				</button>
+			</div>
+
+			<div class="space-y-2">
+				{#each offers as offer (offer.id)}
+					<div class="rounded-2xl bg-slate-50 p-3">
+						<p class="text-[10px] font-bold tracking-wide text-slate-400 uppercase">
+							{offer.item_kind === 'recipe' ? m.sharing_kind_recipe() : m.sharing_kind_food()}
+						</p>
+						<p class="truncate font-bold text-slate-900">{offer.item_name}</p>
+						<p class="text-xs font-semibold text-rose-700">
+							{m.sharing_from({ name: offer.from_name })}
+						</p>
+						<div class="mt-2.5 flex gap-2">
+							<button
+								type="button"
+								disabled={answering === offer.id}
+								onclick={() => acceptOffer(offer)}
+								class="h-10 flex-1 rounded-xl bg-emerald-600 text-sm font-bold text-white active:bg-emerald-700 disabled:opacity-50"
+							>
+								{m.sharing_add_action()}
+							</button>
+							<button
+								type="button"
+								disabled={answering === offer.id}
+								onclick={() => declineOffer(offer)}
+								class="h-10 shrink-0 rounded-xl px-3 text-sm font-semibold text-slate-500 active:bg-slate-100 disabled:opacity-50"
+							>
+								{m.sharing_dismiss_action()}
+							</button>
+						</div>
+					</div>
+				{/each}
+			</div>
+		</div>
+	</div>
 {/if}

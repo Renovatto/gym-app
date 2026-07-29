@@ -273,6 +273,7 @@ _MEAL_TAG_AFFINITY: dict[MealType, set[str]] = {
     MealType.breakfast: {"quick", "sweet"},
     MealType.snack: {"quick", "sweet"},
     MealType.pre_workout: {"quick", "protein"},
+    MealType.post_workout: {"protein", "quick"},
     MealType.supper: {"quick"},
     MealType.lunch: {"protein", "budget", "veggie"},
     MealType.dinner: {"protein", "budget", "veggie"},
