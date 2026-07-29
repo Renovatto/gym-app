@@ -37,6 +37,20 @@ def estimate(
     return ActivityEstimateOut(kcal=kcal)
 
 
+@router.get("/days", response_model=list[date])
+def activity_days(user: CurrentUser, session: SessionDep) -> list[date]:
+    """Dias que tem alguma atividade avulsa, para marcar no calendario de treino
+    (o calendario precisa do mes inteiro de uma vez, nao de um dia por vez)."""
+    return list(
+        session.exec(
+            select(StandaloneActivity.entry_date)
+            .where(StandaloneActivity.user_id == user.id)
+            .distinct()
+            .order_by(desc(StandaloneActivity.entry_date))
+        ).all()
+    )
+
+
 @router.get("", response_model=list[StandaloneActivityOut])
 def list_activities(user: CurrentUser, session: SessionDep, day: date = Query(...)) -> list[StandaloneActivity]:
     return list(

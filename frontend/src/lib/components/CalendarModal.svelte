@@ -4,11 +4,16 @@
 	import { getLocale } from '$lib/paraglide/runtime';
 
 	// value: dia selecionado (YYYY-MM-DD). marked: dias com evento (mesmo formato).
+	// markedAlt: segundo tipo de evento, marcado em outra cor no mesmo dia (os dois
+	// pontinhos convivem). legend/legendAlt: o que cada cor significa.
 	// max: ultimo dia selecionavel (ex.: hoje). onselect/onclose: callbacks.
 	// onmonth: avisa quando o mes visivel muda (o pai carrega as marcacoes do mes).
 	let {
 		value,
 		marked = new Set<string>(),
+		markedAlt = new Set<string>(),
+		legend,
+		legendAlt,
 		max,
 		onselect,
 		onclose,
@@ -16,6 +21,9 @@
 	}: {
 		value: string;
 		marked?: Set<string>;
+		markedAlt?: Set<string>;
+		legend?: string;
+		legendAlt?: string;
 		max?: string;
 		onselect: (date: string) => void;
 		onclose: () => void;
@@ -114,6 +122,7 @@
 				{@const iso = isoOf(viewYear, viewMonth, day)}
 				{@const isSelected = iso === value}
 				{@const isMarked = marked.has(iso)}
+				{@const isMarkedAlt = markedAlt.has(iso)}
 				{@const isFuture = max ? iso > max : false}
 				<button
 					type="button"
@@ -127,11 +136,33 @@
 							: 'text-slate-700 active:bg-slate-100'}"
 				>
 					{day}
-					{#if isMarked && !isSelected}
-						<span class="absolute bottom-1 h-1.5 w-1.5 rounded-full bg-emerald-500"></span>
+					{#if (isMarked || isMarkedAlt) && !isSelected}
+						<span class="absolute bottom-1 left-1/2 flex -translate-x-1/2 gap-0.5">
+							{#if isMarked}
+								<span class="h-1.5 w-1.5 rounded-full bg-emerald-500"></span>
+							{/if}
+							{#if isMarkedAlt}
+								<span class="h-1.5 w-1.5 rounded-full bg-sky-500"></span>
+							{/if}
+						</span>
 					{/if}
 				</button>
 			{/each}
 		</div>
+
+		{#if legend || legendAlt}
+			<div class="mt-4 flex flex-wrap items-center justify-center gap-x-4 gap-y-1 text-[11px] font-semibold text-slate-500">
+				{#if legend}
+					<span class="flex items-center gap-1.5">
+						<span class="h-1.5 w-1.5 rounded-full bg-emerald-500"></span>{legend}
+					</span>
+				{/if}
+				{#if legendAlt}
+					<span class="flex items-center gap-1.5">
+						<span class="h-1.5 w-1.5 rounded-full bg-sky-500"></span>{legendAlt}
+					</span>
+				{/if}
+			</div>
+		{/if}
 	</div>
 </div>

@@ -766,6 +766,8 @@ export const api = {
 			`/me/activities/estimate?kind=${kind}&intensity=${intensity}&duration_min=${durationMin}`
 		),
 	getActivities: (day: string) => request<StandaloneActivity[]>(`/me/activities?day=${day}`),
+	// dias que tem atividade avulsa, para marcar no calendario de treino
+	getActivityDays: () => request<string[]>('/me/activities/days'),
 	addActivity: (activity: StandaloneActivityInput) =>
 		request<StandaloneActivity>('/me/activities', { method: 'POST', body: activity }),
 	deleteActivity: (id: number) => request<void>(`/me/activities/${id}`, { method: 'DELETE' }),
@@ -793,8 +795,13 @@ export const api = {
 	deleteRoutine: (id: number) => request<void>(`/me/routines/${id}`, { method: 'DELETE' }),
 	createFromTemplate: (frequency: number) =>
 		request<Routine[]>(`/me/routines/from-template?frequency=${frequency}`, { method: 'POST' }),
-	completeRoutine: (routineId: number) =>
-		request<WorkoutSession>(`/me/routines/${routineId}/complete`, { method: 'POST' }),
+	// day ausente = treino de agora. Com day, registra um treino esquecido em data
+	// passada (o backend usa o meio-dia local daquele dia).
+	completeRoutine: (routineId: number, day?: string) =>
+		request<WorkoutSession>(`/me/routines/${routineId}/complete`, {
+			method: 'POST',
+			body: day ? { day, tz_offset: new Date().getTimezoneOffset() } : {}
+		}),
 	startSession: (routineId: number | null) =>
 		request<WorkoutSession>('/me/sessions', { method: 'POST', body: { routine_id: routineId } }),
 	getActiveSession: () => request<WorkoutSession | null>('/me/sessions/active'),

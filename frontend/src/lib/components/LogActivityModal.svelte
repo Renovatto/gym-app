@@ -1,11 +1,18 @@
 <script lang="ts">
+	import { untrack } from 'svelte';
 	import { api, type ActivityIntensity, type StandaloneActivityKind } from '$lib/api';
 	import { ACTIVITY_DISTANCE_KINDS, ACTIVITY_KINDS, activityIntensityLabel, activityKindLabel } from '$lib/labels';
 	import Stepper from '$lib/components/Stepper.svelte';
 	import { showToast } from '$lib/toast.svelte';
 	import { m } from '$lib/paraglide/messages';
 
-	let { day, onClose, onAdded }: { day: string; onClose: () => void; onAdded: () => void } = $props();
+	// onAdded recebe o dia salvo: pode nao ser o de hoje, e quem chama precisa saber
+	// se deve recarregar a lista do dia ou so as marcacoes do calendario.
+	let { day, onClose, onAdded }: {
+		day: string;
+		onClose: () => void;
+		onAdded: (savedDay: string) => void;
+	} = $props();
 
 	function nowHHMM(): string {
 		const d = new Date();
@@ -14,6 +21,10 @@
 
 	let kind = $state<StandaloneActivityKind>('running');
 	let intensity = $state<ActivityIntensity>('moderate');
+	// Data comeca no dia de hoje (o `day` que veio da tela) e passa a ser do usuario:
+	// trocar aqui lanca uma atividade que ele esqueceu de registrar. Lemos o prop uma
+	// vez so (untrack) - depois disso quem manda no campo e quem esta digitando.
+	let entryDate = $state(untrack(() => day));
 	let timeOfDay = $state(nowHHMM());
 	let durationMin = $state(30);
 	let distanceKm = $state(5);
@@ -66,7 +77,7 @@
 		saving = true;
 		try {
 			await api.addActivity({
-				entry_date: day,
+				entry_date: entryDate,
 				time_of_day: timeOfDay,
 				kind,
 				duration_min: durationMin,
@@ -76,7 +87,7 @@
 			});
 			showToast(m.activity_added());
 			kcalTouched = false;
-			onAdded();
+			onAdded(entryDate);
 		} finally {
 			saving = false;
 		}
@@ -125,6 +136,21 @@
 
 		<div class="mt-4 grid grid-cols-2 gap-3">
 			<div>
+				<label class="mb-1.5 block text-xs font-bold text-slate-500" for="activity-date">
+					{m.activity_date_label()}
+				</label>
+				<input
+					id="activity-date"
+					type="date"
+					bind:value={entryDate}
+					max={day}
+					class="h-12 w-full rounded-xl border-2 px-3 text-center font-bold text-slate-900 {entryDate !==
+					day
+						? 'border-amber-300 bg-amber-50'
+						: 'border-slate-200'}"
+				/>
+			</div>
+			<div>
 				<label class="mb-1.5 block text-xs font-bold text-slate-500" for="activity-time">
 					{m.activity_time_label()}
 				</label>
@@ -135,10 +161,11 @@
 					class="h-12 w-full rounded-xl border-2 border-slate-200 px-3 text-center text-lg font-bold text-slate-900"
 				/>
 			</div>
-			<div>
-				<span class="mb-1.5 block text-xs font-bold text-slate-500">{m.activity_duration_label()}</span>
-				<Stepper bind:value={durationMin} min={5} max={300} step={5} />
-			</div>
+		</div>
+
+		<div class="mt-4">
+			<span class="mb-1.5 block text-xs font-bold text-slate-500">{m.activity_duration_label()}</span>
+			<Stepper bind:value={durationMin} min={5} max={300} step={5} />
 		</div>
 
 		<div class="mt-4">

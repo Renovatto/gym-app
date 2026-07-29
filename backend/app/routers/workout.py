@@ -1,6 +1,6 @@
 from datetime import date, datetime, time, timedelta, timezone
 
-from fastapi import APIRouter, HTTPException, Query, status
+from fastapi import APIRouter, Body, HTTPException, Query, status
 from sqlmodel import Session, asc, desc, select
 
 from ..deps import CurrentUser, SessionDep
@@ -16,6 +16,7 @@ from ..models import (
 )
 from ..schemas import (
     ExerciseOut,
+    RoutineCompleteIn,
     RoutineIn,
     RoutineItemOut,
     RoutineOut,
@@ -276,12 +277,44 @@ def _session_out(user_session: WorkoutSession) -> SessionOut:
     )
 
 
+def _completed_at(data: RoutineCompleteIn | None) -> datetime:
+    """Instante que fica gravado na sessão. Sem dia informado é agora; com dia
+    informado usamos MEIO-DIA local daquele dia, convertido para UTC - meio-dia
+    porque fica longe das duas viradas, então o treino cai no dia certo tanto para
+    quem lê a data em UTC quanto para quem converte para o fuso local."""
+    if data is None or data.day is None:
+        return datetime.now(timezone.utc)
+    # getTimezoneOffset() do cliente e UTC menos local em minutos: local + offset = UTC
+    stamp = datetime.combine(data.day, time(hour=12)) + timedelta(minutes=data.tz_offset)
+    # Fuso alem de +-12h (Kiribati, Samoa) empurraria o instante para o dia vizinho
+    # em UTC. Como o app identifica o dia do treino pela data em UTC, prendemos o
+    # horario dentro do dia escolhido: o dia que a pessoa marcou e o que vale.
+    stamp = min(max(stamp, datetime.combine(data.day, time(hour=0, minute=30))),
+                datetime.combine(data.day, time(hour=23, minute=30)))
+    return stamp.replace(tzinfo=timezone.utc)
+
+
+def _reject_future_day(data: RoutineCompleteIn | None) -> None:
+    if data is None or data.day is None:
+        return
+    client_today = (datetime.now(timezone.utc) - timedelta(minutes=data.tz_offset)).date()
+    if data.day > client_today:
+        raise HTTPException(status.HTTP_400_BAD_REQUEST, detail="FUTURE_DATE")
+
+
 @router.post("/me/routines/{routine_id}/complete", response_model=SessionOut, status_code=status.HTTP_201_CREATED)
-def complete_routine(routine_id: int, user: CurrentUser, session: SessionDep) -> SessionOut:
+def complete_routine(
+    routine_id: int,
+    user: CurrentUser,
+    session: SessionDep,
+    data: RoutineCompleteIn | None = Body(default=None),
+) -> SessionOut:
     """Registra o treino como feito conforme planejado, sem passar pela execução
-    passo a passo. Cria uma sessão já finalizada com as séries-alvo marcadas."""
+    passo a passo. Cria uma sessão já finalizada com as séries-alvo marcadas.
+    Aceita data passada para lançar um treino esquecido."""
+    _reject_future_day(data)
     routine = _get_owned_routine(session, routine_id, user.id)
-    now = datetime.now(timezone.utc)
+    now = _completed_at(data)
     ws = WorkoutSession(
         user_id=user.id, routine_id=routine.id, routine_name=routine.name,
         started_at=now, finished_at=now,

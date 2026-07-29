@@ -315,11 +315,60 @@
 	// no aparelho para reutilizar sem digitar de novo.
 	const PRINCIPAL_MEALS: MealType[] = ['breakfast', 'lunch', 'dinner'];
 	const EXTRA_MEALS: MealType[] = ['snack', 'pre_workout', 'supper', 'other'];
-	const MEAL_ORDER: MealType[] = [
+	// Ordem em que os cards aparecem. E preferencia GERAL da pessoa (vale para todos
+	// os dias), nao estado do dia: quem lanca o jantar antes do lanche quer essa
+	// ordem amanha tambem. Comeca na sequencia cronologica classica.
+	const DEFAULT_MEAL_ORDER: MealType[] = [
 		'breakfast', 'pre_workout', 'lunch', 'snack', 'dinner', 'supper', 'other'
 	];
+	const MEAL_ORDER_KEY = 'gymapp.diet.mealOrder';
 	const DAY_STATE_KEY = 'gymapp.diet.dayMeals';
 	const CUSTOM_HISTORY_KEY = 'gymapp.diet.customMealNames';
+
+	// Icone por refeicao: os principais usam metafora de horario (nascer do sol,
+	// talher, lua) e os extras usam o objeto (halter, maca, caneca).
+	const MEAL_ICON_PATHS: Record<MealType, string> = {
+		breakfast: 'M12 2v3M4.9 7.9l2.1 2.1M19.1 7.9l-2.1 2.1M2 18h20M6.5 18a5.5 5.5 0 0 1 11 0',
+		pre_workout: 'M6.5 7v10M17.5 7v10M3.5 9.5v5M20.5 9.5v5M6.5 12h11',
+		lunch: 'M7 3v6a2 2 0 1 0 4 0V3M9 11v10M17.5 3c-1.6 1.2-2.3 3-2.3 5.2 0 1.7.9 2.8 2.3 2.8v10',
+		snack: 'M12 8.5c-1-1-2.8-1.6-4.4-.6C5.8 9 5.3 11.2 6.2 14c.9 2.8 2.4 5.5 3.8 5.5.8 0 1.2-.4 2-.4s1.2.4 2 .4c1.4 0 2.9-2.7 3.8-5.5.9-2.8.4-5-1.4-6.1-1.6-1-3.4-.4-4.4.6ZM12 8.5V5.5M12 5.5c0-1.4 1-2.5 2.5-2.5',
+		dinner: 'M20 14.5A8.5 8.5 0 0 1 9.5 4a8.5 8.5 0 1 0 10.5 10.5Z',
+		supper: 'M5 10h10v5a3 3 0 0 1-3 3H8a3 3 0 0 1-3-3v-5ZM15 12h1.5a2 2 0 0 1 0 4H15M8 3.5c0 1.5 1 1.5 1 3M12 3.5c0 1.5 1 1.5 1 3',
+		other: 'M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18ZM12 8.5v7M8.5 12h7'
+	};
+	// Tom do icone acompanhando a hora do dia: manha ambar, tarde azul, noite indigo.
+	const MEAL_ICON_TINTS: Record<MealType, string> = {
+		breakfast: 'bg-amber-100 text-amber-600',
+		pre_workout: 'bg-violet-100 text-violet-600',
+		lunch: 'bg-sky-100 text-sky-600',
+		snack: 'bg-lime-100 text-lime-600',
+		dinner: 'bg-indigo-100 text-indigo-600',
+		supper: 'bg-slate-200 text-slate-500',
+		other: 'bg-emerald-100 text-emerald-600'
+	};
+
+	// Le a preferencia salva tolerando versao antiga ou corrompida: mantem so os
+	// tipos conhecidos e completa no fim os que faltarem.
+	function loadMealOrder(): MealType[] {
+		try {
+			const raw: unknown = JSON.parse(localStorage.getItem(MEAL_ORDER_KEY) ?? 'null');
+			if (Array.isArray(raw)) {
+				const known = raw.filter((meal): meal is MealType =>
+					DEFAULT_MEAL_ORDER.includes(meal as MealType)
+				);
+				const missing = DEFAULT_MEAL_ORDER.filter((meal) => !known.includes(meal));
+				if (known.length > 0) return [...known, ...missing];
+			}
+		} catch {
+			// preferencia corrompida: volta para a ordem cronologica
+		}
+		return [...DEFAULT_MEAL_ORDER];
+	}
+	let mealOrder = $state<MealType[]>(loadMealOrder());
+
+	function saveMealOrder(): void {
+		localStorage.setItem(MEAL_ORDER_KEY, JSON.stringify($state.snapshot(mealOrder)));
+	}
 
 	interface DayMealState {
 		day: string;
@@ -367,7 +416,7 @@
 		return !!group && group.entries.length > 0;
 	}
 	const materializedMeals = $derived(
-		MEAL_ORDER.filter((meal) => dayMeals.added.includes(meal) || mealHasEntries(meal))
+		mealOrder.filter((meal) => dayMeals.added.includes(meal) || mealHasEntries(meal))
 	);
 	const miniPrincipals = $derived(
 		PRINCIPAL_MEALS.filter((meal) => !materializedMeals.includes(meal))
@@ -378,6 +427,10 @@
 
 	function addMealCard(meal: MealType, customLabel: string | null = null): void {
 		if (!dayMeals.added.includes(meal)) dayMeals.added = [...dayMeals.added, meal];
+		// refeicao recem-adicionada vai para o fim da fila: a ordem na tela passa a
+		// ser a ordem em que a pessoa lancou, e nao um enfileiramento fixo por horario.
+		mealOrder = [...mealOrder.filter((mt) => mt !== meal), meal];
+		saveMealOrder();
 		if (customLabel) {
 			dayMeals.customLabel = customLabel;
 			// historico: mais recente primeiro, sem repetidos, no maximo 8
@@ -410,6 +463,66 @@
 
 	function toggleMealOpen(meal: MealType): void {
 		openMeal = openMeal === meal ? null : meal;
+	}
+
+	// --- Arrastar para reordenar ---------------------------------------------
+	// A lista nao se reorganiza durante o arrasto: so uma linha mostra onde o card
+	// vai cair, e a troca acontece ao soltar. Assim as posicoes medidas no inicio
+	// continuam validas ate o fim - se os cards se movessem junto, o alvo mudaria
+	// de lugar debaixo do dedo.
+	let mealCardEls = $state<Partial<Record<MealType, HTMLElement>>>({});
+	let draggingMeal = $state<MealType | null>(null);
+	let dropIndex = $state<number | null>(null);
+	let dragMidpoints: number[] = [];
+
+	function startMealDrag(meal: MealType, event: PointerEvent): void {
+		const from = materializedMeals.indexOf(meal);
+		if (from < 0) return;
+		dragMidpoints = materializedMeals.map((mt) => {
+			const el = mealCardEls[mt];
+			if (!el) return Number.POSITIVE_INFINITY;
+			const rect = el.getBoundingClientRect();
+			return rect.top + rect.height / 2;
+		});
+		draggingMeal = meal;
+		dropIndex = from;
+		(event.currentTarget as HTMLElement).setPointerCapture(event.pointerId);
+	}
+
+	function moveMealDrag(event: PointerEvent): void {
+		if (draggingMeal === null) return;
+		event.preventDefault();
+		// posicao de destino = quantos cards ficaram acima do dedo
+		dropIndex = dragMidpoints.filter((mid) => mid < event.clientY).length;
+	}
+
+	function endMealDrag(): void {
+		const meal = draggingMeal;
+		const target = dropIndex;
+		draggingMeal = null;
+		dropIndex = null;
+		if (meal === null || target === null) return;
+		const from = materializedMeals.indexOf(meal);
+		if (from < 0) return;
+		const others = materializedMeals.filter((mt) => mt !== meal);
+		// o indice medido ainda conta o proprio card arrastado; tirando-o da lista,
+		// tudo que estava depois dele sobe uma posicao.
+		const insertAt = target > from ? target - 1 : target;
+		if (insertAt === from) return;
+		const reordered = [...others.slice(0, insertAt), meal, ...others.slice(insertAt)];
+		// as refeicoes ainda nao materializadas ficam na frente da preferencia: elas
+		// vao para o fim no momento em que a pessoa adicionar o card.
+		mealOrder = [...mealOrder.filter((mt) => !reordered.includes(mt)), ...reordered];
+		saveMealOrder();
+		showToast(m.meal_order_saved());
+	}
+
+	// Linha de destino: escondida quando o card cairia exatamente onde ja esta.
+	function isDropTarget(index: number): boolean {
+		if (draggingMeal === null || dropIndex === null) return false;
+		const from = materializedMeals.indexOf(draggingMeal);
+		if (dropIndex === from || dropIndex === from + 1) return false;
+		return dropIndex === index;
 	}
 
 	const dayLabel = $derived(
@@ -864,7 +977,9 @@
 					onclick={() => addMealCard(meal)}
 					class="min-w-0 flex-1 rounded-2xl border-2 border-dashed border-slate-200 bg-white px-1 py-2.5 text-center text-slate-500 active:border-emerald-400 active:text-emerald-700"
 				>
-					<span class="block text-lg leading-none font-extrabold">+</span>
+					<span class="mx-auto grid h-8 w-8 place-items-center rounded-xl {MEAL_ICON_TINTS[meal]}">
+						<svg viewBox="0 0 24 24" class="h-4.5 w-4.5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d={MEAL_ICON_PATHS[meal]} /></svg>
+					</span>
 					<span class="mt-1 block truncate px-1 text-[11px] font-bold">{mealTypeLabel(meal)}</span>
 					{#if plan}
 						<span class="block text-[9px] text-slate-400">~{nf.format(Math.round(plan.target.kcal))} kcal</span>
@@ -877,7 +992,9 @@
 					onclick={() => (showMealChooser = !showMealChooser)}
 					class="min-w-0 flex-1 rounded-2xl border-2 border-emerald-100 bg-emerald-50 px-1 py-2.5 text-center text-emerald-700 active:bg-emerald-100"
 				>
-					<span class="block text-lg leading-none font-extrabold">+</span>
+					<span class="mx-auto grid h-8 w-8 place-items-center rounded-xl bg-emerald-100 text-emerald-600">
+						<svg viewBox="0 0 24 24" class="h-4.5 w-4.5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d={MEAL_ICON_PATHS.other} /></svg>
+					</span>
 					<span class="mt-1 block truncate px-1 text-[11px] font-bold">{mealTypeLabel('other')}</span>
 					<span class="block truncate text-[9px] text-emerald-600/70">{m.meal_other_hint()}</span>
 				</button>
@@ -935,23 +1052,51 @@
 	{/if}
 
 	<div class="mt-3 space-y-3">
-		{#each materializedMeals as meal (meal)}
+		{#each materializedMeals as meal, index (meal)}
 			{@const group = mealGroup(meal)}
 			{@const plan = mealPlanFor(meal)}
 			{@const isOpen = openMeal === meal}
-			<section class="overflow-hidden rounded-3xl bg-white shadow-sm">
-				<!-- cabecalho: toca para minimizar/expandir (acordeao: um aberto por vez) -->
-				<button
-					type="button"
-					onclick={() => toggleMealOpen(meal)}
-					class="flex w-full items-center gap-2 p-4 text-left"
-				>
-					<h2 class="min-w-0 flex-1 truncate font-bold text-slate-900">{mealDisplayLabel(meal)}</h2>
-					<span class="shrink-0 text-sm font-semibold text-slate-400">
-						{group ? nf.format(Math.round(group.subtotal.kcal)) : 0} kcal
-					</span>
-					<svg viewBox="0 0 24 24" class="h-5 w-5 shrink-0 text-slate-300 transition-transform {isOpen ? 'rotate-180' : ''}" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6" stroke-linecap="round" stroke-linejoin="round" /></svg>
-				</button>
+			{#if isDropTarget(index)}
+				<div class="h-1 rounded-full bg-emerald-500"></div>
+			{/if}
+			<section
+				bind:this={mealCardEls[meal]}
+				class="overflow-hidden rounded-3xl bg-white shadow-sm transition-shadow {draggingMeal === meal
+					? 'opacity-60 ring-2 ring-emerald-400'
+					: ''}"
+			>
+				<!-- cabecalho: toca para minimizar/expandir (acordeao: um aberto por vez).
+					 A alca a esquerda arrasta para reordenar e fica fora do botao. -->
+				<div class="flex items-center pr-4">
+					<div
+						role="button"
+						tabindex="-1"
+						aria-label={m.meal_reorder()}
+						title={m.meal_reorder()}
+						onpointerdown={(e) => startMealDrag(meal, e)}
+						onpointermove={moveMealDrag}
+						onpointerup={endMealDrag}
+						onpointercancel={endMealDrag}
+						onkeydown={() => {}}
+						class="grid h-12 w-8 shrink-0 cursor-grab touch-none place-items-center text-slate-300 active:text-emerald-600"
+					>
+						<svg viewBox="0 0 24 24" class="h-5 w-5" fill="currentColor"><circle cx="9" cy="6" r="1.5" /><circle cx="15" cy="6" r="1.5" /><circle cx="9" cy="12" r="1.5" /><circle cx="15" cy="12" r="1.5" /><circle cx="9" cy="18" r="1.5" /><circle cx="15" cy="18" r="1.5" /></svg>
+					</div>
+					<button
+						type="button"
+						onclick={() => toggleMealOpen(meal)}
+						class="flex min-w-0 flex-1 items-center gap-2.5 py-4 pl-1 text-left"
+					>
+						<span class="grid h-9 w-9 shrink-0 place-items-center rounded-xl {MEAL_ICON_TINTS[meal]}">
+							<svg viewBox="0 0 24 24" class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d={MEAL_ICON_PATHS[meal]} /></svg>
+						</span>
+						<h2 class="min-w-0 flex-1 truncate font-bold text-slate-900">{mealDisplayLabel(meal)}</h2>
+						<span class="shrink-0 text-sm font-semibold text-slate-400">
+							{group ? nf.format(Math.round(group.subtotal.kcal)) : 0} kcal
+						</span>
+						<svg viewBox="0 0 24 24" class="h-5 w-5 shrink-0 text-slate-300 transition-transform {isOpen ? 'rotate-180' : ''}" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6" stroke-linecap="round" stroke-linejoin="round" /></svg>
+					</button>
+				</div>
 				{#if isOpen}
 				<div class="px-4 pb-4" transition:slide={{ duration: 200 }}>
 
@@ -1100,6 +1245,9 @@
 				{/if}
 			</section>
 		{/each}
+		{#if isDropTarget(materializedMeals.length)}
+			<div class="h-1 rounded-full bg-emerald-500"></div>
+		{/if}
 	</div>
 
 	{#if supplements && supplements.total > 0}

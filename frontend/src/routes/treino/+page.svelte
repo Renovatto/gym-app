@@ -22,13 +22,23 @@
 	import { getLocale } from '$lib/paraglide/runtime';
 
 	let showCalendar = $state(false);
-	// visualizacao (somente leitura) do treino de um dia selecionado no calendario
+	// visualizacao (somente leitura) do dia selecionado no calendario: treino de
+	// academia e atividade avulsa aparecem juntos, cada um com sua cor.
 	let dayWorkouts = $state<WorkoutDayDetail[] | null>(null);
+	let dayActivities = $state<StandaloneActivity[]>([]);
 	let dayWorkoutDate = $state('');
 
 	async function openDayWorkout(date: string): Promise<void> {
 		dayWorkoutDate = date;
-		dayWorkouts = await api.getWorkoutsByDay(date, new Date().getTimezoneOffset());
+		[dayWorkouts, dayActivities] = await Promise.all([
+			api.getWorkoutsByDay(date, new Date().getTimezoneOffset()),
+			api.getActivities(date)
+		]);
+	}
+
+	function closeDayWorkout(): void {
+		dayWorkouts = null;
+		dayActivities = [];
 	}
 
 	let routines = $state<Routine[]>([]);
@@ -36,6 +46,8 @@
 	let activeSession = $state<WorkoutSession | null>(null);
 	let periodization = $state<RoutinePeriodization[]>([]);
 	let todayActivities = $state<StandaloneActivity[]>([]);
+	// dias com atividade avulsa, para marcar no calendario numa cor propria
+	let activityDays = $state<string[]>([]);
 	let loading = $state(true);
 
 	let showLogActivity = $state(false);
@@ -43,7 +55,10 @@
 	const activityKcalTotal = $derived(todayActivities.reduce((sum, a) => sum + a.kcal, 0));
 
 	async function reloadActivities(): Promise<void> {
-		todayActivities = await api.getActivities(localDay());
+		[todayActivities, activityDays] = await Promise.all([
+			api.getActivities(localDay()),
+			api.getActivityDays()
+		]);
 	}
 
 	async function deleteActivityEntry(id: number): Promise<void> {
@@ -141,13 +156,15 @@
 	const nf = new Intl.NumberFormat(getLocale());
 
 	async function load(): Promise<void> {
-		[routines, sessions, activeSession, periodization, todayActivities] = await Promise.all([
-			api.getRoutines(),
-			api.getSessions(),
-			api.getActiveSession(),
-			api.getTrainingPeriodization(localDay()),
-			api.getActivities(localDay())
-		]);
+		[routines, sessions, activeSession, periodization, todayActivities, activityDays] =
+			await Promise.all([
+				api.getRoutines(),
+				api.getSessions(),
+				api.getActiveSession(),
+				api.getTrainingPeriodization(localDay()),
+				api.getActivities(localDay()),
+				api.getActivityDays()
+			]);
 		loading = false;
 	}
 
@@ -176,6 +193,14 @@
 	// Iniciar e marcar feito pedem confirmacao (evita inicio/duplicata por clique acidental)
 	let confirmingStart = $state<number | null>(null);
 	let confirmingDone = $state<number | null>(null);
+	// Dia do treino que esta sendo marcado como feito. Comeca sempre em hoje - so
+	// muda quando a pessoa escolhe uma data para lancar um treino esquecido.
+	let doneDay = $state(localDay());
+
+	function openDoneConfirm(routineId: number): void {
+		doneDay = localDay();
+		confirmingDone = routineId;
+	}
 
 	async function start(routineId: number): Promise<void> {
 		confirmingStart = null;
@@ -184,12 +209,18 @@
 	}
 
 	async function markDone(routineId: number): Promise<void> {
+		const day = doneDay;
+		const isPastDay = day !== localDay();
 		confirmingDone = null;
 		completingId = routineId;
 		try {
-			await api.completeRoutine(routineId);
+			await api.completeRoutine(routineId, isPastDay ? day : undefined);
 			await load();
-			showToast(m.workout_done_toast());
+			showToast(
+				isPastDay
+					? m.workout_done_past_toast({ date: fmtDate(day) })
+					: m.workout_done_toast()
+			);
 		} finally {
 			completingId = null;
 		}
@@ -222,6 +253,8 @@
 
 	// dias com treino concluido, marcados no calendario (visualizacao do historico)
 	const trainedDays = $derived(new Set(finishedSessions.map((s) => s.started_at.slice(0, 10))));
+	// dias com atividade avulsa: marcados na segunda cor, podem coincidir com treino
+	const activityDaysSet = $derived(new Set(activityDays));
 </script>
 
 <div class="mb-6 flex items-center justify-between gap-2">
@@ -361,6 +394,9 @@
 	<CalendarModal
 		value={localDay()}
 		marked={trainedDays}
+		markedAlt={activityDaysSet}
+		legend={m.calendar_legend_workout()}
+		legendAlt={m.calendar_legend_activity()}
 		max={localDay()}
 		onselect={openDayWorkout}
 		onclose={() => (showCalendar = false)}
@@ -373,8 +409,8 @@
 		class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
 		role="button"
 		tabindex="-1"
-		onclick={() => (dayWorkouts = null)}
-		onkeydown={(e) => e.key === 'Escape' && (dayWorkouts = null)}
+		onclick={closeDayWorkout}
+		onkeydown={(e) => e.key === 'Escape' && closeDayWorkout()}
 	>
 		<div
 			class="max-h-[90dvh] w-full max-w-md overflow-y-auto rounded-3xl bg-white p-6"
@@ -390,15 +426,15 @@
 				<button
 					type="button"
 					aria-label={m.close()}
-					onclick={() => (dayWorkouts = null)}
+					onclick={closeDayWorkout}
 					class="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-slate-100 text-slate-500 active:bg-slate-200"
 				>
 					<svg viewBox="0 0 24 24" class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 6l12 12M18 6L6 18" stroke-linecap="round" /></svg>
 				</button>
 			</div>
 
-			{#if dayWorkouts.length === 0}
-				<p class="py-6 text-center text-sm text-slate-400">{m.no_workout_that_day()}</p>
+			{#if dayWorkouts.length === 0 && dayActivities.length === 0}
+				<p class="py-6 text-center text-sm text-slate-400">{m.no_entry_that_day()}</p>
 			{:else}
 				<div class="space-y-4">
 					{#each dayWorkouts as workout (workout.session_id)}
@@ -428,6 +464,27 @@
 							</div>
 						</div>
 					{/each}
+
+					<!-- Atividade avulsa do mesmo dia, na cor do calendario (azul) para
+						 diferenciar do treino de academia sem separar em outra tela. -->
+					{#if dayActivities.length > 0}
+						<div>
+							<p class="font-bold text-sky-700">{m.day_activities_title()}</p>
+							<div class="mt-2 space-y-2">
+								{#each dayActivities as activity (activity.id)}
+									<div class="rounded-2xl bg-sky-50 p-3">
+										<p class="text-sm font-bold text-slate-800">{activityKindLabel(activity.kind)}</p>
+										<p class="mt-0.5 text-xs text-slate-500">
+											{activity.time_of_day} · {activity.duration_min}
+											{m.minutes_short()}
+											{#if activity.distance_km}· {nf.format(activity.distance_km)} km{/if}
+											· {nf.format(Math.round(activity.kcal))} kcal
+										</p>
+									</div>
+								{/each}
+							</div>
+						</div>
+					{/if}
 				</div>
 			{/if}
 		</div>
@@ -652,22 +709,42 @@
 								</button>
 							</div>
 						{:else if confirmingDone === routine.id}
-							<div class="mt-4 flex items-center gap-2 rounded-2xl bg-emerald-50 p-2">
-								<span class="min-w-0 flex-1 pl-2 text-sm font-semibold text-emerald-800">{m.workout_done_confirm()}</span>
-								<button
-									type="button"
-									onclick={() => markDone(routine.id)}
-									class="h-10 shrink-0 rounded-xl bg-emerald-600 px-4 font-bold text-white active:bg-emerald-700"
+							<!-- confirmar + escolher o dia: por padrao hoje, mas da pra lancar
+								 um treino que a pessoa fez e esqueceu de registrar -->
+							<div class="mt-4 rounded-2xl bg-emerald-50 p-3">
+								<p class="pl-1 text-sm font-semibold text-emerald-800">{m.workout_done_confirm()}</p>
+								<label
+									class="mt-2.5 block pl-1 text-[11px] font-bold text-emerald-700"
+									for="done-day-{routine.id}"
 								>
-									{m.mark_done()}
-								</button>
-								<button
-									type="button"
-									onclick={() => (confirmingDone = null)}
-									class="h-10 shrink-0 rounded-xl px-3 text-sm font-semibold text-slate-500 active:bg-slate-100"
-								>
-									{m.cancel()}
-								</button>
+									{m.workout_done_date_label()}
+								</label>
+								<input
+									id="done-day-{routine.id}"
+									type="date"
+									bind:value={doneDay}
+									max={localDay()}
+									class="mt-1 h-11 w-full rounded-xl border-2 px-3 text-center font-bold text-slate-900 {doneDay !==
+									localDay()
+										? 'border-amber-300 bg-amber-50'
+										: 'border-emerald-200 bg-white'}"
+								/>
+								<div class="mt-2.5 flex gap-2">
+									<button
+										type="button"
+										onclick={() => markDone(routine.id)}
+										class="h-10 flex-1 rounded-xl bg-emerald-600 px-4 font-bold text-white active:bg-emerald-700"
+									>
+										{m.mark_done()}
+									</button>
+									<button
+										type="button"
+										onclick={() => (confirmingDone = null)}
+										class="h-10 shrink-0 rounded-xl px-3 text-sm font-semibold text-slate-500 active:bg-slate-100"
+									>
+										{m.cancel()}
+									</button>
+								</div>
 							</div>
 						{:else}
 							<div class="mt-4 flex gap-2">
@@ -681,7 +758,7 @@
 								</button>
 								<button
 									type="button"
-									onclick={() => (confirmingDone = routine.id)}
+									onclick={() => openDoneConfirm(routine.id)}
 									disabled={routine.items.length === 0 || completingId === routine.id}
 									class="h-12 flex-1 rounded-2xl border-2 border-emerald-200 font-bold text-emerald-700 active:bg-emerald-50 disabled:opacity-40"
 								>

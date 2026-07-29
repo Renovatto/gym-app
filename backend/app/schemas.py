@@ -354,6 +354,15 @@ class SessionStartIn(BaseModel):
     routine_id: int | None = None
 
 
+class RoutineCompleteIn(BaseModel):
+    """Marcar um treino como feito. Sem 'day', o treino e registrado agora (fluxo
+    normal). Com 'day', registra um treino de data passada que a pessoa esqueceu
+    de lancar - 'tz_offset' e o Date.getTimezoneOffset() do cliente."""
+
+    day: date | None = None
+    tz_offset: int = Field(default=0, ge=-840, le=840)
+
+
 class SessionOut(BaseModel):
     id: int
     routine_id: int | None
