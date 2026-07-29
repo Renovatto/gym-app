@@ -532,6 +532,8 @@
 	"bc_help_range": "A balança tem margem de erro nessa medição. Um número exato passaria uma precisão que ela não tem.",
 	"bc_help_got_it": "Entendi",
 	"bc_trend_since": "Nos últimos {days} dias",
+	"bc_trend_title": "Tendência",
+	"bc_trend_empty": "Aparece aqui quando você tiver duas pesagens com pelo menos 14 dias entre elas. Em menos tempo, a variação normal da balança fala mais alto que a mudança real.",
 	"bc_points_suffix": "ponto",
 	"bc_also_measured": "Também medido pela balança",
 	"bc_target_result_title": "Se eu chegar a {pct}% de gordura",

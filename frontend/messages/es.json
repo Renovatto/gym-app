@@ -532,6 +532,8 @@
 	"bc_help_range": "La báscula tiene margen de error en esta medición. Un número exacto daría una precisión que no tiene.",
 	"bc_help_got_it": "Entendido",
 	"bc_trend_since": "En los últimos {days} días",
+	"bc_trend_title": "Tendencia",
+	"bc_trend_empty": "Aparece aquí cuando tengas dos pesajes con al menos 14 días de diferencia. En menos tiempo, la variación normal de la báscula habla más alto que el cambio real.",
 	"bc_points_suffix": "punto",
 	"bc_also_measured": "También medido por la báscula",
 	"bc_target_result_title": "Si llego al {pct}% de grasa",

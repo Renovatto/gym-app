@@ -671,7 +671,15 @@
 				 Antes o "+0,2 kg em 19 dias" ficava solto na massa magra e a variacao da
 				 gordura aparecia la embaixo com o mesmo rotulo do numero grande do topo
 				 ("Gordura (%)"), o que fazia parecer dois valores concorrentes. -->
-			{#if panel.trend_days !== null && (panel.fat_percentage_delta !== null || panel.lean_mass_delta_kg !== null)}
+			{#if panel.trend_days === null || (panel.fat_percentage_delta === null && panel.lean_mass_delta_kg === null)}
+				<!-- Sem comparacao possivel ainda. Antes o bloco simplesmente sumia, e um
+					 bloco que some sem dizer nada parece defeito - a pessoa procura e nao
+					 acha. Melhor ele explicar por que ainda esta vazio. -->
+				<p class="mt-4 text-[10px] font-black tracking-wide text-slate-400 uppercase">
+					{m.bc_trend_title()}
+				</p>
+				<p class="mt-1 text-xs leading-relaxed text-slate-400">{m.bc_trend_empty()}</p>
+			{:else}
 				<p class="mt-4 text-[10px] font-black tracking-wide text-slate-400 uppercase">
 					{m.bc_trend_since({ days: panel.trend_days })}
 				</p>
