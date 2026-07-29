@@ -50,12 +50,36 @@
 		acceptable: 'bg-blue-400',
 		high: 'bg-amber-400'
 	};
+	// Mesma linguagem da barra de IMC da tela inicial: o marcador e uma bolinha
+	// branca com anel colorido e uma carinha dentro. "Aceitavel" fica com a cara
+	// neutra de proposito - e a faixa media da referencia, nao um problema.
+	const BAND_EMOJI: Record<string, string> = {
+		essential: '🙁',
+		athlete: '🤩',
+		fitness: '😃',
+		acceptable: '🙂',
+		high: '😕'
+	};
+	const BAND_RING_COLORS: Record<string, string> = {
+		essential: 'border-slate-400',
+		athlete: 'border-sky-400',
+		fitness: 'border-emerald-400',
+		acceptable: 'border-blue-400',
+		high: 'border-amber-400'
+	};
 	const BAND_PILL_COLORS: Record<string, string> = {
 		essential: 'bg-slate-100 text-slate-600',
 		athlete: 'bg-sky-100 text-sky-700',
 		fitness: 'bg-emerald-100 text-emerald-700',
 		acceptable: 'bg-blue-100 text-blue-700',
 		high: 'bg-amber-100 text-amber-700'
+	};
+	const BAND_TEXT_COLORS: Record<string, string> = {
+		essential: 'text-slate-600',
+		athlete: 'text-sky-700',
+		fitness: 'text-emerald-700',
+		acceptable: 'text-blue-700',
+		high: 'text-amber-700'
 	};
 
 	function bandLabel(key: string): string {
@@ -98,6 +122,26 @@
 	function withSign(value: number): string {
 		return value > 0 ? `+${nf.format(value)}` : nf.format(value);
 	}
+
+	// Em qual faixa cai a porcentagem escolhida no seletor (mesma regra do backend).
+	function bandKeyAt(pct: number, panel: BodyCompositionPanel): string {
+		for (const band of panel.bands) {
+			if (pct < band.to_pct) return band.key;
+		}
+		return panel.bands[panel.bands.length - 1]?.key ?? 'acceptable';
+	}
+
+	// Previa do peso enquanto a pessoa arrasta o seletor. Espelha
+	// services/body_composition.py (peso = magra / (1 - alvo), janela de +-1,5 ponto);
+	// o valor que fica GRAVADO continua vindo do backend, no Calcular. Aqui e so para
+	// a escolha ter consequencia visivel na hora, sem uma chamada por pixel arrastado.
+	const targetPreview = $derived.by(() => {
+		const lean = bodyReading?.lean_mass_kg;
+		if (lean === null || lean === undefined) return null;
+		const lightest = lean / (1 - Math.max(1, targetPct - 1.5) / 100);
+		const heaviest = lean / (1 - Math.min(60, targetPct + 1.5) / 100);
+		return { lightest: Math.round(lightest * 10) / 10, heaviest: Math.round(heaviest * 10) / 10 };
+	});
 
 	async function saveTarget(): Promise<void> {
 		savingTarget = true;
@@ -583,11 +627,15 @@
 					{/if}
 				{/each}
 			</div>
-			<div class="relative -mt-2 h-4">
+			<div class="relative -mt-2.5 h-7">
 				<span
-					class="absolute top-0 h-4 w-4 -translate-x-1/2 rounded-full border-[3px] border-slate-900 bg-white shadow"
+					class="absolute top-0 grid h-7 w-7 -translate-x-1/2 place-items-center rounded-full border-2 bg-white text-sm shadow-sm {BAND_RING_COLORS[
+						panel.band_key ?? 'acceptable'
+					]}"
 					style="left: {gaugePosition(panel.fat_percentage, panel)}%"
-				></span>
+				>
+					{BAND_EMOJI[panel.band_key ?? 'acceptable']}
+				</span>
 			</div>
 			<!-- Legenda com quebra de linha, e nao rotulos presos a largura de cada
 				 faixa: "Em forma" ocupa 13% da barra e sairia cortado. Aqui cada nome
@@ -735,10 +783,62 @@
 						</button>
 					</div>
 				{:else if showTargetPicker}
+					{@const targetBand = bandKeyAt(targetPct, panel)}
 					<p class="text-sm font-bold text-slate-700">{m.bc_target_choose()}</p>
-					<div class="mt-2">
-						<Stepper bind:value={targetPct} min={5} max={45} step={1} unit="%" />
+
+					<!-- A regua e o proprio grafico de cima: arrastar sobre as cores responde
+						 "qual e o ideal?" sem precisar decorar numero nenhum. -->
+					<div class="mt-3 flex items-center gap-3">
+						<span class="grid h-10 w-10 shrink-0 place-items-center rounded-full border-2 bg-white text-lg {BAND_RING_COLORS[targetBand]}">
+							{BAND_EMOJI[targetBand]}
+						</span>
+						<div class="min-w-0">
+							<p class="text-2xl leading-none font-black text-slate-900">{nf.format(targetPct)}%</p>
+							<p class="mt-0.5 text-xs font-bold {BAND_TEXT_COLORS[targetBand]}">
+								{bandLabel(targetBand)}
+							</p>
+						</div>
 					</div>
+
+					<div class="relative mt-3 h-8">
+						<div class="pointer-events-none absolute top-1/2 right-0 left-0 flex h-2.5 -translate-y-1/2 overflow-hidden rounded-full">
+							{#each panel.bands as band (band.key)}
+								{@const width = bandWidth(band, panel)}
+								{#if width > 0}
+									<span class="h-full {BAND_BAR_COLORS[band.key]}" style="width: {width}%"></span>
+								{/if}
+							{/each}
+						</div>
+						<!-- onde a pessoa esta hoje, para o alvo nascer com referencia -->
+						<div
+							class="pointer-events-none absolute top-1/2 h-5 w-0.5 -translate-x-1/2 -translate-y-1/2 rounded-full bg-slate-900/50"
+							style="left: {gaugePosition(panel.fat_percentage, panel)}%"
+						></div>
+						<input
+							type="range"
+							min={panel.gauge_min}
+							max={panel.gauge_max}
+							step="0.5"
+							bind:value={targetPct}
+							aria-label={m.bc_target_choose()}
+							class="fat-slider absolute inset-0 w-full"
+						/>
+					</div>
+					<div class="flex justify-between text-[10px] font-bold text-slate-400">
+						<span>{nf.format(panel.gauge_min)}%</span>
+						<span>{m.bc_today_label()} · {nf.format(panel.fat_percentage)}%</span>
+						<span>{nf.format(panel.gauge_max)}%</span>
+					</div>
+
+					{#if targetPreview}
+						<div class="mt-3 rounded-2xl bg-emerald-50 p-3 text-center">
+							<p class="text-xl font-black text-emerald-800">
+								{nf.format(targetPreview.lightest)} – {nf.format(targetPreview.heaviest)}
+								<span class="text-sm font-medium text-emerald-700/70">kg</span>
+							</p>
+						</div>
+					{/if}
+
 					<p class="mt-3 text-xs leading-relaxed text-slate-500">
 						{m.bc_target_premise({ lean: nf.format(panel.lean_mass_kg) })}
 					</p>
@@ -1032,3 +1132,52 @@
 		</div>
 	</div>
 {/if}
+
+<style>
+	/* Seletor do alvo de gordura: o trilho e a propria regua colorida desenhada
+	   atras, entao o input fica transparente e so o pegador aparece. */
+	.fat-slider {
+		appearance: none;
+		-webkit-appearance: none;
+		background: transparent;
+		height: 100%;
+		margin: 0;
+		cursor: pointer;
+	}
+	.fat-slider::-webkit-slider-runnable-track {
+		background: transparent;
+		height: 100%;
+	}
+	.fat-slider::-moz-range-track {
+		background: transparent;
+		height: 100%;
+	}
+	/* pegador grande o bastante para o dedo (24px) e com contraste sobre qualquer
+	   cor da regua */
+	.fat-slider::-webkit-slider-thumb {
+		appearance: none;
+		-webkit-appearance: none;
+		height: 24px;
+		width: 24px;
+		border-radius: 999px;
+		background: #fff;
+		border: 3px solid #0f172a;
+		box-shadow: 0 1px 4px rgb(15 23 42 / 0.35);
+	}
+	.fat-slider::-moz-range-thumb {
+		height: 24px;
+		width: 24px;
+		border-radius: 999px;
+		background: #fff;
+		border: 3px solid #0f172a;
+		box-shadow: 0 1px 4px rgb(15 23 42 / 0.35);
+	}
+	.fat-slider:focus-visible::-webkit-slider-thumb {
+		outline: 2px solid #059669;
+		outline-offset: 2px;
+	}
+	.fat-slider:focus-visible::-moz-range-thumb {
+		outline: 2px solid #059669;
+		outline-offset: 2px;
+	}
+</style>
