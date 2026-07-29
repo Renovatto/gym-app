@@ -42,6 +42,9 @@
 	let showTargetPicker = $state(false);
 	let targetPct = $state(18);
 	let savingTarget = $state(false);
+	// Explicacao do que a calculadora e (e principalmente do que ela NAO faz): sem
+	// isso e natural supor que escolher um alvo passa a mexer na meta de calorias.
+	let showTargetHelp = $state(false);
 
 	const BAND_BAR_COLORS: Record<string, string> = {
 		essential: 'bg-slate-300',
@@ -729,8 +732,23 @@
 			 vista. Nunca um "peso ideal" unico decidido pelo app. -->
 		{#if panel.lean_mass_kg !== null}
 			<section class="mt-3 rounded-3xl bg-white p-5 shadow-sm">
+				<!-- O nome "calculadora" e o "?" moram no cabecalho e valem para os tres
+					 estados: e onde a pessoa procura quando quer saber o que isso faz. -->
+				<div class="mb-3 flex items-center justify-between gap-2">
+					<p class="text-sm font-bold text-slate-400 uppercase">{m.bc_calculator_title()}</p>
+					<button
+						type="button"
+						aria-label={m.bc_help_open()}
+						title={m.bc_help_open()}
+						onclick={() => (showTargetHelp = true)}
+						class="grid h-7 w-7 shrink-0 place-items-center rounded-full bg-slate-100 text-sm font-black text-slate-500 active:bg-slate-200"
+					>
+						?
+					</button>
+				</div>
+
 				{#if panel.target_weight_min_kg !== null && panel.target_weight_max_kg !== null && !showTargetPicker}
-					<p class="text-sm font-bold text-slate-400 uppercase">
+					<p class="text-xs font-bold text-slate-500">
 						{m.bc_target_result_title({ pct: nf.format(panel.target_fat_percentage ?? 0) })}
 					</p>
 					<p class="mt-1 text-3xl font-black tracking-tight text-emerald-700">
@@ -871,6 +889,53 @@
 					</button>
 				{/if}
 			</section>
+		{/if}
+
+		<!-- Modal do "?": curta, direta, e com o "nao muda nada" em destaque -->
+		{#if showTargetHelp}
+			<div
+				class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
+				role="button"
+				tabindex="-1"
+				onclick={() => (showTargetHelp = false)}
+				onkeydown={(e) => e.key === 'Escape' && (showTargetHelp = false)}
+			>
+				<div
+					class="max-h-[90dvh] w-full max-w-md overflow-y-auto rounded-3xl bg-white p-6"
+					role="dialog"
+					tabindex="-1"
+					onclick={(e) => e.stopPropagation()}
+					onkeydown={() => {}}
+				>
+					<h2 class="text-lg font-bold text-slate-900">{m.bc_help_title()}</h2>
+					<p class="mt-2 text-sm leading-relaxed text-slate-600">{m.bc_help_what()}</p>
+
+					<div class="mt-4 rounded-2xl border-2 border-amber-200 bg-amber-50 p-3.5">
+						<p class="text-xs font-black tracking-wide text-amber-700 uppercase">
+							{m.bc_help_not_title()}
+						</p>
+						<p class="mt-1.5 text-sm leading-relaxed text-amber-900">{m.bc_help_not()}</p>
+					</div>
+
+					<p class="mt-4 text-xs font-black tracking-wide text-slate-400 uppercase">
+						{m.bc_help_how_title()}
+					</p>
+					<p class="mt-1 text-sm leading-relaxed text-slate-600">{m.bc_help_how()}</p>
+
+					<p class="mt-4 text-xs font-black tracking-wide text-slate-400 uppercase">
+						{m.bc_help_range_title()}
+					</p>
+					<p class="mt-1 text-sm leading-relaxed text-slate-600">{m.bc_help_range()}</p>
+
+					<button
+						type="button"
+						onclick={() => (showTargetHelp = false)}
+						class="mt-6 h-12 w-full rounded-2xl bg-emerald-600 font-bold text-white active:bg-emerald-700"
+					>
+						{m.bc_help_got_it()}
+					</button>
+				</div>
+			</div>
 		{/if}
 	{/if}
 
