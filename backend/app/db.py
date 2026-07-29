@@ -89,6 +89,25 @@ def _run_column_migrations() -> None:
                     conn.execute(text(f"ALTER TABLE {table} ADD COLUMN {name} {ddl}"))
 
 
+def _native_enum_values() -> dict[str, list[str]]:
+    """Nome do tipo -> valores, para todo enum usado como coluna de tabela.
+
+    Varremos o metadata em vez de manter uma lista escrita a mao: foi justamente
+    uma lista a mao que deixou 'supper'/'pre_workout' de fora quando o MealType
+    cresceu, e lancar ceia passou a falhar em producao (no SQLite o enum e VARCHAR
+    e aceita qualquer texto, entao o problema so aparecia no Postgres)."""
+    from sqlalchemy import Enum as SAEnum
+
+    from . import models  # noqa: F401  (garante o metadata populado)
+
+    values: dict[str, list[str]] = {}
+    for table in SQLModel.metadata.tables.values():
+        for column in table.columns:
+            if isinstance(column.type, SAEnum) and column.type.name:
+                values[column.type.name] = list(column.type.enums)
+    return values
+
+
 def _run_enum_migrations() -> None:
     # So Postgres: os enums do SQLModel viram TIPO NATIVO (ex.: foodcategory). Quando
     # adicionamos um valor novo no enum Python (ex.: 'supplement'), o create_all NAO
@@ -98,11 +117,7 @@ def _run_enum_migrations() -> None:
         return
     from sqlalchemy import text
 
-    from .models import FoodCategory
-
-    enum_values: dict[str, list[str]] = {
-        "foodcategory": [e.value for e in FoodCategory],
-    }
+    enum_values = _native_enum_values()
     # ADD VALUE precisa rodar fora de transacao: usamos AUTOCOMMIT.
     with engine.connect() as conn:
         conn = conn.execution_options(isolation_level="AUTOCOMMIT")
