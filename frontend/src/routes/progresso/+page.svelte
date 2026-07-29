@@ -20,6 +20,7 @@
 	import { bootstrap, session } from '$lib/session.svelte';
 	import { showToast } from '$lib/toast.svelte';
 	import { triggerAchievementCelebrations } from '$lib/celebrationTrigger';
+	import SkeletonScreen from '$lib/components/SkeletonScreen.svelte';
 	import { m } from '$lib/paraglide/messages';
 	import { getLocale } from '$lib/paraglide/runtime';
 
@@ -806,9 +807,8 @@
 		</section>
 	{/if}
 {:else}
-	<div class="flex justify-center py-16">
-		<div class="h-8 w-8 animate-spin rounded-full border-4 border-emerald-600 border-t-transparent"></div>
-	</div>
+	<!-- grafico de peso + os cartoes de composicao corporal que vem logo abaixo -->
+	<SkeletonScreen chart cards={2} cardLines={2} />
 {/if}
 
 <!-- Modal de registro de pesagem -->
