@@ -6,6 +6,7 @@
 		type AdaptiveTdee,
 		type BodyComposition,
 		type BodyCompositionPanel,
+		type BodyFatBand,
 		type DietAdherence,
 		type WeekSummary,
 		type WeighInInput,
@@ -83,6 +84,19 @@
 		const to = Math.min(band.to_pct, panel.gauge_max);
 		if (to <= from) return 0;
 		return ((to - from) / (panel.gauge_max - panel.gauge_min)) * 100;
+	}
+
+	// Intervalo escrito de cada faixa, para a legenda. A ultima e aberta ("25%+"):
+	// nao existe teto de gordura corporal, o numero ali seria so o fim do desenho.
+	function bandRange(band: BodyFatBand, panel: BodyCompositionPanel): string {
+		const isLast = panel.bands[panel.bands.length - 1]?.key === band.key;
+		if (isLast) return `${nf.format(band.from_pct)}%+`;
+		return `${nf.format(band.from_pct)}–${nf.format(band.to_pct)}%`;
+	}
+
+	// Sinal explicito no numero: "+0,2" e "-0,2" leem melhor que "0,2" solto.
+	function withSign(value: number): string {
+		return value > 0 ? `+${nf.format(value)}` : nf.format(value);
 	}
 
 	async function saveTarget(): Promise<void> {
@@ -575,12 +589,19 @@
 					style="left: {gaugePosition(panel.fat_percentage, panel)}%"
 				></span>
 			</div>
-			<div class="mt-1 flex text-[9px] font-black tracking-wide text-slate-400 uppercase">
+			<!-- Legenda com quebra de linha, e nao rotulos presos a largura de cada
+				 faixa: "Em forma" ocupa 13% da barra e sairia cortado. Aqui cada nome
+				 aparece inteiro, com o intervalo a que se refere. -->
+			<div class="mt-3 flex flex-wrap gap-x-3 gap-y-1.5">
 				{#each panel.bands as band (band.key)}
-					{@const width = bandWidth(band, panel)}
-					{#if width > 0}
-						<span class="truncate text-center" style="width: {width}%">{bandLabel(band.key)}</span>
-					{/if}
+					{@const isCurrent = band.key === panel.band_key}
+					<span class="flex items-center gap-1.5 text-[11px] {isCurrent ? 'font-black text-slate-900' : 'font-semibold text-slate-400'}">
+						<span class="h-2 w-2 shrink-0 rounded-full {BAND_BAR_COLORS[band.key]}"></span>
+						{bandLabel(band.key)}
+						<span class="font-semibold {isCurrent ? 'text-slate-500' : 'text-slate-300'}">
+							{bandRange(band, panel)}
+						</span>
+					</span>
 				{/each}
 			</div>
 
@@ -588,52 +609,68 @@
 
 			<!-- massa magra: o numero que se protege ao emagrecer -->
 			{#if panel.lean_mass_kg !== null}
-				<div class="flex items-center gap-3">
-					<div class="min-w-0">
-						<p class="text-2xl leading-none font-black text-slate-900">
-							{nf.format(panel.lean_mass_kg)}<span class="text-sm font-medium text-slate-400"> kg</span>
-						</p>
-						<p class="mt-0.5 text-xs font-bold text-slate-500">{m.bc_lean_mass()}</p>
+				<p class="text-2xl leading-none font-black text-slate-900">
+					{nf.format(panel.lean_mass_kg)}<span class="text-sm font-medium text-slate-400"> kg</span>
+				</p>
+				<p class="mt-0.5 text-xs font-bold text-slate-500">{m.bc_lean_mass()}</p>
+				<p class="mt-1 text-[11px] leading-relaxed text-slate-400">{m.bc_lean_hint()}</p>
+			{/if}
+
+			<!-- Tendencia: as duas variacoes juntas e o periodo dito UMA vez no titulo.
+				 Antes o "+0,2 kg em 19 dias" ficava solto na massa magra e a variacao da
+				 gordura aparecia la embaixo com o mesmo rotulo do numero grande do topo
+				 ("Gordura (%)"), o que fazia parecer dois valores concorrentes. -->
+			{#if panel.trend_days !== null && (panel.fat_percentage_delta !== null || panel.lean_mass_delta_kg !== null)}
+				<div class="mt-4 rounded-2xl bg-slate-50 p-3">
+					<p class="text-[10px] font-black tracking-wide text-slate-400 uppercase">
+						{m.bc_trend_since({ days: panel.trend_days })}
+					</p>
+					<div class="mt-2 space-y-1.5">
+						{#if panel.fat_percentage_delta !== null}
+							<div class="flex items-baseline justify-between gap-3">
+								<span class="text-sm font-semibold text-slate-600">{m.bc_fat_pct()}</span>
+								<span class="text-sm font-black {panel.fat_percentage_delta <= 0 ? 'text-emerald-600' : 'text-amber-600'}">
+									{withSign(panel.fat_percentage_delta)}
+									{m.bc_points_suffix()}
+								</span>
+							</div>
+						{/if}
+						{#if panel.lean_mass_delta_kg !== null}
+							<div class="flex items-baseline justify-between gap-3">
+								<span class="text-sm font-semibold text-slate-600">{m.bc_lean_mass()}</span>
+								<span class="text-sm font-black {panel.lean_mass_delta_kg >= 0 ? 'text-emerald-600' : 'text-amber-600'}">
+									{withSign(panel.lean_mass_delta_kg)} kg
+								</span>
+							</div>
+						{/if}
 					</div>
-					{#if panel.lean_mass_delta_kg !== null && panel.trend_days !== null}
-						<div
-							class="ml-auto shrink-0 rounded-xl px-2.5 py-1.5 text-right text-[11px] font-black {panel.lean_mass_delta_kg >=
-							0
-								? 'bg-emerald-50 text-emerald-700'
-								: 'bg-amber-50 text-amber-700'}"
-						>
-							{panel.lean_mass_delta_kg > 0 ? '+' : ''}{nf.format(panel.lean_mass_delta_kg)} kg<br />
-							<span class="font-bold opacity-75">{m.bc_trend_days({ days: panel.trend_days })}</span>
+				</div>
+			{/if}
+
+			<!-- O resto do que a balanca mede: rotulo a esquerda, numero a direita.
+				 Le-se de cima para baixo, sem virar grade de numeros grandes. -->
+			{#if panel.visceral_fat_index !== null || panel.water_percentage !== null}
+				<p class="mt-4 text-[10px] font-black tracking-wide text-slate-400 uppercase">
+					{m.bc_also_measured()}
+				</p>
+				<div class="mt-1.5 space-y-1.5">
+					{#if panel.visceral_fat_index !== null}
+						<div class="flex items-baseline justify-between gap-3">
+							<span class="text-sm font-semibold text-slate-600">{m.bc_visceral()}</span>
+							<span class="text-sm font-black text-slate-900">{nf.format(panel.visceral_fat_index)}</span>
+						</div>
+					{/if}
+					{#if panel.water_percentage !== null}
+						<div class="flex items-baseline justify-between gap-3">
+							<span class="text-sm font-semibold text-slate-600">{m.bc_water_pct()}</span>
+							<span class="text-sm font-black text-slate-900">{nf.format(panel.water_percentage)}%</span>
 						</div>
 					{/if}
 				</div>
 			{/if}
 
-			<div class="mt-3 flex gap-5">
-				{#if panel.visceral_fat_index !== null}
-					<div>
-						<p class="text-base leading-none font-black text-slate-900">{nf.format(panel.visceral_fat_index)}</p>
-						<p class="mt-0.5 text-[11px] font-semibold text-slate-500">{m.bc_visceral()}</p>
-					</div>
-				{/if}
-				{#if panel.water_percentage !== null}
-					<div>
-						<p class="text-base leading-none font-black text-slate-900">{nf.format(panel.water_percentage)}%</p>
-						<p class="mt-0.5 text-[11px] font-semibold text-slate-500">{m.bc_water_pct()}</p>
-					</div>
-				{/if}
-				{#if panel.fat_percentage_delta !== null}
-					<div>
-						<p class="text-base leading-none font-black {panel.fat_percentage_delta <= 0 ? 'text-emerald-600' : 'text-amber-600'}">
-							{panel.fat_percentage_delta > 0 ? '+' : ''}{nf.format(panel.fat_percentage_delta)}
-						</p>
-						<p class="mt-0.5 text-[11px] font-semibold text-slate-500">{m.bc_fat_pct()}</p>
-					</div>
-				{/if}
-			</div>
-
 			{#if panel.measured_at}
-				<p class="mt-3 text-xs text-slate-400">
+				<p class="mt-4 text-xs text-slate-400">
 					{m.bc_measured_on()}
 					{df.format(new Date(panel.measured_at))}
 				</p>
@@ -646,14 +683,13 @@
 			<section class="mt-3 rounded-3xl bg-white p-5 shadow-sm">
 				{#if panel.target_weight_min_kg !== null && panel.target_weight_max_kg !== null && !showTargetPicker}
 					<p class="text-sm font-bold text-slate-400 uppercase">
-						{m.bc_target_title()}
-						{nf.format(panel.target_fat_percentage ?? 0)}%
+						{m.bc_target_result_title({ pct: nf.format(panel.target_fat_percentage ?? 0) })}
 					</p>
 					<p class="mt-1 text-3xl font-black tracking-tight text-emerald-700">
 						{nf.format(panel.target_weight_min_kg)} – {nf.format(panel.target_weight_max_kg)}
 						<span class="text-base font-medium text-slate-400">kg</span>
 					</p>
-					<p class="mt-2 text-xs leading-relaxed font-semibold text-slate-500">
+					<p class="mt-2 text-xs leading-relaxed text-slate-500">
 						{m.bc_target_premise({ lean: nf.format(panel.lean_mass_kg) })}
 					</p>
 
@@ -699,14 +735,14 @@
 						</button>
 					</div>
 				{:else if showTargetPicker}
-					<p class="text-sm font-bold text-slate-400 uppercase">{m.bc_target_title()}</p>
+					<p class="text-sm font-bold text-slate-700">{m.bc_target_choose()}</p>
 					<div class="mt-2">
 						<Stepper bind:value={targetPct} min={5} max={45} step={1} unit="%" />
 					</div>
-					<p class="mt-2 text-xs leading-relaxed font-semibold text-slate-500">
+					<p class="mt-3 text-xs leading-relaxed text-slate-500">
 						{m.bc_target_premise({ lean: nf.format(panel.lean_mass_kg) })}
 					</p>
-					<p class="mt-1 text-xs text-slate-400">{m.bc_range_note()}</p>
+					<p class="mt-1.5 text-xs leading-relaxed text-slate-400">{m.bc_range_note()}</p>
 					<div class="mt-3 flex gap-2">
 						<button
 							type="button"
