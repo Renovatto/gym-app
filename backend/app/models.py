@@ -504,3 +504,81 @@ class DietPeriod(SQLModel, table=True):
     maintenance_kcal: int | None = Field(default=None)  # manutencao real adotada (override)
     active: bool = Field(default=True)
     created_at: datetime = Field(default_factory=utcnow)
+
+
+# --- Compartilhar entre contas --------------------------------------------
+# Uma pessoa compartilha receita/alimento com outra ja conectada. No aceite o item
+# e COPIADO para a conta de quem recebe (nunca referenciado): uma receita pode usar
+# alimento pessoal de quem enviou, e todo caminho de leitura do app filtra alimento
+# por "global OU meu" - referencia obrigaria a reescrever esse filtro no motor
+# inteiro. Copiar resolve na entrada e nao muda nenhuma consulta existente.
+
+
+class ConnectionStatus(str, Enum):
+    pending = "pending"  # convite enviado, aguardando resposta
+    accepted = "accepted"
+    blocked = "blocked"
+
+
+class ShareOfferStatus(str, Enum):
+    pending = "pending"  # esperando na caixa de entrada de quem recebeu
+    accepted = "accepted"
+    declined = "declined"
+
+
+class SharedItemKind(str, Enum):
+    recipe = "recipe"
+    food = "food"
+
+
+class Connection(SQLModel, table=True):
+    """Vinculo entre duas pessoas. Modelado como entidade com estado (e nao como um
+    campo "amigo" no perfil) porque e o que permite crescer para comunidade aberta
+    sem recomecar: bloqueio e permissao ja tem onde morar."""
+
+    __tablename__ = "connections"
+
+    id: int | None = Field(default=None, primary_key=True)
+    requester_user_id: int = Field(foreign_key="users.id", index=True, ondelete="CASCADE")
+    addressee_user_id: int = Field(foreign_key="users.id", index=True, ondelete="CASCADE")
+    status: ConnectionStatus = Field(default=ConnectionStatus.pending)
+    created_at: datetime = Field(default_factory=utcnow)
+    responded_at: datetime | None = Field(default=None)
+
+
+class ShareOffer(SQLModel, table=True):
+    """Item oferecido, esperando aceite - a caixa de entrada. Nada entra na conta de
+    quem recebe sem ela aceitar."""
+
+    __tablename__ = "share_offers"
+
+    id: int | None = Field(default=None, primary_key=True)
+    from_user_id: int = Field(foreign_key="users.id", index=True, ondelete="CASCADE")
+    to_user_id: int = Field(foreign_key="users.id", index=True, ondelete="CASCADE")
+    item_kind: SharedItemKind
+    item_id: int  # id na conta de QUEM ENVIOU
+    # nome no momento do envio: a lista da caixa de entrada mostra isso sem precisar
+    # ler a conta alheia (e continua legivel se o original for renomeado depois).
+    item_name: str
+    status: ShareOfferStatus = Field(default=ShareOfferStatus.pending)
+    created_at: datetime = Field(default_factory=utcnow)
+    responded_at: datetime | None = Field(default=None)
+
+
+class SharedItem(SQLModel, table=True):
+    """De quem veio cada copia aceita. E o que a pilula "Recebidas" filtra e o que
+    evita copiar duas vezes o mesmo alimento de origem.
+
+    Mora em tabela propria, e nao numa coluna em recipes/foods, porque coluna nova em
+    tabela existente e a armadilha que ja quebrou este projeto em producao (ver
+    _COLUMN_MIGRATIONS no db.py)."""
+
+    __tablename__ = "shared_items"
+
+    id: int | None = Field(default=None, primary_key=True)
+    owner_user_id: int = Field(foreign_key="users.id", index=True, ondelete="CASCADE")
+    item_kind: SharedItemKind
+    item_id: int  # id da COPIA, na conta de quem recebeu
+    source_item_id: int  # id do original, na conta de quem enviou
+    from_user_id: int = Field(foreign_key="users.id", ondelete="CASCADE")
+    accepted_at: datetime = Field(default_factory=utcnow)

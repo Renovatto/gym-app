@@ -14,6 +14,7 @@ from .routers import (
     diet,
     feedback,
     profile,
+    sharing,
     stats,
     supplements,
     water,
@@ -63,6 +64,7 @@ app.include_router(feedback.router)
 app.include_router(account.router)
 app.include_router(supplements.router)
 app.include_router(activities.router)
+app.include_router(sharing.router)
 
 
 @app.get("/health")

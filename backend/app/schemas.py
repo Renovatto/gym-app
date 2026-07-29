@@ -5,6 +5,7 @@ from pydantic import BaseModel, ConfigDict, EmailStr, Field
 from .models import (
     ActivityIntensity,
     ActivityLevel,
+    ConnectionStatus,
     CutIntensity,
     Equipment,
     EntrySource,
@@ -17,6 +18,7 @@ from .models import (
     Objective,
     Plan,
     Sex,
+    SharedItemKind,
     StandaloneActivityKind,
     WeightSource,
 )
@@ -728,3 +730,49 @@ class SupplementsDayOut(BaseModel):
     items: list[SupplementOut]
     taken_count: int
     total: int
+
+
+# --- Compartilhar entre contas --------------------------------------------
+
+
+class ConnectionInviteIn(BaseModel):
+    email: EmailStr
+
+
+class ConnectionOut(BaseModel):
+    id: int
+    person_name: str  # nome da outra pessoa (ou o e-mail, se ela nao preencheu)
+    person_email: str
+    status: ConnectionStatus
+    # quem convidou define o que a tela oferece: aceitar/recusar de um lado,
+    # "convite enviado" do outro.
+    i_invited: bool
+    created_at: datetime
+
+
+class ShareItemRefIn(BaseModel):
+    item_kind: SharedItemKind
+    item_id: int
+
+
+class ShareOfferIn(BaseModel):
+    # a conexao (e nao o id da pessoa) e o endereco: so da para oferecer a quem ja
+    # aceitou se conectar com voce.
+    connection_id: int
+    items: list[ShareItemRefIn] = Field(min_length=1, max_length=50)
+
+
+class ShareOfferOut(BaseModel):
+    id: int
+    item_kind: SharedItemKind
+    item_name: str
+    from_name: str
+    created_at: datetime
+
+
+class ReceivedItemOut(BaseModel):
+    """Copia aceita, com a origem - e o que a pilula "Recebidas" usa para filtrar."""
+
+    item_kind: SharedItemKind
+    item_id: int
+    from_name: str
