@@ -29,6 +29,7 @@
 	import { slide } from 'svelte/transition';
 	import { showToast } from '$lib/toast.svelte';
 	import { mealTypeLabel } from '$lib/labels';
+	import SkeletonScreen from '$lib/components/SkeletonScreen.svelte';
 	import { m } from '$lib/paraglide/messages';
 	import { getLocale } from '$lib/paraglide/runtime';
 
@@ -832,9 +833,7 @@
 </div>
 
 {#if loading}
-	<div class="flex justify-center py-16">
-		<div class="h-8 w-8 animate-spin rounded-full border-4 border-emerald-600 border-t-transparent"></div>
-	</div>
+	<SkeletonScreen hero cards={4} cardLines={1} />
 {:else if diary}
 	<MacroSummary totals={diary.totals} goals={diary.goals} />
 

@@ -13,6 +13,7 @@
 	import MacroSummary from '$lib/components/MacroSummary.svelte';
 	import { celebrate } from '$lib/celebration.svelte';
 	import { POOL_BIRTHDAY, POOL_HOLIDAY, pickRandom } from '$lib/celebrationDefs';
+	import SkeletonScreen from '$lib/components/SkeletonScreen.svelte';
 	import { m } from '$lib/paraglide/messages';
 	import { getLocale } from '$lib/paraglide/runtime';
 
@@ -434,9 +435,7 @@
 		</div>
 	</section>
 {:else}
-	<div class="flex justify-center py-16">
-		<div class="h-8 w-8 animate-spin rounded-full border-4 border-emerald-600 border-t-transparent"></div>
-	</div>
+	<SkeletonScreen hero cards={3} />
 {/if}
 
 <!-- Info dos cards de metricas: IMC (detalhado, com tabela da OMS) e TDEE/BMR (rapido).

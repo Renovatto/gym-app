@@ -18,6 +18,7 @@
 	import LogActivityModal from '$lib/components/LogActivityModal.svelte';
 	import { activityKindLabel } from '$lib/labels';
 	import { showToast } from '$lib/toast.svelte';
+	import SkeletonScreen from '$lib/components/SkeletonScreen.svelte';
 	import { m } from '$lib/paraglide/messages';
 	import { getLocale } from '$lib/paraglide/runtime';
 
@@ -523,9 +524,7 @@
 {/snippet}
 
 {#if loading}
-	<div class="flex justify-center py-16">
-		<div class="h-8 w-8 animate-spin rounded-full border-4 border-emerald-600 border-t-transparent"></div>
-	</div>
+	<SkeletonScreen cards={3} cardLines={2} />
 {:else}
 	{#if activeSession}
 		<section class="mb-3 rounded-3xl bg-emerald-600 p-5 text-white shadow-sm">
