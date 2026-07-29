@@ -672,50 +672,57 @@
 				 gordura aparecia la embaixo com o mesmo rotulo do numero grande do topo
 				 ("Gordura (%)"), o que fazia parecer dois valores concorrentes. -->
 			{#if panel.trend_days !== null && (panel.fat_percentage_delta !== null || panel.lean_mass_delta_kg !== null)}
-				<div class="mt-4 rounded-2xl bg-slate-50 p-3">
-					<p class="text-[10px] font-black tracking-wide text-slate-400 uppercase">
-						{m.bc_trend_since({ days: panel.trend_days })}
-					</p>
-					<div class="mt-2 space-y-1.5">
-						{#if panel.fat_percentage_delta !== null}
-							<div class="flex items-baseline justify-between gap-3">
-								<span class="text-sm font-semibold text-slate-600">{m.bc_fat_pct()}</span>
-								<span class="text-sm font-black {panel.fat_percentage_delta <= 0 ? 'text-emerald-600' : 'text-amber-600'}">
-									{withSign(panel.fat_percentage_delta)}
-									{m.bc_points_suffix()}
-								</span>
-							</div>
-						{/if}
-						{#if panel.lean_mass_delta_kg !== null}
-							<div class="flex items-baseline justify-between gap-3">
-								<span class="text-sm font-semibold text-slate-600">{m.bc_lean_mass()}</span>
-								<span class="text-sm font-black {panel.lean_mass_delta_kg >= 0 ? 'text-emerald-600' : 'text-amber-600'}">
-									{withSign(panel.lean_mass_delta_kg)} kg
-								</span>
-							</div>
-						{/if}
-					</div>
+				<p class="mt-4 text-[10px] font-black tracking-wide text-slate-400 uppercase">
+					{m.bc_trend_since({ days: panel.trend_days })}
+				</p>
+				<div class="mt-1.5 flex flex-wrap gap-2">
+					{#if panel.fat_percentage_delta !== null}
+						<span
+							class="flex items-baseline gap-1.5 rounded-full px-3 py-1.5 text-xs font-semibold {panel.fat_percentage_delta <=
+							0
+								? 'bg-emerald-50 text-emerald-700'
+								: 'bg-amber-50 text-amber-700'}"
+						>
+							{m.bc_fat_pct()}
+							<span class="text-sm font-black">
+								{withSign(panel.fat_percentage_delta)}
+								{m.bc_points_suffix()}
+							</span>
+						</span>
+					{/if}
+					{#if panel.lean_mass_delta_kg !== null}
+						<span
+							class="flex items-baseline gap-1.5 rounded-full px-3 py-1.5 text-xs font-semibold {panel.lean_mass_delta_kg >=
+							0
+								? 'bg-emerald-50 text-emerald-700'
+								: 'bg-amber-50 text-amber-700'}"
+						>
+							{m.bc_lean_mass()}
+							<span class="text-sm font-black">{withSign(panel.lean_mass_delta_kg)} kg</span>
+						</span>
+					{/if}
 				</div>
 			{/if}
 
-			<!-- O resto do que a balanca mede: rotulo a esquerda, numero a direita.
-				 Le-se de cima para baixo, sem virar grade de numeros grandes. -->
+			<!-- Pilula por metrica, com o rotulo colado no numero. Antes eram linhas com
+				 rotulo numa ponta e numero na outra: quanto mais larga a tela, mais longe
+				 um do outro, e o olho precisava atravessar o vazio para ligar os dois. -->
 			{#if panel.visceral_fat_index !== null || panel.water_percentage !== null}
 				<p class="mt-4 text-[10px] font-black tracking-wide text-slate-400 uppercase">
 					{m.bc_also_measured()}
 				</p>
-				<div class="mt-1.5 space-y-1.5">
+				<div class="mt-1.5 flex flex-wrap gap-2">
 					{#if panel.visceral_fat_index !== null}
-						<div class="flex items-baseline justify-between gap-3">
-							<span class="text-sm font-semibold text-slate-600">{m.bc_visceral()}</span>
+						<span class="flex items-baseline gap-1.5 rounded-full bg-slate-100 px-3 py-1.5 text-xs font-semibold text-slate-500">
+							{m.bc_visceral()}
 							<span class="text-sm font-black text-slate-900">{nf.format(panel.visceral_fat_index)}</span>
-						</div>
+						</span>
 					{/if}
 					{#if panel.water_percentage !== null}
-						<div class="flex items-baseline justify-between gap-3">
-							<span class="text-sm font-semibold text-slate-600">{m.bc_water_pct()}</span>
+						<span class="flex items-baseline gap-1.5 rounded-full bg-slate-100 px-3 py-1.5 text-xs font-semibold text-slate-500">
+							{m.bc_water_pct()}
 							<span class="text-sm font-black text-slate-900">{nf.format(panel.water_percentage)}%</span>
-						</div>
+						</span>
 					{/if}
 				</div>
 			{/if}
