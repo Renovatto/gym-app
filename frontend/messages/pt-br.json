@@ -520,6 +520,8 @@
 	"delete_weigh_in_confirm": "Excluir esta pesagem? Não dá para desfazer.",
 	"no_body_composition": "Esta pesagem tem apenas o peso.",
 	"bc_measured_on": "Medido em",
+	"bc_prefilled_hint": "Preenchido com a pesagem de {date}. Ajuste o que mudou.",
+	"bc_prefill_clear": "Limpar",
 	"bc_band_essential": "Essencial",
 	"bc_band_athlete": "Atleta",
 	"bc_band_fitness": "Em forma",

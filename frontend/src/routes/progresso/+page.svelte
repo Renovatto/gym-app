@@ -140,6 +140,38 @@
 	// valor digitado (texto) de cada campo da balanca, indexado pela chave
 	let scaleValues = $state<Record<string, string>>({});
 	let showScaleFields = $state(false);
+	// dia da pesagem de onde os campos foram pre-carregados (null = campos em branco)
+	let prefilledFrom = $state<string | null>(null);
+
+	/** Comeca os campos da balanca com a ultima medicao, para so mexer no que mudou.
+	 *
+	 * O usuario le os dez valores no visor da balanca e digita todos na mao a cada
+	 * pesagem; entre uma e outra, a maioria repete ou muda na primeira decimal.
+	 * O risco de pre-carregar e salvar sem querer um valor velho como se fosse de
+	 * hoje - por isso a data de origem fica escrita na tela e a secao ja abre
+	 * expandida: nada acontece escondido. */
+	function prefillScaleValues(log: WeightLog | null): void {
+		if (log === null) {
+			scaleValues = {};
+			prefilledFrom = null;
+			return;
+		}
+		const filled: Record<string, string> = {};
+		for (const field of bodyCompositionInputs) {
+			const value = log[field.key];
+			// String() de proposito, e nao nf.format(): o separador de milhar que o
+			// formatador coloca (1.680) viraria 1,68 na hora de ler o numero de volta.
+			if (value !== null && value !== undefined) filled[field.key] = String(value);
+		}
+		scaleValues = filled;
+		prefilledFrom = Object.keys(filled).length > 0 ? log.logged_at : null;
+		if (prefilledFrom !== null) showScaleFields = true;
+	}
+
+	function clearScaleValues(): void {
+		scaleValues = {};
+		prefilledFrom = null;
+	}
 
 	const dietOn = $derived(session.profile?.diet_enabled ?? false);
 	const nf = new Intl.NumberFormat(getLocale());
@@ -149,6 +181,9 @@
 		const tzOffset = new Date().getTimezoneOffset();
 		history = await api.getWeightHistory();
 		if (history.current_kg !== null) newWeight = history.current_kg;
+		// a ultima pesagem COM dados da balanca, nao a ultima em geral: quem registrou
+		// so o peso ontem nao deve zerar os campos que ele preencheu na semana passada
+		prefillScaleValues(history.latest_body_composition);
 		bodyPanel = await api.getBodyComposition();
 		if (bodyPanel.target_fat_percentage !== null) targetPct = bodyPanel.target_fat_percentage;
 		week = await api.getWeekSummary(localDay(), tzOffset);
@@ -217,8 +252,8 @@
 		busy = true;
 		try {
 			await api.addWeight(buildWeighIn());
-			scaleValues = {};
 			showScaleFields = false;
+			// load() repovoa os campos com a pesagem que acabou de ser salva
 			await load();
 			await bootstrap(); // metas dependem do peso mais recente
 			adding = false;
@@ -808,7 +843,25 @@
 			</button>
 
 			{#if showScaleFields}
-				<p class="mt-1 mb-3 text-xs text-slate-400">{m.scale_data_hint()}</p>
+				{#if prefilledFrom}
+					<!-- de onde vieram os numeros que ja estao nos campos: sem isso, a
+						 pessoa poderia salvar um valor antigo achando que era de hoje -->
+					<div class="mt-2 mb-3 flex items-center gap-2 rounded-2xl bg-amber-50 p-2.5">
+						<svg viewBox="0 0 24 24" class="h-4 w-4 shrink-0 text-amber-600" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9" /><path d="M12 8v4l2.5 2.5" /></svg>
+						<p class="min-w-0 flex-1 text-xs font-semibold text-amber-800">
+							{m.bc_prefilled_hint({ date: df.format(new Date(prefilledFrom)) })}
+						</p>
+						<button
+							type="button"
+							onclick={clearScaleValues}
+							class="shrink-0 rounded-lg px-2 py-1 text-xs font-bold text-amber-700 active:bg-amber-100"
+						>
+							{m.bc_prefill_clear()}
+						</button>
+					</div>
+				{:else}
+					<p class="mt-1 mb-3 text-xs text-slate-400">{m.scale_data_hint()}</p>
+				{/if}
 				<div class="grid grid-cols-2 gap-3">
 					{#each bodyCompositionInputs as field (field.key)}
 						<label class="block">

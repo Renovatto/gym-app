@@ -520,6 +520,8 @@
 	"delete_weigh_in_confirm": "Delete this weigh-in? This can't be undone.",
 	"no_body_composition": "This weigh-in only has the weight.",
 	"bc_measured_on": "Measured on",
+	"bc_prefilled_hint": "Filled in from your {date} weigh-in. Change what is different.",
+	"bc_prefill_clear": "Clear",
 	"bc_band_essential": "Essential",
 	"bc_band_athlete": "Athlete",
 	"bc_band_fitness": "Fitness",
