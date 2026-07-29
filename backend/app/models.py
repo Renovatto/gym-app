@@ -113,6 +113,9 @@ class Profile(SQLModel, table=True):
     cut_intensity: CutIntensity = Field(default=CutIntensity.moderate)
     diet_enabled: bool = Field(default=False)
     scale_mac: str | None = Field(default=None)
+    # Alvo de gordura corporal em % escolhido pela pessoa. So serve para calcular
+    # a faixa de peso correspondente - o app nunca sugere um alvo sozinho.
+    body_fat_target_pct: float | None = Field(default=None)
 
     user: User = Relationship(back_populates="profile")
 

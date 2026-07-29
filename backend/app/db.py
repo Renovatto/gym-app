@@ -50,6 +50,7 @@ _COLUMN_MIGRATIONS: dict[str, dict[str, str]] = {
         "cut_intensity": "VARCHAR DEFAULT 'moderate'",
         "first_name": "VARCHAR",
         "last_name": "VARCHAR",
+        "body_fat_target_pct": "FLOAT",
     },
     # Composicao corporal no registro de pesagem (vem da balanca de bioimpedancia).
     "weight_logs": {

@@ -109,6 +109,35 @@ export interface WeightLog extends BodyComposition {
 	logged_at: string;
 }
 
+// Faixa de referencia de gordura corporal (chave traduzida no frontend).
+export interface BodyFatBand {
+	key: string; // essential | athlete | fitness | acceptable | high
+	from_pct: number;
+	to_pct: number;
+}
+
+// Painel de composicao corporal: a leitura da ultima pesagem com bioimpedancia,
+// ja com regua, tendencia e a faixa de peso do alvo. Tudo calculado no backend.
+export interface BodyCompositionPanel {
+	measured_at: string | null;
+	weight_kg: number | null;
+	fat_percentage: number | null;
+	fat_mass_kg: number | null;
+	lean_mass_kg: number | null;
+	visceral_fat_index: number | null;
+	water_percentage: number | null;
+	bands: BodyFatBand[];
+	band_key: string | null;
+	gauge_min: number;
+	gauge_max: number;
+	trend_days: number | null;
+	fat_percentage_delta: number | null;
+	lean_mass_delta_kg: number | null;
+	target_fat_percentage: number | null;
+	target_weight_min_kg: number | null;
+	target_weight_max_kg: number | null;
+}
+
 export interface WeightHistory {
 	logs: WeightLog[];
 	current_kg: number | null;
@@ -790,6 +819,13 @@ export const api = {
 	addWeight: (weighIn: WeighInInput) =>
 		request<WeightLog>('/me/weight', { method: 'POST', body: weighIn }),
 	deleteWeight: (id: number) => request<void>(`/me/weight/${id}`, { method: 'DELETE' }),
+	getBodyComposition: () => request<BodyCompositionPanel>('/me/weight/body-composition'),
+	// null limpa o alvo de gordura; devolve o painel ja recalculado
+	setBodyFatTarget: (targetPct: number | null) =>
+		request<BodyCompositionPanel>('/me/weight/body-composition/target', {
+			method: 'PUT',
+			body: { target_fat_percentage: targetPct }
+		}),
 	getWaterDay: (day: string, tzOffset: number) =>
 		request<WaterDay>(`/me/water?day=${day}&tz_offset=${tzOffset}`),
 	addWater: (amount_ml: number) =>

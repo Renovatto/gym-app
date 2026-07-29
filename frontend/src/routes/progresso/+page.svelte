@@ -5,6 +5,7 @@
 		type AchievementsResult,
 		type AdaptiveTdee,
 		type BodyComposition,
+		type BodyCompositionPanel,
 		type DietAdherence,
 		type WeekSummary,
 		type WeighInInput,
@@ -23,6 +24,87 @@
 	import { getLocale } from '$lib/paraglide/runtime';
 
 	let history = $state<WeightHistory | null>(null);
+
+	// --- Composicao corporal -------------------------------------------------
+	// O texto do IMC ja avisa que ele "nao avalia a composicao corporal". Este painel
+	// e o que cumpre essa promessa, usando o dado que a balanca ja grava.
+	let bodyPanel = $state<BodyCompositionPanel | null>(null);
+	// O painel so faz sentido com uma medicao de gordura. Este derived resolve a
+	// condicao uma vez e ja entrega a porcentagem como numero, para o resto da tela
+	// nao repetir a verificacao a cada uso.
+	const bodyReading = $derived(
+		bodyPanel && bodyPanel.fat_percentage !== null
+			? { ...bodyPanel, fat_percentage: bodyPanel.fat_percentage }
+			: null
+	);
+	let showTargetPicker = $state(false);
+	let targetPct = $state(18);
+	let savingTarget = $state(false);
+
+	const BAND_BAR_COLORS: Record<string, string> = {
+		essential: 'bg-slate-300',
+		athlete: 'bg-sky-400',
+		fitness: 'bg-emerald-400',
+		acceptable: 'bg-blue-400',
+		high: 'bg-amber-400'
+	};
+	const BAND_PILL_COLORS: Record<string, string> = {
+		essential: 'bg-slate-100 text-slate-600',
+		athlete: 'bg-sky-100 text-sky-700',
+		fitness: 'bg-emerald-100 text-emerald-700',
+		acceptable: 'bg-blue-100 text-blue-700',
+		high: 'bg-amber-100 text-amber-700'
+	};
+
+	function bandLabel(key: string): string {
+		return (
+			{
+				essential: m.bc_band_essential(),
+				athlete: m.bc_band_athlete(),
+				fitness: m.bc_band_fitness(),
+				acceptable: m.bc_band_acceptable(),
+				high: m.bc_band_high()
+			}[key] ?? key
+		);
+	}
+
+	// Posicao de um valor na regua, em % da largura (recortado nos extremos dela).
+	function gaugePosition(value: number, panel: BodyCompositionPanel): number {
+		const span = panel.gauge_max - panel.gauge_min;
+		if (span <= 0) return 0;
+		return Math.max(0, Math.min(100, ((value - panel.gauge_min) / span) * 100));
+	}
+
+	// Largura de cada faixa na barra: a faixa e recortada nos limites da regua, senao
+	// a gordura essencial (que fica fora) empurraria o resto para o lado.
+	function bandWidth(band: { from_pct: number; to_pct: number }, panel: BodyCompositionPanel): number {
+		const from = Math.max(band.from_pct, panel.gauge_min);
+		const to = Math.min(band.to_pct, panel.gauge_max);
+		if (to <= from) return 0;
+		return ((to - from) / (panel.gauge_max - panel.gauge_min)) * 100;
+	}
+
+	async function saveTarget(): Promise<void> {
+		savingTarget = true;
+		try {
+			bodyPanel = await api.setBodyFatTarget(targetPct);
+			showTargetPicker = false;
+			showToast(m.bc_target_saved());
+		} finally {
+			savingTarget = false;
+		}
+	}
+
+	async function clearTarget(): Promise<void> {
+		savingTarget = true;
+		try {
+			bodyPanel = await api.setBodyFatTarget(null);
+			showTargetPicker = false;
+			showToast(m.bc_target_removed());
+		} finally {
+			savingTarget = false;
+		}
+	}
 	let week = $state<WeekSummary | null>(null);
 	let adaptive = $state<AdaptiveTdee | null>(null);
 	let adherence = $state<DietAdherence | null>(null);
@@ -67,6 +149,8 @@
 		const tzOffset = new Date().getTimezoneOffset();
 		history = await api.getWeightHistory();
 		if (history.current_kg !== null) newWeight = history.current_kg;
+		bodyPanel = await api.getBodyComposition();
+		if (bodyPanel.target_fat_percentage !== null) targetPct = bodyPanel.target_fat_percentage;
 		week = await api.getWeekSummary(localDay(), tzOffset);
 		achievements = await api.getAchievements(localDay(), tzOffset);
 		// A conquista pode ter sido desbloqueada agora mesmo (newly_unlocked so vem
@@ -417,50 +501,205 @@
 		{/if}
 	</section>
 
-	{#if history.latest_body_composition}
-		{@const bc = history.latest_body_composition}
+	<!-- Composicao corporal: a gordura vira protagonista com regua de referencia, a
+		 massa magra ganha tendencia (onde a bioimpedancia acerta) e visceral/agua
+		 viram apoio. Antes eram quatro numeros soltos sem nenhuma regua - a tela nao
+		 respondia a unica pergunta que a pessoa tem ao abrir ("isso e bom ou ruim?"). -->
+	{#if bodyReading}
+		{@const panel = bodyReading}
 		<section class="mt-3 rounded-3xl bg-white p-5 shadow-sm">
 			<p class="mb-3 text-sm font-bold text-slate-400 uppercase">{m.body_composition()}</p>
-			<div class="grid grid-cols-2 gap-3">
-				{#if bc.fat_percentage !== null}
-					<div class="flex items-center gap-2 rounded-2xl bg-slate-50 p-3">
-						<BodyMetricIcon kind="fat" class="h-5 w-5 shrink-0 text-slate-400" />
-						<div class="min-w-0">
-							<p class="text-2xl font-black text-slate-900">{nf.format(bc.fat_percentage)}<span class="text-sm font-medium text-slate-400"> %</span></p>
-							<p class="truncate text-xs font-semibold text-slate-500">{m.bc_fat_pct()}</p>
+
+			<div class="mb-3 flex items-end justify-between gap-3">
+				<div class="min-w-0">
+					<p class="text-4xl leading-none font-black tracking-tight text-slate-900">
+						{nf.format(panel.fat_percentage)}<span class="text-lg font-bold text-slate-400">%</span>
+					</p>
+					<p class="mt-1 text-xs font-bold text-slate-500">{m.bc_fat_pct()}</p>
+				</div>
+				{#if panel.band_key}
+					<span class="shrink-0 rounded-full px-3 py-1 text-xs font-black {BAND_PILL_COLORS[panel.band_key]}">
+						{bandLabel(panel.band_key)}
+					</span>
+				{/if}
+			</div>
+
+			<!-- regua de referencia: cada faixa recortada nos limites do desenho -->
+			<div class="flex h-2.5 overflow-hidden rounded-full">
+				{#each panel.bands as band (band.key)}
+					{@const width = bandWidth(band, panel)}
+					{#if width > 0}
+						<span class="h-full {BAND_BAR_COLORS[band.key]}" style="width: {width}%"></span>
+					{/if}
+				{/each}
+			</div>
+			<div class="relative -mt-2 h-4">
+				<span
+					class="absolute top-0 h-4 w-4 -translate-x-1/2 rounded-full border-[3px] border-slate-900 bg-white shadow"
+					style="left: {gaugePosition(panel.fat_percentage, panel)}%"
+				></span>
+			</div>
+			<div class="mt-1 flex text-[9px] font-black tracking-wide text-slate-400 uppercase">
+				{#each panel.bands as band (band.key)}
+					{@const width = bandWidth(band, panel)}
+					{#if width > 0}
+						<span class="truncate text-center" style="width: {width}%">{bandLabel(band.key)}</span>
+					{/if}
+				{/each}
+			</div>
+
+			<div class="my-4 h-px bg-slate-100"></div>
+
+			<!-- massa magra: o numero que se protege ao emagrecer -->
+			{#if panel.lean_mass_kg !== null}
+				<div class="flex items-center gap-3">
+					<div class="min-w-0">
+						<p class="text-2xl leading-none font-black text-slate-900">
+							{nf.format(panel.lean_mass_kg)}<span class="text-sm font-medium text-slate-400"> kg</span>
+						</p>
+						<p class="mt-0.5 text-xs font-bold text-slate-500">{m.bc_lean_mass()}</p>
+					</div>
+					{#if panel.lean_mass_delta_kg !== null && panel.trend_days !== null}
+						<div
+							class="ml-auto shrink-0 rounded-xl px-2.5 py-1.5 text-right text-[11px] font-black {panel.lean_mass_delta_kg >=
+							0
+								? 'bg-emerald-50 text-emerald-700'
+								: 'bg-amber-50 text-amber-700'}"
+						>
+							{panel.lean_mass_delta_kg > 0 ? '+' : ''}{nf.format(panel.lean_mass_delta_kg)} kg<br />
+							<span class="font-bold opacity-75">{m.bc_trend_days({ days: panel.trend_days })}</span>
 						</div>
+					{/if}
+				</div>
+			{/if}
+
+			<div class="mt-3 flex gap-5">
+				{#if panel.visceral_fat_index !== null}
+					<div>
+						<p class="text-base leading-none font-black text-slate-900">{nf.format(panel.visceral_fat_index)}</p>
+						<p class="mt-0.5 text-[11px] font-semibold text-slate-500">{m.bc_visceral()}</p>
 					</div>
 				{/if}
-				{#if bc.visceral_fat_index !== null}
-					<div class="flex items-center gap-2 rounded-2xl bg-slate-50 p-3">
-						<BodyMetricIcon kind="visceral" class="h-5 w-5 shrink-0 text-slate-400" />
-						<div class="min-w-0">
-							<p class="text-2xl font-black text-slate-900">{nf.format(bc.visceral_fat_index)}</p>
-							<p class="truncate text-xs font-semibold text-slate-500">{m.bc_visceral()}</p>
-						</div>
+				{#if panel.water_percentage !== null}
+					<div>
+						<p class="text-base leading-none font-black text-slate-900">{nf.format(panel.water_percentage)}%</p>
+						<p class="mt-0.5 text-[11px] font-semibold text-slate-500">{m.bc_water_pct()}</p>
 					</div>
 				{/if}
-				{#if bc.muscle_mass_kg !== null}
-					<div class="flex items-center gap-2 rounded-2xl bg-slate-50 p-3">
-						<BodyMetricIcon kind="muscle" class="h-5 w-5 shrink-0 text-slate-400" />
-						<div class="min-w-0">
-							<p class="text-2xl font-black text-slate-900">{nf.format(bc.muscle_mass_kg)}<span class="text-sm font-medium text-slate-400"> kg</span></p>
-							<p class="truncate text-xs font-semibold text-slate-500">{m.bc_muscle_mass()}</p>
-						</div>
-					</div>
-				{/if}
-				{#if bc.water_percentage !== null}
-					<div class="flex items-center gap-2 rounded-2xl bg-slate-50 p-3">
-						<BodyMetricIcon kind="water" class="h-5 w-5 shrink-0 text-slate-400" />
-						<div class="min-w-0">
-							<p class="text-2xl font-black text-slate-900">{nf.format(bc.water_percentage)}<span class="text-sm font-medium text-slate-400"> %</span></p>
-							<p class="truncate text-xs font-semibold text-slate-500">{m.bc_water_pct()}</p>
-						</div>
+				{#if panel.fat_percentage_delta !== null}
+					<div>
+						<p class="text-base leading-none font-black {panel.fat_percentage_delta <= 0 ? 'text-emerald-600' : 'text-amber-600'}">
+							{panel.fat_percentage_delta > 0 ? '+' : ''}{nf.format(panel.fat_percentage_delta)}
+						</p>
+						<p class="mt-0.5 text-[11px] font-semibold text-slate-500">{m.bc_fat_pct()}</p>
 					</div>
 				{/if}
 			</div>
-			<p class="mt-3 text-xs text-slate-400">{m.bc_measured_on()} {df.format(new Date(bc.logged_at))}</p>
+
+			{#if panel.measured_at}
+				<p class="mt-3 text-xs text-slate-400">
+					{m.bc_measured_on()}
+					{df.format(new Date(panel.measured_at))}
+				</p>
+			{/if}
 		</section>
+
+		<!-- Alvo: faixa derivada de um alvo que a PESSOA escolhe, com a premissa a
+			 vista. Nunca um "peso ideal" unico decidido pelo app. -->
+		{#if panel.lean_mass_kg !== null}
+			<section class="mt-3 rounded-3xl bg-white p-5 shadow-sm">
+				{#if panel.target_weight_min_kg !== null && panel.target_weight_max_kg !== null && !showTargetPicker}
+					<p class="text-sm font-bold text-slate-400 uppercase">
+						{m.bc_target_title()}
+						{nf.format(panel.target_fat_percentage ?? 0)}%
+					</p>
+					<p class="mt-1 text-3xl font-black tracking-tight text-emerald-700">
+						{nf.format(panel.target_weight_min_kg)} – {nf.format(panel.target_weight_max_kg)}
+						<span class="text-base font-medium text-slate-400">kg</span>
+					</p>
+					<p class="mt-2 text-xs leading-relaxed font-semibold text-slate-500">
+						{m.bc_target_premise({ lean: nf.format(panel.lean_mass_kg) })}
+					</p>
+
+					<!-- onde a faixa cai em relacao ao peso de hoje -->
+					{#if panel.weight_kg !== null}
+						{@const trackMin = Math.min(panel.target_weight_min_kg, panel.weight_kg) - 2}
+						{@const trackMax = Math.max(panel.target_weight_max_kg, panel.weight_kg) + 2}
+						{@const span = trackMax - trackMin}
+						<div class="relative mt-4 h-9">
+							<div class="absolute top-3 right-0 left-0 h-1.5 rounded-full bg-slate-100"></div>
+							<div
+								class="absolute top-3 h-1.5 rounded-full bg-emerald-200"
+								style="left: {((panel.target_weight_min_kg - trackMin) / span) * 100}%; width: {((panel.target_weight_max_kg - panel.target_weight_min_kg) / span) * 100}%"
+							></div>
+							<span
+								class="absolute top-1.5 h-4 w-4 -translate-x-1/2 rounded-full border-[3px] border-slate-900 bg-white"
+								style="left: {((panel.weight_kg - trackMin) / span) * 100}%"
+							></span>
+							<span
+								class="absolute top-6 -translate-x-1/2 text-[9px] font-black text-slate-400"
+								style="left: {((panel.weight_kg - trackMin) / span) * 100}%"
+							>
+								{m.bc_today_label()} · {nf.format(panel.weight_kg)}
+							</span>
+						</div>
+					{/if}
+
+					<div class="mt-3 flex gap-2">
+						<button
+							type="button"
+							onclick={() => (showTargetPicker = true)}
+							class="h-10 flex-1 rounded-xl border-2 border-slate-200 text-sm font-bold text-slate-600 active:bg-slate-50"
+						>
+							{m.edit()}
+						</button>
+						<button
+							type="button"
+							disabled={savingTarget}
+							onclick={clearTarget}
+							class="h-10 shrink-0 rounded-xl px-3 text-sm font-semibold text-slate-400 active:bg-slate-100 disabled:opacity-50"
+						>
+							{m.bc_target_clear()}
+						</button>
+					</div>
+				{:else if showTargetPicker}
+					<p class="text-sm font-bold text-slate-400 uppercase">{m.bc_target_title()}</p>
+					<div class="mt-2">
+						<Stepper bind:value={targetPct} min={5} max={45} step={1} unit="%" />
+					</div>
+					<p class="mt-2 text-xs leading-relaxed font-semibold text-slate-500">
+						{m.bc_target_premise({ lean: nf.format(panel.lean_mass_kg) })}
+					</p>
+					<p class="mt-1 text-xs text-slate-400">{m.bc_range_note()}</p>
+					<div class="mt-3 flex gap-2">
+						<button
+							type="button"
+							disabled={savingTarget}
+							onclick={saveTarget}
+							class="h-11 flex-1 rounded-xl bg-emerald-600 text-sm font-bold text-white active:bg-emerald-700 disabled:opacity-50"
+						>
+							{m.bc_target_save()}
+						</button>
+						<button
+							type="button"
+							onclick={() => (showTargetPicker = false)}
+							class="h-11 shrink-0 rounded-xl px-3 text-sm font-semibold text-slate-500 active:bg-slate-100"
+						>
+							{m.cancel()}
+						</button>
+					</div>
+				{:else}
+					<button
+						type="button"
+						onclick={() => (showTargetPicker = true)}
+						class="flex w-full items-center justify-center gap-2 rounded-2xl border-2 border-dashed border-slate-300 py-3 text-sm font-bold text-slate-700 active:bg-slate-50"
+					>
+						<svg viewBox="0 0 24 24" class="h-4.5 w-4.5 text-slate-500" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9" /><circle cx="12" cy="12" r="5" /><circle cx="12" cy="12" r="1" /></svg>
+						{m.bc_target_open()}
+					</button>
+				{/if}
+			</section>
+		{/if}
 	{/if}
 
 	<button

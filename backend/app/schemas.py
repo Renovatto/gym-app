@@ -776,3 +776,50 @@ class ReceivedItemOut(BaseModel):
     item_kind: SharedItemKind
     item_id: int
     from_name: str
+
+
+# --- Composicao corporal (painel do Progresso) ----------------------------
+
+
+class BodyFatBandOut(BaseModel):
+    """Faixa de referencia de gordura corporal. O frontend traduz pela chave."""
+
+    key: str  # essential | athlete | fitness | acceptable | high
+    from_pct: float
+    to_pct: float
+
+
+class BodyCompositionPanelOut(BaseModel):
+    """Leitura da ultima pesagem com bioimpedancia, ja com regua e tendencia.
+
+    Tudo calculado no backend para a formula viver num lugar so (ver
+    services/body_composition.py)."""
+
+    measured_at: datetime | None = None
+    weight_kg: float | None = None
+    fat_percentage: float | None = None
+    fat_mass_kg: float | None = None
+    lean_mass_kg: float | None = None
+    visceral_fat_index: float | None = None
+    water_percentage: float | None = None
+
+    # regua de referencia (muda conforme o sexo do perfil)
+    bands: list[BodyFatBandOut] = []
+    band_key: str | None = None
+    gauge_min: float = 0
+    gauge_max: float = 100
+
+    # tendencia contra uma pesagem antiga o bastante para significar algo
+    trend_days: int | None = None
+    fat_percentage_delta: float | None = None
+    lean_mass_delta_kg: float | None = None
+
+    # alvo escolhido pela pessoa (o app nunca escolhe sozinho)
+    target_fat_percentage: float | None = None
+    target_weight_min_kg: float | None = None
+    target_weight_max_kg: float | None = None
+
+
+class BodyFatTargetIn(BaseModel):
+    # None limpa o alvo. O piso de 5% evita alvo abaixo da gordura essencial.
+    target_fat_percentage: float | None = Field(default=None, ge=5, le=45)
