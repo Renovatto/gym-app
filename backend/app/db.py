@@ -35,8 +35,9 @@ if IS_SQLITE:
         cursor.close()
 
 
-# Migrações leves: create_all cria tabelas novas, mas não adiciona colunas a
-# tabelas já existentes. Adicionamos colunas faltantes manualmente (dev/SQLite).
+# Migrações leves: create_all cria tabelas novas, mas nunca adiciona coluna a tabela
+# que já existe. Adicionamos as faltantes aqui, nos dois bancos. O DDL abaixo precisa
+# valer no SQLite E no Postgres - por isso só tipos portáveis (VARCHAR/FLOAT/INTEGER).
 _COLUMN_MIGRATIONS: dict[str, dict[str, str]] = {
     "exercises": {
         "kind": "VARCHAR DEFAULT 'strength'",
@@ -66,27 +67,44 @@ _COLUMN_MIGRATIONS: dict[str, dict[str, str]] = {
 }
 
 
+def _table_exists(conn, table: str) -> bool:
+    from sqlalchemy import text
+
+    if IS_SQLITE:
+        row = conn.execute(
+            text("SELECT name FROM sqlite_master WHERE type='table' AND name=:t"),
+            {"t": table},
+        ).first()
+        return row is not None
+    return conn.execute(text("SELECT to_regclass(:t)"), {"t": table}).scalar() is not None
+
+
 def _run_column_migrations() -> None:
-    # So faz sentido no SQLite (dev): usa sqlite_master e PRAGMA table_info. No Postgres
-    # a base nasce ja com o schema completo via create_all, entao nao ha o que migrar.
-    if not IS_SQLITE:
-        return
+    """Adiciona as colunas que entraram depois que a base ja existia.
+
+    Roda nos DOIS bancos. No SQLite perguntamos ao PRAGMA quais colunas ja existem;
+    no Postgres deixamos o proprio banco decidir com ADD COLUMN IF NOT EXISTS, que e
+    idempotente. Antes isso era so-SQLite, na premissa de que "no Postgres a base
+    nasce completa via create_all" - premissa que vale so para base nova: numa base
+    que ja rodava, a coluna nova simplesmente nunca aparecia."""
     from sqlalchemy import text
 
     with engine.begin() as conn:
         for table, columns in _COLUMN_MIGRATIONS.items():
-            exists = conn.execute(
-                text("SELECT name FROM sqlite_master WHERE type='table' AND name=:t"),
-                {"t": table},
-            ).first()
-            if not exists:
-                continue
-            present = {
-                row[1] for row in conn.execute(text(f"PRAGMA table_info({table})")).all()
-            }
-            for name, ddl in columns.items():
-                if name not in present:
-                    conn.execute(text(f"ALTER TABLE {table} ADD COLUMN {name} {ddl}"))
+            if not _table_exists(conn, table):
+                continue  # base nova: o create_all logo a seguir cria completa
+            if IS_SQLITE:
+                present = {
+                    row[1] for row in conn.execute(text(f"PRAGMA table_info({table})")).all()
+                }
+                for name, ddl in columns.items():
+                    if name not in present:
+                        conn.execute(text(f"ALTER TABLE {table} ADD COLUMN {name} {ddl}"))
+            else:
+                for name, ddl in columns.items():
+                    conn.execute(
+                        text(f"ALTER TABLE {table} ADD COLUMN IF NOT EXISTS {name} {ddl}")
+                    )
 
 
 def _native_enum_values() -> dict[str, list[str]]:
