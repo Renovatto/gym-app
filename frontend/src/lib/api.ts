@@ -348,6 +348,9 @@ export interface CoachNote {
 export interface CoachResult {
 	notes: CoachNote[];
 	days_since_weigh_in: number | null;
+	// Progresso de pesagens rumo ao TDEE adaptativo. null = nao se aplica.
+	weigh_ins_in_window: number | null;
+	min_weigh_ins: number;
 }
 
 // Resultado do TDEE adaptativo (manutencao real estimada a partir dos dados).

@@ -253,6 +253,10 @@ class CoachOut(BaseModel):
     notes: list[CoachNote]
     # dias desde a ultima pesagem (None = nunca pesou). Alimenta o lembrete de pesagem.
     days_since_weigh_in: int | None
+    # Pesagens ja feitas na janela do TDEE adaptativo, para o lembrete mostrar o
+    # progresso ("3/8"). None = nao se aplica: dieta desligada ou minimo ja atingido.
+    weigh_ins_in_window: int | None = None
+    min_weigh_ins: int = 0
 
 
 class AdaptiveTdeeOut(BaseModel):

@@ -23,8 +23,13 @@ a manutencao calorica (calorias para manter o peso).
 
 from dataclasses import dataclass
 
-# Minimos para confiar na estimativa. A janela de analise tem 21 dias (ver
-# ADAPTIVE_WINDOW_DAYS em routers/stats.py), entao o span chega no maximo a 20.
+# Janela de analise: 3 semanas, tempo suficiente para a tendencia de peso aparecer
+# acima do ruido do dia a dia. Fica aqui (e nao no router) porque quem precisa dela
+# tambem precisa dos minimos abaixo - o coach usa as duas para dizer quanto falta.
+ADAPTIVE_WINDOW_DAYS = 21
+
+# Minimos para confiar na estimativa. Como a janela e inclusiva (do dia -20 ate hoje),
+# o span entre a primeira e a ultima pesagem chega no maximo a 20.
 #
 # Os minimos sao altos de proposito. Com poucas pesagens num intervalo curto, a
 # oscilacao de agua/glicogenio domina a inclinacao da reta: 1 kg de agua convertido a

@@ -5,11 +5,12 @@ frontend traduz. Sem IA: sao regras simples e explicaveis."""
 from datetime import date, datetime, time, timedelta, timezone
 
 from fastapi import APIRouter, HTTPException, Query, status
-from sqlmodel import desc, select
+from sqlmodel import Session, desc, select
 
 from ..deps import CurrentUser, SessionDep
 from ..models import DiaryEntry, Objective, Profile, WaterLog, WeightLog, WorkoutSession
 from ..schemas import CoachNote, CoachOut
+from ..services.adaptive import ADAPTIVE_WINDOW_DAYS, MIN_WEIGH_INS
 from ..services.dietplan import maintenance_override as diet_maintenance_override
 from ..services.goals import compute_goals
 
@@ -27,6 +28,25 @@ def _local_day_window(day: date, tz_offset_min: int) -> tuple[datetime, datetime
     start_local = datetime.combine(day, time.min)
     start = (start_local + timedelta(minutes=tz_offset_min)).replace(tzinfo=timezone.utc)
     return start, start + timedelta(days=1)
+
+
+def _weigh_ins_in_adaptive_window(
+    session: Session, user_id: int, day: date, tz_offset_min: int
+) -> int:
+    """Quantas pesagens o usuario tem na janela do TDEE adaptativo.
+
+    E so a CONTAGEM, nao a estimativa: serve para o lembrete de pesagem dizer quanto
+    falta, sem pagar o custo de carregar 3 semanas de diario alimentar."""
+    start_day = day - timedelta(days=ADAPTIVE_WINDOW_DAYS - 1)
+    start_utc, _ = _local_day_window(start_day, tz_offset_min)
+    _, end_utc = _local_day_window(day, tz_offset_min)
+    logs = session.exec(
+        select(WeightLog.id)
+        .where(WeightLog.user_id == user_id)
+        .where(WeightLog.logged_at >= start_utc)
+        .where(WeightLog.logged_at < end_utc)
+    ).all()
+    return len(logs)
 
 
 @router.get("", response_model=CoachOut)
@@ -110,6 +130,20 @@ def coach_notes(
     if profile.objective == Objective.lose_fat and len(notes) < MAX_NOTES:
         notes.append(CoachNote(code="VISCERAL_TIP", severity="info"))
 
+    # Progresso de pesagens rumo ao TDEE adaptativo: so faz sentido com a dieta ligada
+    # (e de quem estima manutencao) e enquanto faltam pesagens. Atingido o minimo, some -
+    # o lembrete volta a ser o generico, sem ficar cobrando quem ja esta em dia.
+    weigh_ins_in_window: int | None = None
+    if profile.diet_enabled:
+        counted = _weigh_ins_in_adaptive_window(session, user.id, day, tz_offset)
+        if counted < MIN_WEIGH_INS:
+            weigh_ins_in_window = counted
+
     # dicas com severidade "warn" primeiro
     notes.sort(key=lambda note: 0 if note.severity == "warn" else 1)
-    return CoachOut(notes=notes[:MAX_NOTES], days_since_weigh_in=days_since_weigh_in)
+    return CoachOut(
+        notes=notes[:MAX_NOTES],
+        days_since_weigh_in=days_since_weigh_in,
+        weigh_ins_in_window=weigh_ins_in_window,
+        min_weigh_ins=MIN_WEIGH_INS,
+    )

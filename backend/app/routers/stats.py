@@ -16,6 +16,7 @@ from ..models import (
 )
 from ..schemas import AdaptiveTdeeOut, WeekSummaryOut
 from ..services.adaptive import (
+    ADAPTIVE_WINDOW_DAYS,
     MIN_DAYS_LOGGED,
     MIN_SPAN_DAYS,
     MIN_WEIGH_INS,
@@ -32,10 +33,6 @@ from ..services.goals import (
 from ..services.dietplan import maintenance_override as diet_maintenance_override
 
 router = APIRouter(prefix="/me/summary", tags=["stats"])
-
-# Janela de analise do TDEE adaptativo (3 semanas: tempo suficiente para a tendencia
-# de peso aparecer acima do ruido do dia a dia).
-ADAPTIVE_WINDOW_DAYS = 21
 
 
 def _utc_window(start_day: date, end_day: date, tz_offset_min: int) -> tuple[datetime, datetime]:
