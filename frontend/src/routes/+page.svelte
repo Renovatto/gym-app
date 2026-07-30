@@ -140,17 +140,15 @@
 		coach !== null && (coach.days_since_weigh_in === null || coach.days_since_weigh_in >= 1)
 	);
 
-	// Quando faltam pesagens para o TDEE adaptativo, o lembrete ganha uma linha dizendo
-	// o motivo: pedir tem mais forca quando a pessoa ve o que ganha com isso.
-	// Some ACIMA da dica de como pesar, nunca no lugar dela - quem esta nas primeiras
-	// pesagens e justamente quem precisa aprender a pesar sempre nas mesmas condicoes,
-	// e pesar de qualquer jeito e a fonte de ruido que essa estimativa mais sofre.
+	// Pesagens que faltam para o TDEE adaptativo, no formato "3/8" da pilula ao lado do
+	// titulo. O numero fica na pilula e o motivo numa linha propria: junto viravam duas
+	// frases longas que deixavam o card alto demais.
+	// A linha do motivo entra ACIMA da dica de como pesar, nunca no lugar dela - quem
+	// esta nas primeiras pesagens e justamente quem precisa aprender a pesar sempre nas
+	// mesmas condicoes, e pesar de qualquer jeito e o ruido que essa estimativa sofre.
 	const weighInProgress = $derived(
 		coach?.weigh_ins_in_window !== null && coach?.weigh_ins_in_window !== undefined
-			? m.weigh_reminder_progress({
-					current: coach.weigh_ins_in_window,
-					goal: coach.min_weigh_ins
-				})
+			? `${coach.weigh_ins_in_window}/${coach.min_weigh_ins}`
 			: null
 	);
 
@@ -265,9 +263,16 @@
 			<svg viewBox="0 0 24 24" class="h-6 w-6" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3a9 9 0 100 18 9 9 0 000-18zM12 8v4l3 2" stroke-linecap="round" stroke-linejoin="round" /></svg>
 		</span>
 		<div class="min-w-0 flex-1">
-			<p class="font-bold text-sky-900">{m.weigh_reminder_title()}</p>
+			<p class="flex flex-wrap items-center gap-2 font-bold text-sky-900">
+				{m.weigh_reminder_title()}
+				{#if weighInProgress}
+					<span class="rounded-full bg-sky-100 px-2 py-0.5 text-xs font-bold text-sky-700">
+						{weighInProgress}
+					</span>
+				{/if}
+			</p>
 			{#if weighInProgress}
-				<p class="text-xs font-semibold text-sky-800">{weighInProgress}</p>
+				<p class="text-xs font-semibold text-sky-800">{m.weigh_reminder_progress()}</p>
 			{/if}
 			<p class="text-xs text-sky-700">{m.weigh_reminder_hint()}</p>
 		</div>
