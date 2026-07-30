@@ -381,6 +381,15 @@ class RoutineCompleteIn(BaseModel):
     tz_offset: int = Field(default=0, ge=-840, le=840)
 
 
+class ExerciseSwapOut(BaseModel):
+    """Troca feita nesta sessao. A tela aplica antes de montar os blocos."""
+
+    routine_exercise_id: int
+    exercise: ExerciseOut
+    original_exercise: ExerciseOut  # para a tela poder dizer "no lugar de X"
+    last_weight_kg: float | None  # ultima carga usada NO SUBSTITUTO
+
+
 class SessionOut(BaseModel):
     id: int
     routine_id: int | None
@@ -388,6 +397,19 @@ class SessionOut(BaseModel):
     started_at: datetime
     finished_at: datetime | None
     sets: list[SetLogOut]
+    swaps: list[ExerciseSwapOut] = []
+
+
+class ExerciseSwapIn(BaseModel):
+    exercise_id: int
+
+
+class AlternativeExerciseOut(BaseModel):
+    """Candidato a substituto, com a carga que a pessoa ja usou nele (se usou)."""
+
+    exercise: ExerciseOut
+    last_weight_kg: float | None
+    same_equipment: bool  # ordena primeiro, mas a tela tambem marca visualmente
 
 
 class SessionSummaryOut(BaseModel):

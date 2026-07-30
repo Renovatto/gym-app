@@ -10,12 +10,16 @@ from ..models import (
     MuscleGroup,
     Routine,
     RoutineExercise,
+    SessionExerciseSwap,
     SetLog,
     User,
     WorkoutSession,
 )
 from ..schemas import (
+    AlternativeExerciseOut,
     ExerciseOut,
+    ExerciseSwapIn,
+    ExerciseSwapOut,
     RoutineCompleteIn,
     RoutineIn,
     RoutineItemOut,
@@ -266,7 +270,36 @@ def create_from_template(
 # --- Sessões (executar treino) -------------------------------------------
 
 
-def _session_out(user_session: WorkoutSession) -> SessionOut:
+def _swaps_out(
+    session: Session, user_session: WorkoutSession, locale: str
+) -> list[ExerciseSwapOut]:
+    """Trocas feitas nesta sessao, ja resolvidas em exercicio original e substituto."""
+    swaps = session.exec(
+        select(SessionExerciseSwap).where(SessionExerciseSwap.session_id == user_session.id)
+    ).all()
+    out: list[ExerciseSwapOut] = []
+    for swap in swaps:
+        item = session.get(RoutineExercise, swap.routine_exercise_id)
+        substitute = session.get(Exercise, swap.exercise_id)
+        if item is None or substitute is None:
+            continue  # rotina ou exercicio sumiu: a troca perde o sentido
+        original = session.get(Exercise, item.exercise_id)
+        if original is None:
+            continue
+        out.append(
+            ExerciseSwapOut(
+                routine_exercise_id=swap.routine_exercise_id,
+                exercise=to_exercise_out(session, substitute, locale),
+                original_exercise=to_exercise_out(session, original, locale),
+                last_weight_kg=_last_weight(session, user_session.user_id, substitute.id),
+            )
+        )
+    return out
+
+
+def _session_out(
+    user_session: WorkoutSession, session: Session | None = None, locale: str = "pt-BR"
+) -> SessionOut:
     return SessionOut(
         id=user_session.id,
         routine_id=user_session.routine_id,
@@ -274,6 +307,7 @@ def _session_out(user_session: WorkoutSession) -> SessionOut:
         started_at=user_session.started_at,
         finished_at=user_session.finished_at,
         sets=[SetLogOut.model_validate(s) for s in user_session.sets],
+        swaps=[] if session is None else _swaps_out(session, user_session, locale),
     )
 
 
@@ -352,7 +386,7 @@ def _find_active_session(session: Session, user_id: int) -> WorkoutSession | Non
 @router.get("/me/sessions/active", response_model=SessionOut | None)
 def active_session(user: CurrentUser, session: SessionDep) -> SessionOut | None:
     ws = _find_active_session(session, user.id)
-    return _session_out(ws) if ws else None
+    return _session_out(ws, session, user.locale) if ws else None
 
 
 def _workout_day_detail(session: Session, ws: WorkoutSession, locale: str) -> WorkoutDayDetailOut:
@@ -519,7 +553,7 @@ def list_sessions(user: CurrentUser, session: SessionDep) -> list[SessionSummary
 
 @router.get("/me/sessions/{session_id}", response_model=SessionOut)
 def get_session(session_id: int, user: CurrentUser, session: SessionDep) -> SessionOut:
-    return _session_out(_get_owned_session(session, session_id, user.id))
+    return _session_out(_get_owned_session(session, session_id, user.id), session, user.locale)
 
 
 @router.delete("/me/sessions/{session_id}", status_code=status.HTTP_204_NO_CONTENT)
@@ -527,3 +561,128 @@ def discard_session(session_id: int, user: CurrentUser, session: SessionDep) -> 
     ws = _get_owned_session(session, session_id, user.id)
     session.delete(ws)
     session.commit()
+
+
+# --- Trocar exercicio so nesta sessao -------------------------------------
+
+
+@router.get("/exercises/{exercise_id}/alternatives", response_model=list[AlternativeExerciseOut])
+def exercise_alternatives(
+    exercise_id: int,
+    user: CurrentUser,
+    session: SessionDep,
+    limit: int = Query(default=8, ge=1, le=20),
+) -> list[AlternativeExerciseOut]:
+    """Substitutos plausiveis: mesmo grupo muscular e mesmo tipo (forca/cardio).
+
+    Ordena por equipamento igual primeiro - trocar supino com barra por supino com
+    halter e util; sugerir um exercicio de maquina que a pessoa nao tem por perto,
+    nem tanto. Depois pelo que ela ja usou (tem carga registrada), porque exercicio
+    conhecido e mais facil de encaixar no meio do treino."""
+    original = _visible_exercise(session, exercise_id, user.id)
+    if original is None:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, detail="EXERCISE_NOT_FOUND")
+
+    candidates = session.exec(
+        select(Exercise)
+        .where((Exercise.user_id.is_(None)) | (Exercise.user_id == user.id))
+        .where(Exercise.muscle_group == original.muscle_group)
+        .where(Exercise.kind == original.kind)
+        .where(Exercise.id != original.id)
+    ).all()
+    # so exercicio com nome no idioma da pessoa: sugerir nome em ingles no meio do
+    # treino atrapalha mais do que ajuda
+    candidates = [c for c in candidates if has_locale_translation(c, user.locale)]
+
+    out = [
+        AlternativeExerciseOut(
+            exercise=to_exercise_out(session, c, user.locale),
+            last_weight_kg=_last_weight(session, user.id, c.id),
+            same_equipment=c.equipment == original.equipment,
+        )
+        for c in candidates
+    ]
+    out.sort(
+        key=lambda a: (
+            not a.same_equipment,
+            a.last_weight_kg is None,
+            a.exercise.name.lower(),
+        )
+    )
+    return out[:limit]
+
+
+def _owned_routine_item(
+    session: Session, ws: WorkoutSession, routine_exercise_id: int
+) -> RoutineExercise:
+    item = session.get(RoutineExercise, routine_exercise_id)
+    if item is None or item.routine_id != ws.routine_id:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, detail="ROUTINE_ITEM_NOT_FOUND")
+    return item
+
+
+@router.put("/me/sessions/{session_id}/swaps/{routine_exercise_id}", response_model=SessionOut)
+def swap_exercise(
+    session_id: int,
+    routine_exercise_id: int,
+    data: ExerciseSwapIn,
+    user: CurrentUser,
+    session: SessionDep,
+) -> SessionOut:
+    """Troca o exercicio SO nesta sessao. A rotina salva fica intacta."""
+    ws = _get_owned_session(session, session_id, user.id)
+    if ws.finished_at is not None:
+        raise HTTPException(status.HTTP_400_BAD_REQUEST, detail="SESSION_FINISHED")
+    item = _owned_routine_item(session, ws, routine_exercise_id)
+    substitute = _visible_exercise(session, data.exercise_id, user.id)
+    if substitute is None:
+        raise HTTPException(status.HTTP_400_BAD_REQUEST, detail="EXERCISE_NOT_FOUND")
+
+    existing = session.exec(
+        select(SessionExerciseSwap)
+        .where(SessionExerciseSwap.session_id == ws.id)
+        .where(SessionExerciseSwap.routine_exercise_id == routine_exercise_id)
+    ).first()
+
+    # voltou para o exercicio original: nao guardamos uma "troca para ele mesmo"
+    if substitute.id == item.exercise_id:
+        if existing is not None:
+            session.delete(existing)
+            session.commit()
+        session.refresh(ws)
+        return _session_out(ws, session, user.locale)
+
+    if existing is not None:
+        existing.exercise_id = substitute.id
+        session.add(existing)
+    else:
+        session.add(
+            SessionExerciseSwap(
+                session_id=ws.id,
+                routine_exercise_id=routine_exercise_id,
+                exercise_id=substitute.id,
+            )
+        )
+    session.commit()
+    session.refresh(ws)
+    return _session_out(ws, session, user.locale)
+
+
+@router.delete("/me/sessions/{session_id}/swaps/{routine_exercise_id}", response_model=SessionOut)
+def undo_swap(
+    session_id: int, routine_exercise_id: int, user: CurrentUser, session: SessionDep
+) -> SessionOut:
+    """Desfaz a troca e volta ao exercicio da rotina. As series ja registradas no
+    substituto FICAM: elas aconteceram de verdade, e apagar treino feito por causa de
+    um toque em 'desfazer' seria perder dado real."""
+    ws = _get_owned_session(session, session_id, user.id)
+    swap = session.exec(
+        select(SessionExerciseSwap)
+        .where(SessionExerciseSwap.session_id == ws.id)
+        .where(SessionExerciseSwap.routine_exercise_id == routine_exercise_id)
+    ).first()
+    if swap is not None:
+        session.delete(swap)
+        session.commit()
+        session.refresh(ws)
+    return _session_out(ws, session, user.locale)

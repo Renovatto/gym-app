@@ -676,5 +676,16 @@
 	"sharing_added_toast": "Added to your recipes!",
 	"sharing_dismissed_toast": "Dismissed.",
 	"sharing_kind_recipe": "Recipe",
-	"sharing_kind_food": "Food"
+	"sharing_kind_food": "Food",
+	"swap_action": "Swap exercise",
+	"swap_title": "Swap for today",
+	"swap_hint": "This swap applies to this workout only. Your routine stays as it is.",
+	"swap_instead_of": "instead of {name}",
+	"swap_undo": "Back to {name}",
+	"swap_undone": "Back to the routine's exercise.",
+	"swap_done": "Swapped for {name}.",
+	"swap_same_equipment": "same equipment",
+	"swap_never_done": "you have not done this one yet",
+	"swap_no_alternatives": "No suggestions for this exercise.",
+	"swap_browse_all": "Find another exercise"
 }

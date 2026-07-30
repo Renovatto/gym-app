@@ -676,5 +676,16 @@
 	"sharing_added_toast": "Adicionado às suas receitas!",
 	"sharing_dismissed_toast": "Dispensado.",
 	"sharing_kind_recipe": "Receita",
-	"sharing_kind_food": "Alimento"
+	"sharing_kind_food": "Alimento",
+	"swap_action": "Trocar exercício",
+	"swap_title": "Trocar só hoje",
+	"swap_hint": "A troca vale só neste treino. Sua rotina continua como está.",
+	"swap_instead_of": "no lugar de {name}",
+	"swap_undo": "Voltar para {name}",
+	"swap_undone": "Voltou ao exercício da rotina.",
+	"swap_done": "Trocado por {name}.",
+	"swap_same_equipment": "mesmo aparelho",
+	"swap_never_done": "você ainda não fez este",
+	"swap_no_alternatives": "Sem sugestões para este exercício.",
+	"swap_browse_all": "Buscar outro exercício"
 }

@@ -586,3 +586,22 @@ class SharedItem(SQLModel, table=True):
     source_item_id: int  # id do original, na conta de quem enviou
     from_user_id: int = Field(foreign_key="users.id", ondelete="CASCADE")
     accepted_at: datetime = Field(default_factory=utcnow)
+
+
+class SessionExerciseSwap(SQLModel, table=True):
+    """Troca de exercicio valida SO nesta sessao - a rotina salva nao muda.
+
+    Precisa existir no banco (e nao so na memoria da tela) por dois motivos: a tela
+    remonta a lista de exercicios lendo a rotina AO VIVO a cada carregamento, e o
+    Safari do iPhone descarta e recarrega a aba sozinho. Sem isso, ao voltar para o
+    treino o exercicio original reapareceria e as series ja feitas no substituto
+    ficariam orfas - os blocos pareceriam nao feitos e dariam para registrar de novo.
+    """
+
+    __tablename__ = "session_exercise_swaps"
+
+    id: int | None = Field(default=None, primary_key=True)
+    session_id: int = Field(foreign_key="workout_sessions.id", index=True, ondelete="CASCADE")
+    routine_exercise_id: int = Field(foreign_key="routine_exercises.id", ondelete="CASCADE")
+    exercise_id: int = Field(foreign_key="exercises.id")  # o substituto
+    created_at: datetime = Field(default_factory=utcnow)

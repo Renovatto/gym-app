@@ -253,6 +253,20 @@ export interface SetLog {
 	done: boolean;
 }
 
+// Troca de exercicio valida so nesta sessao (a rotina salva nao muda).
+export interface ExerciseSwap {
+	routine_exercise_id: number;
+	exercise: Exercise;
+	original_exercise: Exercise;
+	last_weight_kg: number | null;
+}
+
+export interface AlternativeExercise {
+	exercise: Exercise;
+	last_weight_kg: number | null;
+	same_equipment: boolean;
+}
+
 export interface WorkoutSession {
 	id: number;
 	routine_id: number | null;
@@ -260,6 +274,7 @@ export interface WorkoutSession {
 	started_at: string;
 	finished_at: string | null;
 	sets: SetLog[];
+	swaps: ExerciseSwap[];
 }
 
 export interface SessionSummary {
@@ -914,6 +929,17 @@ export const api = {
 		request<WorkoutSession>('/me/sessions', { method: 'POST', body: { routine_id: routineId } }),
 	getActiveSession: () => request<WorkoutSession | null>('/me/sessions/active'),
 	deleteSession: (id: number) => request<void>(`/me/sessions/${id}`, { method: 'DELETE' }),
+	getExerciseAlternatives: (exerciseId: number) =>
+		request<AlternativeExercise[]>(`/exercises/${exerciseId}/alternatives`),
+	swapExercise: (sessionId: number, routineExerciseId: number, exerciseId: number) =>
+		request<WorkoutSession>(`/me/sessions/${sessionId}/swaps/${routineExerciseId}`, {
+			method: 'PUT',
+			body: { exercise_id: exerciseId }
+		}),
+	undoExerciseSwap: (sessionId: number, routineExerciseId: number) =>
+		request<WorkoutSession>(`/me/sessions/${sessionId}/swaps/${routineExerciseId}`, {
+			method: 'DELETE'
+		}),
 	getSession: (id: number) => request<WorkoutSession>(`/me/sessions/${id}`),
 	logSet: (
 		sessionId: number,
