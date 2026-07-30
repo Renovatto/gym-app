@@ -12,15 +12,29 @@ Ideia central (balanco energetico):
 Precisamos de dados suficientes para a estimativa fazer sentido: varias pesagens
 espalhadas e varios dias de diario. Sem isso, retornamos has_enough_data=False.
 
+Cuidado ao mexer no KCAL_PER_KG_FAT (goals.py): ele e usado nas DUAS pontas - aqui para
+LER a balanca (inclinacao -> kcal) e em daily_deficit_for_cut para ESCREVER o deficit
+(kcal -> inclinacao desejada). Em malha fechada os dois erros se cancelam, entao trocar
+por um valor "mais correto" piora o resultado em vez de melhorar.
+
 Siglas: TDEE (Total Daily Energy Expenditure) = gasto total do dia; aqui tratado como
 a manutencao calorica (calorias para manter o peso).
 """
 
 from dataclasses import dataclass
 
-# Minimos para confiar na estimativa (janela tipica de ~14 dias).
-MIN_SPAN_DAYS = 10  # distancia minima entre a primeira e a ultima pesagem
-MIN_WEIGH_INS = 3  # numero minimo de pesagens na janela
+# Minimos para confiar na estimativa. A janela de analise tem 21 dias (ver
+# ADAPTIVE_WINDOW_DAYS em routers/stats.py), entao o span chega no maximo a 20.
+#
+# Os minimos sao altos de proposito. Com poucas pesagens num intervalo curto, a
+# oscilacao de agua/glicogenio domina a inclinacao da reta: 1 kg de agua convertido a
+# 7700 kcal/kg vira ate ~385 kcal/dia de erro com 3 pesagens, contra ~100 kcal/dia com
+# 21. O caso pior e a PRIMEIRA janela de uma dieta, quando a queda de glicogenio ainda
+# esta acontecendo e e quase todo o sinal - ali a manutencao saia ate ~1200 kcal
+# inflada, e a meta adotada ficava ACIMA da manutencao real (a pessoa engordava
+# seguindo o app). Exigir quase a janela inteira deixa a agua sair antes de estimarmos.
+MIN_SPAN_DAYS = 18  # dias entre a primeira e a ultima pesagem (a janela permite ate 20)
+MIN_WEIGH_INS = 8  # pesagens na janela: ~1 a cada 2-3 dias, o bastante para a reta
 MIN_DAYS_LOGGED = 8  # numero minimo de dias com diario alimentar
 
 
@@ -28,6 +42,7 @@ MIN_DAYS_LOGGED = 8  # numero minimo de dias com diario alimentar
 class AdaptiveEstimate:
     has_enough_data: bool
     span_days: int  # dias entre a primeira e a ultima pesagem analisada
+    weigh_ins: int  # pesagens na janela
     days_logged: int  # dias com diario alimentar na janela
     avg_intake_kcal: int  # media diaria consumida
     weekly_change_kg: float  # variacao de peso por semana (negativo = perdendo)
@@ -73,6 +88,7 @@ def estimate_maintenance(
         return AdaptiveEstimate(
             has_enough_data=False,
             span_days=span_days,
+            weigh_ins=len(weigh_ins),
             days_logged=days_logged,
             avg_intake_kcal=avg_intake,
             weekly_change_kg=0.0,
@@ -88,6 +104,7 @@ def estimate_maintenance(
     return AdaptiveEstimate(
         has_enough_data=True,
         span_days=span_days,
+        weigh_ins=len(weigh_ins),
         days_logged=days_logged,
         avg_intake_kcal=avg_intake,
         weekly_change_kg=round(slope_per_day * 7, 2),

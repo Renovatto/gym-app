@@ -7,7 +7,12 @@ from sqlmodel import asc, desc, select
 from ..deps import CurrentUser, SessionDep
 from ..models import DiaryEntry, Objective, Profile, WaterLog, WeightLog, WorkoutSession
 from ..schemas import AdaptiveTdeeOut, WeekSummaryOut
-from ..services.adaptive import estimate_maintenance
+from ..services.adaptive import (
+    MIN_DAYS_LOGGED,
+    MIN_SPAN_DAYS,
+    MIN_WEIGH_INS,
+    estimate_maintenance,
+)
 from ..services.goals import (
     KCAL_PER_KG_FAT,
     WEEKLY_LOSS_RATE_PCT,
@@ -98,6 +103,22 @@ def week_summary(
     )
 
 
+# Ritmos que denunciam janela contaminada: perder rapido demais quase sempre e agua e
+# glicogenio saindo, nao gordura. A conversao kg->kcal assume gordura, entao ali a
+# manutencao estimada sai inflada e nao pode virar meta.
+UNRELIABLE_RATE_CODES = frozenset({"TOO_FAST"})
+
+
+def _can_adopt_estimate(message_code: str, suggested_target_kcal: int | None) -> bool:
+    """A estimativa e boa o bastante para o usuario adotar como meta?
+
+    Adotar troca a meta calorica do app inteiro dali em diante, entao so liberamos
+    quando ha dados suficientes E o ritmo medido e plausivel como perda de gordura."""
+    if suggested_target_kcal is None:
+        return False
+    return message_code not in UNRELIABLE_RATE_CODES
+
+
 def _adaptive_message_code(
     profile: Profile, weight_kg: float, weekly_change_kg: float
 ) -> str:
@@ -184,7 +205,11 @@ def adaptive_tdee(
     return AdaptiveTdeeOut(
         has_enough_data=estimate.has_enough_data,
         span_days=estimate.span_days,
+        weigh_ins=estimate.weigh_ins,
         days_logged=estimate.days_logged,
+        min_span_days=MIN_SPAN_DAYS,
+        min_weigh_ins=MIN_WEIGH_INS,
+        min_days_logged=MIN_DAYS_LOGGED,
         avg_intake_kcal=estimate.avg_intake_kcal,
         weekly_change_kg=estimate.weekly_change_kg,
         estimated_maintenance_kcal=estimate.estimated_maintenance_kcal,
@@ -193,5 +218,6 @@ def adaptive_tdee(
             profile, weight_kg, maintenance_override=diet_maintenance_override(session, user.id)
         ).target_kcal,
         suggested_target_kcal=suggested_target,
+        can_adopt=_can_adopt_estimate(message_code, suggested_target),
         message_code=message_code,
     )

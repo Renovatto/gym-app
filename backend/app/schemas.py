@@ -252,13 +252,22 @@ class AdaptiveTdeeOut(BaseModel):
     # Resultado do TDEE adaptativo: manutencao real estimada pelos dados do usuario.
     has_enough_data: bool
     span_days: int  # dias entre a primeira e a ultima pesagem analisada
+    weigh_ins: int  # pesagens na janela
     days_logged: int  # dias com diario alimentar na janela
+    # Quanto falta para a estimativa ficar pronta. Vem do backend (e nao fixo no
+    # frontend) para os minimos terem uma fonte unica: adaptive.py.
+    min_span_days: int
+    min_weigh_ins: int
+    min_days_logged: int
     avg_intake_kcal: int  # media diaria consumida
     weekly_change_kg: float  # variacao de peso por semana (negativo = perdendo)
     estimated_maintenance_kcal: int | None  # manutencao REAL estimada
     formula_tdee_kcal: int  # manutencao ESTIMADA pela formula (para comparar)
     current_target_kcal: int  # meta atual (baseada na formula)
     suggested_target_kcal: int | None  # meta sugerida com base na manutencao real
+    # A estimativa e confiavel o bastante para virar a meta do app? False esconde o
+    # botao de adotar (mas o numero continua visivel, so que sem virar meta).
+    can_adopt: bool
     # codigo traduzido no frontend: NOT_ENOUGH_DATA, ON_TRACK, TOO_SLOW, STALLED,
     # TOO_FAST, ESTIMATE_READY
     message_code: str

@@ -268,7 +268,9 @@
 			ON_TRACK: { text: m.adaptive_on_track(), tone: 'good' },
 			TOO_SLOW: { text: m.adaptive_too_slow(), tone: 'warn' },
 			STALLED: { text: m.adaptive_stalled(), tone: 'warn' },
-			TOO_FAST: { text: m.adaptive_too_fast(), tone: 'info' },
+			// perder rapido demais nao e neutro: sinaliza janela contaminada por agua,
+			// e e o unico codigo que tambem bloqueia adotar a meta (can_adopt=false)
+			TOO_FAST: { text: m.adaptive_too_fast(), tone: 'warn' },
 			ESTIMATE_READY: { text: m.adaptive_estimate_ready(), tone: 'info' }
 		};
 		return byCode[adaptive.message_code] ?? byCode.ESTIMATE_READY;
@@ -480,9 +482,15 @@
 		<p class="mb-1 text-sm font-bold text-slate-400 uppercase">{m.adaptive_title()}</p>
 		{#if !adaptive.has_enough_data}
 			<p class="text-sm text-slate-500">{m.adaptive_need_data()}</p>
-			<p class="mt-2 text-xs text-slate-400">
-				{m.adaptive_progress_label()}: {adaptive.days_logged} {m.adaptive_days_logged()} ·
-				{adaptive.span_days} {m.adaptive_days_span()}
+			<!-- Mostra o alvo de cada exigencia (atual/minimo): sem isso a pessoa nao
+			     descobre qual das tres esta faltando. Verde = ja atingida. -->
+			<p class="mt-2 flex flex-wrap gap-x-2 gap-y-1 text-xs text-slate-400">
+				<span class="font-semibold">{m.adaptive_progress_label()}:</span>
+				{#each [ { have: adaptive.days_logged, need: adaptive.min_days_logged, label: m.adaptive_days_logged() }, { have: adaptive.weigh_ins, need: adaptive.min_weigh_ins, label: m.adaptive_weigh_ins() }, { have: adaptive.span_days, need: adaptive.min_span_days, label: m.adaptive_days_span() } ] as req}
+					<span class={req.have >= req.need ? 'font-semibold text-emerald-600' : ''}>
+						{req.have}/{req.need} {req.label}
+					</span>
+				{/each}
 			</p>
 		{:else}
 			<!-- manutencao real estimada vs estimativa da formula -->
@@ -532,6 +540,9 @@
 					<svg viewBox="0 0 24 24" class="h-4 w-4 shrink-0" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 13l4 4L19 7" stroke-linecap="round" stroke-linejoin="round" /></svg>
 					{m.adaptive_already_adopted()}
 				</p>
+			{:else if !adaptive.can_adopt}
+				<!-- a manutencao medida continua visivel acima, mas nao pode virar meta -->
+				<p class="mt-3 text-xs font-semibold text-amber-700">{m.adaptive_cannot_adopt()}</p>
 			{:else if confirmingAdoptGoal}
 				<div class="mt-3 flex items-center gap-2 rounded-2xl bg-emerald-50 p-2">
 					<span class="min-w-0 flex-1 pl-2 text-xs font-semibold text-emerald-800">{m.adaptive_adopt_confirm()}</span>

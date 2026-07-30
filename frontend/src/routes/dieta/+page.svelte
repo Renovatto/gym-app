@@ -91,8 +91,10 @@
 	}
 
 	// Meta sugerida difere da atual -> tem informacao nova do TDEE adaptativo para ver.
+	// Exige can_adopt: sem isso o badge levaria a pessoa a abrir a modal e nao achar botao.
 	const hasNewSuggestion = $derived(
 		!!periodAdaptive?.has_enough_data &&
+			periodAdaptive.can_adopt &&
 			periodAdaptive.suggested_target_kcal !== null &&
 			periodAdaptive.suggested_target_kcal !== periodAdaptive.current_target_kcal
 	);
@@ -1585,7 +1587,9 @@
 				</span>
 			</div>
 
-			{#if periodAdaptive && periodAdaptive.has_enough_data && periodAdaptive.estimated_maintenance_kcal}
+			<!-- CTA de adotar: so aparece quando a estimativa pode virar meta. Quando nao
+			     pode, o numero e o motivo ficam na tela de Progresso, que e a de analise. -->
+			{#if periodAdaptive && periodAdaptive.has_enough_data && periodAdaptive.can_adopt && periodAdaptive.estimated_maintenance_kcal}
 				<div class="mt-4 rounded-2xl border border-emerald-100 bg-emerald-50 p-3">
 					<p class="text-sm font-semibold text-emerald-800">
 						{m.diet_period_measured({ kcal: nf.format(periodAdaptive.estimated_maintenance_kcal) })}

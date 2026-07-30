@@ -335,13 +335,20 @@ export interface CoachResult {
 export interface AdaptiveTdee {
 	has_enough_data: boolean;
 	span_days: number;
+	weigh_ins: number;
 	days_logged: number;
+	// Minimos vindos do backend (fonte unica), para a tela mostrar "quanto falta".
+	min_span_days: number;
+	min_weigh_ins: number;
+	min_days_logged: number;
 	avg_intake_kcal: number;
 	weekly_change_kg: number;
 	estimated_maintenance_kcal: number | null;
 	formula_tdee_kcal: number;
 	current_target_kcal: number;
 	suggested_target_kcal: number | null;
+	// Estimativa confiavel o bastante para virar meta? False esconde o botao de adotar.
+	can_adopt: boolean;
 	message_code: string;
 }
 
