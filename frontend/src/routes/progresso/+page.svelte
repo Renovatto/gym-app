@@ -235,6 +235,28 @@
 		prefilledFrom = null;
 	}
 
+	// Os sete dias da janela, do mais antigo ao de hoje, cada um sabendo se teve
+	// movimento. A inicial vem do proprio idioma (weekday: 'narrow'), entao nao ha
+	// lista de letras escrita a mao para desencontrar da traducao.
+	const weekDayInitial = new Intl.DateTimeFormat(getLocale(), { weekday: 'narrow' });
+	const weekDays = $derived.by(() => {
+		if (!week) return [];
+		const active = new Set(week.active_dates);
+		const today = new Date(localDay() + 'T12:00:00'); // meio-dia evita virada de fuso
+		return Array.from({ length: 7 }, (_, index) => {
+			const dayDate = new Date(today);
+			dayDate.setDate(today.getDate() - (6 - index));
+			// montado a mao, e nao com toISOString(): aquele converte para UTC e pularia
+			// um dia em fuso adiantado (meio-dia em UTC+13 ja e o dia anterior la)
+			const iso = `${dayDate.getFullYear()}-${String(dayDate.getMonth() + 1).padStart(2, '0')}-${String(dayDate.getDate()).padStart(2, '0')}`;
+			return {
+				iso,
+				initial: weekDayInitial.format(dayDate).toUpperCase(),
+				active: active.has(iso)
+			};
+		});
+	});
+
 	const dietOn = $derived(session.profile?.diet_enabled ?? false);
 	const nf = new Intl.NumberFormat(getLocale());
 	const df = new Intl.DateTimeFormat(getLocale(), { day: '2-digit', month: 'short' });
@@ -431,12 +453,15 @@
 			</p>
 			<p class="mt-1 text-xs font-bold text-slate-500">{m.active_days_label()}</p>
 			<div class="mt-2 flex gap-1.5">
-				{#each Array(7) as _, index (index)}
+				{#each weekDays as weekDay (weekDay.iso)}
 					<span
-						class="h-1.5 flex-1 rounded-full {index < week.active_days
-							? 'bg-emerald-500'
-							: 'bg-slate-200'}"
-					></span>
+						class="grid h-8 flex-1 place-items-center rounded-lg text-[11px] font-black {weekDay.active
+							? 'bg-emerald-500 text-white'
+							: 'bg-slate-100 text-slate-400'}"
+						title={weekDay.iso}
+					>
+						{weekDay.initial}
+					</span>
 				{/each}
 			</div>
 		</div>

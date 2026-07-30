@@ -307,6 +307,8 @@ export interface WeekSummary {
 	workouts: number;
 	// dias distintos com treino OU atividade avulsa (uniao, nunca soma)
 	active_days: number;
+	// quais dias tiveram movimento (YYYY-MM-DD), para marcar cada dia da semana
+	active_dates: string[];
 	activities: number;
 	activities_kcal: number;
 	total_volume_kg: number;

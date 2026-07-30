@@ -210,6 +210,9 @@ class WeekSummaryOut(BaseModel):
     # dias distintos com treino OU atividade avulsa (uniao, nunca soma: passar de 7
     # seria mentira). E o numero que responde "como foi minha semana?".
     active_days: int
+    # QUAIS dias, nao so quantos: a tela marca cada dia da semana, entao "treinei
+    # segunda e quarta" e uma informacao melhor que "treinei 2 dias".
+    active_dates: list[date]
     activities: int  # quantas atividades avulsas
     activities_kcal: int  # gasto estimado delas
     # Soma de repeticoes x peso. Continua no schema porque a tela de detalhe do treino

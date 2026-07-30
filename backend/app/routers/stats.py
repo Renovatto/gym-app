@@ -83,7 +83,7 @@ def week_summary(
     # dia de musculacao mais corrida conta uma vez so, senao o numero passaria de 7.
     workout_days = {(ws.started_at - timedelta(minutes=tz_offset)).date() for ws in sessions}
     activity_days = {a.entry_date for a in activities}
-    active_days = len(workout_days | activity_days)
+    active_dates = sorted(workout_days | activity_days)
 
     # Dieta: média de kcal por dia com registro (entry_date é dia local)
     diary = session.exec(
@@ -114,7 +114,8 @@ def week_summary(
 
     return WeekSummaryOut(
         workouts=len(sessions),
-        active_days=active_days,
+        active_days=len(active_dates),
+        active_dates=active_dates,
         activities=len(activities),
         activities_kcal=round(sum(a.kcal for a in activities)),
         total_volume_kg=round(total_volume, 1),
