@@ -32,9 +32,26 @@
 		return clampRange(Math.round(v / step) * step);
 	}
 
+	// Casas GUARDADAS, que nao sao as mesmas casas EXIBIDAS (`decimals`). Quem digita
+	// 76,75 num campo de peso quer 76,75 guardado, mesmo que o normal seja mostrar uma
+	// casa - antes o valor era truncado na digitacao e virava 76,8.
+	// Campo inteiro (decimals = 0) continua inteiro: repeticoes e series nao podem
+	// virar 10,5, que o backend recusaria.
+	const storedDecimals = $derived(decimals === 0 ? 0 : 3);
+
 	function set(v: number): void {
-		value = Number(v.toFixed(decimals));
+		// arredondar aqui tambem mata o lixo do ponto flutuante (0.1 + 0.2 = 0.3000...4)
+		const factor = 10 ** storedDecimals;
+		value = Math.round(v * factor) / factor;
 		onchange?.(value);
+	}
+
+	// Mostra a precisao configurada quando o numero cabe nela, e o numero inteiro
+	// quando a pessoa digitou casas a mais - assim 76,8 aparece "76.8" (e nao
+	// "76.80") e 76,75 nao vira 76,8 na frente de quem acabou de digitar.
+	function display(v: number): string {
+		const rounded = Number(v.toFixed(decimals));
+		return rounded === v ? v.toFixed(decimals) : String(v);
 	}
 
 	function nudge(direction: 1 | -1): void {
@@ -65,7 +82,7 @@
 			<input
 				inputmode="decimal"
 				class="w-full min-w-0 border-none bg-transparent text-center text-lg font-bold text-slate-900 outline-none"
-				value={value.toFixed(decimals)}
+				value={display(value)}
 				onfocus={(e) => e.currentTarget.select()}
 				oninput={stripNonNumeric}
 				onchange={onInput}
@@ -99,7 +116,7 @@
 			<input
 				inputmode="decimal"
 				class="w-full min-w-0 border-none bg-transparent text-center text-2xl font-bold text-slate-900 outline-none"
-				value={value.toFixed(decimals)}
+				value={display(value)}
 				onfocus={(e) => e.currentTarget.select()}
 				oninput={stripNonNumeric}
 				onchange={onInput}
