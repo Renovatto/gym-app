@@ -5,7 +5,15 @@ from fastapi import APIRouter, HTTPException, Query, status
 from sqlmodel import asc, desc, select
 
 from ..deps import CurrentUser, SessionDep
-from ..models import DiaryEntry, Objective, Profile, WaterLog, WeightLog, WorkoutSession
+from ..models import (
+    DiaryEntry,
+    Objective,
+    Profile,
+    StandaloneActivity,
+    WaterLog,
+    WeightLog,
+    WorkoutSession,
+)
 from ..schemas import AdaptiveTdeeOut, WeekSummaryOut
 from ..services.adaptive import (
     MIN_DAYS_LOGGED,
@@ -65,6 +73,21 @@ def week_summary(
                 total_volume += s.reps * s.weight_kg
                 total_sets += 1
 
+    # Atividade avulsa (corrida, bike, ioga...) na mesma janela. entry_date ja e o dia
+    # local do usuario, entao compara direto com os dias, sem converter fuso.
+    activities = session.exec(
+        select(StandaloneActivity)
+        .where(StandaloneActivity.user_id == user.id)
+        .where(StandaloneActivity.entry_date >= start_day)
+        .where(StandaloneActivity.entry_date <= day)
+    ).all()
+
+    # Dias em movimento: dias distintos com treino OU atividade. Uniao, nao soma - um
+    # dia de musculacao mais corrida conta uma vez so, senao o numero passaria de 7.
+    workout_days = {(ws.started_at - timedelta(minutes=tz_offset)).date() for ws in sessions}
+    activity_days = {a.entry_date for a in activities}
+    active_days = len(workout_days | activity_days)
+
     # Dieta: média de kcal por dia com registro (entry_date é dia local)
     diary = session.exec(
         select(DiaryEntry)
@@ -94,6 +117,9 @@ def week_summary(
 
     return WeekSummaryOut(
         workouts=len(sessions),
+        active_days=active_days,
+        activities=len(activities),
+        activities_kcal=round(sum(a.kcal for a in activities)),
         total_volume_kg=round(total_volume, 1),
         total_sets=total_sets,
         avg_kcal=avg_kcal,

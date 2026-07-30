@@ -45,7 +45,7 @@ const PT_BR: GuideSection[] = [
 			{ name: 'Deficit por taxa de perda', formula: 'peso x (taxa%/100) x 7700 / 7', note: 'Taxa: leve 0.25%, moderado 0.5%, agressivo 0.75% do peso por semana. 1 kg de gordura ~ 7700 kcal.' },
 			{ name: 'Proteina', formula: 'g por kg de peso, conforme objetivo', note: '1.6 manter, 2.0 perder/ganhar, 2.2 recomposicao. Protege o musculo no deficit.' },
 			{ name: 'Agua', formula: 'peso(kg) x 35 ml', note: 'Meta diaria base; ajuste com calor e treino.' },
-			{ name: 'TDEE adaptativo', formula: 'media comida - (inclinacao do peso x 7700)', note: 'Estima sua manutencao REAL pelos dados: o que voce comeu vs como o peso mudou. Corrige o erro da formula.' }
+			{ name: 'TDEE adaptativo', formula: 'media comida - (inclinacao do peso x 7700)', note: 'Estima sua manutencao REAL pelos dados: o que voce comeu vs como o peso mudou. Os 7700 supoem que o peso perdido era gordura, entao a conta so vale com pesagem frequente por ~3 semanas e com o peso caindo em ritmo normal.' }
 		]
 	},
 	{
@@ -57,7 +57,7 @@ const PT_BR: GuideSection[] = [
 			'Nunca coma abaixo do seu BMR por muito tempo. O app aplica esse piso automaticamente.',
 			'Proteina alta e treino de forca no deficit: e o que garante que o que sai e gordura, nao musculo.',
 			'Nao some as calorias do treino de novo na meta: o TDEE ja as inclui (contaria duas vezes).',
-			'A balanca decide, nao a formula: se em 2-3 semanas o peso nao cair, o deficit real e zero. Use a meta sugerida (TDEE adaptativo).',
+			'A balanca decide, nao a formula: se em 2-3 semanas o peso nao cair, o deficit real e zero. Quando houver dados suficientes, o app sugere a meta corrigida (TDEE adaptativo).',
 			'Conforme voce emagrece, o gasto cai. A meta precisa ser recalculada (o app faz isso a cada nova pesagem).'
 		]
 	},
@@ -83,7 +83,9 @@ const PT_BR: GuideSection[] = [
 			'Sempre nas mesmas condicoes (o horario muda bastante o numero).',
 			'Peso: idealmente diario ou quase; o app usa a media para cortar o ruido do dia a dia.',
 			'Composicao corporal (bioimpedancia): 1x por semana basta, no mesmo dia da semana.',
-			'Nao se assuste com oscilacao de 1-2 kg em um dia: e agua e comida, nao gordura.'
+			'Nao se assuste com oscilacao de 1-2 kg em um dia: e agua e comida, nao gordura.',
+			'Nas primeiras semanas de dieta o peso despenca por agua e glicogenio, nao por gordura. Depois desacelera - e o normal, nao e o deficit falhando.',
+			'Pese com frequencia: a meta corrigida (TDEE adaptativo) so aparece com cerca de 8 pesagens em 3 semanas. Com poucas pesagens, a agua manda na conta e a estimativa erra feio.'
 		]
 	}
 ];
@@ -110,7 +112,7 @@ const EN: GuideSection[] = [
 			{ name: 'Deficit from loss rate', formula: 'weight x (rate%/100) x 7700 / 7', note: 'Rate: light 0.25%, moderate 0.5%, aggressive 0.75% of bodyweight per week. 1 kg of fat ~ 7700 kcal.' },
 			{ name: 'Protein', formula: 'g per kg of bodyweight, by goal', note: '1.6 maintain, 2.0 lose/gain, 2.2 recomposition. Protects muscle in a deficit.' },
 			{ name: 'Water', formula: 'weight(kg) x 35 ml', note: 'Base daily goal; adjust for heat and training.' },
-			{ name: 'Adaptive TDEE', formula: 'avg intake - (weight slope x 7700)', note: 'Estimates your REAL maintenance from data: what you ate vs how weight changed. Corrects the formula error.' }
+			{ name: 'Adaptive TDEE', formula: 'avg intake - (weight slope x 7700)', note: 'Estimates your REAL maintenance from data: what you ate vs how weight changed. The 7700 assumes the weight lost was fat, so it only holds with frequent weigh-ins over ~3 weeks and weight dropping at a normal pace.' }
 		]
 	},
 	{
@@ -122,7 +124,7 @@ const EN: GuideSection[] = [
 			'Never eat below your BMR for long. The app applies this floor automatically.',
 			'High protein and strength training in a deficit: this ensures what you lose is fat, not muscle.',
 			'Do not add training calories to your goal again: TDEE already includes them (would double-count).',
-			'The scale decides, not the formula: if weight does not drop in 2-3 weeks, your real deficit is zero. Use the suggested goal (adaptive TDEE).',
+			'The scale decides, not the formula: if weight does not drop in 2-3 weeks, your real deficit is zero. Once there is enough data, the app suggests the corrected goal (adaptive TDEE).',
 			'As you get leaner, expenditure drops. The goal must be recomputed (the app does this on each weigh-in).'
 		]
 	},
@@ -148,7 +150,9 @@ const EN: GuideSection[] = [
 			'Always under the same conditions (time of day changes the number a lot).',
 			'Weight: ideally daily or almost; the app uses the average to cut daily noise.',
 			'Body composition (bioimpedance): once a week is enough, on the same weekday.',
-			'Do not panic over a 1-2 kg swing in a day: that is water and food, not fat.'
+			'Do not panic over a 1-2 kg swing in a day: that is water and food, not fat.',
+			'In the first weeks of a diet weight drops fast from water and glycogen, not fat. It then slows down - that is normal, not a failing deficit.',
+			'Weigh in often: the corrected goal (adaptive TDEE) only shows up with about 8 weigh-ins over 3 weeks. With few weigh-ins, water rules the math and the estimate is badly off.'
 		]
 	}
 ];
@@ -175,7 +179,7 @@ const ES: GuideSection[] = [
 			{ name: 'Deficit por tasa de perdida', formula: 'peso x (tasa%/100) x 7700 / 7', note: 'Tasa: ligero 0.25%, moderado 0.5%, agresivo 0.75% del peso por semana. 1 kg de grasa ~ 7700 kcal.' },
 			{ name: 'Proteina', formula: 'g por kg de peso, segun objetivo', note: '1.6 mantener, 2.0 perder/ganar, 2.2 recomposicion. Protege el musculo en el deficit.' },
 			{ name: 'Agua', formula: 'peso(kg) x 35 ml', note: 'Meta diaria base; ajusta con calor y entrenamiento.' },
-			{ name: 'TDEE adaptativo', formula: 'media comida - (pendiente del peso x 7700)', note: 'Estima tu mantenimiento REAL con datos: lo que comiste vs como cambio el peso. Corrige el error de la formula.' }
+			{ name: 'TDEE adaptativo', formula: 'media comida - (pendiente del peso x 7700)', note: 'Estima tu mantenimiento REAL con datos: lo que comiste vs como cambio el peso. Los 7700 suponen que el peso perdido era grasa, asi que la cuenta solo vale con pesajes frecuentes durante ~3 semanas y con el peso bajando a ritmo normal.' }
 		]
 	},
 	{
@@ -187,7 +191,7 @@ const ES: GuideSection[] = [
 			'Nunca comas por debajo de tu BMR por mucho tiempo. La app aplica ese piso automaticamente.',
 			'Proteina alta y entrenamiento de fuerza en el deficit: asegura que lo que pierdes es grasa, no musculo.',
 			'No sumes las calorias del entrenamiento otra vez a la meta: el TDEE ya las incluye (contaria doble).',
-			'La bascula decide, no la formula: si en 2-3 semanas el peso no baja, tu deficit real es cero. Usa la meta sugerida (TDEE adaptativo).',
+			'La bascula decide, no la formula: si en 2-3 semanas el peso no baja, tu deficit real es cero. Cuando haya datos suficientes, la app sugiere la meta corregida (TDEE adaptativo).',
 			'A medida que adelgazas, el gasto baja. La meta debe recalcularse (la app lo hace en cada pesaje).'
 		]
 	},
@@ -213,7 +217,9 @@ const ES: GuideSection[] = [
 			'Siempre en las mismas condiciones (la hora cambia mucho el numero).',
 			'Peso: idealmente diario o casi; la app usa el promedio para cortar el ruido diario.',
 			'Composicion corporal (bioimpedancia): una vez por semana basta, el mismo dia de la semana.',
-			'No te asustes por una oscilacion de 1-2 kg en un dia: es agua y comida, no grasa.'
+			'No te asustes por una oscilacion de 1-2 kg en un dia: es agua y comida, no grasa.',
+			'En las primeras semanas de dieta el peso cae rapido por agua y glucogeno, no por grasa. Luego se frena: es lo normal, no es que falle el deficit.',
+			'Pesate con frecuencia: la meta corregida (TDEE adaptativo) solo aparece con unos 8 pesajes en 3 semanas. Con pocos pesajes, el agua manda en la cuenta y la estimacion falla mucho.'
 		]
 	}
 ];

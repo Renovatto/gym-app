@@ -602,6 +602,8 @@
 	"adaptive_cannot_adopt": "Pérdida demasiado rápida en esta lectura: buena parte es agua, no grasa. La estimación aún no sirve como meta; espera la próxima.",
 	"this_week": "Esta semana",
 	"workouts_label": "Entrenamientos",
+	"active_days_label": "Días en movimiento",
+	"activities_label": "Actividades",
 	"volume_label": "Volumen total",
 	"avg_calories": "Promedio calorías/día",
 	"avg_water": "Promedio agua/día",

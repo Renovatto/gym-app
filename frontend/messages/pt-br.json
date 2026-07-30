@@ -602,6 +602,8 @@
 	"adaptive_cannot_adopt": "Perda rápida demais nesta leitura — boa parte disso é água, não gordura. A estimativa ainda não serve como meta; espere a próxima.",
 	"this_week": "Esta semana",
 	"workouts_label": "Treinos",
+	"active_days_label": "Dias em movimento",
+	"activities_label": "Atividades",
 	"volume_label": "Volume total",
 	"avg_calories": "Média de calorias/dia",
 	"avg_water": "Média de água/dia",

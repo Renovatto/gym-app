@@ -602,6 +602,8 @@
 	"adaptive_cannot_adopt": "Losing too fast in this reading — much of it is water, not fat. This estimate can't become your goal yet; wait for the next one.",
 	"this_week": "This week",
 	"workouts_label": "Workouts",
+	"active_days_label": "Days you moved",
+	"activities_label": "Activities",
 	"volume_label": "Total volume",
 	"avg_calories": "Avg calories/day",
 	"avg_water": "Avg water/day",

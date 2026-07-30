@@ -419,16 +419,49 @@
 {#if week}
 	<section class="mb-4 rounded-3xl bg-white p-5 shadow-sm">
 		<p class="mb-3 text-sm font-bold text-slate-400 uppercase">{m.this_week()}</p>
+
+		<!-- Dias em movimento como numero principal: para quem nao e atleta, constancia
+			 e o que prevê resultado, e funciona igual para musculacao, corrida e ioga.
+			 Saiu daqui o "volume total" (repeticoes x peso), que dava zero para exercicio
+			 de peso corporal e zero para cardio - uma semana de abdominal e corrida
+			 aparecia como "0 kg". -->
+		<div class="mb-3">
+			<p class="text-4xl leading-none font-black tracking-tight text-slate-900">
+				{week.active_days}<span class="text-lg font-bold text-slate-400">/7</span>
+			</p>
+			<p class="mt-1 text-xs font-bold text-slate-500">{m.active_days_label()}</p>
+			<div class="mt-2 flex gap-1.5">
+				{#each Array(7) as _, index (index)}
+					<span
+						class="h-1.5 flex-1 rounded-full {index < week.active_days
+							? 'bg-emerald-500'
+							: 'bg-slate-200'}"
+					></span>
+				{/each}
+			</div>
+		</div>
+
 		<div class="grid grid-cols-2 gap-3">
 			<div class="rounded-2xl bg-slate-50 p-3">
 				<p class="text-2xl font-black text-slate-900">{week.workouts}</p>
 				<p class="text-xs font-semibold text-slate-500">{m.workouts_label()}</p>
+				<!-- series como linha secundaria: interessa em treino de forca, mas nao a
+					 ponto de ocupar um bloco inteiro -->
+				{#if week.total_sets > 0}
+					<p class="mt-0.5 text-[11px] font-semibold text-slate-400">
+						{week.total_sets}
+						{m.sets_label()}
+					</p>
+				{/if}
 			</div>
 			<div class="rounded-2xl bg-slate-50 p-3">
-				<p class="text-2xl font-black text-slate-900">
-					{nf.format(week.total_volume_kg)}<span class="text-sm font-medium text-slate-400"> kg</span>
-				</p>
-				<p class="text-xs font-semibold text-slate-500">{m.volume_label()}</p>
+				<p class="text-2xl font-black text-slate-900">{week.activities}</p>
+				<p class="text-xs font-semibold text-slate-500">{m.activities_label()}</p>
+				{#if week.activities_kcal > 0}
+					<p class="mt-0.5 text-[11px] font-semibold text-slate-400">
+						{nf.format(week.activities_kcal)} kcal
+					</p>
+				{/if}
 			</div>
 			{#if dietOn}
 				<div class="rounded-2xl bg-slate-50 p-3">

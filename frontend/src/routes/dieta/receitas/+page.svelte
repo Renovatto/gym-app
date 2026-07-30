@@ -218,18 +218,32 @@
 		</svg>
 	</a>
 	<h1 class="min-w-0 flex-1 truncate text-2xl font-bold">{m.my_recipes()}</h1>
-	{#if !loading && partners.length > 0 && recipes.length > 0}
-		<button
-			type="button"
-			aria-label={m.sharing_share_action()}
-			title={m.sharing_share_action()}
-			onclick={() => (selecting ? cancelSelecting() : startSelecting())}
-			class="grid h-10 w-10 shrink-0 place-items-center rounded-full shadow-sm {selecting
-				? 'bg-emerald-600 text-white'
-				: 'bg-white text-slate-500 active:bg-slate-100'}"
-		>
-			<svg viewBox="0 0 24 24" class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3" /><circle cx="6" cy="12" r="3" /><circle cx="18" cy="19" r="3" /><path d="M8.6 13.5l6.8 4M15.4 6.5l-6.8 4" /></svg>
-		</button>
+	<!-- Verde, e nao branco: antes era um circulo cinza identico ao botao de voltar
+		 logo ao lado, e ninguem achava. Aparece mesmo sem conexao - botao que some nao
+		 ensina que a funcao existe; sem parceiro, ele leva para onde se convida alguem. -->
+	{#if !loading && recipes.length > 0}
+		{#if partners.length > 0}
+			<button
+				type="button"
+				aria-label={m.sharing_share_action()}
+				title={m.sharing_share_action()}
+				onclick={() => (selecting ? cancelSelecting() : startSelecting())}
+				class="grid h-10 w-10 shrink-0 place-items-center rounded-full shadow-sm {selecting
+					? 'bg-emerald-600 text-white'
+					: 'bg-emerald-50 text-emerald-600 active:bg-emerald-100'}"
+			>
+				<svg viewBox="0 0 24 24" class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3" /><circle cx="6" cy="12" r="3" /><circle cx="18" cy="19" r="3" /><path d="M8.6 13.5l6.8 4M15.4 6.5l-6.8 4" /></svg>
+			</button>
+		{:else}
+			<a
+				href="/perfil/conexoes"
+				aria-label={m.sharing_share_action()}
+				title={m.sharing_share_action()}
+				class="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-emerald-50 text-emerald-600 shadow-sm active:bg-emerald-100"
+			>
+				<svg viewBox="0 0 24 24" class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3" /><circle cx="6" cy="12" r="3" /><circle cx="18" cy="19" r="3" /><path d="M8.6 13.5l6.8 4M15.4 6.5l-6.8 4" /></svg>
+			</a>
+		{/if}
 	{/if}
 </div>
 

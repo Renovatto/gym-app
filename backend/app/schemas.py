@@ -207,6 +207,13 @@ class LocaleUpdate(BaseModel):
 
 class WeekSummaryOut(BaseModel):
     workouts: int
+    # dias distintos com treino OU atividade avulsa (uniao, nunca soma: passar de 7
+    # seria mentira). E o numero que responde "como foi minha semana?".
+    active_days: int
+    activities: int  # quantas atividades avulsas
+    activities_kcal: int  # gasto estimado delas
+    # Soma de repeticoes x peso. Continua no schema porque a tela de detalhe do treino
+    # ainda usa, mas saiu do resumo semanal: da zero para peso corporal e para cardio.
     total_volume_kg: float
     total_sets: int
     avg_kcal: int

@@ -290,6 +290,10 @@ export interface WorkoutDayDetail {
 
 export interface WeekSummary {
 	workouts: number;
+	// dias distintos com treino OU atividade avulsa (uniao, nunca soma)
+	active_days: number;
+	activities: number;
+	activities_kcal: number;
 	total_volume_kg: number;
 	total_sets: number;
 	avg_kcal: number;
