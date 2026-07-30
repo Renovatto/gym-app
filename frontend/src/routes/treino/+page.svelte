@@ -42,6 +42,33 @@
 		dayActivities = [];
 	}
 
+	// Excluir direto pelo dia do calendario. Sem isso ha registro que o app nao deixa
+	// apagar de jeito nenhum: treino mais antigo que os ultimos do historico, e
+	// atividade avulsa de qualquer dia que nao seja hoje.
+	let confirmingDayWorkout = $state<number | null>(null);
+	let confirmingDayActivity = $state<number | null>(null);
+
+	async function refreshOpenDay(): Promise<void> {
+		await load(); // atualiza historico e as marcas do calendario
+		await openDayWorkout(dayWorkoutDate);
+		// dia ficou sem nada: manter a modal aberta e vazia nao ajuda ninguem
+		if (dayWorkouts?.length === 0 && dayActivities.length === 0) closeDayWorkout();
+	}
+
+	async function deleteDayWorkout(sessionId: number): Promise<void> {
+		confirmingDayWorkout = null;
+		await api.deleteSession(sessionId);
+		await refreshOpenDay();
+		showToast(m.toast_deleted());
+	}
+
+	async function deleteDayActivity(activityId: number): Promise<void> {
+		confirmingDayActivity = null;
+		await api.deleteActivity(activityId);
+		await refreshOpenDay();
+		showToast(m.toast_deleted());
+	}
+
 	let routines = $state<Routine[]>([]);
 	let sessions = $state<SessionSummary[]>([]);
 	let activeSession = $state<WorkoutSession | null>(null);
@@ -252,6 +279,14 @@
 
 	const finishedSessions = $derived(sessions.filter((s) => s.finished_at));
 
+	// O historico mostrava so os 8 mais recentes e nao havia como chegar no resto -
+	// treino antigo ficava sem jeito de abrir nem de excluir.
+	const HISTORY_PREVIEW = 8;
+	let historyExpanded = $state(false);
+	const visibleHistory = $derived(
+		historyExpanded ? finishedSessions : finishedSessions.slice(0, HISTORY_PREVIEW)
+	);
+
 	// dias com treino concluido, marcados no calendario (visualizacao do historico)
 	const trainedDays = $derived(new Set(finishedSessions.map((s) => s.started_at.slice(0, 10))));
 	// dias com atividade avulsa: marcados na segunda cor, podem coincidir com treino
@@ -440,11 +475,42 @@
 				<div class="space-y-4">
 					{#each dayWorkouts as workout (workout.session_id)}
 						<div>
-							<p class="font-bold text-emerald-700">{workout.routine_name ?? m.free_workout()}</p>
-							<p class="mb-2 text-xs text-slate-400">
-								{workout.total_sets}
-								{m.sets_label()} · {nf.format(workout.total_volume_kg)} kg
-							</p>
+							<div class="flex items-start gap-2">
+								<div class="min-w-0 flex-1">
+									<p class="font-bold text-emerald-700">{workout.routine_name ?? m.free_workout()}</p>
+									<p class="mb-2 text-xs text-slate-400">
+										{workout.total_sets}
+										{m.sets_label()}
+									</p>
+								</div>
+								<button
+									type="button"
+									aria-label={m.delete_confirm_button()}
+									onclick={() => (confirmingDayWorkout = workout.session_id)}
+									class="grid h-8 w-8 shrink-0 place-items-center rounded-lg text-slate-300 active:bg-slate-100 active:text-red-500"
+								>
+									<svg viewBox="0 0 24 24" class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 7h16M9 7V5h6v2M6 7l1 13h10l1-13" stroke-linecap="round" stroke-linejoin="round" /></svg>
+								</button>
+							</div>
+							{#if confirmingDayWorkout === workout.session_id}
+								<div class="mb-2 flex items-center gap-2 rounded-xl bg-red-50 p-2">
+									<p class="min-w-0 flex-1 text-xs font-semibold text-red-700">{m.confirm_delete()}</p>
+									<button
+										type="button"
+										onclick={() => deleteDayWorkout(workout.session_id)}
+										class="shrink-0 rounded-lg bg-red-600 px-3 py-1.5 text-xs font-bold text-white active:bg-red-700"
+									>
+										{m.delete_confirm_button()}
+									</button>
+									<button
+										type="button"
+										onclick={() => (confirmingDayWorkout = null)}
+										class="shrink-0 rounded-lg px-2 py-1.5 text-xs font-semibold text-slate-500"
+									>
+										{m.cancel()}
+									</button>
+								</div>
+							{/if}
 							<div class="space-y-2">
 								{#each workout.exercises as ex (ex.exercise_name)}
 									<div class="rounded-2xl bg-slate-50 p-3">
@@ -474,13 +540,44 @@
 							<div class="mt-2 space-y-2">
 								{#each dayActivities as activity (activity.id)}
 									<div class="rounded-2xl bg-sky-50 p-3">
-										<p class="text-sm font-bold text-slate-800">{activityKindLabel(activity.kind)}</p>
-										<p class="mt-0.5 text-xs text-slate-500">
-											{activity.time_of_day} · {activity.duration_min}
-											{m.minutes_short()}
-											{#if activity.distance_km}· {nf.format(activity.distance_km)} km{/if}
-											· {nf.format(Math.round(activity.kcal))} kcal
-										</p>
+										<div class="flex items-start gap-2">
+											<div class="min-w-0 flex-1">
+												<p class="text-sm font-bold text-slate-800">{activityKindLabel(activity.kind)}</p>
+												<p class="mt-0.5 text-xs text-slate-500">
+													{activity.time_of_day} · {activity.duration_min}
+													{m.minutes_short()}
+													{#if activity.distance_km}· {nf.format(activity.distance_km)} km{/if}
+													· {nf.format(Math.round(activity.kcal))} kcal
+												</p>
+											</div>
+											<button
+												type="button"
+												aria-label={m.delete_confirm_button()}
+												onclick={() => (confirmingDayActivity = activity.id)}
+												class="grid h-8 w-8 shrink-0 place-items-center rounded-lg text-slate-400 active:bg-white active:text-red-500"
+											>
+												<svg viewBox="0 0 24 24" class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 7h16M9 7V5h6v2M6 7l1 13h10l1-13" stroke-linecap="round" stroke-linejoin="round" /></svg>
+											</button>
+										</div>
+										{#if confirmingDayActivity === activity.id}
+											<div class="mt-2 flex items-center gap-2 rounded-xl bg-red-50 p-2">
+												<p class="min-w-0 flex-1 text-xs font-semibold text-red-700">{m.confirm_delete()}</p>
+												<button
+													type="button"
+													onclick={() => deleteDayActivity(activity.id)}
+													class="shrink-0 rounded-lg bg-red-600 px-3 py-1.5 text-xs font-bold text-white active:bg-red-700"
+												>
+													{m.delete_confirm_button()}
+												</button>
+												<button
+													type="button"
+													onclick={() => (confirmingDayActivity = null)}
+													class="shrink-0 rounded-lg px-2 py-1.5 text-xs font-semibold text-slate-500"
+												>
+													{m.cancel()}
+												</button>
+											</div>
+										{/if}
 									</div>
 								{/each}
 							</div>
@@ -791,12 +888,13 @@
 		<section class="mt-6">
 			<h2 class="mb-2 text-sm font-bold text-slate-500 uppercase">{m.workout_history()}</h2>
 			<div class="overflow-hidden rounded-3xl bg-white shadow-sm">
-				{#each finishedSessions.slice(0, 8) as session, i (session.id)}
+				{#each visibleHistory as session, i (session.id)}
 					<div class="flex items-center gap-2 px-5 py-3.5 {i > 0 ? 'border-t border-slate-100' : ''}">
 						<div class="min-w-0 flex-1">
 							<p class="truncate font-semibold text-slate-900">{session.routine_name ?? m.free_workout()}</p>
 							<p class="text-sm text-slate-500">
-								{session.total_sets} {m.sets_label()} · {nf.format(session.total_volume_kg)} kg
+								{session.total_sets}
+								{m.sets_label()}
 							</p>
 						</div>
 						{#if confirmingDeleteHistory === session.id}
@@ -805,7 +903,7 @@
 								onclick={() => deleteHistory(session.id)}
 								class="shrink-0 rounded-xl bg-red-600 px-3 py-1.5 text-xs font-bold text-white active:bg-red-700"
 							>
-								{m.confirm_delete()}
+								{m.delete_confirm_button()}
 							</button>
 							<button
 								type="button"
@@ -827,6 +925,17 @@
 						{/if}
 					</div>
 				{/each}
+				{#if finishedSessions.length > HISTORY_PREVIEW}
+					<button
+						type="button"
+						onclick={() => (historyExpanded = !historyExpanded)}
+						class="w-full border-t border-slate-100 py-3 text-sm font-bold text-emerald-700 active:bg-slate-50"
+					>
+						{historyExpanded
+							? m.show_less()
+							: m.show_more_count({ count: finishedSessions.length - HISTORY_PREVIEW })}
+					</button>
+				{/if}
 			</div>
 		</section>
 	{/if}

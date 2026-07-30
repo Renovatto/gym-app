@@ -228,6 +228,8 @@
 	"variation_word": "variación",
 	"new_routine": "Nueva rutina",
 	"workout_history": "Historial",
+	"show_less": "Mostrar menos",
+	"show_more_count": "Ver {count} más",
 	"workout_calendar": "Calendario de entrenamientos",
 	"no_workout_that_day": "Ningún entrenamiento registrado este día.",
 	"free_workout": "Entrenamiento libre",
