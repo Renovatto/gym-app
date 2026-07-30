@@ -1,10 +1,16 @@
 <script lang="ts">
-	import { ApiError, api, type Connection } from '$lib/api';
+	import { ApiError, api, type Connection, type ShareOffer } from '$lib/api';
 	import { errorMessage } from '$lib/errors';
+	import { refreshSharingPending } from '$lib/sharing.svelte';
 	import { showToast } from '$lib/toast.svelte';
 	import { m } from '$lib/paraglide/messages';
 
 	let connections = $state<Connection[]>([]);
+	// Itens esperando aceite moram AQUI tambem, e nao so em Minhas receitas: e para
+	// onde o aviso da barra de abas aponta, entao tudo que espera uma acao sua precisa
+	// estar num lugar so.
+	let offers = $state<ShareOffer[]>([]);
+	let answering = $state<number | null>(null);
 	let loading = $state(true);
 
 	let email = $state('');
@@ -16,13 +22,39 @@
 	let confirmingRemove = $state<number | null>(null);
 
 	async function load(): Promise<void> {
-		connections = await api.getConnections();
+		[connections, offers] = await Promise.all([api.getConnections(), api.getShareOffers()]);
+		await refreshSharingPending();
 		loading = false;
 	}
 
 	$effect(() => {
 		load();
 	});
+
+	async function acceptOffer(offer: ShareOffer): Promise<void> {
+		answering = offer.id;
+		try {
+			await api.acceptShareOffer(offer.id);
+			await load();
+			showToast(m.sharing_added_toast());
+		} catch (e) {
+			showToast(errorMessage(e instanceof ApiError ? e.code : 'GENERIC_ERROR'));
+			await load();
+		} finally {
+			answering = null;
+		}
+	}
+
+	async function declineOffer(offer: ShareOffer): Promise<void> {
+		answering = offer.id;
+		try {
+			await api.declineShareOffer(offer.id);
+			await load();
+			showToast(m.sharing_dismissed_toast());
+		} finally {
+			answering = null;
+		}
+	}
 
 	const accepted = $derived(connections.filter((c) => c.status === 'accepted'));
 	const waitingMe = $derived(connections.filter((c) => c.status === 'pending' && !c.i_invited));
@@ -77,6 +109,46 @@
 </div>
 
 <p class="mb-4 text-sm text-slate-500">{m.sharing_subtitle()}</p>
+
+<!-- Itens esperando aceite vem PRIMEIRO: e o que o aviso da barra de abas prometeu. -->
+{#if offers.length > 0}
+	<section class="mb-3 overflow-hidden rounded-3xl bg-white shadow-sm ring-2 ring-emerald-400">
+		<p class="px-5 pt-4 pb-2 text-xs font-black tracking-wide text-emerald-700 uppercase">
+			{m.sharing_inbox_title()}
+		</p>
+		<div class="space-y-2 px-3 pb-3">
+			{#each offers as offer (offer.id)}
+				<div class="rounded-2xl bg-slate-50 p-3">
+					<p class="text-[10px] font-bold tracking-wide text-slate-400 uppercase">
+						{offer.item_kind === 'recipe' ? m.sharing_kind_recipe() : m.sharing_kind_food()}
+					</p>
+					<p class="truncate font-bold text-slate-900">{offer.item_name}</p>
+					<p class="text-xs font-semibold text-emerald-700">
+						{m.sharing_from({ name: offer.from_name })}
+					</p>
+					<div class="mt-2.5 flex gap-2">
+						<button
+							type="button"
+							disabled={answering === offer.id}
+							onclick={() => acceptOffer(offer)}
+							class="h-10 flex-1 rounded-xl bg-emerald-600 text-sm font-bold text-white active:bg-emerald-700 disabled:opacity-50"
+						>
+							{m.sharing_add_action()}
+						</button>
+						<button
+							type="button"
+							disabled={answering === offer.id}
+							onclick={() => declineOffer(offer)}
+							class="h-10 shrink-0 rounded-xl px-3 text-sm font-semibold text-slate-500 active:bg-slate-100 disabled:opacity-50"
+						>
+							{m.sharing_dismiss_action()}
+						</button>
+					</div>
+				</div>
+			{/each}
+		</div>
+	</section>
+{/if}
 
 <!-- Convidar por e-mail: a pessoa precisa ja ter conta no app -->
 <section class="mb-3 rounded-3xl bg-white p-5 shadow-sm">

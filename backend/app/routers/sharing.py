@@ -7,7 +7,7 @@ aceite. Sem perfil publico, sem descoberta de pessoas - as duas ja se conhecem.
 from datetime import datetime, timezone
 
 from fastapi import APIRouter, HTTPException, status
-from sqlmodel import Session, desc, or_, select
+from sqlmodel import Session, desc, func, or_, select
 
 from ..deps import CurrentUser, SessionDep
 from ..models import (
@@ -28,6 +28,7 @@ from ..schemas import (
     ReceivedItemOut,
     ShareOfferIn,
     ShareOfferOut,
+    SharingPendingCountOut,
 )
 from ..services.sharing import SourceItemGone, copy_food, copy_recipe
 
@@ -336,3 +337,21 @@ def list_received(user: CurrentUser, session: SessionDep) -> list[ReceivedItemOu
             )
         )
     return out
+
+
+@router.get("/pending-count", response_model=SharingPendingCountOut)
+def pending_count(user: CurrentUser, session: SessionDep) -> SharingPendingCountOut:
+    """Duas contagens para o badge do app. So conta, nao carrega as listas."""
+    invites = session.exec(
+        select(func.count())
+        .select_from(Connection)
+        .where(Connection.addressee_user_id == user.id)
+        .where(Connection.status == ConnectionStatus.pending)
+    ).one()
+    offers = session.exec(
+        select(func.count())
+        .select_from(ShareOffer)
+        .where(ShareOffer.to_user_id == user.id)
+        .where(ShareOffer.status == ShareOfferStatus.pending)
+    ).one()
+    return SharingPendingCountOut(invites=invites, offers=offers, total=invites + offers)

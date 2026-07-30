@@ -11,6 +11,7 @@
 	} from '$lib/api';
 	import RecipeViewModal from '$lib/components/RecipeViewModal.svelte';
 	import { errorMessage } from '$lib/errors';
+	import { refreshSharingPending } from '$lib/sharing.svelte';
 	import { normalizeSearch, searchMatches } from '$lib/text';
 	import { showToast } from '$lib/toast.svelte';
 	import { m } from '$lib/paraglide/messages';
@@ -52,6 +53,8 @@
 			api.getShareOffers(),
 			api.getReceivedItems()
 		]);
+		// o badge da barra de abas precisa cair no mesmo instante em que a pilula cai
+		await refreshSharingPending();
 	}
 
 	async function load(): Promise<void> {

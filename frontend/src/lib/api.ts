@@ -421,6 +421,12 @@ export interface ShareItemRef {
 	item_id: number;
 }
 
+export interface SharingPendingCount {
+	invites: number; // convites de conexao esperando sua resposta
+	offers: number; // receitas/alimentos esperando aceite
+	total: number;
+}
+
 export interface ReceivedItem {
 	item_kind: SharedItemKind;
 	item_id: number;
@@ -865,6 +871,8 @@ export const api = {
 	declineShareOffer: (id: number) =>
 		request<void>(`/me/sharing/offers/${id}/decline`, { method: 'POST' }),
 	getReceivedItems: () => request<ReceivedItem[]>('/me/sharing/received'),
+	getSharingPendingCount: () =>
+		request<SharingPendingCount>('/me/sharing/pending-count'),
 	getActivities: (day: string) => request<StandaloneActivity[]>(`/me/activities?day=${day}`),
 	// dias que tem atividade avulsa, para marcar no calendario de treino
 	getActivityDays: () => request<string[]>('/me/activities/days'),

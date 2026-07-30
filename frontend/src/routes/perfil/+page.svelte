@@ -13,6 +13,7 @@
 	import ChoiceChips from '$lib/components/ChoiceChips.svelte';
 	import Stepper from '$lib/components/Stepper.svelte';
 	import { bootstrap, session, signOut } from '$lib/session.svelte';
+	import { sharingPending } from '$lib/sharing.svelte';
 	import { showToast } from '$lib/toast.svelte';
 	import { titleIcon, titleName } from '$lib/titleContent';
 	import { triggerAchievementCelebrations } from '$lib/celebrationTrigger';
@@ -261,7 +262,16 @@
 		</span>
 		<span class="font-semibold text-slate-800">{m.sharing_title()}</span>
 	</div>
-	<svg viewBox="0 0 24 24" class="h-5 w-5 text-slate-300" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 6l6 6-6 6" stroke-linecap="round" stroke-linejoin="round" /></svg>
+	<div class="flex items-center gap-2">
+		{#if sharingPending.total > 0}
+			<span
+				class="grid h-5 min-w-5 shrink-0 place-items-center rounded-full bg-emerald-600 px-1.5 text-xs font-bold text-white"
+			>
+				{sharingPending.total}
+			</span>
+		{/if}
+		<svg viewBox="0 0 24 24" class="h-5 w-5 text-slate-300" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 6l6 6-6 6" stroke-linecap="round" stroke-linejoin="round" /></svg>
+	</div>
 </a>
 
 <a

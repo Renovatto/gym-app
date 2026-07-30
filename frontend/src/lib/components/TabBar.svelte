@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { page } from '$app/state';
 	import { session } from '$lib/session.svelte';
+	import { sharingPending } from '$lib/sharing.svelte';
 	import { m } from '$lib/paraglide/messages';
 
 	const iconPaths: Record<string, string> = {
@@ -33,17 +34,28 @@
 				class="flex min-h-16 flex-1 flex-col items-center justify-center gap-1 text-xs font-medium
 					{active ? 'text-emerald-600' : 'text-slate-400'}"
 			>
-				<svg
-					viewBox="0 0 24 24"
-					class="h-6 w-6"
-					fill="none"
-					stroke="currentColor"
-					stroke-width="2"
-					stroke-linecap="round"
-					stroke-linejoin="round"
-				>
-					<path d={iconPaths[tab.icon]} />
-				</svg>
+				<!-- Pontinho no Perfil quando ha convite ou item esperando aceite. Sem ele,
+					 so descobre quem abre o Perfil por acaso. -->
+				<span class="relative">
+					<svg
+						viewBox="0 0 24 24"
+						class="h-6 w-6"
+						fill="none"
+						stroke="currentColor"
+						stroke-width="2"
+						stroke-linecap="round"
+						stroke-linejoin="round"
+					>
+						<path d={iconPaths[tab.icon]} />
+					</svg>
+					{#if tab.icon === 'profile' && sharingPending.total > 0}
+						<span
+							class="absolute -top-0.5 -right-1 grid h-4 min-w-4 place-items-center rounded-full bg-emerald-600 px-1 text-[10px] font-black text-white ring-2 ring-white"
+						>
+							{sharingPending.total}
+						</span>
+					{/if}
+				</span>
 				{tab.label}
 			</a>
 		{/each}

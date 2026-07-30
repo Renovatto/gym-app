@@ -8,6 +8,7 @@
 	import Toast from '$lib/components/Toast.svelte';
 	import CelebrationOverlay from '$lib/components/CelebrationOverlay.svelte';
 	import { bootstrap, session } from '$lib/session.svelte';
+	import { refreshSharingPending } from '$lib/sharing.svelte';
 	import { initTheme } from '$lib/theme.svelte';
 
 	let { children } = $props();
@@ -26,6 +27,17 @@
 	);
 
 	bootstrap();
+
+	// Sem polling (a API hiberna no plano gratuito): recontamos quando a pessoa volta
+	// para o app, que e quando um convite novo teria chegado. Mesmo gatilho que o
+	// cronometro de descanso ja usa para se re-sincronizar.
+	$effect(() => {
+		function onVisible(): void {
+			if (document.visibilityState === 'visible' && session.user) void refreshSharingPending();
+		}
+		document.addEventListener('visibilitychange', onVisible);
+		return () => document.removeEventListener('visibilitychange', onVisible);
+	});
 
 	$effect(() => {
 		if (!session.loaded) return;

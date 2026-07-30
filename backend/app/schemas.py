@@ -839,3 +839,14 @@ class BodyCompositionPanelOut(BaseModel):
 class BodyFatTargetIn(BaseModel):
     # None limpa o alvo. O piso de 5% evita alvo abaixo da gordura essencial.
     target_fat_percentage: float | None = Field(default=None, ge=5, le=45)
+
+
+class SharingPendingCountOut(BaseModel):
+    """Quantas coisas de compartilhamento esperam uma acao sua.
+
+    Existe para o badge nao precisar baixar as duas listas inteiras so para desenhar
+    um numero - a chamada roda a cada abertura do app."""
+
+    invites: int  # convites de conexao que voce recebeu e ainda nao respondeu
+    offers: int  # receitas/alimentos oferecidos, esperando aceite
+    total: int
