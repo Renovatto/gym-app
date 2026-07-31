@@ -55,16 +55,26 @@
 	// resposta anterior voltar, a resposta antiga (mais lenta) nao pode sobrescrever
 	// a mais nova ao chegar depois - so aplicamos o resultado da busca MAIS RECENTE.
 	let extRequestId = 0;
+	// "a busca falhou" e "a busca rodou e nao achou nada" precisam de mensagens
+	// diferentes: tratar as duas como lista vazia fazia a tela afirmar que o produto
+	// nao existe quando na verdade a base nem foi consultada.
+	let extFailed = $state(false);
 
 	async function searchExternal(): Promise<void> {
 		if (extQuery.trim().length < 2) return;
 		const requestId = ++extRequestId;
 		extSearching = true;
+		extFailed = false;
 		try {
 			const results = await api.searchExternalFoods(extQuery.trim());
 			if (requestId !== extRequestId) return; // uma busca mais nova ja foi disparada
 			extResults = results;
 			extSearched = true;
+		} catch {
+			if (requestId !== extRequestId) return;
+			extResults = [];
+			extSearched = false;
+			extFailed = true;
 		} finally {
 			if (requestId === extRequestId) extSearching = false;
 		}
@@ -200,6 +210,17 @@
 						<svg viewBox="0 0 24 24" class="h-4 w-4 shrink-0 text-emerald-500" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14" stroke-linecap="round" /></svg>
 					</button>
 				{/each}
+			</div>
+		{:else if extFailed && !extSearching}
+			<div class="mt-2 flex items-center gap-2 rounded-xl bg-amber-50 p-2.5">
+				<p class="min-w-0 flex-1 text-xs font-semibold text-amber-800">{m.ext_search_failed()}</p>
+				<button
+					type="button"
+					onclick={searchExternal}
+					class="shrink-0 rounded-lg bg-amber-600 px-2.5 py-1 text-xs font-bold text-white active:bg-amber-700"
+				>
+					{m.ext_search_retry()}
+				</button>
 			</div>
 		{:else if extSearched && !extSearching}
 			<p class="mt-2 text-xs text-slate-400">{m.ext_search_empty()}</p>

@@ -457,6 +457,8 @@
 	"ext_search_title": "Buscar en la base online",
 	"ext_search_action": "Buscar",
 	"ext_search_empty": "Nada encontrado en la base.",
+	"ext_search_failed": "La búsqueda en línea no respondió. Eso no significa que el producto no exista.",
+	"ext_search_retry": "Intentar de nuevo",
 	"ext_search_hint": "Toca un resultado para rellenar los campos (Open Food Facts).",
 	"ext_search_filled": "Campos rellenados ✓",
 	"cat_other": "Otro",

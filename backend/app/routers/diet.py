@@ -44,7 +44,7 @@ from ..services.coaching import diet_adherence
 from ..services.dietplan import maintenance_override as diet_maintenance_override
 from ..services.dietplan import period_out as diet_period_out
 from ..services.dietplan import renew as renew_diet_period
-from ..services.foodsearch import search_external
+from ..services.foodsearch import ExternalSearchUnavailable, search_external
 from ..services.diet import (
     food_macros,
     localized_food_name,
@@ -254,7 +254,14 @@ def search_external_foods(
     """Busca alimentos na base aberta (Open Food Facts) para importar ao catalogo."""
     # locale do usuario -> codigo de idioma do OFF (pt-BR -> pt, en -> en, es -> es)
     lang = user.locale.split("-")[0].lower()
-    return search_external(q, limit, lang)
+    try:
+        return search_external(q, limit, lang)
+    except ExternalSearchUnavailable:
+        # 503 e nao lista vazia: "a busca falhou" e "nao achei nada" sao respostas
+        # diferentes, e a tela precisa poder dizer qual das duas aconteceu.
+        raise HTTPException(
+            status.HTTP_503_SERVICE_UNAVAILABLE, detail="EXTERNAL_SEARCH_UNAVAILABLE"
+        ) from None
 
 
 # --- Receitas -------------------------------------------------------------
