@@ -1020,9 +1020,6 @@
 	</div>
 {/if}
 
-{#if photoOf}
-	<ExercisePhotoModal exercise={photoOf} onClose={() => (photoOf = null)} />
-{/if}
 
 <!-- Trocar exercicio: sugestoes do mesmo grupo muscular primeiro, catalogo inteiro
 	 depois. z-50 porque o modo foco usa z-30 e a barra de descanso z-40. -->
@@ -1065,28 +1062,44 @@
 			{:else}
 				<div class="space-y-2">
 					{#each alternatives as alternative (alternative.exercise.id)}
-						<button
-							type="button"
-							disabled={swapping}
-							onclick={() => applySwap(alternative.exercise)}
-							class="flex w-full items-center gap-3 rounded-2xl bg-slate-50 p-3 text-left active:bg-slate-100 disabled:opacity-50"
-						>
-							<div class="min-w-0 flex-1">
-								<p class="truncate font-bold text-slate-900">{alternative.exercise.name}</p>
-								<p class="truncate text-xs text-slate-500">
-									{#if alternative.last_weight_kg !== null}
-										{m.last_time()}: {alternative.last_weight_kg} kg
-									{:else}
-										{m.swap_never_done()}
-									{/if}
-								</p>
-							</div>
-							{#if alternative.same_equipment}
-								<span class="shrink-0 rounded-full bg-emerald-100 px-2 py-0.5 text-[10px] font-bold text-emerald-700">
-									{m.swap_same_equipment()}
-								</span>
-							{/if}
-						</button>
+						<!-- miniatura abre a foto ANTES de trocar: ninguem deveria aceitar um
+							 exercicio sem saber como ele e. Mesmo padrao dos blocos da sessao. -->
+						<div class="flex items-center gap-3 rounded-2xl bg-slate-50 p-3">
+							<button
+								type="button"
+								aria-label={m.view_photo()}
+								onclick={() => (photoOf = alternative.exercise)}
+								class="grid h-12 w-12 shrink-0 place-items-center overflow-hidden rounded-xl bg-slate-200/70"
+							>
+								{#if alternative.exercise.media_urls.length > 0}
+									<img src={alternative.exercise.media_urls[0]} alt="" class="h-full w-full object-cover" loading="lazy" />
+								{:else}
+									<svg viewBox="0 0 24 24" class="h-5 w-5 text-slate-400" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3" /><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7z" /></svg>
+								{/if}
+							</button>
+							<button
+								type="button"
+								disabled={swapping}
+								onclick={() => applySwap(alternative.exercise)}
+								class="flex min-w-0 flex-1 items-center gap-3 text-left active:opacity-70 disabled:opacity-50"
+							>
+								<div class="min-w-0 flex-1">
+									<p class="truncate font-bold text-slate-900">{alternative.exercise.name}</p>
+									<p class="truncate text-xs text-slate-500">
+										{#if alternative.last_weight_kg !== null}
+											{m.last_time()}: {alternative.last_weight_kg} kg
+										{:else}
+											{m.swap_never_done()}
+										{/if}
+									</p>
+								</div>
+								{#if alternative.same_equipment}
+									<span class="shrink-0 rounded-full bg-emerald-100 px-2 py-0.5 text-[10px] font-bold text-emerald-700">
+										{m.swap_same_equipment()}
+									</span>
+								{/if}
+							</button>
+						</div>
 					{/each}
 					{#if alternatives.length === 0}
 						<p class="py-6 text-center text-sm text-slate-400">{m.swap_no_alternatives()}</p>
@@ -1102,4 +1115,9 @@
 			{/if}
 		</div>
 	</div>
+{/if}
+
+<!-- Foto por ultimo no DOM: mesmo z-50 da modal de troca, a ordem decide quem fica por cima -->
+{#if photoOf}
+	<ExercisePhotoModal exercise={photoOf} onClose={() => (photoOf = null)} />
 {/if}
