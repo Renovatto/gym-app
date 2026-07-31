@@ -116,6 +116,10 @@ class Profile(SQLModel, table=True):
     # Alvo de gordura corporal em % escolhido pela pessoa. So serve para calcular
     # a faixa de peso correspondente - o app nunca sugere um alvo sozinho.
     body_fat_target_pct: float | None = Field(default=None)
+    # Qual fonte manda no painel de composicao corporal: "auto" | "scale" | "tape".
+    # Existe porque quem nao tem balanca de bioimpedancia so tem a fita - e ate agora o
+    # painel inteiro dependia da balanca e ficava vazio para essas pessoas.
+    body_comp_source: str = Field(default="auto")
 
     user: User = Relationship(back_populates="profile")
 
@@ -144,6 +148,18 @@ class WeightLog(SQLModel, table=True):
     water_mass_kg: float | None = Field(default=None)  # peso da agua em kg
     visceral_fat_index: float | None = Field(default=None)  # V-fat = gordura visceral (indice da balanca)
     scale_bmr_kcal: int | None = Field(default=None)  # BMR estimado pela balanca (kcal/dia)
+
+    # Medidas de fita metrica (opcionais). NAO vem da balanca: sao tiradas a mao, e por
+    # isso vivem em bloco proprio. Cintura, pescoco e quadril alimentam a estimativa de
+    # gordura (formula da Marinha); braco, coxa e peito sao so acompanhamento - nenhum
+    # estudo liga circunferencia de membro a tamanho de musculo, entao nao entram em
+    # formula nenhuma.
+    waist_cm: float | None = Field(default=None)  # cintura (na altura do umbigo)
+    neck_cm: float | None = Field(default=None)  # pescoco (abaixo do pomo de adao)
+    hip_cm: float | None = Field(default=None)  # quadril (parte mais larga)
+    arm_cm: float | None = Field(default=None)  # braco relaxado
+    thigh_cm: float | None = Field(default=None)  # coxa (meio)
+    chest_cm: float | None = Field(default=None)  # peito
 
     user: User = Relationship(back_populates="weight_logs")
 

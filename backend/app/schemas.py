@@ -130,13 +130,24 @@ class BodyCompositionFields(BaseModel):
     scale_bmr_kcal: int | None = Field(default=None, ge=0, le=5000)  # BMR estimado pela balanca
 
 
-class WeightLogIn(BodyCompositionFields):
+# Medidas de fita metrica (todas opcionais). Mixin SEPARADA da balanca de proposito:
+# a tela e o painel precisam distinguir o que veio de onde.
+class TapeMeasurementFields(BaseModel):
+    waist_cm: float | None = Field(default=None, ge=30, le=250)  # cintura
+    neck_cm: float | None = Field(default=None, ge=15, le=80)  # pescoco
+    hip_cm: float | None = Field(default=None, ge=40, le=250)  # quadril
+    arm_cm: float | None = Field(default=None, ge=10, le=80)  # braco
+    thigh_cm: float | None = Field(default=None, ge=20, le=120)  # coxa
+    chest_cm: float | None = Field(default=None, ge=40, le=250)  # peito
+
+
+class WeightLogIn(BodyCompositionFields, TapeMeasurementFields):
     weight_kg: float = Field(gt=20, lt=400)
     source: WeightSource = WeightSource.manual
     logged_at: datetime | None = None
 
 
-class WeightLogOut(BodyCompositionFields):
+class WeightLogOut(BodyCompositionFields, TapeMeasurementFields):
     model_config = ConfigDict(from_attributes=True)
 
     id: int
@@ -866,6 +877,36 @@ class BodyCompositionPanelOut(BaseModel):
     target_fat_percentage: float | None = None
     target_weight_min_kg: float | None = None
     target_weight_max_kg: float | None = None
+
+    # De onde veio o numero principal de gordura: "scale" | "tape" | None.
+    # As duas estimativas viajam juntas para a tela comparar ("Balanca: X - Fita: Y") -
+    # ambas erram, e fingir que uma delas e A verdade seria desonesto.
+    fat_source: str | None = None
+    fat_percentage_scale: float | None = None
+    fat_percentage_tape: float | None = None
+    # preferencia gravada no perfil: "auto" | "scale" | "tape"
+    source_preference: str = "auto"
+
+    # Medidas de fita da ultima pesagem que as trouxe
+    waist_cm: float | None = None
+    neck_cm: float | None = None
+    hip_cm: float | None = None
+    arm_cm: float | None = None
+    thigh_cm: float | None = None
+    chest_cm: float | None = None
+    # cintura como marcador de risco (cortes da OMS): ok | increased | high
+    waist_risk: str | None = None
+    waist_risk_increased_cm: float | None = None
+    waist_risk_high_cm: float | None = None
+    # variacao das medidas na mesma janela da tendencia de gordura
+    waist_delta_cm: float | None = None
+    arm_delta_cm: float | None = None
+    thigh_delta_cm: float | None = None
+
+
+class BodyCompSourceIn(BaseModel):
+    # auto = fita quando completa (erra menos), senao balanca
+    source: str = Field(pattern=r"^(auto|scale|tape)$")
 
 
 class BodyFatTargetIn(BaseModel):

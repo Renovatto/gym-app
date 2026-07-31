@@ -51,6 +51,7 @@ _COLUMN_MIGRATIONS: dict[str, dict[str, str]] = {
         "first_name": "VARCHAR",
         "last_name": "VARCHAR",
         "body_fat_target_pct": "FLOAT",
+        "body_comp_source": "VARCHAR DEFAULT 'auto'",
     },
     # Composicao corporal no registro de pesagem (vem da balanca de bioimpedancia).
     "weight_logs": {
@@ -64,6 +65,13 @@ _COLUMN_MIGRATIONS: dict[str, dict[str, str]] = {
         "water_mass_kg": "FLOAT",
         "visceral_fat_index": "FLOAT",
         "scale_bmr_kcal": "INTEGER",
+        # medidas de fita metrica (tiradas a mao, nao pela balanca)
+        "waist_cm": "FLOAT",
+        "neck_cm": "FLOAT",
+        "hip_cm": "FLOAT",
+        "arm_cm": "FLOAT",
+        "thigh_cm": "FLOAT",
+        "chest_cm": "FLOAT",
     },
 }
 
