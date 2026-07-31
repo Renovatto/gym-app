@@ -1094,8 +1094,20 @@
 							<svg viewBox="0 0 24 24" class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d={MEAL_ICON_PATHS[meal]} /></svg>
 						</span>
 						<h2 class="min-w-0 flex-1 truncate font-bold text-slate-900">{mealDisplayLabel(meal)}</h2>
-						<span class="shrink-0 text-sm font-semibold text-slate-400">
-							{group ? nf.format(Math.round(group.subtotal.kcal)) : 0} kcal
+						<!-- kcal em cima e P/C/G embaixo (mesmo MacroBreakdown do resto do app):
+							 da para conferir a refeicao sem precisar abrir o acordeao -->
+						<span class="flex shrink-0 flex-col items-end">
+							<span class="text-sm font-semibold text-slate-400">
+								{group ? nf.format(Math.round(group.subtotal.kcal)) : 0} kcal
+							</span>
+							{#if group && group.entries.length > 0}
+								<MacroBreakdown
+									protein_g={group.subtotal.protein_g}
+									carbs_g={group.subtotal.carbs_g}
+									fat_g={group.subtotal.fat_g}
+									class="text-[11px] text-slate-400"
+								/>
+							{/if}
 						</span>
 						<svg viewBox="0 0 24 24" class="h-5 w-5 shrink-0 text-slate-300 transition-transform {isOpen ? 'rotate-180' : ''}" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6" stroke-linecap="round" stroke-linejoin="round" /></svg>
 					</button>
