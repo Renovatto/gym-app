@@ -329,7 +329,7 @@
     "names": {
       "pt-BR": "Batata cozida",
       "en": "Boiled potato",
-      "es": "Papa cocida"
+      "es": "Patata cocida"
     }
   },
   {
@@ -875,9 +875,9 @@
       }
     ],
     "names": {
-      "pt-BR": "Brócolis",
-      "en": "Broccoli",
-      "es": "Brócoli"
+      "pt-BR": "Brócolis cru",
+      "en": "Raw broccoli",
+      "es": "Brócoli crudo"
     }
   },
   {
@@ -895,9 +895,9 @@
       }
     ],
     "names": {
-      "pt-BR": "Cenoura",
-      "en": "Carrot",
-      "es": "Zanahoria"
+      "pt-BR": "Cenoura crua",
+      "en": "Raw carrot",
+      "es": "Zanahoria cruda"
     }
   },
   {
@@ -1000,9 +1000,9 @@
     "default_portion_g": 100,
     "portions": [],
     "names": {
-      "pt-BR": "Abobrinha",
-      "en": "Zucchini",
-      "es": "Calabacín"
+      "pt-BR": "Abobrinha crua",
+      "en": "Raw zucchini",
+      "es": "Calabacín crudo"
     }
   },
   {
@@ -1020,9 +1020,9 @@
       }
     ],
     "names": {
-      "pt-BR": "Couve-flor",
-      "en": "Cauliflower",
-      "es": "Coliflor"
+      "pt-BR": "Couve-flor crua",
+      "en": "Raw cauliflower",
+      "es": "Coliflor cruda"
     }
   },
   {
@@ -1070,9 +1070,9 @@
     "default_portion_g": 100,
     "portions": [],
     "names": {
-      "pt-BR": "Repolho",
-      "en": "Cabbage",
-      "es": "Repollo"
+      "pt-BR": "Repolho cru",
+      "en": "Raw cabbage",
+      "es": "Col cruda"
     }
   },
   {
@@ -1090,9 +1090,9 @@
       }
     ],
     "names": {
-      "pt-BR": "Beterraba",
-      "en": "Beetroot",
-      "es": "Remolacha"
+      "pt-BR": "Beterraba crua",
+      "en": "Raw beetroot",
+      "es": "Remolacha cruda"
     }
   },
   {
@@ -3897,6 +3897,966 @@
       "pt-BR": "Fubá de milho",
       "en": "Cornmeal",
       "es": "Harina de maíz (fubá)"
+    }
+  },
+  {
+    "slug": "hominy-with-milk",
+    "category": "prepared",
+    "kcal": 112.5,
+    "protein_g": 2.4,
+    "carbs_g": 23.6,
+    "fat_g": 1.2,
+    "default_portion_g": 200,
+    "portions": [
+      {
+        "label_key": "portion",
+        "grams": 200
+      }
+    ],
+    "names": {
+      "pt-BR": "Canjica com leite",
+      "en": "Hominy with milk (canjica)",
+      "es": "Canjica con leche"
+    }
+  },
+  {
+    "slug": "green-corn-curau",
+    "category": "prepared",
+    "kcal": 78.4,
+    "protein_g": 2.4,
+    "carbs_g": 13.9,
+    "fat_g": 1.6,
+    "default_portion_g": 150,
+    "portions": [
+      {
+        "label_key": "portion",
+        "grams": 150
+      }
+    ],
+    "names": {
+      "pt-BR": "Curau de milho verde",
+      "en": "Green corn pudding (curau)",
+      "es": "Curau de maíz"
+    }
+  },
+  {
+    "slug": "fresh-lasagna-raw",
+    "category": "carb",
+    "kcal": 220.3,
+    "protein_g": 7.0,
+    "carbs_g": 45.1,
+    "fat_g": 1.3,
+    "default_portion_g": 100,
+    "portions": [
+      {
+        "label_key": "portion",
+        "grams": 100
+      }
+    ],
+    "names": {
+      "pt-BR": "Massa de lasanha fresca crua",
+      "en": "Raw fresh lasagna sheets",
+      "es": "Placas de lasaña frescas crudas"
+    }
+  },
+  {
+    "slug": "raw-meat-pastel",
+    "category": "prepared",
+    "kcal": 288.7,
+    "protein_g": 10.7,
+    "carbs_g": 42.0,
+    "fat_g": 8.8,
+    "default_portion_g": 80,
+    "portions": [
+      {
+        "label_key": "portion",
+        "grams": 80
+      }
+    ],
+    "names": {
+      "pt-BR": "Pastel de carne cru",
+      "en": "Raw meat pastel",
+      "es": "Empanada de carne cruda"
+    }
+  },
+  {
+    "slug": "fried-meat-pastel",
+    "category": "prepared",
+    "kcal": 388.4,
+    "protein_g": 10.1,
+    "carbs_g": 43.8,
+    "fat_g": 20.1,
+    "default_portion_g": 80,
+    "portions": [
+      {
+        "label_key": "portion",
+        "grams": 80
+      }
+    ],
+    "names": {
+      "pt-BR": "Pastel de carne frito",
+      "en": "Fried meat pastel",
+      "es": "Empanada de carne frita"
+    }
+  },
+  {
+    "slug": "popcorn-oil",
+    "category": "carb",
+    "kcal": 448.3,
+    "protein_g": 9.9,
+    "carbs_g": 70.3,
+    "fat_g": 15.9,
+    "default_portion_g": 30,
+    "portions": [
+      {
+        "label_key": "portion",
+        "grams": 30
+      }
+    ],
+    "names": {
+      "pt-BR": "Pipoca com óleo",
+      "en": "Popcorn with oil",
+      "es": "Palomitas con aceite"
+    }
+  },
+  {
+    "slug": "polenta-precooked",
+    "category": "carb",
+    "kcal": 102.7,
+    "protein_g": 2.3,
+    "carbs_g": 23.3,
+    "fat_g": 0.3,
+    "default_portion_g": 120,
+    "portions": [
+      {
+        "label_key": "portion",
+        "grams": 120
+      }
+    ],
+    "names": {
+      "pt-BR": "Polenta pré-cozida",
+      "en": "Precooked polenta",
+      "es": "Polenta precocida"
+    }
+  },
+  {
+    "slug": "kabocha-cooked",
+    "category": "vegetable",
+    "kcal": 48.0,
+    "protein_g": 1.4,
+    "carbs_g": 10.8,
+    "fat_g": 0.7,
+    "default_portion_g": 80,
+    "portions": [
+      {
+        "label_key": "portion",
+        "grams": 80
+      }
+    ],
+    "names": {
+      "pt-BR": "Abóbora cabotiá cozida",
+      "en": "Cooked kabocha squash",
+      "es": "Calabaza cocida"
+    }
+  },
+  {
+    "slug": "kabocha-raw",
+    "category": "vegetable",
+    "kcal": 38.6,
+    "protein_g": 1.7,
+    "carbs_g": 8.4,
+    "fat_g": 0.5,
+    "default_portion_g": 80,
+    "portions": [
+      {
+        "label_key": "portion",
+        "grams": 80
+      }
+    ],
+    "names": {
+      "pt-BR": "Abóbora cabotiá crua",
+      "en": "Raw kabocha squash",
+      "es": "Calabaza cruda"
+    }
+  },
+  {
+    "slug": "zucchini-sauteed",
+    "category": "vegetable",
+    "kcal": 24.4,
+    "protein_g": 1.1,
+    "carbs_g": 4.2,
+    "fat_g": 0.8,
+    "default_portion_g": 80,
+    "portions": [
+      {
+        "label_key": "portion",
+        "grams": 80
+      }
+    ],
+    "names": {
+      "pt-BR": "Abobrinha refogada",
+      "en": "Sauteed zucchini",
+      "es": "Calabacín salteado"
+    }
+  },
+  {
+    "slug": "chicory-raw",
+    "category": "vegetable",
+    "kcal": 18.0,
+    "protein_g": 1.8,
+    "carbs_g": 3.3,
+    "fat_g": 0.2,
+    "default_portion_g": 50,
+    "portions": [
+      {
+        "label_key": "portion",
+        "grams": 50
+      }
+    ],
+    "names": {
+      "pt-BR": "Almeirão cru",
+      "en": "Raw chicory greens",
+      "es": "Achicoria cruda"
+    }
+  },
+  {
+    "slug": "chicory-sauteed",
+    "category": "vegetable",
+    "kcal": 65.1,
+    "protein_g": 1.7,
+    "carbs_g": 5.7,
+    "fat_g": 4.8,
+    "default_portion_g": 80,
+    "portions": [
+      {
+        "label_key": "portion",
+        "grams": 80
+      }
+    ],
+    "names": {
+      "pt-BR": "Almeirão refogado",
+      "en": "Sauteed chicory greens",
+      "es": "Achicoria salteada"
+    }
+  },
+  {
+    "slug": "arracacha-cooked",
+    "category": "carb",
+    "kcal": 80.1,
+    "protein_g": 0.9,
+    "carbs_g": 18.9,
+    "fat_g": 0.2,
+    "default_portion_g": 100,
+    "portions": [
+      {
+        "label_key": "portion",
+        "grams": 100
+      }
+    ],
+    "names": {
+      "pt-BR": "Batata baroa cozida",
+      "en": "Cooked arracacha",
+      "es": "Arracacha cocida"
+    }
+  },
+  {
+    "slug": "sweet-potato-raw",
+    "category": "carb",
+    "kcal": 118.2,
+    "protein_g": 1.3,
+    "carbs_g": 28.2,
+    "fat_g": 0.1,
+    "default_portion_g": 150,
+    "portions": [
+      {
+        "label_key": "portion",
+        "grams": 150
+      }
+    ],
+    "names": {
+      "pt-BR": "Batata-doce crua",
+      "en": "Raw sweet potato",
+      "es": "Batata cruda"
+    }
+  },
+  {
+    "slug": "potato-raw",
+    "category": "carb",
+    "kcal": 64.4,
+    "protein_g": 1.8,
+    "carbs_g": 14.7,
+    "fat_g": 0.0,
+    "default_portion_g": 150,
+    "portions": [
+      {
+        "label_key": "portion",
+        "grams": 150
+      }
+    ],
+    "names": {
+      "pt-BR": "Batata inglesa crua",
+      "en": "Raw potato",
+      "es": "Patata cruda"
+    }
+  },
+  {
+    "slug": "potato-fried",
+    "category": "carb",
+    "kcal": 267.2,
+    "protein_g": 5.0,
+    "carbs_g": 35.6,
+    "fat_g": 13.1,
+    "default_portion_g": 100,
+    "portions": [
+      {
+        "label_key": "portion",
+        "grams": 100
+      }
+    ],
+    "names": {
+      "pt-BR": "Batata frita",
+      "en": "French fries",
+      "es": "Patatas fritas"
+    }
+  },
+  {
+    "slug": "beetroot-cooked",
+    "category": "vegetable",
+    "kcal": 32.2,
+    "protein_g": 1.3,
+    "carbs_g": 7.2,
+    "fat_g": 0.1,
+    "default_portion_g": 80,
+    "portions": [
+      {
+        "label_key": "portion",
+        "grams": 80
+      }
+    ],
+    "names": {
+      "pt-BR": "Beterraba cozida",
+      "en": "Cooked beetroot",
+      "es": "Remolacha cocida"
+    }
+  },
+  {
+    "slug": "broccoli-cooked",
+    "category": "vegetable",
+    "kcal": 24.6,
+    "protein_g": 2.1,
+    "carbs_g": 4.4,
+    "fat_g": 0.5,
+    "default_portion_g": 80,
+    "portions": [
+      {
+        "label_key": "portion",
+        "grams": 80
+      }
+    ],
+    "names": {
+      "pt-BR": "Brócolis cozido",
+      "en": "Cooked broccoli",
+      "es": "Brócoli cocido"
+    }
+  },
+  {
+    "slug": "taro-cooked",
+    "category": "carb",
+    "kcal": 77.6,
+    "protein_g": 1.5,
+    "carbs_g": 18.9,
+    "fat_g": 0.1,
+    "default_portion_g": 100,
+    "portions": [
+      {
+        "label_key": "portion",
+        "grams": 100
+      }
+    ],
+    "names": {
+      "pt-BR": "Cará cozido",
+      "en": "Cooked taro",
+      "es": "Taro cocido"
+    }
+  },
+  {
+    "slug": "catalonha-sauteed",
+    "category": "vegetable",
+    "kcal": 63.4,
+    "protein_g": 1.9,
+    "carbs_g": 4.8,
+    "fat_g": 4.8,
+    "default_portion_g": 80,
+    "portions": [
+      {
+        "label_key": "portion",
+        "grams": 80
+      }
+    ],
+    "names": {
+      "pt-BR": "Catalonha refogada",
+      "en": "Sauteed catalogna chicory",
+      "es": "Achicoria catalogna salteada"
+    }
+  },
+  {
+    "slug": "carrot-cooked",
+    "category": "vegetable",
+    "kcal": 29.9,
+    "protein_g": 0.8,
+    "carbs_g": 6.7,
+    "fat_g": 0.2,
+    "default_portion_g": 80,
+    "portions": [
+      {
+        "label_key": "portion",
+        "grams": 80
+      }
+    ],
+    "names": {
+      "pt-BR": "Cenoura cozida",
+      "en": "Cooked carrot",
+      "es": "Zanahoria cocida"
+    }
+  },
+  {
+    "slug": "chayote-cooked",
+    "category": "vegetable",
+    "kcal": 18.5,
+    "protein_g": 0.4,
+    "carbs_g": 4.8,
+    "fat_g": 0.0,
+    "default_portion_g": 80,
+    "portions": [
+      {
+        "label_key": "portion",
+        "grams": 80
+      }
+    ],
+    "names": {
+      "pt-BR": "Chuchu cozido",
+      "en": "Cooked chayote",
+      "es": "Chayote cocido"
+    }
+  },
+  {
+    "slug": "chayote-raw",
+    "category": "vegetable",
+    "kcal": 17.0,
+    "protein_g": 0.7,
+    "carbs_g": 4.1,
+    "fat_g": 0.1,
+    "default_portion_g": 80,
+    "portions": [
+      {
+        "label_key": "portion",
+        "grams": 80
+      }
+    ],
+    "names": {
+      "pt-BR": "Chuchu cru",
+      "en": "Raw chayote",
+      "es": "Chayote crudo"
+    }
+  },
+  {
+    "slug": "cauliflower-cooked",
+    "category": "vegetable",
+    "kcal": 19.1,
+    "protein_g": 1.2,
+    "carbs_g": 3.9,
+    "fat_g": 0.3,
+    "default_portion_g": 80,
+    "portions": [
+      {
+        "label_key": "portion",
+        "grams": 80
+      }
+    ],
+    "names": {
+      "pt-BR": "Couve-flor cozida",
+      "en": "Cooked cauliflower",
+      "es": "Coliflor cocida"
+    }
+  },
+  {
+    "slug": "cassava-flour-toasted",
+    "category": "carb",
+    "kcal": 365.3,
+    "protein_g": 1.2,
+    "carbs_g": 89.2,
+    "fat_g": 0.3,
+    "default_portion_g": 20,
+    "portions": [
+      {
+        "label_key": "portion",
+        "grams": 20
+      }
+    ],
+    "names": {
+      "pt-BR": "Farinha de mandioca torrada",
+      "en": "Toasted cassava flour",
+      "es": "Harina de yuca tostada"
+    }
+  },
+  {
+    "slug": "yam-raw",
+    "category": "carb",
+    "kcal": 96.7,
+    "protein_g": 2.1,
+    "carbs_g": 23.2,
+    "fat_g": 0.2,
+    "default_portion_g": 150,
+    "portions": [
+      {
+        "label_key": "portion",
+        "grams": 150
+      }
+    ],
+    "names": {
+      "pt-BR": "Inhame cru",
+      "en": "Raw yam",
+      "es": "Ñame crudo"
+    }
+  },
+  {
+    "slug": "scarlet-eggplant",
+    "category": "vegetable",
+    "kcal": 27.4,
+    "protein_g": 1.4,
+    "carbs_g": 6.2,
+    "fat_g": 0.2,
+    "default_portion_g": 60,
+    "portions": [
+      {
+        "label_key": "portion",
+        "grams": 60
+      }
+    ],
+    "names": {
+      "pt-BR": "Jiló cru",
+      "en": "Raw scarlet eggplant",
+      "es": "Berenjena escarlata cruda"
+    }
+  },
+  {
+    "slug": "cassava-raw",
+    "category": "carb",
+    "kcal": 151.4,
+    "protein_g": 1.1,
+    "carbs_g": 36.2,
+    "fat_g": 0.3,
+    "default_portion_g": 150,
+    "portions": [
+      {
+        "label_key": "portion",
+        "grams": 150
+      }
+    ],
+    "names": {
+      "pt-BR": "Mandioca crua",
+      "en": "Raw cassava",
+      "es": "Yuca cruda"
+    }
+  },
+  {
+    "slug": "seasoned-farofa",
+    "category": "carb",
+    "kcal": 405.7,
+    "protein_g": 2.1,
+    "carbs_g": 80.3,
+    "fat_g": 9.1,
+    "default_portion_g": 25,
+    "portions": [
+      {
+        "label_key": "portion",
+        "grams": 25
+      }
+    ],
+    "names": {
+      "pt-BR": "Farofa temperada",
+      "en": "Seasoned cassava flour (farofa)",
+      "es": "Farofa condimentada"
+    }
+  },
+  {
+    "slug": "cassava-fried",
+    "category": "carb",
+    "kcal": 300.1,
+    "protein_g": 1.4,
+    "carbs_g": 50.3,
+    "fat_g": 11.2,
+    "default_portion_g": 100,
+    "portions": [
+      {
+        "label_key": "portion",
+        "grams": 100
+      }
+    ],
+    "names": {
+      "pt-BR": "Mandioca frita",
+      "en": "Fried cassava",
+      "es": "Yuca frita"
+    }
+  },
+  {
+    "slug": "gherkin-raw",
+    "category": "vegetable",
+    "kcal": 13.7,
+    "protein_g": 1.4,
+    "carbs_g": 2.7,
+    "fat_g": 0.1,
+    "default_portion_g": 60,
+    "portions": [
+      {
+        "label_key": "portion",
+        "grams": 60
+      }
+    ],
+    "names": {
+      "pt-BR": "Maxixe cru",
+      "en": "Raw West Indian gherkin",
+      "es": "Pepinillo crudo"
+    }
+  },
+  {
+    "slug": "mustard-greens-raw",
+    "category": "vegetable",
+    "kcal": 18.1,
+    "protein_g": 2.1,
+    "carbs_g": 3.2,
+    "fat_g": 0.2,
+    "default_portion_g": 50,
+    "portions": [
+      {
+        "label_key": "portion",
+        "grams": 50
+      }
+    ],
+    "names": {
+      "pt-BR": "Folha de mostarda crua",
+      "en": "Raw mustard greens",
+      "es": "Hojas de mostaza crudas"
+    }
+  },
+  {
+    "slug": "potato-gnocchi",
+    "category": "carb",
+    "kcal": 180.8,
+    "protein_g": 5.9,
+    "carbs_g": 36.8,
+    "fat_g": 1.9,
+    "default_portion_g": 150,
+    "portions": [
+      {
+        "label_key": "portion",
+        "grams": 150
+      }
+    ],
+    "names": {
+      "pt-BR": "Nhoque de batata cozido",
+      "en": "Cooked potato gnocchi",
+      "es": "Ñoquis de patata cocidos"
+    }
+  },
+  {
+    "slug": "red-cabbage-sauteed",
+    "category": "vegetable",
+    "kcal": 41.8,
+    "protein_g": 1.8,
+    "carbs_g": 7.6,
+    "fat_g": 1.2,
+    "default_portion_g": 80,
+    "portions": [
+      {
+        "label_key": "portion",
+        "grams": 80
+      }
+    ],
+    "names": {
+      "pt-BR": "Repolho roxo refogado",
+      "en": "Sauteed red cabbage",
+      "es": "Col lombarda salteada"
+    }
+  },
+  {
+    "slug": "acai-pulp",
+    "category": "fruit",
+    "kcal": 58.0,
+    "protein_g": 0.8,
+    "carbs_g": 6.2,
+    "fat_g": 3.9,
+    "default_portion_g": 100,
+    "portions": [
+      {
+        "label_key": "portion",
+        "grams": 100
+      }
+    ],
+    "names": {
+      "pt-BR": "Açaí polpa congelada",
+      "en": "Frozen açaí pulp",
+      "es": "Pulpa de açaí congelada"
+    }
+  },
+  {
+    "slug": "acerola",
+    "category": "fruit",
+    "kcal": 33.5,
+    "protein_g": 0.9,
+    "carbs_g": 8.0,
+    "fat_g": 0.2,
+    "default_portion_g": 100,
+    "portions": [
+      {
+        "label_key": "portion",
+        "grams": 100
+      }
+    ],
+    "names": {
+      "pt-BR": "Acerola crua",
+      "en": "Raw acerola",
+      "es": "Acerola cruda"
+    }
+  },
+  {
+    "slug": "cashew-fruit",
+    "category": "fruit",
+    "kcal": 43.1,
+    "protein_g": 1.0,
+    "carbs_g": 10.3,
+    "fat_g": 0.3,
+    "default_portion_g": 100,
+    "portions": [
+      {
+        "label_key": "portion",
+        "grams": 100
+      }
+    ],
+    "names": {
+      "pt-BR": "Caju cru",
+      "en": "Raw cashew apple",
+      "es": "Marañón crudo"
+    }
+  },
+  {
+    "slug": "persimmon",
+    "category": "fruit",
+    "kcal": 71.4,
+    "protein_g": 0.4,
+    "carbs_g": 19.3,
+    "fat_g": 0.1,
+    "default_portion_g": 120,
+    "portions": [
+      {
+        "label_key": "portion",
+        "grams": 120
+      }
+    ],
+    "names": {
+      "pt-BR": "Caqui cru",
+      "en": "Raw persimmon",
+      "es": "Caqui crudo"
+    }
+  },
+  {
+    "slug": "starfruit",
+    "category": "fruit",
+    "kcal": 45.7,
+    "protein_g": 0.9,
+    "carbs_g": 11.5,
+    "fat_g": 0.2,
+    "default_portion_g": 100,
+    "portions": [
+      {
+        "label_key": "portion",
+        "grams": 100
+      }
+    ],
+    "names": {
+      "pt-BR": "Carambola crua",
+      "en": "Raw starfruit",
+      "es": "Carambola cruda"
+    }
+  },
+  {
+    "slug": "cupuacu",
+    "category": "fruit",
+    "kcal": 49.4,
+    "protein_g": 1.2,
+    "carbs_g": 10.4,
+    "fat_g": 1.0,
+    "default_portion_g": 100,
+    "portions": [
+      {
+        "label_key": "portion",
+        "grams": 100
+      }
+    ],
+    "names": {
+      "pt-BR": "Cupuaçu cru",
+      "en": "Raw cupuaçu",
+      "es": "Cupuazú crudo"
+    }
+  },
+  {
+    "slug": "soursop",
+    "category": "fruit",
+    "kcal": 61.6,
+    "protein_g": 0.8,
+    "carbs_g": 15.8,
+    "fat_g": 0.2,
+    "default_portion_g": 100,
+    "portions": [
+      {
+        "label_key": "portion",
+        "grams": 100
+      }
+    ],
+    "names": {
+      "pt-BR": "Graviola crua",
+      "en": "Raw soursop",
+      "es": "Guanábana cruda"
+    }
+  },
+  {
+    "slug": "jackfruit",
+    "category": "fruit",
+    "kcal": 87.9,
+    "protein_g": 1.4,
+    "carbs_g": 22.5,
+    "fat_g": 0.3,
+    "default_portion_g": 100,
+    "portions": [
+      {
+        "label_key": "portion",
+        "grams": 100
+      }
+    ],
+    "names": {
+      "pt-BR": "Jaca crua",
+      "en": "Raw jackfruit",
+      "es": "Yaca cruda"
+    }
+  },
+  {
+    "slug": "jambolan",
+    "category": "fruit",
+    "kcal": 41.0,
+    "protein_g": 0.5,
+    "carbs_g": 10.6,
+    "fat_g": 0.1,
+    "default_portion_g": 100,
+    "portions": [
+      {
+        "label_key": "portion",
+        "grams": 100
+      }
+    ],
+    "names": {
+      "pt-BR": "Jamelão cru",
+      "en": "Raw jambolan",
+      "es": "Jambolán crudo"
+    }
+  },
+  {
+    "slug": "surinam-cherry",
+    "category": "fruit",
+    "kcal": 41.4,
+    "protein_g": 0.9,
+    "carbs_g": 10.2,
+    "fat_g": 0.2,
+    "default_portion_g": 100,
+    "portions": [
+      {
+        "label_key": "portion",
+        "grams": 100
+      }
+    ],
+    "names": {
+      "pt-BR": "Pitanga crua",
+      "en": "Raw Surinam cherry",
+      "es": "Pitanga cruda"
+    }
+  },
+  {
+    "slug": "umbu",
+    "category": "fruit",
+    "kcal": 37.0,
+    "protein_g": 0.8,
+    "carbs_g": 9.4,
+    "fat_g": 0.0,
+    "default_portion_g": 100,
+    "portions": [
+      {
+        "label_key": "portion",
+        "grams": 100
+      }
+    ],
+    "names": {
+      "pt-BR": "Umbu cru",
+      "en": "Raw umbu",
+      "es": "Umbú crudo"
+    }
+  },
+  {
+    "slug": "baked-kibbeh",
+    "category": "prepared",
+    "kcal": 136.2,
+    "protein_g": 14.6,
+    "carbs_g": 12.9,
+    "fat_g": 2.7,
+    "default_portion_g": 120,
+    "portions": [
+      {
+        "label_key": "portion",
+        "grams": 120
+      }
+    ],
+    "names": {
+      "pt-BR": "Quibe assado",
+      "en": "Baked kibbeh",
+      "es": "Kibbe al horno"
+    }
+  },
+  {
+    "slug": "skim-plain-yogurt",
+    "category": "dairy",
+    "kcal": 41.5,
+    "protein_g": 3.8,
+    "carbs_g": 5.8,
+    "fat_g": 0.3,
+    "default_portion_g": 170,
+    "portions": [
+      {
+        "label_key": "portion",
+        "grams": 170
+      }
+    ],
+    "names": {
+      "pt-BR": "Iogurte natural desnatado",
+      "en": "Skim plain yogurt",
+      "es": "Yogur natural desnatado"
+    }
+  },
+  {
+    "slug": "molasses",
+    "category": "sweet",
+    "kcal": 296.5,
+    "protein_g": 0.0,
+    "carbs_g": 76.6,
+    "fat_g": 0.0,
+    "default_portion_g": 20,
+    "portions": [
+      {
+        "label_key": "portion",
+        "grams": 20
+      }
+    ],
+    "names": {
+      "pt-BR": "Melado de cana",
+      "en": "Sugarcane molasses",
+      "es": "Melaza de caña"
     }
   }
 ]
