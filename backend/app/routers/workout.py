@@ -541,6 +541,7 @@ def list_sessions(user: CurrentUser, session: SessionDep) -> list[SessionSummary
         summaries.append(
             SessionSummaryOut(
                 id=ws.id,
+                routine_id=ws.routine_id,
                 routine_name=ws.routine_name,
                 started_at=ws.started_at,
                 finished_at=ws.finished_at,

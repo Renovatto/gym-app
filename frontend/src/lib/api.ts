@@ -279,6 +279,8 @@ export interface WorkoutSession {
 
 export interface SessionSummary {
 	id: number;
+	// id da rotina (null = treino livre ou rotina excluida); aponta o proximo do ciclo
+	routine_id: number | null;
 	routine_name: string | null;
 	started_at: string;
 	finished_at: string | null;

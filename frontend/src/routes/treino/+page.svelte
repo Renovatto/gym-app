@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { slide } from 'svelte/transition';
 	import { goto } from '$app/navigation';
 	import {
 		api,
@@ -264,20 +265,71 @@
 		showToast(m.toast_deleted());
 	}
 
-	// rotinas com sessão concluída hoje (mostra selo "feito hoje")
-	const doneTodayNames = $derived(
-		new Set(
-			sessions
-				.filter((s) => s.finished_at && s.started_at.slice(0, 10) === localDay())
-				.map((s) => s.routine_name)
-		)
+	const finishedSessions = $derived(sessions.filter((s) => s.finished_at));
+
+	// --- Proximo treino do ciclo ------------------------------------------
+	// A ordem das rotinas na tela E o ciclo (A -> B -> C -> A). O proximo e a rotina
+	// seguinte a do ultimo treino concluido. Treino livre e atividade avulsa nao
+	// avancam a fila; rotina excluida (ou fila nunca iniciada) recomeca do topo.
+
+	// ultima sessao concluida que aponta para uma rotina AINDA existente
+	// (finishedSessions vem do backend do mais recente para o mais antigo)
+	const lastFinishedWithRoutine = $derived(
+		finishedSessions.find(
+			(s) => s.routine_id !== null && routines.some((r) => r.id === s.routine_id)
+		) ?? null
 	);
+
+	const nextRoutine = $derived.by(() => {
+		const startable = routines.filter((r) => r.items.length > 0);
+		if (startable.length === 0) return null;
+		const lastId = lastFinishedWithRoutine?.routine_id;
+		const lastIndex = lastId != null ? routines.findIndex((r) => r.id === lastId) : -1;
+		if (lastIndex === -1) return startable[0];
+		// anda a partir da seguinte, pulando rotinas vazias (nao da para inicia-las)
+		for (let step = 1; step <= routines.length; step++) {
+			const candidate = routines[(lastIndex + step) % routines.length];
+			if (candidate.items.length > 0) return candidate;
+		}
+		return null;
+	});
+
+	// dia (YYYY-MM-DD) da ultima vez que cada rotina foi treinada
+	const lastDoneDayByRoutine = $derived.by(() => {
+		const map = new Map<number, string>();
+		for (const s of finishedSessions) {
+			if (s.routine_id !== null && !map.has(s.routine_id)) {
+				map.set(s.routine_id, s.started_at.slice(0, 10));
+			}
+		}
+		return map;
+	});
+
+	const weekdayFmt = new Intl.DateTimeFormat(getLocale(), { weekday: 'short' });
+
+	// "hoje" / "ontem" / "seg." / "12 de jul." - quando foi a ultima vez. E o que faz
+	// a fila fazer sentido de relance ("treinei A ontem, entao hoje e B").
+	function recencyLabel(routineId: number): string | null {
+		const day = lastDoneDayByRoutine.get(routineId);
+		if (!day) return null;
+		const today = localDay();
+		if (day === today) return m.recency_today();
+		// meio-dia evita a virada de fuso na conta de diferenca de dias
+		const diffDays = Math.round(
+			(new Date(today + 'T12:00:00').getTime() - new Date(day + 'T12:00:00').getTime()) / 86400000
+		);
+		if (diffDays === 1) return m.recency_yesterday();
+		if (diffDays < 7) return weekdayFmt.format(new Date(day + 'T12:00:00'));
+		return df.format(new Date(day + 'T12:00:00'));
+	}
+
+	// rotinas fora do destaque ficam compactas; tocar expande uma por vez
+	let expandedRoutine = $state<number | null>(null);
 
 	$effect(() => {
 		load();
 	});
 
-	const finishedSessions = $derived(sessions.filter((s) => s.finished_at));
 
 	// O historico mostrava so os 8 mais recentes e nao havia como chegar no resto -
 	// treino antigo ficava sem jeito de abrir nem de excluir.
@@ -336,7 +388,9 @@
 	/>
 {/if}
 
-{#if dueRoutine}
+<!-- so avisa quando a rotina vencida e a DA VEZ: aviso de rotina que a pessoa nem
+	 vai treinar hoje e ruido (a pilula ambar dela continua la ao expandir) -->
+{#if dueRoutine && dueRoutine.routine_id === nextRoutine?.id}
 	<div class="mb-4 flex items-start gap-3 rounded-3xl border-2 border-amber-200 bg-amber-50 p-4">
 		<span class="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-amber-500 text-white">
 			<svg viewBox="0 0 24 24" class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4v6h6M20 20v-6h-6M20 8a8 8 0 00-14-3M4 16a8 8 0 0014 3" stroke-linecap="round" stroke-linejoin="round" /></svg>
@@ -691,179 +745,250 @@
 				</div>
 			</div>
 		{/if}
-		<div class="space-y-3">
-			{#each routines as routine (routine.id)}
-				{@const period = periodizationFor(routine.id)}
-				<section class="rounded-3xl bg-white p-5 shadow-sm">
-					<div class="flex items-start justify-between gap-2">
-						<div class="min-w-0">
-							<div class="flex items-center gap-2">
-								<h2 class="truncate text-lg font-bold text-slate-900">{routine.name}</h2>
-								{#if doneTodayNames.has(routine.name)}
-									<span class="shrink-0 rounded-full bg-emerald-100 px-2 py-0.5 text-xs font-bold text-emerald-700">
-										✓ {m.done_today()}
-									</span>
-								{/if}
-							</div>
-							<p class="text-sm text-slate-500">
-								{routine.items.length}
-								{routine.items.length === 1 ? m.exercise_singular() : m.exercise_plural()}
-							</p>
-							{#if period}
-								<button
-									type="button"
-									onclick={() => (selectedPeriod = period)}
-									class="mt-1.5 inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-semibold {period.due
-										? 'bg-amber-50 text-amber-700'
-										: 'bg-slate-100 text-slate-500'}"
-								>
-									<svg viewBox="0 0 24 24" class="h-3.5 w-3.5" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="17" rx="2" /><path d="M3 9h18M8 2v4M16 2v4" stroke-linecap="round" /></svg>
-									{#if period.due}
-										{m.cycle_renew_badge()}
-									{:else}
-										{m.cycle_valid_until({ date: fmtDate(period.renew_on) })}
-									{/if}
-								</button>
-							{/if}
-						</div>
-						<div class="flex shrink-0 items-center gap-3">
-							{#if routine.items.length > 0}
-								<button
-									type="button"
-									aria-label={m.vary_this_workout()}
-									title={m.vary_this_workout()}
-									disabled={variationLoading === routine.id}
-									onclick={() => openVariation(routine.id)}
-									class="grid h-9 w-9 place-items-center rounded-full text-emerald-700 active:bg-emerald-50 disabled:opacity-50"
-								>
-									<svg viewBox="0 0 24 24" class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4v6h6M20 20v-6h-6M20 8a8 8 0 00-14-3M4 16a8 8 0 0014 3" /></svg>
-								</button>
-							{/if}
-							<a
-								href="/treino/rotina/{routine.id}"
-								aria-label={m.edit()}
-								title={m.edit()}
-								class="grid h-9 w-9 place-items-center rounded-full text-slate-400 active:bg-slate-100"
+		{#snippet periodPill(routine: Routine)}
+			{@const period = periodizationFor(routine.id)}
+			{#if period}
+				<button
+					type="button"
+					onclick={() => (selectedPeriod = period)}
+					class="mt-1.5 inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-semibold {period.due
+						? 'bg-amber-50 text-amber-700'
+						: 'bg-slate-100 text-slate-500'}"
+				>
+					<svg viewBox="0 0 24 24" class="h-3.5 w-3.5" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="17" rx="2" /><path d="M3 9h18M8 2v4M16 2v4" stroke-linecap="round" /></svg>
+					{#if period.due}
+						{m.cycle_renew_badge()}
+					{:else}
+						{m.cycle_valid_until({ date: fmtDate(period.renew_on) })}
+					{/if}
+				</button>
+			{/if}
+		{/snippet}
+
+		{#snippet routineTools(routine: Routine)}
+			<div class="flex shrink-0 items-center gap-3">
+				{#if routine.items.length > 0}
+					<button
+						type="button"
+						aria-label={m.vary_this_workout()}
+						title={m.vary_this_workout()}
+						disabled={variationLoading === routine.id}
+						onclick={() => openVariation(routine.id)}
+						class="grid h-9 w-9 place-items-center rounded-full text-emerald-700 active:bg-emerald-50 disabled:opacity-50"
+					>
+						<svg viewBox="0 0 24 24" class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4v6h6M20 20v-6h-6M20 8a8 8 0 00-14-3M4 16a8 8 0 0014 3" /></svg>
+					</button>
+				{/if}
+				<a
+					href="/treino/rotina/{routine.id}"
+					aria-label={m.edit()}
+					title={m.edit()}
+					class="grid h-9 w-9 place-items-center rounded-full text-slate-400 active:bg-slate-100"
+				>
+					<svg viewBox="0 0 24 24" class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9M16.5 3.5a2.1 2.1 0 013 3L7 19l-4 1 1-4z" /></svg>
+				</a>
+			</div>
+		{/snippet}
+
+		{#snippet routineThumbs(routine: Routine)}
+			{#if routine.items.length > 0}
+				<button
+					type="button"
+					aria-label={m.view_workout_details()}
+					title={m.view_workout_details()}
+					onclick={() => (previewRoutine = routine)}
+					class="mt-3 flex w-full items-center gap-1.5 text-left"
+				>
+					{#each routine.items.slice(0, 4) as item (item.id)}
+						{#if item.exercise.media_urls.length > 0}
+							<img
+								src={item.exercise.media_urls[0]}
+								alt={item.exercise.name}
+								title={item.exercise.name}
+								loading="lazy"
+								class="h-12 w-12 rounded-xl border border-slate-100 object-cover"
+							/>
+						{:else}
+							<span
+								class="grid h-12 w-12 place-items-center rounded-xl bg-slate-100 text-xs font-bold text-slate-400"
 							>
-								<svg viewBox="0 0 24 24" class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9M16.5 3.5a2.1 2.1 0 013 3L7 19l-4 1 1-4z" /></svg>
-							</a>
-						</div>
-					</div>
-					{#if routine.items.length > 0}
+								{item.exercise.name.slice(0, 2)}
+							</span>
+						{/if}
+					{/each}
+					{#if routine.items.length > 4}
+						<span class="grid h-12 w-12 place-items-center rounded-xl bg-slate-100 text-xs font-bold text-slate-500">
+							+{routine.items.length - 4}
+						</span>
+					{/if}
+					<span class="ml-auto grid h-9 w-9 shrink-0 place-items-center text-emerald-700">
+						<svg viewBox="0 0 24 24" class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3" /><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7z" /></svg>
+					</span>
+				</button>
+			{/if}
+		{/snippet}
+
+		{#snippet routineActions(routine: Routine, primary: boolean)}
+			{#if !activeSession}
+				<!-- com sessao ativa, os botoes somem: nao da pra iniciar de novo -->
+				{#if confirmingStart === routine.id}
+					<div class="mt-4 flex items-center gap-2 rounded-2xl bg-emerald-50 p-2">
+						<span class="min-w-0 flex-1 pl-2 text-sm font-semibold text-emerald-800">{m.workout_start_confirm()}</span>
 						<button
 							type="button"
-							aria-label={m.view_workout_details()}
-							title={m.view_workout_details()}
-							onclick={() => (previewRoutine = routine)}
-							class="mt-3 flex w-full items-center gap-1.5 text-left"
+							onclick={() => start(routine.id)}
+							class="h-10 shrink-0 rounded-xl bg-emerald-600 px-4 font-bold text-white active:bg-emerald-700"
 						>
-							{#each routine.items.slice(0, 4) as item (item.id)}
-								{#if item.exercise.media_urls.length > 0}
-									<img
-										src={item.exercise.media_urls[0]}
-										alt={item.exercise.name}
-										title={item.exercise.name}
-										loading="lazy"
-										class="h-12 w-12 rounded-xl border border-slate-100 object-cover"
-									/>
-								{:else}
-									<span
-										class="grid h-12 w-12 place-items-center rounded-xl bg-slate-100 text-xs font-bold text-slate-400"
-									>
-										{item.exercise.name.slice(0, 2)}
-									</span>
-								{/if}
-							{/each}
-							{#if routine.items.length > 4}
-								<span class="grid h-12 w-12 place-items-center rounded-xl bg-slate-100 text-xs font-bold text-slate-500">
-									+{routine.items.length - 4}
+							{m.start_workout()}
+						</button>
+						<button
+							type="button"
+							onclick={() => (confirmingStart = null)}
+							class="h-10 shrink-0 rounded-xl px-3 text-sm font-semibold text-slate-500 active:bg-slate-100"
+						>
+							{m.cancel()}
+						</button>
+					</div>
+				{:else if confirmingDone === routine.id}
+					<!-- confirmar + escolher o dia: por padrao hoje, mas da pra lancar
+						 um treino que a pessoa fez e esqueceu de registrar -->
+					<div class="mt-4 rounded-2xl bg-emerald-50 p-3">
+						<p class="pl-1 text-sm font-semibold text-emerald-800">{m.workout_done_confirm()}</p>
+						<label
+							class="mt-2.5 block pl-1 text-[11px] font-bold text-emerald-700"
+							for="done-day-{routine.id}"
+						>
+							{m.workout_done_date_label()}
+						</label>
+						<input
+							id="done-day-{routine.id}"
+							type="date"
+							bind:value={doneDay}
+							max={localDay()}
+							class="mt-1 h-11 w-full rounded-xl border-2 px-3 text-center font-bold text-slate-900 {doneDay !==
+							localDay()
+								? 'border-amber-300 bg-amber-50'
+								: 'border-emerald-200 bg-white'}"
+						/>
+						<div class="mt-2.5 flex gap-2">
+							<button
+								type="button"
+								onclick={() => markDone(routine.id)}
+								class="h-10 flex-1 rounded-xl bg-emerald-600 px-4 font-bold text-white active:bg-emerald-700"
+							>
+								{m.mark_done()}
+							</button>
+							<button
+								type="button"
+								onclick={() => (confirmingDone = null)}
+								class="h-10 shrink-0 rounded-xl px-3 text-sm font-semibold text-slate-500 active:bg-slate-100"
+							>
+								{m.cancel()}
+							</button>
+						</div>
+					</div>
+				{:else}
+					<!-- so o PROXIMO tem botao cheio: primario repetido em todo cartao
+						 deixa de ser primario -->
+					<div class="mt-4 flex gap-2">
+						<button
+							type="button"
+							onclick={() => (confirmingStart = routine.id)}
+							disabled={routine.items.length === 0}
+							class="h-12 flex-[2] rounded-2xl font-bold disabled:opacity-40 {primary
+								? 'bg-emerald-600 text-white active:bg-emerald-700'
+								: 'border-2 border-emerald-200 text-emerald-700 active:bg-emerald-50'}"
+						>
+							{m.start_workout()}
+						</button>
+						<button
+							type="button"
+							onclick={() => openDoneConfirm(routine.id)}
+							disabled={routine.items.length === 0 || completingId === routine.id}
+							class="h-12 flex-1 rounded-2xl border-2 border-slate-200 font-semibold text-slate-600 active:bg-slate-50 disabled:opacity-40"
+						>
+							{completingId === routine.id ? '…' : m.mark_done()}
+						</button>
+					</div>
+				{/if}
+			{/if}
+		{/snippet}
+
+		<!-- O PROXIMO do ciclo em destaque: abre a tela, aperta um botao, zero decisao.
+			 Some quando ha treino em andamento (o cartao de retomar ja e o principal). -->
+		{#if nextRoutine && !activeSession}
+			{@const lastWhen =
+				lastFinishedWithRoutine?.routine_id != null
+					? recencyLabel(lastFinishedWithRoutine.routine_id)
+					: null}
+			<section class="relative mb-3 rounded-3xl border-2 border-emerald-500 bg-white p-5 shadow-sm">
+				<span class="absolute -top-3 left-4 rounded-full bg-emerald-600 px-2.5 py-1 text-[10px] font-black tracking-wider text-white uppercase">
+					{m.next_workout_badge()}
+				</span>
+				<div class="mt-1 flex items-start justify-between gap-2">
+					<div class="min-w-0">
+						<h2 class="truncate text-lg font-bold text-slate-900">{nextRoutine.name}</h2>
+						<p class="text-sm text-slate-500">
+							{nextRoutine.items.length}
+							{nextRoutine.items.length === 1 ? m.exercise_singular() : m.exercise_plural()}
+						</p>
+						{@render periodPill(nextRoutine)}
+						{#if lastFinishedWithRoutine && lastWhen}
+							<!-- o MOTIVO de este ser o proximo, escrito -->
+							<p class="mt-1.5 text-xs font-semibold text-slate-500">
+								{m.last_workout_line({
+									name: lastFinishedWithRoutine.routine_name ?? m.free_workout(),
+									when: lastWhen
+								})}
+							</p>
+						{/if}
+					</div>
+					{@render routineTools(nextRoutine)}
+				</div>
+				{@render routineThumbs(nextRoutine)}
+				{@render routineActions(nextRoutine, true)}
+			</section>
+		{/if}
+
+		<div class="space-y-3">
+			{#each routines as routine (routine.id)}
+				{#if !(nextRoutine && !activeSession && routine.id === nextRoutine.id)}
+					{@const isOpen = expandedRoutine === routine.id}
+					{@const recency = recencyLabel(routine.id)}
+					<!-- compacta: nome + quando foi a ultima vez. Tocar expande o cartao
+						 completo (miniaturas, variacao, edicao, periodizacao, iniciar). -->
+					<section class="overflow-hidden rounded-3xl bg-white shadow-sm">
+						<button
+							type="button"
+							onclick={() => (expandedRoutine = isOpen ? null : routine.id)}
+							class="flex w-full items-center gap-2.5 p-4 text-left"
+						>
+							<div class="min-w-0 flex-1">
+								<h2 class="truncate font-bold text-slate-900">{routine.name}</h2>
+								<p class="text-xs text-slate-500">
+									{routine.items.length}
+									{routine.items.length === 1 ? m.exercise_singular() : m.exercise_plural()}
+								</p>
+							</div>
+							{#if recency}
+								<span class="shrink-0 rounded-full bg-emerald-100 px-2 py-0.5 text-xs font-bold text-emerald-700">
+									✓ {recency}
 								</span>
 							{/if}
-							<span class="ml-auto grid h-9 w-9 shrink-0 place-items-center text-emerald-700">
-								<svg viewBox="0 0 24 24" class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3" /><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7z" /></svg>
-							</span>
+							<svg viewBox="0 0 24 24" class="h-5 w-5 shrink-0 text-slate-300 transition-transform {isOpen ? 'rotate-180' : ''}" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6" stroke-linecap="round" stroke-linejoin="round" /></svg>
 						</button>
-					{/if}
-					{#if !activeSession}
-						<!-- com sessao ativa, os botoes somem: nao da pra iniciar de novo -->
-						{#if confirmingStart === routine.id}
-							<div class="mt-4 flex items-center gap-2 rounded-2xl bg-emerald-50 p-2">
-								<span class="min-w-0 flex-1 pl-2 text-sm font-semibold text-emerald-800">{m.workout_start_confirm()}</span>
-								<button
-									type="button"
-									onclick={() => start(routine.id)}
-									class="h-10 shrink-0 rounded-xl bg-emerald-600 px-4 font-bold text-white active:bg-emerald-700"
-								>
-									{m.start_workout()}
-								</button>
-								<button
-									type="button"
-									onclick={() => (confirmingStart = null)}
-									class="h-10 shrink-0 rounded-xl px-3 text-sm font-semibold text-slate-500 active:bg-slate-100"
-								>
-									{m.cancel()}
-								</button>
-							</div>
-						{:else if confirmingDone === routine.id}
-							<!-- confirmar + escolher o dia: por padrao hoje, mas da pra lancar
-								 um treino que a pessoa fez e esqueceu de registrar -->
-							<div class="mt-4 rounded-2xl bg-emerald-50 p-3">
-								<p class="pl-1 text-sm font-semibold text-emerald-800">{m.workout_done_confirm()}</p>
-								<label
-									class="mt-2.5 block pl-1 text-[11px] font-bold text-emerald-700"
-									for="done-day-{routine.id}"
-								>
-									{m.workout_done_date_label()}
-								</label>
-								<input
-									id="done-day-{routine.id}"
-									type="date"
-									bind:value={doneDay}
-									max={localDay()}
-									class="mt-1 h-11 w-full rounded-xl border-2 px-3 text-center font-bold text-slate-900 {doneDay !==
-									localDay()
-										? 'border-amber-300 bg-amber-50'
-										: 'border-emerald-200 bg-white'}"
-								/>
-								<div class="mt-2.5 flex gap-2">
-									<button
-										type="button"
-										onclick={() => markDone(routine.id)}
-										class="h-10 flex-1 rounded-xl bg-emerald-600 px-4 font-bold text-white active:bg-emerald-700"
-									>
-										{m.mark_done()}
-									</button>
-									<button
-										type="button"
-										onclick={() => (confirmingDone = null)}
-										class="h-10 shrink-0 rounded-xl px-3 text-sm font-semibold text-slate-500 active:bg-slate-100"
-									>
-										{m.cancel()}
-									</button>
+						{#if isOpen}
+							<div class="px-4 pb-4" transition:slide={{ duration: 200 }}>
+								<div class="flex items-center justify-between gap-2">
+									<div>{@render periodPill(routine)}</div>
+									{@render routineTools(routine)}
 								</div>
-							</div>
-						{:else}
-							<div class="mt-4 flex gap-2">
-								<button
-									type="button"
-									onclick={() => (confirmingStart = routine.id)}
-									disabled={routine.items.length === 0}
-									class="h-12 flex-[2] rounded-2xl bg-emerald-600 font-bold text-white active:bg-emerald-700 disabled:opacity-40"
-								>
-									{m.start_workout()}
-								</button>
-								<button
-									type="button"
-									onclick={() => openDoneConfirm(routine.id)}
-									disabled={routine.items.length === 0 || completingId === routine.id}
-									class="h-12 flex-1 rounded-2xl border-2 border-emerald-200 font-bold text-emerald-700 active:bg-emerald-50 disabled:opacity-40"
-								>
-									{completingId === routine.id ? '…' : m.mark_done()}
-								</button>
+								{@render routineThumbs(routine)}
+								{@render routineActions(routine, false)}
 							</div>
 						{/if}
-					{/if}
-				</section>
+					</section>
+				{/if}
 			{/each}
 		</div>
 

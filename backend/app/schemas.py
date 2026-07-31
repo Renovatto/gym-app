@@ -421,6 +421,9 @@ class AlternativeExerciseOut(BaseModel):
 
 class SessionSummaryOut(BaseModel):
     id: int
+    # id da rotina treinada (None = treino livre ou rotina ja excluida). E o que
+    # permite a tela apontar o PROXIMO treino do ciclo: o seguinte ao ultimo feito.
+    routine_id: int | None
     routine_name: str | None
     started_at: datetime
     finished_at: datetime | None
