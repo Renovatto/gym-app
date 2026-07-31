@@ -25,17 +25,6 @@ export type GuideSection =
 
 const PT_BR: GuideSection[] = [
 	{
-		kind: 'topics',
-		title: 'De onde vem os numeros dos alimentos',
-		intro: 'O catalogo do app nao foi inventado: cada alimento vem de uma fonte que pode ser conferida.',
-		bullets: [
-			'Comida brasileira (feijao cozido, farofa, acai, chuchu, mandioca): TACO - Tabela Brasileira de Composicao de Alimentos, 4a edicao, NEPA/UNICAMP. Dados medidos em laboratorio, com preparo brasileiro.',
-			'Produto de marca (o que tem codigo de barras): Open Food Facts, base colaborativa e aberta. Como e preenchida por voluntarios, confira o rotulo antes de salvar.',
-			'Alimento que voce cria fica so na sua conta e nunca sobrescreve o catalogo.',
-			'Valores sao sempre por 100 g da parte comestivel, no estado indicado no nome (cru, cozido, refogado). Cozinhar muda o peso, nao os macros: 100 g de arroz cru viram cerca de 300 g cozidos.'
-		]
-	},
-	{
 		kind: 'glossary',
 		title: 'Glossario (siglas)',
 		terms: [
@@ -98,21 +87,21 @@ const PT_BR: GuideSection[] = [
 			'Nas primeiras semanas de dieta o peso despenca por agua e glicogenio, nao por gordura. Depois desacelera - e o normal, nao e o deficit falhando.',
 			'Pese com frequencia: a meta corrigida (TDEE adaptativo) so aparece com cerca de 8 pesagens em 3 semanas. Com poucas pesagens, a agua manda na conta e a estimativa erra feio.'
 		]
+	},
+	{
+		kind: 'topics',
+		title: 'De onde vem os numeros dos alimentos',
+		intro: 'O catalogo do app nao foi inventado: cada alimento vem de uma fonte que pode ser conferida.',
+		bullets: [
+			'Comida brasileira (feijao cozido, farofa, acai, chuchu, mandioca): TACO - Tabela Brasileira de Composicao de Alimentos, 4a edicao, NEPA/UNICAMP. Dados medidos em laboratorio, com preparo brasileiro.',
+			'Produto de marca (o que tem codigo de barras): Open Food Facts, base colaborativa e aberta. Como e preenchida por voluntarios, confira o rotulo antes de salvar.',
+			'Alimento que voce cria fica so na sua conta e nunca sobrescreve o catalogo.',
+			'Valores sao sempre por 100 g da parte comestivel, no estado indicado no nome (cru, cozido, refogado). Cozinhar muda o peso, nao os macros: 100 g de arroz cru viram cerca de 300 g cozidos.'
+		]
 	}
 ];
 
 const EN: GuideSection[] = [
-	{
-		kind: 'topics',
-		title: 'Where the food numbers come from',
-		intro: 'The app catalog was not made up: every food comes from a source you can check.',
-		bullets: [
-			'Brazilian food (cooked beans, farofa, acai, chayote, cassava): TACO - Brazilian Food Composition Table, 4th edition, NEPA/UNICAMP. Laboratory-measured, with Brazilian preparation.',
-			'Branded products (anything with a barcode): Open Food Facts, an open collaborative database. It is filled in by volunteers, so check the label before saving.',
-			'Food you create stays in your account only and never overwrites the catalog.',
-			'Values are always per 100 g of edible portion, in the state given in the name (raw, cooked, sauteed). Cooking changes the weight, not the macros: 100 g of raw rice becomes about 300 g cooked.'
-		]
-	},
 	{
 		kind: 'glossary',
 		title: 'Glossary (acronyms)',
@@ -176,21 +165,21 @@ const EN: GuideSection[] = [
 			'In the first weeks of a diet weight drops fast from water and glycogen, not fat. It then slows down - that is normal, not a failing deficit.',
 			'Weigh in often: the corrected goal (adaptive TDEE) only shows up with about 8 weigh-ins over 3 weeks. With few weigh-ins, water rules the math and the estimate is badly off.'
 		]
+	},
+	{
+		kind: 'topics',
+		title: 'Where the food numbers come from',
+		intro: 'The app catalog was not made up: every food comes from a source you can check.',
+		bullets: [
+			'Brazilian food (cooked beans, farofa, acai, chayote, cassava): TACO - Brazilian Food Composition Table, 4th edition, NEPA/UNICAMP. Laboratory-measured, with Brazilian preparation.',
+			'Branded products (anything with a barcode): Open Food Facts, an open collaborative database. It is filled in by volunteers, so check the label before saving.',
+			'Food you create stays in your account only and never overwrites the catalog.',
+			'Values are always per 100 g of edible portion, in the state given in the name (raw, cooked, sauteed). Cooking changes the weight, not the macros: 100 g of raw rice becomes about 300 g cooked.'
+		]
 	}
 ];
 
 const ES: GuideSection[] = [
-	{
-		kind: 'topics',
-		title: 'De donde vienen los numeros de los alimentos',
-		intro: 'El catalogo del app no fue inventado: cada alimento viene de una fuente que se puede verificar.',
-		bullets: [
-			'Comida brasilena (frijol cocido, farofa, acai, chayote, yuca): TACO - Tabla Brasilena de Composicion de Alimentos, 4a edicion, NEPA/UNICAMP. Medida en laboratorio, con preparacion brasilena.',
-			'Producto de marca (lo que tiene codigo de barras): Open Food Facts, base colaborativa y abierta. La llenan voluntarios, asi que revisa la etiqueta antes de guardar.',
-			'El alimento que tu creas queda solo en tu cuenta y nunca sobrescribe el catalogo.',
-			'Los valores son siempre por 100 g de parte comestible, en el estado indicado en el nombre (crudo, cocido, salteado). Cocinar cambia el peso, no los macros: 100 g de arroz crudo se vuelven unos 300 g cocidos.'
-		]
-	},
 	{
 		kind: 'glossary',
 		title: 'Glosario (siglas)',
@@ -253,6 +242,17 @@ const ES: GuideSection[] = [
 			'No te asustes por una oscilacion de 1-2 kg en un dia: es agua y comida, no grasa.',
 			'En las primeras semanas de dieta el peso cae rapido por agua y glucogeno, no por grasa. Luego se frena: es lo normal, no es que falle el deficit.',
 			'Pesate con frecuencia: la meta corregida (TDEE adaptativo) solo aparece con unos 8 pesajes en 3 semanas. Con pocos pesajes, el agua manda en la cuenta y la estimacion falla mucho.'
+		]
+	},
+	{
+		kind: 'topics',
+		title: 'De donde vienen los numeros de los alimentos',
+		intro: 'El catalogo del app no fue inventado: cada alimento viene de una fuente que se puede verificar.',
+		bullets: [
+			'Comida brasilena (frijol cocido, farofa, acai, chayote, yuca): TACO - Tabla Brasilena de Composicion de Alimentos, 4a edicion, NEPA/UNICAMP. Medida en laboratorio, con preparacion brasilena.',
+			'Producto de marca (lo que tiene codigo de barras): Open Food Facts, base colaborativa y abierta. La llenan voluntarios, asi que revisa la etiqueta antes de guardar.',
+			'El alimento que tu creas queda solo en tu cuenta y nunca sobrescribe el catalogo.',
+			'Los valores son siempre por 100 g de parte comestible, en el estado indicado en el nombre (crudo, cocido, salteado). Cocinar cambia el peso, no los macros: 100 g de arroz crudo se vuelven unos 300 g cocidos.'
 		]
 	}
 ];
