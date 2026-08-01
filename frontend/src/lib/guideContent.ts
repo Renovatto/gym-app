@@ -83,6 +83,10 @@ const PT_BR: GuideSection[] = [
 			'Sempre nas mesmas condicoes (o horario muda bastante o numero).',
 			'Peso: idealmente diario ou quase; o app usa a media para cortar o ruido do dia a dia.',
 			'Composicao corporal (bioimpedancia): 1x por semana basta, no mesmo dia da semana.',
+			'Fita metrica: 1x por semana, sempre no mesmo horario e sem apertar - a fita encostada na pele, sem marcar. Cintura na altura do umbigo, expirando normal (nao sugue a barriga).',
+			'A fita erra menos que a balanca de bioimpedancia: ~3 a 4 pontos de gordura contra ~4 a 8 da balanca. Medida tirada errada, porem, estraga mais que a escolha do metodo - por isso vale sempre medir do mesmo jeito.',
+			'Cintura sozinha ja diz muito: acima de 94 cm (homem) ou 80 cm (mulher) o risco metabolico sobe, e acima de 102/88 sobe bastante - independente do peso na balanca.',
+			'Braco, coxa e peito nao medem musculo: a fita pega gordura, liquido e osso junto. Servem para acompanhar a evolucao (braco subindo enquanto a cintura desce), nunca como estimativa.',
 			'Nao se assuste com oscilacao de 1-2 kg em um dia: e agua e comida, nao gordura.',
 			'Nas primeiras semanas de dieta o peso despenca por agua e glicogenio, nao por gordura. Depois desacelera - e o normal, nao e o deficit falhando.',
 			'Pese com frequencia: a meta corrigida (TDEE adaptativo) so aparece com cerca de 8 pesagens em 3 semanas. Com poucas pesagens, a agua manda na conta e a estimativa erra feio.'
@@ -161,6 +165,10 @@ const EN: GuideSection[] = [
 			'Always under the same conditions (time of day changes the number a lot).',
 			'Weight: ideally daily or almost; the app uses the average to cut daily noise.',
 			'Body composition (bioimpedance): once a week is enough, on the same weekday.',
+			'Tape measure: once a week, same time of day, snug but not tight - the tape touching the skin without denting it. Waist at navel level, breathing out normally (do not suck it in).',
+			'The tape is more accurate than a home bioimpedance scale: ~3 to 4 body fat points versus ~4 to 8. But a badly taken measurement hurts more than the choice of method - always measure the same way.',
+			'Waist alone says a lot: above 94 cm (men) or 80 cm (women) metabolic risk goes up, and above 102/88 it goes up sharply - regardless of what the scale says.',
+			'Arm, thigh and chest do not measure muscle: the tape picks up fat, fluid and bone too. Use them to track change (arm growing while waist shrinks), never as an estimate.',
 			'Do not panic over a 1-2 kg swing in a day: that is water and food, not fat.',
 			'In the first weeks of a diet weight drops fast from water and glycogen, not fat. It then slows down - that is normal, not a failing deficit.',
 			'Weigh in often: the corrected goal (adaptive TDEE) only shows up with about 8 weigh-ins over 3 weeks. With few weigh-ins, water rules the math and the estimate is badly off.'
@@ -239,6 +247,10 @@ const ES: GuideSection[] = [
 			'Siempre en las mismas condiciones (la hora cambia mucho el numero).',
 			'Peso: idealmente diario o casi; la app usa el promedio para cortar el ruido diario.',
 			'Composicion corporal (bioimpedancia): una vez por semana basta, el mismo dia de la semana.',
+			'Cinta metrica: 1 vez por semana, siempre a la misma hora y sin apretar - la cinta tocando la piel, sin marcarla. Cintura a la altura del ombligo, exhalando normal (no metas la barriga).',
+			'La cinta falla menos que la bascula de bioimpedancia: ~3 a 4 puntos de grasa frente a ~4 a 8. Pero una medida mal tomada estropea mas que la eleccion del metodo - mide siempre igual.',
+			'La cintura sola ya dice mucho: por encima de 94 cm (hombre) u 80 cm (mujer) el riesgo metabolico sube, y por encima de 102/88 sube bastante - sin importar el peso.',
+			'Brazo, muslo y pecho no miden musculo: la cinta capta grasa, liquido y hueso a la vez. Sirven para seguir la evolucion (brazo subiendo mientras la cintura baja), nunca como estimacion.',
 			'No te asustes por una oscilacion de 1-2 kg en un dia: es agua y comida, no grasa.',
 			'En las primeras semanas de dieta el peso cae rapido por agua y glucogeno, no por grasa. Luego se frena: es lo normal, no es que falle el deficit.',
 			'Pesate con frecuencia: la meta corregida (TDEE adaptativo) solo aparece con unos 8 pesajes en 3 semanas. Con pocos pesajes, el agua manda en la cuenta y la estimacion falla mucho.'

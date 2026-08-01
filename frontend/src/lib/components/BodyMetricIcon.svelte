@@ -1,13 +1,16 @@
 <script lang="ts">
 	// Icone para cada medida de composicao corporal.
-	// kind: fat | muscle | skeletal | water | visceral | metabolism | weight
+	// kind: fat | muscle | skeletal | water | visceral | metabolism | weight | tape
 	//
 	// Origem dos desenhos (todas licencas compativeis com repositorio publico):
 	// - Health Icons (healthicons.org, CC0/dominio publico): fat, skeletal, visceral.
 	//   Sao desenhados por PREENCHIMENTO - e o que faz figura humana e orgao
 	//   continuarem legiveis a 14px, onde contorno fino vira mancha.
 	// - Lucide (lucide.dev, ISC): muscle, water, metabolism. Desenhados por traco.
-	// - Tabler (tabler.io, MIT): weight. Traco.
+	// - Tabler (tabler.io, MIT): weight, tape. Traco.
+	// Nao existe icone proprio de cintura de proposito: a figura humana que faria
+	// sentido ali e a MESMA do 'fat', e dois desenhos iguais a 14px confundem mais
+	// do que ajudam. Todo campo de fita usa 'tape'; o rotulo ao lado diz qual e.
 	// A mistura preenchimento/traco e intencional e foi aprovada em teste visual
 	// a 14/20/48px nos dois temas.
 	let { kind, class: klass = 'h-5 w-5' }: { kind: string; class?: string } = $props();
@@ -44,6 +47,16 @@
 		<!-- chama: gasto energetico em repouso (Lucide) -->
 		<g stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
 			<path d="M12 3q1 4 4 6.5t3 5.5a1 1 0 0 1-14 0 5 5 0 0 1 1-3 1 1 0 0 0 5 0c0-2-1.5-3-1.5-5q0-2 2.5-4" />
+		</g>
+	{:else if kind === 'tape'}
+		<!-- regua/fita metrica (Tabler) -->
+		<g stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+			<path d="M19.875 12c.621 0 1.125 .512 1.125 1.143v5.714c0 .631 -.504 1.143 -1.125 1.143h-15.875a1 1 0 0 1 -1 -1v-5.857c0 -.631 .504 -1.143 1.125 -1.143h15.75" />
+			<path d="M9 12v2" />
+			<path d="M6 12v3" />
+			<path d="M12 12v3" />
+			<path d="M18 12v3" />
+			<path d="M15 12v2" />
 		</g>
 	{:else}
 		<!-- peso de balanca (Tabler) -->

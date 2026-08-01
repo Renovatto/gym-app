@@ -102,7 +102,20 @@ export interface BodyComposition {
 	scale_bmr_kcal: number | null; // BMR estimado pela balanca (kcal/dia)
 }
 
-export interface WeightLog extends BodyComposition {
+// Medidas de fita metrica. Separadas da balanca porque a tela precisa distinguir:
+// cintura/pescoco/quadril alimentam a estimativa de gordura, o resto e acompanhamento.
+export interface TapeMeasurements {
+	waist_cm: number | null; // cintura
+	neck_cm: number | null; // pescoco
+	hip_cm: number | null; // quadril
+	arm_cm: number | null; // braco
+	thigh_cm: number | null; // coxa
+	chest_cm: number | null; // peito
+}
+
+export type BodyCompSource = 'auto' | 'scale' | 'tape';
+
+export interface WeightLog extends BodyComposition, TapeMeasurements {
 	id: number;
 	weight_kg: number;
 	source: 'manual' | 'ble';
@@ -136,6 +149,25 @@ export interface BodyCompositionPanel {
 	target_fat_percentage: number | null;
 	target_weight_min_kg: number | null;
 	target_weight_max_kg: number | null;
+	// de onde veio o numero principal, e as DUAS estimativas para comparar
+	fat_source: 'scale' | 'tape' | null;
+	fat_percentage_scale: number | null;
+	fat_percentage_tape: number | null;
+	source_preference: BodyCompSource;
+	// medidas da ultima pesagem que as trouxe
+	waist_cm: number | null;
+	neck_cm: number | null;
+	hip_cm: number | null;
+	arm_cm: number | null;
+	thigh_cm: number | null;
+	chest_cm: number | null;
+	// cintura como marcador de risco (cortes da OMS): ok | increased | high
+	waist_risk: string | null;
+	waist_risk_increased_cm: number | null;
+	waist_risk_high_cm: number | null;
+	waist_delta_cm: number | null;
+	arm_delta_cm: number | null;
+	thigh_delta_cm: number | null;
 }
 
 export interface WeightHistory {
@@ -147,7 +179,8 @@ export interface WeightHistory {
 }
 
 // Entrada da pesagem: peso obrigatorio + composicao corporal opcional.
-export type WeighInInput = { weight_kg: number } & Partial<BodyComposition>;
+export type WeighInInput = { weight_kg: number } & Partial<BodyComposition> &
+	Partial<TapeMeasurements>;
 
 export interface WaterLog {
 	id: number;
@@ -860,6 +893,11 @@ export const api = {
 	deleteWeight: (id: number) => request<void>(`/me/weight/${id}`, { method: 'DELETE' }),
 	getBodyComposition: () => request<BodyCompositionPanel>('/me/weight/body-composition'),
 	// null limpa o alvo de gordura; devolve o painel ja recalculado
+	setBodyCompSource: (source: BodyCompSource) =>
+		request<BodyCompositionPanel>('/me/weight/body-composition/source', {
+			method: 'PUT',
+			body: { source }
+		}),
 	setBodyFatTarget: (targetPct: number | null) =>
 		request<BodyCompositionPanel>('/me/weight/body-composition/target', {
 			method: 'PUT',

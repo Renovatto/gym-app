@@ -7,6 +7,8 @@
 		type BodyComposition,
 		type BodyCompositionPanel,
 		type BodyFatBand,
+		type BodyCompSource,
+		type TapeMeasurements,
 		type DietAdherence,
 		type WeekSummary,
 		type WeighInInput,
@@ -39,6 +41,36 @@
 			? { ...bodyPanel, fat_percentage: bodyPanel.fat_percentage }
 			: null
 	);
+	// Tons da faixa de risco da cintura. Verde nao e "parabens", e "dentro da faixa":
+	// a mensagem ao lado e que dá o sentido, a cor so orienta o olho.
+	const WAIST_RISK_TONES: Record<string, string> = {
+		ok: 'bg-emerald-50 text-emerald-800',
+		increased: 'bg-amber-50 text-amber-800',
+		high: 'bg-red-50 text-red-800'
+	};
+
+	function waistRiskLabel(risk: string): string {
+		return (
+			{ ok: m.waist_risk_ok(), increased: m.waist_risk_increased(), high: m.waist_risk_high() }[
+				risk
+			] ?? risk
+		);
+	}
+
+	let savingSource = $state(false);
+
+	// Fixar a fonte tambem serve para nao trocar de metodo no meio da serie: a
+	// tendencia compara sempre a mesma fonte nas duas pontas.
+	async function chooseSource(source: BodyCompSource): Promise<void> {
+		savingSource = true;
+		try {
+			bodyPanel = await api.setBodyCompSource(source);
+			showToast(source === 'auto' ? m.source_auto_saved() : m.source_saved());
+		} finally {
+			savingSource = false;
+		}
+	}
+
 	let showTargetPicker = $state(false);
 	let targetPct = $state(18);
 	let savingTarget = $state(false);
@@ -199,6 +231,26 @@
 		{ key: 'water_mass_kg', label: m.bc_water_mass(), unit: 'kg', icon: 'water' },
 		{ key: 'scale_bmr_kcal', label: m.bc_scale_bmr(), unit: 'kcal', icon: 'metabolism' }
 	];
+	// Medidas de fita metrica. Array PROPRIO, e nao no mesmo do outro: fita nao e
+	// balanca, e misturar as duas sob o rotulo "dados da balanca" seria mentira.
+	// Cintura, pescoco e quadril alimentam a estimativa de gordura; braco, coxa e
+	// peito sao so acompanhamento (circunferencia de membro nao isola musculo).
+	const tapeInputs: {
+		key: keyof TapeMeasurements;
+		label: string;
+		hint: string;
+		feedsFormula: boolean;
+	}[] = [
+		{ key: 'waist_cm', label: m.tape_waist(), hint: m.tape_waist_hint(), feedsFormula: true },
+		{ key: 'neck_cm', label: m.tape_neck(), hint: m.tape_neck_hint(), feedsFormula: true },
+		{ key: 'hip_cm', label: m.tape_hip(), hint: m.tape_hip_hint(), feedsFormula: true },
+		{ key: 'arm_cm', label: m.tape_arm(), hint: m.tape_arm_hint(), feedsFormula: false },
+		{ key: 'thigh_cm', label: m.tape_thigh(), hint: m.tape_thigh_hint(), feedsFormula: false },
+		{ key: 'chest_cm', label: m.tape_chest(), hint: m.tape_chest_hint(), feedsFormula: false }
+	];
+	let tapeValues = $state<Record<string, string>>({});
+	let showTapeFields = $state(false);
+
 	// valor digitado (texto) de cada campo da balanca, indexado pela chave
 	let scaleValues = $state<Record<string, string>>({});
 	let showScaleFields = $state(false);
@@ -226,12 +278,25 @@
 			if (value !== null && value !== undefined) filled[field.key] = String(value);
 		}
 		scaleValues = filled;
-		prefilledFrom = Object.keys(filled).length > 0 ? log.logged_at : null;
-		if (prefilledFrom !== null) showScaleFields = true;
+
+		// mesma ideia para a fita - e ali vale ainda mais: pescoco e quadril quase
+		// nao mudam entre pesagens, e redigitar tudo afastaria a pessoa de medir
+		const tapeFilled: Record<string, string> = {};
+		for (const field of tapeInputs) {
+			const value = log[field.key];
+			if (value !== null && value !== undefined) tapeFilled[field.key] = String(value);
+		}
+		tapeValues = tapeFilled;
+		if (Object.keys(tapeFilled).length > 0) showTapeFields = true;
+
+		const anyFilled = Object.keys(filled).length > 0 || Object.keys(tapeFilled).length > 0;
+		prefilledFrom = anyFilled ? log.logged_at : null;
+		if (Object.keys(filled).length > 0) showScaleFields = true;
 	}
 
 	function clearScaleValues(): void {
 		scaleValues = {};
+		tapeValues = {};
 		prefilledFrom = null;
 	}
 
@@ -327,6 +392,12 @@
 		const weighIn: WeighInInput = { weight_kg: newWeight };
 		for (const field of bodyCompositionInputs) {
 			const raw = (scaleValues[field.key] ?? '').replace(',', '.').trim();
+			if (raw === '') continue;
+			const parsed = Number(raw);
+			if (!Number.isNaN(parsed)) weighIn[field.key] = parsed;
+		}
+		for (const field of tapeInputs) {
+			const raw = (tapeValues[field.key] ?? '').replace(',', '.').trim();
 			if (raw === '') continue;
 			const parsed = Number(raw);
 			if (!Number.isNaN(parsed)) weighIn[field.key] = parsed;
@@ -681,7 +752,12 @@
 					<p class="text-4xl leading-none font-black tracking-tight text-slate-900">
 						{nf.format(panel.fat_percentage)}<span class="text-lg font-bold text-slate-400">%</span>
 					</p>
-					<p class="mt-1 text-xs font-bold text-slate-500">{m.bc_fat_pct()}</p>
+					<p class="mt-1 text-xs font-bold text-slate-500">
+						{m.bc_fat_pct()}
+						{#if panel.fat_source}
+							· {panel.fat_source === 'tape' ? m.source_tape() : m.source_scale()}
+						{/if}
+					</p>
 				</div>
 				{#if panel.band_key}
 					<span class="shrink-0 rounded-full px-3 py-1 text-xs font-black {BAND_PILL_COLORS[panel.band_key]}">
@@ -725,6 +801,41 @@
 				{/each}
 			</div>
 
+			<!-- As DUAS estimativas lado a lado quando existem. Ambas erram (a balanca
+				 mais que a fita), entao eleger uma como "a verdade" seria desonesto - o
+				 que vale acompanhar e a tendencia de cada uma. -->
+			{#if panel.fat_percentage_scale !== null && panel.fat_percentage_tape !== null}
+				<div class="mt-4 rounded-2xl bg-slate-50 p-3">
+					<div class="flex flex-wrap items-center gap-2">
+						{#each [{ key: 'scale' as const, label: m.source_scale(), value: panel.fat_percentage_scale }, { key: 'tape' as const, label: m.source_tape(), value: panel.fat_percentage_tape }] as option (option.key)}
+							<button
+								type="button"
+								disabled={savingSource}
+								onclick={() => chooseSource(option.key)}
+								class="flex items-baseline gap-1.5 rounded-full px-3 py-1.5 text-xs font-semibold disabled:opacity-50 {panel.fat_source ===
+								option.key
+									? 'bg-emerald-600 text-white'
+									: 'bg-white text-slate-500 ring-1 ring-slate-200'}"
+							>
+								{option.label}
+								<span class="text-sm font-black">{nf.format(option.value ?? 0)}%</span>
+							</button>
+						{/each}
+						{#if panel.source_preference !== 'auto'}
+							<button
+								type="button"
+								disabled={savingSource}
+								onclick={() => chooseSource('auto')}
+								class="rounded-full px-2.5 py-1.5 text-xs font-semibold text-slate-400 disabled:opacity-50"
+							>
+								{m.source_auto()}
+							</button>
+						{/if}
+					</div>
+					<p class="mt-2 text-[11px] leading-relaxed text-slate-500">{m.source_explain()}</p>
+				</div>
+			{/if}
+
 			<div class="my-4 h-px bg-slate-100"></div>
 
 			<!-- massa magra: o numero que se protege ao emagrecer -->
@@ -767,6 +878,17 @@
 							</span>
 						</span>
 					{/if}
+					{#if panel.waist_delta_cm !== null && panel.waist_delta_cm !== 0}
+						<span
+							class="flex items-baseline gap-1.5 rounded-full px-3 py-1.5 text-xs font-semibold {panel.waist_delta_cm <=
+							0
+								? 'bg-emerald-50 text-emerald-700'
+								: 'bg-amber-50 text-amber-700'}"
+						>
+							{m.tape_waist()}
+							<span class="text-sm font-black">{withSign(panel.waist_delta_cm)} cm</span>
+						</span>
+					{/if}
 					{#if panel.lean_mass_delta_kg !== null}
 						<span
 							class="flex items-baseline gap-1.5 rounded-full px-3 py-1.5 text-xs font-semibold {panel.lean_mass_delta_kg >=
@@ -778,6 +900,56 @@
 							<span class="text-sm font-black">{withSign(panel.lean_mass_delta_kg)} kg</span>
 						</span>
 					{/if}
+				</div>
+			{/if}
+
+			<!-- Cintura tem destaque proprio: e a unica medida da lista com significado
+				 clinico SOZINHA. Preve gordura visceral e risco cardiometabolico
+				 independentemente do IMC, porque captura DISTRIBUICAO de gordura - que
+				 peso e IMC nao capturam. Nao depende de formula nenhuma. -->
+			{#if panel.waist_cm !== null}
+				<div class="mt-4 rounded-2xl p-3 {WAIST_RISK_TONES[panel.waist_risk ?? 'ok']}">
+					<div class="flex items-baseline justify-between gap-3">
+						<span class="text-xs font-bold">{m.tape_waist()}</span>
+						<span class="text-lg font-black">
+							{nf.format(panel.waist_cm)}<span class="text-xs font-semibold"> cm</span>
+						</span>
+					</div>
+					{#if panel.waist_risk && panel.waist_risk_increased_cm !== null && panel.waist_risk_high_cm !== null}
+						<p class="mt-0.5 text-[11px] leading-relaxed font-semibold">
+							{waistRiskLabel(panel.waist_risk)}
+							<span class="opacity-70">
+								· {m.waist_cutoffs({
+									increased: nf.format(panel.waist_risk_increased_cm),
+									high: nf.format(panel.waist_risk_high_cm)
+								})}
+							</span>
+						</p>
+					{/if}
+				</div>
+			{/if}
+
+			<!-- Braco, coxa e peito: SO tendencia, nunca estimativa. Circunferencia de
+				 membro nao isola musculo (pega gordura, liquido e osso junto) - o valor
+				 delas e ver o braco subindo enquanto a cintura desce. -->
+			{#if panel.arm_cm !== null || panel.thigh_cm !== null || panel.chest_cm !== null}
+				<p class="mt-4 text-[10px] font-black tracking-wide text-slate-400 uppercase">
+					{m.tape_measurements()}
+				</p>
+				<div class="mt-1.5 flex flex-wrap gap-2">
+					{#each [{ label: m.tape_arm(), value: panel.arm_cm, delta: panel.arm_delta_cm }, { label: m.tape_thigh(), value: panel.thigh_cm, delta: panel.thigh_delta_cm }, { label: m.tape_chest(), value: panel.chest_cm, delta: null }] as measure (measure.label)}
+						{#if measure.value !== null}
+							<span class="flex items-baseline gap-1.5 rounded-full bg-slate-100 px-3 py-1.5 text-xs font-semibold text-slate-500">
+								{measure.label}
+								<span class="text-sm font-black text-slate-900">{nf.format(measure.value)} cm</span>
+								{#if measure.delta !== null && measure.delta !== 0}
+									<span class="text-[11px] font-black {measure.delta > 0 ? 'text-emerald-600' : 'text-slate-400'}">
+										{withSign(measure.delta)}
+									</span>
+								{/if}
+							</span>
+						{/if}
+					{/each}
 				</div>
 			{/if}
 
@@ -1168,6 +1340,51 @@
 						</label>
 					{/each}
 				</div>
+			{/if}
+
+			<!-- Medidas de fita metrica: secao propria, porque nao vem da balanca.
+				 Serve tambem para quem NAO tem balanca - com cintura e pescoco o app
+				 ja estima a gordura, e antes essas pessoas nao viam painel nenhum. -->
+			<button
+				type="button"
+				onclick={() => (showTapeFields = !showTapeFields)}
+				class="mt-4 flex w-full items-center justify-between text-sm font-semibold text-emerald-700"
+			>
+				<span>{m.tape_data()}</span>
+				<svg viewBox="0 0 24 24" class="h-5 w-5 transition-transform {showTapeFields ? 'rotate-180' : ''}" fill="none" stroke="currentColor" stroke-width="2">
+					<path d="M6 9l6 6 6-6" stroke-linecap="round" stroke-linejoin="round" />
+				</svg>
+			</button>
+
+			{#if showTapeFields}
+				<p class="mt-1 mb-3 text-xs text-slate-400">{m.tape_data_hint()}</p>
+				<div class="grid grid-cols-2 gap-3">
+					{#each tapeInputs as field (field.key)}
+						<label class="block">
+							<span class="mb-1 flex items-center gap-1 text-xs font-semibold text-slate-500">
+								<BodyMetricIcon kind="tape" class="h-3.5 w-3.5 shrink-0 text-slate-400" />
+								{field.label}
+								<!-- marca os tres que alimentam a estimativa de gordura: sem
+									 isso ninguem adivinha por que o pescoco esta sendo pedido -->
+								{#if field.feedsFormula}
+									<span class="text-emerald-600" title={m.tape_feeds_formula()}>•</span>
+								{/if}
+							</span>
+							<div class="flex items-center gap-1 rounded-2xl border-2 border-slate-200 bg-white px-3">
+								<input
+									inputmode="decimal"
+									value={tapeValues[field.key] ?? ''}
+									oninput={(e) =>
+										(tapeValues[field.key] = e.currentTarget.value.replace(/[^0-9.,]/g, ''))}
+									placeholder={field.hint}
+									class="h-11 w-full min-w-0 bg-transparent text-base outline-none"
+								/>
+								<span class="shrink-0 text-xs text-slate-400">cm</span>
+							</div>
+						</label>
+					{/each}
+				</div>
+				<p class="mt-2 text-[11px] leading-relaxed text-slate-400">{m.tape_formula_note()}</p>
 			{/if}
 
 			<div class="mt-5 flex gap-3">
