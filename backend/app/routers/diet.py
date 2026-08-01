@@ -727,6 +727,11 @@ def copy_previous_day(
                 food_id=src.food_id,
                 recipe_id=src.recipe_id,
                 quantity=src.quantity,
+                # copia as gramas junto: sem isso a copia de um dia antigo (que ainda
+                # nao tem a coluna) nasceria sem elas e voltaria a mostrar porcao
+                grams=src.grams
+                if src.grams is not None
+                else _entry_grams(session, user.id, src.source, src.recipe_id, src.quantity),
                 name_snapshot=src.name_snapshot,
                 kcal=src.kcal,
                 protein_g=src.protein_g,
