@@ -1,7 +1,13 @@
 <script lang="ts">
 	import { goto } from '$app/navigation';
 	import { page } from '$app/state';
-	import { api, ApiError, type ExternalFood, type FoodCategory } from '$lib/api';
+	import {
+		api,
+		ApiError,
+		type Connection,
+		type ExternalFood,
+		type FoodCategory
+	} from '$lib/api';
 	import ChoiceChips from '$lib/components/ChoiceChips.svelte';
 	import Stepper from '$lib/components/Stepper.svelte';
 	import Spinner from '$lib/components/Spinner.svelte';
@@ -24,6 +30,43 @@
 	let deleteError = $state('');
 	let confirmingDelete = $state(false);
 
+	// Compartilhar este alimento. O backend ja aceitava alimento desde o inicio
+	// (a copia leva traducoes e porcoes junto); faltava so a porta na tela - e ela
+	// cabe aqui, que e onde a pessoa gerencia o alimento dela.
+	let partners = $state<Connection[]>([]);
+	let sharing = $state(false);
+	let pickingPartner = $state(false);
+
+	async function loadPartners(): Promise<void> {
+		if (isNew) return;
+		const connections = await api.getConnections();
+		partners = connections.filter((c) => c.status === 'accepted');
+	}
+
+	function startShare(): void {
+		// com um parceiro so nao ha o que escolher
+		if (partners.length === 1) {
+			void shareWith(partners[0]);
+			return;
+		}
+		pickingPartner = true;
+	}
+
+	async function shareWith(partner: Connection): Promise<void> {
+		sharing = true;
+		try {
+			await api.createShareOffers(partner.id, [
+				{ item_kind: 'food', item_id: Number(foodId) }
+			]);
+			pickingPartner = false;
+			showToast(m.sharing_sent_toast({ name: partner.person_name }));
+		} catch (e) {
+			showToast(errorMessage(e instanceof ApiError ? e.code : 'GENERIC_ERROR'));
+		} finally {
+			sharing = false;
+		}
+	}
+
 	async function load(): Promise<void> {
 		if (isNew) {
 			loading = false;
@@ -43,6 +86,7 @@
 			portion = food.default_portion_g;
 		}
 		loading = false;
+		void loadPartners();
 	}
 
 	// Busca externa (Open Food Facts): preenche os campos com dados reais do produto.
@@ -312,6 +356,17 @@
 				</button>
 			</div>
 		{:else}
+			{#if partners.length > 0}
+				<button
+					type="button"
+					disabled={sharing}
+					onclick={startShare}
+					class="mt-3 flex h-12 w-full items-center justify-center gap-2 rounded-2xl bg-emerald-50 font-bold text-emerald-700 active:bg-emerald-100 disabled:opacity-50"
+				>
+					<svg viewBox="0 0 24 24" class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3" /><circle cx="6" cy="12" r="3" /><circle cx="18" cy="19" r="3" /><path d="M8.6 13.5l6.8 4M15.4 6.5l-6.8 4" /></svg>
+					{m.sharing_share_action()}
+				</button>
+			{/if}
 			<button
 				type="button"
 				onclick={() => (confirmingDelete = true)}
@@ -321,4 +376,40 @@
 			</button>
 		{/if}
 	{/if}
+{/if}
+
+<!-- Com mais de uma conexao, escolher para quem vai -->
+{#if pickingPartner}
+	<div
+		class="fixed inset-0 z-50 flex items-end justify-center bg-black/50 p-4"
+		role="button"
+		tabindex="-1"
+		onclick={() => (pickingPartner = false)}
+		onkeydown={(e) => e.key === 'Escape' && (pickingPartner = false)}
+	>
+		<div
+			class="w-full max-w-md rounded-3xl bg-white p-5"
+			role="dialog"
+			tabindex="-1"
+			onclick={(e) => e.stopPropagation()}
+			onkeydown={() => {}}
+		>
+			<p class="mb-3 font-bold text-slate-900">{m.sharing_share_action()}</p>
+			<div class="space-y-2">
+				{#each partners as partner (partner.id)}
+					<button
+						type="button"
+						disabled={sharing}
+						onclick={() => shareWith(partner)}
+						class="flex w-full items-center gap-3 rounded-2xl bg-slate-50 p-3 text-left active:bg-slate-100 disabled:opacity-50"
+					>
+						<span class="min-w-0 flex-1 truncate font-semibold text-slate-800">
+							{partner.person_name}
+						</span>
+						<svg viewBox="0 0 24 24" class="h-5 w-5 shrink-0 text-slate-300" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 6l6 6-6 6" stroke-linecap="round" stroke-linejoin="round" /></svg>
+					</button>
+				{/each}
+			</div>
+		</div>
+	</div>
 {/if}
