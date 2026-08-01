@@ -46,12 +46,18 @@
 		onchange?.(value);
 	}
 
-	// Mostra a precisao configurada quando o numero cabe nela, e o numero inteiro
-	// quando a pessoa digitou casas a mais - assim 76,8 aparece "76.8" (e nao
-	// "76.80") e 76,75 nao vira 76,8 na frente de quem acabou de digitar.
+	// Mostra a precisao configurada quando o numero cabe nela, e as casas a mais
+	// quando existem - assim 76,8 aparece "76.8" (e nao "76.80") e 76,75 nao vira
+	// 76,8 na frente de quem acabou de digitar.
+	//
+	// O corte em `storedDecimals` e obrigatorio: `value` chega por bind e pode vir de
+	// uma conta feita em outro lugar, com o lixo inteiro do ponto flutuante. Sem ele,
+	// uma receita lancada em gramas (1.0344827586206897 porcoes) aparecia com as 16
+	// casas na tela.
 	function display(v: number): string {
-		const rounded = Number(v.toFixed(decimals));
-		return rounded === v ? v.toFixed(decimals) : String(v);
+		const limited = Number(v.toFixed(storedDecimals));
+		const rounded = Number(limited.toFixed(decimals));
+		return rounded === limited ? limited.toFixed(decimals) : String(limited);
 	}
 
 	function nudge(direction: 1 | -1): void {

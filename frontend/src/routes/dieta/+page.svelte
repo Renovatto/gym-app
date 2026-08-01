@@ -9,6 +9,7 @@
 		type MealPlan,
 		type MealPlanMeal,
 		type MealType,
+		type Recipe,
 		type RecipeSuggestion,
 		type RecipeView,
 		type SubstituteItem,
@@ -129,11 +130,52 @@
 	let editQty = $state(0);
 	let editBusy = $state(false);
 
+	// Edicao de receita em GRAMAS: a modal de adicionar ja oferece as duas unidades,
+	// mas a de editar so oferecia porcoes - entao quem lancava em gramas nao
+	// conseguia mais mexer na mesma unidade que usou. A conversao precisa do peso
+	// de uma porcao, que so a receita tem; buscamos a lista uma vez e guardamos.
+	let recipesCache: Recipe[] | null = null;
+	let editQtyMode = $state<'servings' | 'grams'>('servings');
+	let editGrams = $state(0);
+	let editGramsPerServing = $state(0);
+
+	// quantidade que vai para a API: sempre em PORCOES, porque e assim que o
+	// lancamento de receita e guardado. Em modo gramas convertemos na hora.
+	const editEffectiveQty = $derived(
+		editQtyMode === 'grams' && editGramsPerServing > 0
+			? editGrams / editGramsPerServing
+			: editQty
+	);
+
+	async function loadRecipeScale(recipeId: number): Promise<void> {
+		if (recipesCache === null) recipesCache = await api.getRecipes();
+		const recipe = recipesCache.find((r) => r.id === recipeId);
+		if (!recipe || recipe.servings <= 0) return;
+		const totalG = recipe.ingredients.reduce((sum, i) => sum + i.grams, 0);
+		editGramsPerServing = totalG / recipe.servings;
+	}
+
 	function openEdit(entry: DiaryEntry): void {
 		editing = entry;
 		editQty = entry.quantity;
+		editQtyMode = 'servings';
+		editGrams = 0;
+		editGramsPerServing = 0;
 		confirmingDeleteEntry = false;
 		subs = null;
+		if (entry.source === 'recipe' && entry.recipe_id !== null) {
+			void loadRecipeScale(entry.recipe_id).then(() => {
+				if (editGramsPerServing <= 0) return;
+				editGrams = Math.round(entry.quantity * editGramsPerServing);
+				// Quantidade quebrada so aparece quando o lancamento foi feito em GRAMAS
+				// (300 g viram 1,0344... porcoes). Abrir em porcoes nesse caso mostraria
+				// a fracao crua e obrigaria a pessoa a converter de cabeca - abrimos na
+				// unidade que ela realmente usou.
+				if (Math.abs(entry.quantity - Math.round(entry.quantity)) > 0.001) {
+					editQtyMode = 'grams';
+				}
+			});
+		}
 	}
 
 	let confirmingDeleteEntry = $state(false);
@@ -147,7 +189,7 @@
 		if (!editing) return;
 		editBusy = true;
 		try {
-			await api.updateDiaryEntry(editing.id, editQty);
+			await api.updateDiaryEntry(editing.id, editEffectiveQty);
 			editing = null;
 			await load();
 			showToast(m.toast_saved());
@@ -173,11 +215,12 @@
 	// prévia dos macros ao mudar a quantidade (proporção linear ao valor atual)
 	const editPreview = $derived(
 		editing && editing.quantity > 0
-			? Math.round((editing.macros.kcal / editing.quantity) * editQty)
+			? Math.round((editing.macros.kcal / editing.quantity) * editEffectiveQty)
 			: 0
 	);
 	const editPreviewMacros = $derived.by(() => {
-		const factor = editing && editing.quantity > 0 ? editQty / editing.quantity : 0;
+		const factor =
+			editing && editing.quantity > 0 ? editEffectiveQty / editing.quantity : 0;
 		return {
 			protein_g: (editing?.macros.protein_g ?? 0) * factor,
 			carbs_g: (editing?.macros.carbs_g ?? 0) * factor,
@@ -1426,7 +1469,51 @@
 					class="mb-4 text-xs text-slate-400"
 				/>
 				{#if editing.source === 'recipe'}
-					<Stepper bind:value={editQty} min={1} max={20} step={1} unit={m.serving_plural()} />
+					<!-- as duas unidades, como na modal de adicionar: quem lancou em gramas
+						 precisa conseguir editar em gramas -->
+					{#if editGramsPerServing > 0}
+						<div class="mb-3 flex justify-center gap-2">
+							<button
+								type="button"
+								onclick={() => (editQtyMode = 'servings')}
+								class="rounded-full border-2 px-3 py-1.5 text-sm font-semibold {editQtyMode ===
+								'servings'
+									? 'border-emerald-600 bg-emerald-50 text-emerald-800'
+									: 'border-slate-200 text-slate-600'}"
+							>
+								{m.by_servings()}
+							</button>
+							<button
+								type="button"
+								onclick={() => (editQtyMode = 'grams')}
+								class="rounded-full border-2 px-3 py-1.5 text-sm font-semibold {editQtyMode ===
+								'grams'
+									? 'border-emerald-600 bg-emerald-50 text-emerald-800'
+									: 'border-slate-200 text-slate-600'}"
+							>
+								{m.by_grams()}
+							</button>
+						</div>
+					{/if}
+					{#if editQtyMode === 'grams'}
+						<p class="mb-1 text-center text-xs text-slate-400">
+							{m.recipe_grams_equiv({
+								servings: nf.format(Math.round(editEffectiveQty * 100) / 100)
+							})}
+						</p>
+						<Stepper bind:value={editGrams} min={1} max={3000} step={10} unit="g" />
+					{:else}
+						<!-- decimals=2: lancamento feito em gramas vira porcao fracionaria, e
+							 arredondar para inteiro aqui mudaria a quantidade sem avisar -->
+						<Stepper
+							bind:value={editQty}
+							min={0.1}
+							max={20}
+							step={0.5}
+							decimals={2}
+							unit={m.serving_plural()}
+						/>
+					{/if}
 				{:else}
 					<Stepper bind:value={editQty} min={1} max={2000} step={5} unit="g" />
 				{/if}
