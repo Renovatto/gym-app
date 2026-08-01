@@ -414,6 +414,11 @@ class DiaryEntry(SQLModel, table=True):
     food_id: int | None = Field(default=None, foreign_key="foods.id")
     recipe_id: int | None = Field(default=None, foreign_key="recipes.id")
     quantity: float  # gramas (alimento) ou porções (receita)
+    # Gramas que o lancamento representa, para a tela ler sempre na mesma unidade.
+    # Alimento: igual a quantity. Receita: porcoes x peso de uma porcao - senao a
+    # lista mostraria "1,034 porcoes", que e o resto da conversao de 300 g e nao diz
+    # nada a quem lancou em gramas. Nulo em lancamento antigo (calculamos na leitura).
+    grams: float | None = Field(default=None)
     # snapshot para preservar o histórico mesmo se o alimento/receita mudar
     name_snapshot: str
     kcal: float

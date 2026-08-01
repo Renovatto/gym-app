@@ -46,6 +46,7 @@ _COLUMN_MIGRATIONS: dict[str, dict[str, str]] = {
     },
     "routine_exercises": {"target_duration_min": "INTEGER"},
     "set_logs": {"duration_min": "FLOAT"},
+    "diary_entries": {"grams": "FLOAT"},
     "profiles": {
         "cut_intensity": "VARCHAR DEFAULT 'moderate'",
         "first_name": "VARCHAR",

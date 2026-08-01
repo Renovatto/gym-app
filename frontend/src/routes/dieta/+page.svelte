@@ -228,6 +228,27 @@
 		};
 	});
 
+	// Como a quantidade de um lancamento aparece na lista.
+	function entryQuantityLabel(entry: DiaryEntry): string {
+		const servings = entry.source === 'recipe' ? entry.quantity : null;
+		// porcao redonda vira contexto; quebrada e so o resto de um lancamento feito
+		// em gramas e nao ajuda ninguem a entender o prato
+		const roundServings =
+			servings !== null && Math.abs(servings - Math.round(servings)) < 0.01
+				? Math.round(servings)
+				: null;
+		if (entry.grams === null) {
+			// receita sem como converter (foi excluida): resta a porcao
+			if (servings === null) return '';
+			const unit = servings === 1 ? m.serving_singular() : m.serving_plural();
+			return `${nf.format(servings)} ${unit}`;
+		}
+		const grams = `${nf.format(Math.round(entry.grams))} g`;
+		if (roundServings === null) return grams;
+		const unit = roundServings === 1 ? m.serving_singular() : m.serving_plural();
+		return `${grams} (${nf.format(roundServings)} ${unit})`;
+	}
+
 	const nf = new Intl.NumberFormat(getLocale());
 	const df = new Intl.DateTimeFormat(getLocale(), { weekday: 'short', day: '2-digit', month: 'short' });
 	const today = localDay();
@@ -1181,9 +1202,11 @@
 								<div class="min-w-0 flex-1">
 									<p class="truncate text-sm font-semibold text-slate-800">{entry.name}</p>
 									<p class="text-xs text-slate-500">
-										{entry.source === 'recipe'
-											? `${nf.format(entry.quantity)} ${entry.quantity === 1 ? m.serving_singular() : m.serving_plural()}`
-											: `${nf.format(entry.quantity)} g`}
+										<!-- Grama e a unidade universal e comparavel, entao ela e o
+											 numero. A porcao vira contexto entre parenteses, e so
+											 quando o valor e redondo: "1,034 porcoes" e resto de
+											 conversao, nao informacao. -->
+										{entryQuantityLabel(entry)}
 										· {nf.format(Math.round(entry.macros.kcal))} kcal
 									</p>
 								</div>

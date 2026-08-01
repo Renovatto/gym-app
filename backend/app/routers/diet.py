@@ -349,6 +349,8 @@ def add_from_library(
     macros, name = _entry_macros_and_name(
         session, user.id, user.locale, EntrySource.recipe, None, recipe.id, data.quantity
     )
+    per_serving_g = _recipe_grams_per_serving(recipe)
+    recipe_grams = round(per_serving_g * data.quantity, 1) if per_serving_g > 0 else None
     entry = DiaryEntry(
         user_id=user.id,
         entry_date=data.entry_date,
@@ -356,6 +358,7 @@ def add_from_library(
         source=EntrySource.recipe,
         recipe_id=recipe.id,
         quantity=data.quantity,
+        grams=recipe_grams,
         name_snapshot=name,
         kcal=macros.kcal,
         protein_g=macros.protein_g,
@@ -438,7 +441,22 @@ def _daily_goals(session: Session, user_id: int) -> MacrosOut | None:
     )
 
 
-def _entry_out(entry: DiaryEntry) -> DiaryEntryOut:
+def _entry_out(
+    entry: DiaryEntry, grams_per_serving: dict[int, float] | None = None
+) -> DiaryEntryOut:
+    """Lancamento para a API.
+
+    `grams` pode estar nulo em lancamento antigo (a coluna e nova). Nesse caso
+    convertemos na leitura: alimento ja E gramas, e receita usa o peso da porcao que
+    o chamador carregou em lote. Sem isso, o registro de ontem continuaria aparecendo
+    em porcoes quebradas para sempre."""
+    grams = entry.grams
+    if grams is None:
+        if entry.source == EntrySource.food:
+            grams = entry.quantity
+        elif grams_per_serving and entry.recipe_id in grams_per_serving:
+            per_serving = grams_per_serving[entry.recipe_id]
+            grams = round(per_serving * entry.quantity, 1) if per_serving > 0 else None
     return DiaryEntryOut(
         id=entry.id,
         meal_type=entry.meal_type,
@@ -447,10 +465,20 @@ def _entry_out(entry: DiaryEntry) -> DiaryEntryOut:
         recipe_id=entry.recipe_id,
         name=entry.name_snapshot,
         quantity=entry.quantity,
+        grams=grams,
         macros=MacrosOut(
             kcal=entry.kcal, protein_g=entry.protein_g, carbs_g=entry.carbs_g, fat_g=entry.fat_g
         ),
     )
+
+
+def _grams_per_serving_map(session: Session, entries: list[DiaryEntry]) -> dict[int, float]:
+    """Peso da porcao de cada receita usada no dia, numa consulta so."""
+    recipe_ids = {e.recipe_id for e in entries if e.recipe_id is not None and e.grams is None}
+    if not recipe_ids:
+        return {}
+    recipes = session.exec(select(Recipe).where(Recipe.id.in_(recipe_ids))).all()
+    return {r.id: _recipe_grams_per_serving(r) for r in recipes}
 
 
 @router.get("/me/diary/logged-days", response_model=list[date])
@@ -481,10 +509,11 @@ def get_diary(
         .where(DiaryEntry.user_id == user.id)
         .where(DiaryEntry.entry_date == day)
     ).all()
+    per_serving = _grams_per_serving_map(session, list(entries))
     meals: list[MealGroupOut] = []
     for meal_type in MealType:
         group = [e for e in entries if e.meal_type == meal_type]
-        entry_outs = [_entry_out(e) for e in group]
+        entry_outs = [_entry_out(e, per_serving) for e in group]
         subtotal = sum_macros([e.macros for e in entry_outs])
         meals.append(MealGroupOut(meal_type=meal_type, entries=entry_outs, subtotal=subtotal))
     totals = sum_macros([_entry_out(e).macros for e in entries])
@@ -564,6 +593,30 @@ def diet_period_renew(
     return renew_diet_period(session, user, day, adopt_maintenance_kcal)
 
 
+def _entry_grams(
+    session: Session, user_id: int, source: EntrySource, recipe_id: int | None, quantity: float
+) -> float | None:
+    """Gramas que o lancamento representa. Alimento ja e gramas; receita converte
+    pelo peso de uma porcao."""
+    if source == EntrySource.food:
+        return quantity
+    if recipe_id is None:
+        return None
+    recipe = session.get(Recipe, recipe_id)
+    if recipe is None or recipe.user_id != user_id:
+        return None
+    per_serving = _recipe_grams_per_serving(recipe)
+    return round(per_serving * quantity, 1) if per_serving > 0 else None
+
+
+def _recipe_grams_per_serving(recipe: Recipe) -> float:
+    """Peso de UMA porcao da receita: soma dos ingredientes dividida pelo rendimento."""
+    if recipe.servings <= 0:
+        return 0.0
+    total = sum(item.grams for item in recipe.ingredients)
+    return total / recipe.servings
+
+
 def _entry_macros_and_name(
     session: Session, user_id: int, locale: str, source: EntrySource,
     food_id: int | None, recipe_id: int | None, quantity: float
@@ -601,6 +654,7 @@ def add_diary_entry(data: DiaryEntryIn, user: CurrentUser, session: SessionDep) 
         food_id=data.food_id,
         recipe_id=data.recipe_id,
         quantity=data.quantity,
+        grams=_entry_grams(session, user.id, data.source, data.recipe_id, data.quantity),
         name_snapshot=name,
         kcal=macros.kcal,
         protein_g=macros.protein_g,
@@ -624,6 +678,9 @@ def update_diary_entry(
         session, user.id, user.locale, entry.source, entry.food_id, entry.recipe_id, data.quantity
     )
     entry.quantity = data.quantity
+    entry.grams = _entry_grams(
+        session, user.id, entry.source, entry.recipe_id, data.quantity
+    )
     entry.name_snapshot = name
     entry.kcal = macros.kcal
     entry.protein_g = macros.protein_g

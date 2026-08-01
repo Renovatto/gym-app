@@ -558,6 +558,9 @@ class DiaryEntryOut(BaseModel):
     recipe_id: int | None
     name: str
     quantity: float
+    # gramas equivalentes (alimento = quantity; receita = porcoes x peso da porcao).
+    # Nulo so quando a receita sumiu e nao da para converter.
+    grams: float | None = None
     macros: MacrosOut
 
 

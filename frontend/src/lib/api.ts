@@ -562,6 +562,9 @@ export interface DiaryEntry {
 	recipe_id: number | null;
 	name: string;
 	quantity: number;
+	// gramas equivalentes: alimento = quantity, receita = porcoes x peso da porcao.
+	// Nulo so quando a receita sumiu e nao da para converter.
+	grams: number | null;
 	macros: Macros;
 }
 
