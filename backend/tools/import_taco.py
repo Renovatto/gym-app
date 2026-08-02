@@ -41,6 +41,32 @@ COL_CODE, COL_DESC, COL_KCAL, COL_PROTEIN, COL_FAT, COL_CARBS, COL_FIBER = 0, 1,
 # O numero e a chave porque e estavel: o nome da TACO tem virgulas e varia de edicao.
 # portion = porcao caseira em gramas que vira o padrao ao lancar no diario.
 ALLOWLIST: dict[int, dict] = {
+    # --- Variedades que o catalogo tratava como UM alimento so ----------------
+    # A primeira rodada so trouxe o que faltava por completo, para nao duplicar.
+    # Regra apertada demais: "Banana" ja existia, entao as 8 bananas da TACO
+    # ficaram de fora - inclusive a da terra, que tem 40% mais caloria que a
+    # comum e nem se come do mesmo jeito. Variedade so entra aqui quando muda o
+    # numero E muda o prato; banana nanica (92 kcal) continua fora porque e a
+    # propria "Banana" generica do catalogo (89 kcal) com outro nome.
+    175: dict(slug="banana-plantain", category="fruit", portion=100,
+              pt="Banana da terra crua", en="Raw plantain", es="Plátano macho crudo"),
+    182: dict(slug="banana-silver", category="fruit", portion=70,
+              pt="Banana prata", en="Silver banana", es="Plátano plata"),
+    487: dict(slug="egg-yolk-cooked", category="protein", portion=17,
+              pt="Gema de ovo cozida", en="Cooked egg yolk", es="Yema de huevo cocida"),
+    158: dict(slug="tomato-paste", category="vegetable", portion=30,
+              pt="Extrato de tomate", en="Tomato paste", es="Extracto de tomate"),
+    159: dict(slug="tomato-sauce", category="vegetable", portion=60,
+              pt="Molho de tomate", en="Tomato sauce", es="Salsa de tomate"),
+    286: dict(slug="shrimp-fried", category="protein", portion=100,
+              pt="Camarão frito", en="Fried shrimp", es="Camarón frito"),
+    319: dict(slug="sardine-canned", category="protein", portion=60,
+              pt="Sardinha em conserva", en="Canned sardine", es="Sardina en conserva"),
+    317: dict(slug="salmon-grilled", category="protein", portion=130,
+              pt="Salmão grelhado", en="Grilled salmon", es="Salmón a la plancha"),
+    316: dict(slug="salmon-raw", category="protein", portion=100,
+              pt="Salmão cru", en="Raw salmon", es="Salmón crudo"),
+
     # --- Vegetais: versao COZIDA do que o catalogo so tinha cru ---------------
     109: dict(slug="carrot-cooked", category="vegetable", portion=80,
               pt="Cenoura cozida", en="Cooked carrot", es="Zanahoria cocida"),
