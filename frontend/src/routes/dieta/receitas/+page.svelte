@@ -3,6 +3,7 @@
 		ApiError,
 		api,
 		type Connection,
+		type Food,
 		type LibraryRecipe,
 		type ReceivedItem,
 		type Recipe,
@@ -31,7 +32,14 @@
 		};
 	}
 
+	// A tela e das DUAS coisas que a pessoa cadastrou. Antes o alimento so era
+	// alcancavel fingindo que se ia lancar uma refeicao (Adicionar > lapis), e nao
+	// tinha onde ser criado nem compartilhado. As abas repetem o par que a modal de
+	// adicionar ja ensina, entao ninguem precisa aprender nada novo.
+	let tab = $state<'foods' | 'recipes'>('recipes');
+
 	let recipes = $state<Recipe[]>([]);
+	let myFoods = $state<Food[]>([]);
 	let library = $state<LibraryRecipe[]>([]);
 	let loading = $state(true);
 	const nf = new Intl.NumberFormat(getLocale());
@@ -42,9 +50,12 @@
 	let received = $state<ReceivedItem[]>([]);
 
 	const partners = $derived(connections.filter((c) => c.status === 'accepted'));
-	// receita copiada de alguem -> nome de quem mandou (o selo "de Ana" na linha)
+	// item copiado de alguem -> nome de quem mandou (o selo "de Ana" na linha)
 	const receivedFrom = $derived(
 		new Map(received.filter((r) => r.item_kind === 'recipe').map((r) => [r.item_id, r.from_name]))
+	);
+	const receivedFoodFrom = $derived(
+		new Map(received.filter((r) => r.item_kind === 'food').map((r) => [r.item_id, r.from_name]))
 	);
 
 	async function loadSharing(): Promise<void> {
@@ -58,7 +69,12 @@
 	}
 
 	async function load(): Promise<void> {
-		[recipes, library] = await Promise.all([api.getRecipes(), api.getRecipeLibrary()]);
+		[recipes, myFoods, library] = await Promise.all([
+			api.getRecipes(),
+			// so o que a pessoa criou: o catalogo global nao e dela para editar ou mandar
+			api.getFoods('', undefined, { scope: 'mine', limit: 200 }),
+			api.getRecipeLibrary()
+		]);
 		await loadSharing();
 		loading = false;
 	}
@@ -104,26 +120,32 @@
 		}
 	}
 
-	// Selecao multipla: mandar as receitas todas de uma vez e o caso do primeiro dia.
+	// Selecao multipla: mandar tudo de uma vez e o caso do primeiro dia. A escolha
+	// guarda o TIPO junto do id porque atravessa as abas - da para marcar a receita e
+	// o tempero que ela leva e mandar os dois numa oferta so.
 	let selecting = $state(false);
-	let selectedIds = $state<number[]>([]);
+	let selected = $state<{ kind: 'food' | 'recipe'; id: number }[]>([]);
 	let pickingPartner = $state(false);
 	let sending = $state(false);
 
-	function toggleSelected(id: number): void {
-		selectedIds = selectedIds.includes(id)
-			? selectedIds.filter((x) => x !== id)
-			: [...selectedIds, id];
+	function isSelected(kind: 'food' | 'recipe', id: number): boolean {
+		return selected.some((x) => x.kind === kind && x.id === id);
+	}
+
+	function toggleSelected(kind: 'food' | 'recipe', id: number): void {
+		selected = isSelected(kind, id)
+			? selected.filter((x) => !(x.kind === kind && x.id === id))
+			: [...selected, { kind, id }];
 	}
 
 	function startSelecting(): void {
 		selecting = true;
-		selectedIds = [];
+		selected = [];
 	}
 
 	function cancelSelecting(): void {
 		selecting = false;
-		selectedIds = [];
+		selected = [];
 		pickingPartner = false;
 	}
 
@@ -141,7 +163,7 @@
 		try {
 			await api.createShareOffers(
 				partner.id,
-				selectedIds.map((id) => ({ item_kind: 'recipe' as const, item_id: id }))
+				selected.map((x) => ({ item_kind: x.kind, item_id: x.id }))
 			);
 			cancelSelecting();
 			showToast(m.sharing_sent_toast({ name: partner.person_name }));
@@ -165,6 +187,18 @@
 			(r) => searchMatches(r.name, term) && (!onlyReceived || receivedFrom.has(r.id))
 		)
 	);
+
+	const filteredMyFoods = $derived(
+		myFoods.filter(
+			(f) => searchMatches(f.name, term) && (!onlyReceived || receivedFoodFrom.has(f.id))
+		)
+	);
+
+	async function toggleFoodFav(food: Food): Promise<void> {
+		const { favorite } = await api.toggleFavorite('food', food.id);
+		showToast(favorite ? m.toast_favorited() : m.toast_unfavorited());
+		await load();
+	}
 
 	async function toggleRecipeFav(recipe: Recipe): Promise<void> {
 		const { favorite } = await api.toggleFavorite('recipe', recipe.id);
@@ -220,11 +254,11 @@
 			<path d="M15 6l-6 6 6 6" stroke-linecap="round" stroke-linejoin="round" />
 		</svg>
 	</a>
-	<h1 class="min-w-0 flex-1 truncate text-2xl font-bold">{m.my_recipes()}</h1>
+	<h1 class="min-w-0 flex-1 truncate text-2xl font-bold">{m.foods_and_recipes()}</h1>
 	<!-- Verde, e nao branco: antes era um circulo cinza identico ao botao de voltar
 		 logo ao lado, e ninguem achava. Aparece mesmo sem conexao - botao que some nao
 		 ensina que a funcao existe; sem parceiro, ele leva para onde se convida alguem. -->
-	{#if !loading && recipes.length > 0}
+	{#if !loading && (recipes.length > 0 || myFoods.length > 0)}
 		{#if partners.length > 0}
 			<button
 				type="button"
@@ -255,12 +289,35 @@
 		<div class="h-8 w-8 animate-spin rounded-full border-4 border-emerald-600 border-t-transparent"></div>
 	</div>
 {:else}
+	<!-- Mesmo par de abas da modal de adicionar: o padrao ja e conhecido. A selecao
+		 de compartilhar NAO se perde ao trocar de aba - e de proposito. -->
+	<div class="mb-3 grid grid-cols-2 gap-2">
+		<button
+			type="button"
+			onclick={() => (tab = 'foods')}
+			class="h-11 rounded-2xl font-semibold {tab === 'foods'
+				? 'bg-emerald-600 text-white'
+				: 'bg-white text-slate-600 shadow-sm'}"
+		>
+			{m.foods_tab()}
+		</button>
+		<button
+			type="button"
+			onclick={() => (tab = 'recipes')}
+			class="h-11 rounded-2xl font-semibold {tab === 'recipes'
+				? 'bg-emerald-600 text-white'
+				: 'bg-white text-slate-600 shadow-sm'}"
+		>
+			{m.recipes_tab()}
+		</button>
+	</div>
+
 	<!-- busca sem acento/caixa; na biblioteca vale tambem por INGREDIENTE -->
 	<div class="relative mb-4">
 		<svg viewBox="0 0 24 24" class="pointer-events-none absolute top-1/2 left-4 h-5 w-5 -translate-y-1/2 text-slate-400" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7" /><path d="M21 21l-4.3-4.3" stroke-linecap="round" /></svg>
 		<input
 			bind:value={query}
-			placeholder={m.search_recipes()}
+			placeholder={tab === 'foods' ? m.search_food() : m.search_recipes()}
 			class="h-12 w-full rounded-2xl border-2 border-slate-200 bg-white pr-11 pl-11 outline-none focus:border-emerald-600"
 		/>
 		{#if query}
@@ -308,6 +365,110 @@
 		</div>
 	{/if}
 
+	{#if tab === 'foods'}
+		{#if myFoods.length === 0}
+			<div class="rounded-3xl border-2 border-dashed border-slate-200 p-8 text-center">
+				<p class="font-semibold text-slate-600">{m.no_foods_title()}</p>
+				<p class="mt-1 text-sm text-slate-400">{m.no_foods_text()}</p>
+			</div>
+		{:else if filteredMyFoods.length === 0}
+			<p class="rounded-2xl bg-white px-4 py-3 text-center text-sm text-slate-400 shadow-sm">
+				{m.search_no_results()}
+			</p>
+		{:else}
+			<div class="space-y-2">
+				{#each filteredMyFoods as food (food.id)}
+					{@const sharedBy = receivedFoodFrom.get(food.id)}
+					{@const picked = isSelected('food', food.id)}
+					<div
+						class="flex items-center gap-1 rounded-2xl bg-white p-1.5 shadow-sm {selecting && picked
+							? 'ring-2 ring-emerald-500'
+							: ''}"
+					>
+						{#if selecting}
+							<button
+								type="button"
+								aria-label={food.name}
+								onclick={() => toggleSelected('food', food.id)}
+								class="flex min-w-0 flex-1 items-center gap-2.5 rounded-xl p-2 text-left active:bg-slate-50"
+							>
+								<span
+									class="grid h-6 w-6 shrink-0 place-items-center rounded-lg border-2 {picked
+										? 'border-emerald-600 bg-emerald-600 text-white'
+										: 'border-slate-300'}"
+								>
+									{#if picked}
+										<svg viewBox="0 0 24 24" class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="3"><path d="M5 12l5 5L19 7" stroke-linecap="round" stroke-linejoin="round" /></svg>
+									{/if}
+								</span>
+								<div class="min-w-0 flex-1">
+									<p class="truncate font-bold text-slate-900">{food.name}</p>
+									<p class="truncate text-sm text-slate-500">
+										{nf.format(Math.round(food.kcal))} kcal / 100 g
+									</p>
+								</div>
+							</button>
+						{:else}
+							<a
+								href="/dieta/alimento/{food.id}"
+								class="flex min-w-0 flex-1 items-center rounded-xl p-2 active:bg-slate-50"
+							>
+								<div class="min-w-0 flex-1">
+									<p class="truncate font-bold text-slate-900">{food.name}</p>
+									<p class="text-sm text-slate-500">
+										{nf.format(Math.round(food.kcal))} kcal / 100 g
+										· {m.default_portion()} {nf.format(food.default_portion_g)} g
+									</p>
+									{#if sharedBy}
+										<span class="mt-1 inline-block rounded-full bg-rose-50 px-2 py-0.5 text-[10px] font-bold text-rose-700">
+											{m.sharing_from({ name: sharedBy })}
+										</span>
+									{/if}
+								</div>
+							</a>
+							<div class="flex shrink-0 items-center">
+								<button
+									type="button"
+									aria-label={m.favorite_toggle()}
+									title={m.favorite_toggle()}
+									onclick={() => toggleFoodFav(food)}
+									class="grid h-11 w-11 place-items-center rounded-xl active:bg-slate-100"
+								>
+									<svg
+										viewBox="0 0 24 24"
+										class="h-[22px] w-[22px] {food.is_favorite ? 'text-amber-400' : 'text-slate-300'}"
+										fill={food.is_favorite ? 'currentColor' : 'none'}
+										stroke="currentColor"
+										stroke-width="2"
+										stroke-linejoin="round"
+									>
+										<path d="M12 3l2.9 5.9 6.5.9-4.7 4.6 1.1 6.5L12 17.8 6.2 20.9l1.1-6.5L2.6 9.8l6.5-.9z" stroke-linecap="round" />
+									</svg>
+								</button>
+								<a
+									href="/dieta/alimento/{food.id}"
+									aria-label={m.edit()}
+									title={m.edit()}
+									class="grid h-11 w-11 place-items-center rounded-xl text-slate-400 active:bg-slate-100"
+								>
+									<svg viewBox="0 0 24 24" class="h-[22px] w-[22px]" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9M16.5 3.5a2.1 2.1 0 013 3L7 19l-4 1 1-4z" /></svg>
+								</a>
+							</div>
+						{/if}
+					</div>
+				{/each}
+			</div>
+		{/if}
+
+		{#if !selecting}
+			<a
+				href="/dieta/alimento/novo"
+				class="mt-4 flex h-14 w-full items-center justify-center rounded-2xl bg-emerald-600 text-lg font-bold text-white active:bg-emerald-700"
+			>
+				+ {m.create_food()}
+			</a>
+		{/if}
+	{:else}
 	{#if recipes.length === 0}
 		<div class="rounded-3xl border-2 border-dashed border-slate-200 p-8 text-center">
 			<p class="font-semibold text-slate-600">{m.no_recipes_title()}</p>
@@ -319,9 +480,9 @@
 		<div class="space-y-2">
 			{#each filteredMyRecipes as recipe (recipe.id)}
 				{@const sharedBy = receivedFrom.get(recipe.id)}
-				{@const isSelected = selectedIds.includes(recipe.id)}
+				{@const picked = isSelected('recipe', recipe.id)}
 				<div
-					class="flex items-center gap-1 rounded-2xl bg-white p-1.5 shadow-sm {selecting && isSelected
+					class="flex items-center gap-1 rounded-2xl bg-white p-1.5 shadow-sm {selecting && picked
 						? 'ring-2 ring-emerald-500'
 						: ''}"
 				>
@@ -329,15 +490,15 @@
 						<button
 							type="button"
 							aria-label={recipe.name}
-							onclick={() => toggleSelected(recipe.id)}
+							onclick={() => toggleSelected('recipe', recipe.id)}
 							class="flex min-w-0 flex-1 items-center gap-2.5 rounded-xl p-2 text-left active:bg-slate-50"
 						>
 							<span
-								class="grid h-6 w-6 shrink-0 place-items-center rounded-lg border-2 {isSelected
+								class="grid h-6 w-6 shrink-0 place-items-center rounded-lg border-2 {picked
 									? 'border-emerald-600 bg-emerald-600 text-white'
 									: 'border-slate-300'}"
 							>
-								{#if isSelected}
+								{#if picked}
 									<svg viewBox="0 0 24 24" class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="3"><path d="M5 12l5 5L19 7" stroke-linecap="round" stroke-linejoin="round" /></svg>
 								{/if}
 							</span>
@@ -494,6 +655,7 @@
 				{/each}
 			</div>
 		</section>
+		{/if}
 	{/if}
 {/if}
 
@@ -507,7 +669,7 @@
 	<div class="fixed inset-x-0 bottom-0 z-40 border-t border-slate-200 bg-white/95 p-4 backdrop-blur">
 		<div class="mx-auto flex max-w-md items-center gap-2">
 			<span class="min-w-0 flex-1 truncate text-sm font-bold text-slate-600">
-				{m.sharing_selected_count({ count: selectedIds.length })}
+				{m.sharing_selected_count({ count: selected.length })}
 			</span>
 			<button
 				type="button"
@@ -518,7 +680,7 @@
 			</button>
 			<button
 				type="button"
-				disabled={selectedIds.length === 0 || sending}
+				disabled={selected.length === 0 || sending}
 				onclick={confirmShare}
 				class="h-11 shrink-0 rounded-xl bg-emerald-600 px-5 text-sm font-bold text-white active:bg-emerald-700 disabled:opacity-40"
 			>

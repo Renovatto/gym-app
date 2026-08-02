@@ -722,5 +722,8 @@
 	"swap_never_done": "aún no has hecho este",
 	"swap_no_alternatives": "Sin sugerencias para este ejercicio.",
 	"swap_browse_all": "Buscar otro ejercicio",
+	"foods_and_recipes": "Alimentos y recetas",
+	"no_foods_title": "Aun no tienes alimentos propios",
+	"no_foods_text": "Registra lo que comes y no esta en el catalogo.",
 	"food_create_and_add": "Crear y anadir"
 }

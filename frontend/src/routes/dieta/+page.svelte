@@ -1425,7 +1425,7 @@
 		href="/dieta/receitas"
 		class="mt-3 flex h-12 w-full items-center justify-center rounded-2xl border-2 border-slate-200 bg-white font-semibold text-slate-700 active:bg-slate-100"
 	>
-		{m.my_recipes()}
+		{m.foods_and_recipes()}
 	</a>
 {/if}
 
