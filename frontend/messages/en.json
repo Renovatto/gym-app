@@ -458,6 +458,7 @@
 	"cat_sweet": "Sweet",
 	"cat_prepared": "Prepared dish",
 	"cat_supplement": "Supplement",
+	"cat_beverage": "Beverages",
 	"ext_search_title": "Search the online database",
 	"ext_search_action": "Search",
 	"ext_search_empty": "Nothing found in the database.",
@@ -725,5 +726,8 @@
 	"foods_and_recipes": "Foods & recipes",
 	"no_foods_title": "No foods of your own yet",
 	"no_foods_text": "Add what you eat that isn't in the catalog.",
-	"food_create_and_add": "Create and add"
+	"food_create_and_add": "Create and add",
+	"food_library_title": "Food catalog",
+	"food_library_hint": "Comes with the app and can be logged as is. Star the ones you eat often so they show up first.",
+	"food_library_count": "{count} foods"
 }

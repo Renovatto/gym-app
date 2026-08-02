@@ -1019,7 +1019,7 @@ export const api = {
 	getFoods: (
 		q = '',
 		category?: FoodCategory,
-		opts?: { scope?: 'mine'; limit?: number; offset?: number }
+		opts?: { scope?: 'mine' | 'catalog'; limit?: number; offset?: number }
 	) => {
 		const params = new URLSearchParams();
 		if (q) params.set('q', q);

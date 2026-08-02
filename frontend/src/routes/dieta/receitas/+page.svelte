@@ -206,6 +206,70 @@
 		await load(); // backend devolve favoritas primeiro (recarrega minhas + biblioteca)
 	}
 
+	// --- Catalogo de alimentos -----------------------------------------------
+	// O paralelo da biblioteca de receitas, com uma diferenca que muda o botao:
+	// receita da biblioteca precisa ser COPIADA para virar sua, alimento do catalogo
+	// ja da para lancar direto. Entao aqui nao existe "adotar" - copiar so criaria
+	// um alimento igual disputando espaco na busca. O que faz diferenca e a
+	// estrelinha: favorito sobe para o topo do picker na hora de lancar.
+	let catalog = $state<Food[]>([]);
+	let catalogLoading = $state(false);
+	let catalogLoaded = $state(false);
+	const FOOD_CATEGORIES = [
+		'protein', 'carb', 'vegetable', 'fruit', 'dairy', 'legume',
+		'fat', 'sweet', 'prepared', 'beverage', 'supplement', 'other'
+	] as const;
+	let activeCategory = $state<string | null>(null);
+
+	function categoryLabel(category: string): string {
+		return {
+			protein: m.cat_protein(), carb: m.cat_carb(), vegetable: m.cat_vegetable(),
+			fruit: m.cat_fruit(), dairy: m.cat_dairy(), legume: m.cat_legume(),
+			fat: m.cat_fat(), sweet: m.cat_sweet(), prepared: m.cat_prepared(),
+			beverage: m.cat_beverage(), supplement: m.cat_supplement(), other: m.cat_other()
+		}[category] ?? category;
+	}
+
+	// O endpoint corta em 200 por chamada e o catalogo ja passa disso, entao pagina
+	// ate vir uma pagina curta - sem isso a tela mentiria dizendo que o alimento nao
+	// existe so porque ele ficou depois do corte.
+	async function loadCatalog(): Promise<void> {
+		if (catalogLoaded || catalogLoading) return;
+		catalogLoading = true;
+		try {
+			const pagina = 200;
+			const todos: Food[] = [];
+			for (let offset = 0; offset < 5000; offset += pagina) {
+				const lote = await api.getFoods('', undefined, { scope: 'catalog', limit: pagina, offset });
+				todos.push(...lote);
+				if (lote.length < pagina) break;
+			}
+			catalog = todos;
+			catalogLoaded = true;
+		} finally {
+			catalogLoading = false;
+		}
+	}
+
+	// so busca o catalogo quando a aba de alimentos e aberta de fato
+	$effect(() => {
+		if (tab === 'foods') void loadCatalog();
+	});
+
+	const filteredCatalog = $derived(
+		catalog.filter(
+			(f) => (!activeCategory || f.category === activeCategory) && searchMatches(f.name, term)
+		)
+	);
+
+	async function toggleCatalogFav(food: Food): Promise<void> {
+		const { favorite } = await api.toggleFavorite('food', food.id);
+		showToast(favorite ? m.toast_favorited() : m.toast_unfavorited());
+		// so a linha muda de estado: recarregar o catalogo inteiro por uma estrela
+		// custaria duas chamadas e faria a lista piscar
+		catalog = catalog.map((f) => (f.id === food.id ? { ...f, is_favorite: favorite } : f));
+	}
+
 	// Biblioteca: filtro por tag e "adotar" (copia para as minhas receitas)
 	const TAGS = ['protein', 'quick', 'veggie', 'sweet', 'budget'] as const;
 	let activeTag = $state<string | null>(null);
@@ -468,6 +532,84 @@
 				+ {m.create_food()}
 			</a>
 		{/if}
+
+		<!-- Catalogo que vem com o app. Sem botao de adotar: o alimento daqui ja pode
+			 ser lancado como esta - o que muda a vida e a estrela, que o faz aparecer
+			 primeiro na hora de montar a refeicao. -->
+		<section class="mt-8">
+			<h2 class="text-lg font-bold text-slate-900">{m.food_library_title()}</h2>
+			<p class="mt-0.5 text-sm text-slate-500">{m.food_library_hint()}</p>
+
+			{#if catalogLoading}
+				<div class="flex justify-center py-10">
+					<div class="h-7 w-7 animate-spin rounded-full border-4 border-emerald-600 border-t-transparent"></div>
+				</div>
+			{:else}
+				<div class="mt-3 flex flex-wrap gap-1.5">
+					<button
+						type="button"
+						onclick={() => (activeCategory = null)}
+						class="rounded-full border-2 px-3 py-1.5 text-sm font-semibold {activeCategory === null
+							? 'border-emerald-600 bg-emerald-50 text-emerald-800'
+							: 'border-slate-200 text-slate-600'}"
+					>
+						{m.tag_all()}
+					</button>
+					{#each FOOD_CATEGORIES as category (category)}
+						<button
+							type="button"
+							onclick={() => (activeCategory = activeCategory === category ? null : category)}
+							class="rounded-full border-2 px-3 py-1.5 text-sm font-semibold {activeCategory === category
+								? 'border-emerald-600 bg-emerald-50 text-emerald-800'
+								: 'border-slate-200 text-slate-600'}"
+						>
+							{categoryLabel(category)}
+						</button>
+					{/each}
+				</div>
+
+				{#if filteredCatalog.length === 0}
+					<p class="mt-3 rounded-2xl bg-white px-4 py-3 text-center text-sm text-slate-400 shadow-sm">
+						{m.search_no_results()}
+					</p>
+				{:else}
+					<p class="mt-3 text-xs font-semibold text-slate-400">
+						{m.food_library_count({ count: filteredCatalog.length })}
+					</p>
+					<div class="mt-1.5 space-y-2">
+						{#each filteredCatalog as food (food.id)}
+							<div class="flex items-center gap-2 rounded-2xl bg-white p-3.5 shadow-sm">
+								<div class="min-w-0 flex-1">
+									<p class="truncate font-semibold text-slate-900">{food.name}</p>
+									<p class="text-xs text-slate-500">
+										{nf.format(Math.round(food.kcal))} kcal · P {nf.format(Math.round(food.protein_g))}g
+										C {nf.format(Math.round(food.carbs_g))}g G {nf.format(Math.round(food.fat_g))}g · 100 g
+									</p>
+								</div>
+								<button
+									type="button"
+									aria-label={m.favorite_toggle()}
+									title={m.favorite_toggle()}
+									onclick={() => toggleCatalogFav(food)}
+									class="grid h-10 w-10 shrink-0 place-items-center rounded-xl active:bg-slate-100"
+								>
+									<svg
+										viewBox="0 0 24 24"
+										class="h-[22px] w-[22px] {food.is_favorite ? 'text-amber-400' : 'text-slate-300'}"
+										fill={food.is_favorite ? 'currentColor' : 'none'}
+										stroke="currentColor"
+										stroke-width="2"
+										stroke-linejoin="round"
+									>
+										<path d="M12 3l2.9 5.9 6.5.9-4.7 4.6 1.1 6.5L12 17.8 6.2 20.9l1.1-6.5L2.6 9.8l6.5-.9z" stroke-linecap="round" />
+									</svg>
+								</button>
+							</div>
+						{/each}
+					</div>
+				{/if}
+			{/if}
+		</section>
 	{:else}
 	{#if recipes.length === 0}
 		<div class="rounded-3xl border-2 border-dashed border-slate-200 p-8 text-center">

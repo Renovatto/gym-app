@@ -458,6 +458,7 @@
 	"cat_sweet": "Dulce",
 	"cat_prepared": "Plato preparado",
 	"cat_supplement": "Suplemento",
+	"cat_beverage": "Bebidas",
 	"ext_search_title": "Buscar en la base online",
 	"ext_search_action": "Buscar",
 	"ext_search_empty": "Nada encontrado en la base.",
@@ -725,5 +726,8 @@
 	"foods_and_recipes": "Alimentos y recetas",
 	"no_foods_title": "Aun no tienes alimentos propios",
 	"no_foods_text": "Registra lo que comes y no esta en el catalogo.",
-	"food_create_and_add": "Crear y anadir"
+	"food_create_and_add": "Crear y anadir",
+	"food_library_title": "Catálogo de alimentos",
+	"food_library_hint": "Ya viene en la app y se puede registrar tal cual. Marca la estrella para que aparezca primero.",
+	"food_library_count": "{count} alimentos"
 }

@@ -77,13 +77,17 @@ def list_foods(
     category: FoodCategory | None = Query(default=None),
     # scope=mine filtra so os alimentos criados pelo proprio usuario (a etiqueta "meu"),
     # que sem isso podiam ficar fora do corte de "limit" quando o catalogo global e grande.
-    scope: str | None = Query(default=None, pattern=r"^(mine)$"),
+    # scope=catalog e o oposto: so o que vem com o app, para a tela poder listar as duas
+    # coisas separadas sem repetir os seus alimentos na lista de baixo.
+    scope: str | None = Query(default=None, pattern=r"^(mine|catalog)$"),
     limit: int = Query(default=60, ge=1, le=200),
     offset: int = Query(default=0, ge=0),
 ) -> list[FoodOut]:
     query = select(Food).where((Food.user_id.is_(None)) | (Food.user_id == user.id))
     if scope == "mine":
         query = query.where(Food.user_id == user.id)
+    elif scope == "catalog":
+        query = query.where(Food.user_id.is_(None))
     if category is not None:
         query = query.where(Food.category == category)
     foods = session.exec(query).all()
