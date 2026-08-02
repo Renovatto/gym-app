@@ -4,7 +4,7 @@ from fastapi import APIRouter, status
 from sqlmodel import select
 
 from ..deps import CurrentUser, SessionDep
-from ..models import DiaryEntry, Profile, WaterLog, WeightLog
+from ..models import CycleTracking, DiaryEntry, Profile, WaterLog, WeightLog
 
 router = APIRouter(prefix="/me/account", tags=["account"])
 
@@ -15,6 +15,9 @@ def export_data(user: CurrentUser, session: SessionDep) -> dict:
     weight_logs = session.exec(select(WeightLog).where(WeightLog.user_id == user.id)).all()
     water_logs = session.exec(select(WaterLog).where(WaterLog.user_id == user.id)).all()
     diary = session.exec(select(DiaryEntry).where(DiaryEntry.user_id == user.id)).all()
+    cycle = session.exec(
+        select(CycleTracking).where(CycleTracking.user_id == user.id)
+    ).first()
     return {
         "user": {
             "email": user.email,
@@ -32,6 +35,10 @@ def export_data(user: CurrentUser, session: SessionDep) -> dict:
         "diary_entries": [
             e.model_dump(exclude={"id", "user_id"}, mode="json") for e in diary
         ],
+        # dado de saude e dado da pessoa: o export LGPD leva o ciclo junto
+        "cycle_tracking": cycle.model_dump(exclude={"id", "user_id"}, mode="json")
+        if cycle
+        else None,
     }
 
 

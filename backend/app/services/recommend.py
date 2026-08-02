@@ -18,6 +18,7 @@ from datetime import date, timedelta
 from sqlmodel import desc, select
 from sqlmodel import Session
 
+from .cycle import PHASE_BONUS, phase_boost_food_ids
 from ..models import (
     DiaryEntry,
     EntrySource,
@@ -205,6 +206,7 @@ def _rank_suggestions(
     freq: Counter, max_freq: int, limit: int, favorite_ids: set[int],
     restrict_ids: set[int] | None = None,
     meal_freq: Counter | None = None, max_meal_freq: int = 0,
+    phase_food_ids: set[int] | None = None,
 ) -> list[FoodSuggestionOut]:
     """Ranqueia alimentos que fecham a lacuna informada (do dia ou de uma refeicao).
 
@@ -251,7 +253,10 @@ def _rank_suggestions(
         meal_freq_bonus = (meal_freq.get(food.id, 0) / max_meal_freq) if meal_freq and max_meal_freq else 0.0
         # favorito e o sinal mais forte (voce DISSE que gosta); pesa acima da frequencia
         fav_bonus = 0.5 if food.id in favorite_ids else 0.0
-        score = coverage + 0.8 * density_norm + 0.2 * freq_bonus + 1.5 * meal_freq_bonus + fav_bonus
+        # ciclo menstrual (opt-in): desempate suave pro alimento da fase - menor que
+        # favorito e que afinidade de horario, entao nunca fura objetivo nem gosto
+        phase_bonus = PHASE_BONUS if phase_food_ids and food.id in phase_food_ids else 0.0
+        score = coverage + 0.8 * density_norm + 0.2 * freq_bonus + 1.5 * meal_freq_bonus + fav_bonus + phase_bonus
         scored.append((score, food, portion, macros))
 
     scored.sort(key=lambda item: item[0], reverse=True)
@@ -364,6 +369,7 @@ def suggest_gap(
     suggestions = _rank_suggestions(
         session, user, remaining, primary_attr, freq, max_freq, limit, fav_ids,
         meal_freq=meal_freq, max_meal_freq=max_meal_freq,
+        phase_food_ids=phase_boost_food_ids(session, user.id, day),
     )
     # receita usa a afinidade de tag existente quando ha horario; sem horario, sem afinidade
     recipe_suggestions = suggest_recipes(session, user, remaining, meal_type=meal_type)
@@ -470,6 +476,7 @@ def build_meal(
         session, user, remaining, chosen[0], freq, max_freq, limit, fav_ids,
         restrict_ids=have_set | staple_ids,
         meal_freq=meal_freq, max_meal_freq=max_meal_freq,
+        phase_food_ids=phase_boost_food_ids(session, user.id, day),
     )
     recipe_matches = match_pantry_recipes(session, user, remaining, have_set, meal_type, limit)
     return BuildMealOut(
@@ -555,6 +562,8 @@ def meal_plan(session: Session, user: User, day: date, limit: int = 3) -> MealPl
     freq = _food_frequency(session, user.id, day)
     max_freq = max(freq.values(), default=1)
     fav_ids = favorite_food_ids(session, user.id)
+    # resolvido uma vez: a fase e a mesma para as quatro refeicoes do dia
+    phase_ids = phase_boost_food_ids(session, user.id, day)
 
     meals: list[MealPlanMealOut] = []
     for meal_type, share in shares.items():
@@ -568,6 +577,7 @@ def meal_plan(session: Session, user: User, day: date, limit: int = 3) -> MealPl
             _rank_suggestions(
                 session, user, meal_remaining, chosen[0], freq, max_freq, limit, fav_ids,
                 meal_freq=meal_freq, max_meal_freq=max_meal_freq,
+                phase_food_ids=phase_ids,
             )
             if chosen is not None
             else []

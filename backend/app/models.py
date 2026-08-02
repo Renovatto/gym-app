@@ -626,3 +626,41 @@ class SessionExerciseSwap(SQLModel, table=True):
     routine_exercise_id: int = Field(foreign_key="routine_exercises.id", ondelete="CASCADE")
     exercise_id: int = Field(foreign_key="exercises.id")  # o substituto
     created_at: datetime = Field(default_factory=utcnow)
+
+
+class CyclePhase(str, Enum):
+    menstrual = "menstrual"
+    follicular = "follicular"  # folicular: do fim da menstruacao ate perto da ovulacao
+    ovulatory = "ovulatory"
+    luteal = "luteal"  # lutea: da ovulacao ate o proximo periodo
+
+
+class CycleMode(str, Enum):
+    manual = "manual"  # a pessoa marca a fase atual direto
+    by_date = "by_date"  # informa a data do ultimo periodo e o app estima
+
+
+class CycleTracking(SQLModel, table=True):
+    """Acompanhamento do ciclo menstrual (Fase A) - uma linha por usuaria.
+
+    Tabela propria, e nao colunas em profiles: alem da regra da casa (coluna nova em
+    tabela existente e a armadilha de producao, ver _COLUMN_MIGRATIONS no db.py), isso
+    mantem o dado de saude mais sensivel do app num lugar so - facil de exportar
+    (LGPD), facil de apagar, impossivel de vazar por um ProfileOut mais largo.
+
+    enabled e opt-in EXPLICITO: nunca e derivado do sexo cadastrado. Desligar preserva
+    a linha (a pessoa pode religar sem reconfigurar); apagar a conta apaga junto
+    (CASCADE, como toda tabela do usuario)."""
+
+    __tablename__ = "cycle_tracking"
+
+    id: int | None = Field(default=None, primary_key=True)
+    user_id: int = Field(foreign_key="users.id", unique=True, index=True, ondelete="CASCADE")
+    enabled: bool = Field(default=False)
+    mode: CycleMode = Field(default=CycleMode.manual)
+    # modo manual: a fase marcada; modo by_date: ignorada (a fase vem da estimativa)
+    phase: CyclePhase | None = Field(default=None)
+    last_period_date: date | None = Field(default=None)
+    # duracao tipica do ciclo, usada SO na estimativa por data (21-40 validado no schema)
+    cycle_length_days: int = Field(default=28)
+    updated_at: datetime = Field(default_factory=utcnow)

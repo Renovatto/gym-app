@@ -7,6 +7,8 @@ from .models import (
     ActivityLevel,
     ConnectionStatus,
     CutIntensity,
+    CycleMode,
+    CyclePhase,
     Equipment,
     EntrySource,
     FavoriteKind,
@@ -926,3 +928,34 @@ class SharingPendingCountOut(BaseModel):
     invites: int  # convites de conexao que voce recebeu e ainda nao respondeu
     offers: int  # receitas/alimentos oferecidos, esperando aceite
     total: int
+
+
+class CycleIn(BaseModel):
+    """Configuracao do acompanhamento do ciclo (upsert completo).
+
+    Regras condicionais validadas no router (dependem do modo): manual exige a fase,
+    by_date exige a data do ultimo periodo. A duracao so importa no modo por data."""
+
+    enabled: bool
+    mode: CycleMode = CycleMode.manual
+    phase: CyclePhase | None = None
+    last_period_date: date | None = None
+    # 21-40 cobre a variacao normal; fora disso e mais provavel erro de digitacao
+    cycle_length_days: int = Field(default=28, ge=21, le=40)
+
+
+class CycleOut(BaseModel):
+    """Estado do acompanhamento + fase RESOLVIDA para o dia pedido.
+
+    phase ja vem resolvida (marcada ou estimada) para a tela nao repetir a conta;
+    phase_source diz de onde veio ("manual"/"estimated"); estimate_stale avisa que
+    a data do ultimo periodo ja passou de um ciclo inteiro e merece atualizacao."""
+
+    enabled: bool
+    mode: CycleMode
+    phase: CyclePhase | None
+    phase_source: str | None
+    day_in_cycle: int | None
+    estimate_stale: bool
+    last_period_date: date | None
+    cycle_length_days: int

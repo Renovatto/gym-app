@@ -11,6 +11,7 @@ from .routers import (
     activities,
     auth,
     coach,
+    cycle,
     diet,
     feedback,
     profile,
@@ -59,6 +60,7 @@ app.include_router(workout.router)
 app.include_router(diet.router)
 app.include_router(stats.router)
 app.include_router(coach.router)
+app.include_router(cycle.router)
 app.include_router(achievements.router)
 app.include_router(feedback.router)
 app.include_router(account.router)
