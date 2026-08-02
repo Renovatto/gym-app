@@ -721,5 +721,6 @@
 	"swap_same_equipment": "same equipment",
 	"swap_never_done": "you have not done this one yet",
 	"swap_no_alternatives": "No suggestions for this exercise.",
-	"swap_browse_all": "Find another exercise"
+	"swap_browse_all": "Find another exercise",
+	"food_create_and_add": "Create and add"
 }

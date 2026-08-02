@@ -721,5 +721,6 @@
 	"swap_same_equipment": "mesmo aparelho",
 	"swap_never_done": "você ainda não fez este",
 	"swap_no_alternatives": "Sem sugestões para este exercício.",
-	"swap_browse_all": "Buscar outro exercício"
+	"swap_browse_all": "Buscar outro exercício",
+	"food_create_and_add": "Cadastrar e adicionar"
 }
