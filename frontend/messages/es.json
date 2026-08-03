@@ -741,7 +741,7 @@
 	"cycle_phase_ovulatory": "Ovulatoria",
 	"cycle_phase_luteal": "Lútea",
 	"cycle_last_period_label": "¿Cuándo empezó tu menstruación más reciente?",
-	"cycle_length_label": "Duración típica del ciclo (días)",
+	"cycle_length_label": "Días de una menstruación a la siguiente",
 	"cycle_save": "Guardar ciclo",
 	"cycle_saved_toast": "Ciclo actualizado",
 	"cycle_disabled_toast": "Seguimiento desactivado",
@@ -759,5 +759,6 @@
 	"error_cycle_date_future": "Esa fecha está en el futuro. Indica el primer día del último período.",
 	"cycle_last_period_hint": "Si estás menstruando ahora, es el día en que empezó — no la del mes pasado.",
 	"cycle_started_today": "Empezó hoy",
-	"cycle_mode_hint": "¿No recuerdas la fecha? Elige \"Elegir la fase\" y di solo cómo estás ahora."
+	"cycle_mode_hint": "¿No recuerdas la fecha? Elige \"Elegir la fase\" y di solo cómo estás ahora.",
+	"cycle_length_hint": "Se cuenta desde el primer día de una hasta el día antes de que empiece la siguiente — no es cuántos días sangras. El promedio es 28; si no lo sabes, déjalo así."
 }

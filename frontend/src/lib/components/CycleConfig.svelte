@@ -110,6 +110,9 @@
 		<div>
 			<p class="mb-2 text-sm font-semibold text-slate-600">{m.cycle_length_label()}</p>
 			<Stepper bind:value={cycleLength} min={21} max={40} />
+			<!-- "duracao do ciclo" era lido como "quantos dias eu sangro". A dica separa
+				 as duas coisas e dispensa a pessoa de saber o numero (28 e o padrao). -->
+			<p class="mt-1.5 text-xs text-slate-400">{m.cycle_length_hint()}</p>
 		</div>
 	{/if}
 

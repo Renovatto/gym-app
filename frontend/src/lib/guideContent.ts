@@ -105,6 +105,7 @@ const PT_BR: GuideSection[] = [
 			'Folicular: energia costuma subir. Proteina magra e comida fresca - ovo, iogurte, quinoa, frutas.',
 			'Ovulatoria: fibras e antioxidantes - brocolis, folhas, abacate, chia.',
 			'Lutea: a fase da TPM. Magnesio e fibras ajudam com o desconforto e a fissura por doce - banana, aveia, castanhas, chocolate 70%.',
+			'O que e a "duracao do ciclo": conta-se do primeiro dia de uma menstruacao ate o dia ANTES da proxima comecar - nao e quantos dias dura o sangramento (esse costuma ser de 3 a 7 dias). A media e 28 dias, e a faixa considerada normal vai de 21 a 35 na vida adulta. Nao saber o proprio numero e comum: o app assume 28 e voce corrige quando quiser.',
 			'Sobre a estimativa por data: a fase lutea dura cerca de 14 dias e e bem estavel; quem estica ou encolhe e a folicular. Por isso o app estima a ovulacao como "duracao do ciclo menos 14", e nao como a metade do ciclo.',
 			'Ciclo irregular, anticoncepcional e perimenopausa mudam tudo. O app nunca presume regularidade: se a data informada ja passou de um ciclo inteiro, ele avisa em vez de fingir precisao - e voce sempre pode marcar a fase na mao.',
 			'Isto e bem-estar geral, nao diagnostico nem tratamento. Sintoma que atrapalha sua vida e conversa com profissional de saude, nao com aplicativo.'
@@ -205,6 +206,7 @@ const EN: GuideSection[] = [
 			'Follicular: energy usually rises. Lean protein and fresh food - egg, yogurt, quinoa, fruit.',
 			'Ovulatory: fibre and antioxidants - broccoli, greens, avocado, chia.',
 			'Luteal: the PMS phase. Magnesium and fibre help with discomfort and sugar cravings - banana, oats, nuts, 70% chocolate.',
+			'What "cycle length" means: it is counted from the first day of one period to the day BEFORE the next one starts - not how many days the bleeding lasts (that is usually 3 to 7 days). The average is 28 days and the range considered normal in adulthood is 21 to 35. Not knowing your own number is common: the app assumes 28 and you can correct it whenever you want.',
 			'About the date estimate: the luteal phase lasts about 14 days and is quite stable; the follicular one is what stretches or shrinks. So the app estimates ovulation as "cycle length minus 14", not as the middle of the cycle.',
 			'Irregular cycles, contraceptives and perimenopause change everything. The app never assumes regularity: if the date you entered is over a full cycle old, it says so instead of faking precision - and you can always set the phase by hand.',
 			'This is general wellbeing, not diagnosis or treatment. Symptoms that disrupt your life are a conversation with a health professional, not with an app.'
@@ -305,6 +307,7 @@ const ES: GuideSection[] = [
 			'Folicular: la energia suele subir. Proteina magra y comida fresca - huevo, yogur, quinoa, frutas.',
 			'Ovulatoria: fibra y antioxidantes - brocoli, hojas verdes, aguacate, chia.',
 			'Lutea: la fase del sindrome premenstrual. El magnesio y la fibra ayudan con el malestar y el antojo de dulce - platano, avena, nueces, chocolate 70%.',
+			'Que es la "duracion del ciclo": se cuenta desde el primer dia de una menstruacion hasta el dia ANTES de que empiece la siguiente - no es cuantos dias dura el sangrado (ese suele ser de 3 a 7 dias). El promedio es 28 dias y el rango considerado normal en la vida adulta va de 21 a 35. No saber el propio numero es comun: la app asume 28 y lo corriges cuando quieras.',
 			'Sobre la estimacion por fecha: la fase lutea dura unos 14 dias y es bastante estable; la que se alarga o acorta es la folicular. Por eso la app estima la ovulacion como "duracion del ciclo menos 14", y no como la mitad del ciclo.',
 			'Ciclo irregular, anticonceptivos y perimenopausia lo cambian todo. La app nunca presume regularidad: si la fecha indicada ya paso un ciclo entero, avisa en vez de fingir precision - y siempre puedes marcar la fase a mano.',
 			'Esto es bienestar general, no diagnostico ni tratamiento. Un sintoma que afecta tu vida es una conversacion con un profesional de la salud, no con una aplicacion.'
