@@ -94,6 +94,24 @@ const PT_BR: GuideSection[] = [
 	},
 	{
 		kind: 'topics',
+		title: 'Ciclo menstrual e alimentacao',
+		intro:
+			'O acompanhamento e opcional e so aparece se voce ligar no Perfil. Ele sugere ' +
+			'alimentos ligados a fase do ciclo e NAO mexe na sua meta de calorias, nem em ' +
+			'peso ou composicao corporal.',
+		bullets: [
+			'Ressalva honesta: "cycle syncing" como programa fechado nao tem validacao clinica robusta. O que a evidencia sustenta melhor e a influencia hormonal sobre energia, apetite e humor - nao uma prescricao dia a dia. Por isso o app so da um empurraozinho nas sugestoes, nunca uma regra.',
+			'Menstrual (dias 1-5): perde-se sangue, entao ferro entra em foco - feijao, lentilha, carne magra, folhas escuras. Vitamina C na mesma refeicao (laranja, acerola, morango) ajuda o corpo a absorver esse ferro.',
+			'Folicular: energia costuma subir. Proteina magra e comida fresca - ovo, iogurte, quinoa, frutas.',
+			'Ovulatoria: fibras e antioxidantes - brocolis, folhas, abacate, chia.',
+			'Lutea: a fase da TPM. Magnesio e fibras ajudam com o desconforto e a fissura por doce - banana, aveia, castanhas, chocolate 70%.',
+			'Sobre a estimativa por data: a fase lutea dura cerca de 14 dias e e bem estavel; quem estica ou encolhe e a folicular. Por isso o app estima a ovulacao como "duracao do ciclo menos 14", e nao como a metade do ciclo.',
+			'Ciclo irregular, anticoncepcional e perimenopausa mudam tudo. O app nunca presume regularidade: se a data informada ja passou de um ciclo inteiro, ele avisa em vez de fingir precisao - e voce sempre pode marcar a fase na mao.',
+			'Isto e bem-estar geral, nao diagnostico nem tratamento. Sintoma que atrapalha sua vida e conversa com profissional de saude, nao com aplicativo.'
+		]
+	},
+	{
+		kind: 'topics',
 		title: 'De onde vem os numeros dos alimentos',
 		intro: 'O catalogo do app nao foi inventado: cada alimento vem de uma fonte que pode ser conferida.',
 		bullets: [
@@ -176,6 +194,24 @@ const EN: GuideSection[] = [
 	},
 	{
 		kind: 'topics',
+		title: 'Menstrual cycle and food',
+		intro:
+			'Tracking is optional and only shows up if you turn it on in your Profile. It ' +
+			'suggests foods tied to the cycle phase and does NOT touch your calorie target, ' +
+			'your weight or your body composition.',
+		bullets: [
+			'An honest caveat: "cycle syncing" as a closed programme has no robust clinical validation. What evidence supports better is hormonal influence on energy, appetite and mood - not a day-by-day prescription. That is why the app only nudges suggestions, never sets a rule.',
+			'Menstrual (days 1-5): you lose blood, so iron comes into focus - beans, lentils, lean beef, dark greens. Vitamin C in the same meal (orange, acerola, strawberry) helps your body absorb that iron.',
+			'Follicular: energy usually rises. Lean protein and fresh food - egg, yogurt, quinoa, fruit.',
+			'Ovulatory: fibre and antioxidants - broccoli, greens, avocado, chia.',
+			'Luteal: the PMS phase. Magnesium and fibre help with discomfort and sugar cravings - banana, oats, nuts, 70% chocolate.',
+			'About the date estimate: the luteal phase lasts about 14 days and is quite stable; the follicular one is what stretches or shrinks. So the app estimates ovulation as "cycle length minus 14", not as the middle of the cycle.',
+			'Irregular cycles, contraceptives and perimenopause change everything. The app never assumes regularity: if the date you entered is over a full cycle old, it says so instead of faking precision - and you can always set the phase by hand.',
+			'This is general wellbeing, not diagnosis or treatment. Symptoms that disrupt your life are a conversation with a health professional, not with an app.'
+		]
+	},
+	{
+		kind: 'topics',
 		title: 'Where the food numbers come from',
 		intro: 'The app catalog was not made up: every food comes from a source you can check.',
 		bullets: [
@@ -254,6 +290,24 @@ const ES: GuideSection[] = [
 			'No te asustes por una oscilacion de 1-2 kg en un dia: es agua y comida, no grasa.',
 			'En las primeras semanas de dieta el peso cae rapido por agua y glucogeno, no por grasa. Luego se frena: es lo normal, no es que falle el deficit.',
 			'Pesate con frecuencia: la meta corregida (TDEE adaptativo) solo aparece con unos 8 pesajes en 3 semanas. Con pocos pesajes, el agua manda en la cuenta y la estimacion falla mucho.'
+		]
+	},
+	{
+		kind: 'topics',
+		title: 'Ciclo menstrual y alimentacion',
+		intro:
+			'El seguimiento es opcional y solo aparece si lo activas en el Perfil. Sugiere ' +
+			'alimentos ligados a la fase del ciclo y NO toca tu meta de calorias, ni tu peso ' +
+			'ni tu composicion corporal.',
+		bullets: [
+			'Advertencia honesta: el "cycle syncing" como programa cerrado no tiene validacion clinica robusta. Lo que la evidencia sostiene mejor es la influencia hormonal sobre energia, apetito y animo - no una prescripcion dia a dia. Por eso la app solo empuja un poco las sugerencias, nunca impone una regla.',
+			'Menstrual (dias 1-5): hay perdida de sangre, asi que el hierro entra en foco - frijoles, lentejas, carne magra, hojas verdes oscuras. La vitamina C en la misma comida (naranja, acerola, fresa) ayuda a absorber ese hierro.',
+			'Folicular: la energia suele subir. Proteina magra y comida fresca - huevo, yogur, quinoa, frutas.',
+			'Ovulatoria: fibra y antioxidantes - brocoli, hojas verdes, aguacate, chia.',
+			'Lutea: la fase del sindrome premenstrual. El magnesio y la fibra ayudan con el malestar y el antojo de dulce - platano, avena, nueces, chocolate 70%.',
+			'Sobre la estimacion por fecha: la fase lutea dura unos 14 dias y es bastante estable; la que se alarga o acorta es la folicular. Por eso la app estima la ovulacion como "duracion del ciclo menos 14", y no como la mitad del ciclo.',
+			'Ciclo irregular, anticonceptivos y perimenopausia lo cambian todo. La app nunca presume regularidad: si la fecha indicada ya paso un ciclo entero, avisa en vez de fingir precision - y siempre puedes marcar la fase a mano.',
+			'Esto es bienestar general, no diagnostico ni tratamiento. Un sintoma que afecta tu vida es una conversacion con un profesional de la salud, no con una aplicacion.'
 		]
 	},
 	{

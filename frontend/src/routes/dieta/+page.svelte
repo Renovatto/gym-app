@@ -2,6 +2,8 @@
 	import {
 		api,
 		localDay,
+		type CyclePhase,
+		type CycleStatus,
 		type DiaryDay,
 		type DiaryEntry,
 		type DiaryGap,
@@ -19,6 +21,7 @@
 		type DietPeriod,
 		type AdaptiveTdee
 	} from '$lib/api';
+	import CycleConfig from '$lib/components/CycleConfig.svelte';
 	import MacroSummary from '$lib/components/MacroSummary.svelte';
 	import Stepper from '$lib/components/Stepper.svelte';
 	import Spinner from '$lib/components/Spinner.svelte';
@@ -276,12 +279,58 @@
 		} catch {
 			// extra: sem dados suficientes ainda, o card fica sem badge
 		}
+		try {
+			// fase resolvida para o DIA EXIBIDO (ontem mostra a fase de ontem)
+			cycle = await api.getCycle(day);
+			maybePlayAura();
+		} catch {
+			// acompanhamento indisponivel: a tela vive sem o card
+		}
 	}
 
 	async function load(): Promise<void> {
 		loading = true;
 		await reloadSilent();
 		loading = false;
+	}
+
+	// --- Ciclo menstrual (opt-in): card + aura ------------------------------
+	let cycle = $state<CycleStatus | null>(null);
+	let cycleModal = $state(false);
+	// A aura "acende e assenta": percorre a borda da tela ao abrir a Dieta e se
+	// recolhe para a borda do card. Uma vez por dia por sessao - efeito especial
+	// que roda a cada toque de aba viraria papel de parede.
+	let auraPlaying = $state(false);
+	const AURA_KEY = 'gymapp.diet.cycleAuraDay';
+
+	function maybePlayAura(): void {
+		if (!cycle?.enabled || !cycle.phase || day !== today) return;
+		try {
+			if (sessionStorage.getItem(AURA_KEY) === today) return;
+			sessionStorage.setItem(AURA_KEY, today);
+		} catch {
+			// sessionStorage bloqueado: toca mesmo assim
+		}
+		auraPlaying = true;
+		setTimeout(() => (auraPlaying = false), 2600);
+	}
+
+	function cyclePhaseLabel(phase: CyclePhase): string {
+		return {
+			menstrual: m.cycle_phase_menstrual(),
+			follicular: m.cycle_phase_follicular(),
+			ovulatory: m.cycle_phase_ovulatory(),
+			luteal: m.cycle_phase_luteal()
+		}[phase];
+	}
+
+	function cycleFocusLabel(phase: CyclePhase): string {
+		return {
+			menstrual: m.cycle_focus_menstrual(),
+			follicular: m.cycle_focus_follicular(),
+			ovulatory: m.cycle_focus_ovulatory(),
+			luteal: m.cycle_focus_luteal()
+		}[phase];
 	}
 
 	// Modal de adicionar alimento/receita (fica aberta para lancar varios itens).
@@ -902,6 +951,48 @@
 	<SkeletonScreen hero cards={4} cardLines={1} />
 {:else if diary}
 	<MacroSummary totals={diary.totals} goals={diary.goals} />
+
+	<!-- Ciclo menstrual (opt-in): a borda gradiente e o "assentado" da aura que
+		 percorre a tela ao abrir - o efeito escolhido no artefato (acende e assenta).
+		 So existe com o acompanhamento ligado; a informacao nunca depende do efeito
+		 (movimento reduzido desliga a animacao e fica a borda parada). -->
+	{#if cycle?.enabled}
+		<div class="cycle-card relative mt-3 rounded-2xl bg-white p-3.5 shadow-sm">
+			{#if cycle.phase}
+				<button
+					type="button"
+					onclick={() => (cycleModal = true)}
+					class="absolute top-3 right-3.5 text-xs font-bold text-[#6658fe] active:opacity-70"
+				>
+					{m.cycle_adjust()}
+				</button>
+				<div class="flex items-baseline gap-2 pr-16">
+					<p class="font-bold text-slate-900">{cyclePhaseLabel(cycle.phase)}</p>
+					{#if cycle.day_in_cycle !== null}
+						<span class="text-xs font-semibold text-slate-400">
+							{m.cycle_day_label({ day: cycle.day_in_cycle })} · {m.cycle_estimated()}
+						</span>
+					{/if}
+				</div>
+				<p class="mt-0.5 text-xs text-slate-500">{cycleFocusLabel(cycle.phase)}</p>
+				{#if cycle.estimate_stale}
+					<p class="mt-1.5 rounded-lg bg-amber-50 px-2 py-1 text-[11px] font-semibold text-amber-700">
+						{m.cycle_stale_hint()}
+					</p>
+				{/if}
+			{:else}
+				<!-- ligado no perfil mas sem fase (ex.: religou sem configurar) -->
+				<button
+					type="button"
+					onclick={() => (cycleModal = true)}
+					class="flex w-full items-center justify-between text-left"
+				>
+					<span class="text-sm font-semibold text-slate-700">{m.cycle_configure()}</span>
+					<svg viewBox="0 0 24 24" class="h-4 w-4 shrink-0 text-slate-300" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 6l6 6-6 6" stroke-linecap="round" stroke-linejoin="round" /></svg>
+				</button>
+			{/if}
+		</div>
+	{/if}
 
 	{#if dietPeriod}
 		<button
@@ -1938,3 +2029,152 @@
 		actionBusy={addBusy}
 	/>
 {/if}
+
+{#if auraPlaying}
+	<!-- A aura da tela inteira: 2,6 s e some (ver maybePlayAura). aria-hidden porque
+		 e puro efeito - leitor de tela nao tem o que anunciar aqui. -->
+	<div class="cycle-aura" aria-hidden="true"><i></i><i></i><i></i></div>
+{/if}
+
+{#if cycleModal && cycle}
+	<div
+		class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
+		role="button"
+		tabindex="-1"
+		onclick={() => (cycleModal = false)}
+		onkeydown={(e) => e.key === 'Escape' && (cycleModal = false)}
+	>
+		<div
+			class="w-full max-w-md rounded-3xl bg-white p-5"
+			role="dialog"
+			tabindex="-1"
+			onclick={(e) => e.stopPropagation()}
+			onkeydown={() => {}}
+		>
+			<div class="mb-4 flex items-start justify-between gap-2">
+				<h2 class="text-lg font-bold text-slate-900">{m.cycle_optin_label()}</h2>
+				<button
+					type="button"
+					aria-label={m.close()}
+					onclick={() => (cycleModal = false)}
+					class="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-slate-100 text-slate-500 active:bg-slate-200"
+				>
+					<svg viewBox="0 0 24 24" class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 6l12 12M18 6L6 18" stroke-linecap="round" /></svg>
+				</button>
+			</div>
+			<CycleConfig
+				value={cycle}
+				day={today}
+				onSaved={(c) => {
+					cycleModal = false;
+					// A modal salva ancorada em HOJE (a validacao da data precisa do hoje
+					// real), mas o card mostra o DIA EXIBIDO. Adotar a resposta direto
+					// faria o card de ontem exibir o dia do ciclo de hoje.
+					if (day === today) {
+						cycle = c;
+						return;
+					}
+					api
+						.getCycle(day)
+						.then((resolved) => (cycle = resolved))
+						.catch(() => {});
+				}}
+			/>
+		</div>
+	</div>
+{/if}
+
+<style>
+	/* Borda gradiente viva do card do ciclo (o "assentado" da aura). Duas camadas:
+	   o anel nitido e uma copia borrada por tras, respirando devagar. O truque do
+	   mask-composite recorta so a moldura, deixando o miolo do card intacto. */
+	.cycle-card::before,
+	.cycle-card::after {
+		content: '';
+		position: absolute;
+		inset: 0;
+		border-radius: 1rem;
+		padding: 2px;
+		pointer-events: none;
+		background: linear-gradient(120deg, #6658fe, #c33764, #6658fe, #c33764);
+		background-size: 300% 300%;
+		-webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+		mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+		-webkit-mask-composite: xor;
+		mask-composite: exclude;
+		animation: cycle-slide 6s linear infinite;
+	}
+	.cycle-card::after {
+		filter: blur(6px);
+		animation: cycle-slide 6s linear infinite, cycle-breathe 3.2s ease-in-out infinite;
+	}
+
+	/* A aura de tela inteira: mesma moldura, tres camadas cada vez mais borradas,
+	   acende ao abrir e apaga sozinha (animation forwards + timeout no script). */
+	.cycle-aura {
+		position: fixed;
+		inset: 0;
+		z-index: 60;
+		pointer-events: none;
+		animation: cycle-ignite 2.6s ease-out forwards;
+	}
+	.cycle-aura i {
+		position: absolute;
+		inset: 0;
+		padding: 3px;
+		background: linear-gradient(120deg, #6658fe, #c33764, #8b5cf6, #6658fe);
+		background-size: 300% 300%;
+		-webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+		mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+		-webkit-mask-composite: xor;
+		mask-composite: exclude;
+		animation: cycle-slide 2.6s linear;
+	}
+	.cycle-aura i:nth-child(2) {
+		filter: blur(10px);
+	}
+	.cycle-aura i:nth-child(3) {
+		filter: blur(26px);
+		opacity: 0.8;
+	}
+
+	@keyframes cycle-slide {
+		to {
+			background-position: 300% 0;
+		}
+	}
+	@keyframes cycle-breathe {
+		0%,
+		100% {
+			opacity: 0.2;
+		}
+		50% {
+			opacity: 0.7;
+		}
+	}
+	@keyframes cycle-ignite {
+		0% {
+			opacity: 0;
+		}
+		12% {
+			opacity: 1;
+		}
+		70% {
+			opacity: 1;
+		}
+		100% {
+			opacity: 0;
+		}
+	}
+
+	/* Quem pede menos movimento nao perde nada: a borda fica parada e a aura sai. */
+	@media (prefers-reduced-motion: reduce) {
+		.cycle-card::before,
+		.cycle-card::after {
+			animation: none;
+		}
+		.cycle-aura {
+			display: none;
+		}
+	}
+</style>

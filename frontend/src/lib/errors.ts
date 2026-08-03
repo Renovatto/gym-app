@@ -16,7 +16,12 @@ const ERROR_MESSAGES: Record<string, () => string> = {
 	CANNOT_INVITE_SELF: () => m.error_cannot_invite_self(),
 	CONNECTION_EXISTS: () => m.error_connection_exists(),
 	SOURCE_ITEM_GONE: () => m.error_source_item_gone(),
-	ALREADY_ANSWERED: () => m.error_already_answered()
+	ALREADY_ANSWERED: () => m.error_already_answered(),
+	// ciclo menstrual: a tela ja evita os tres casos, mas mensagem generica num
+	// erro de data deixaria a pessoa sem saber o que corrigir
+	CYCLE_PHASE_REQUIRED: () => m.error_cycle_phase_required(),
+	CYCLE_DATE_REQUIRED: () => m.error_cycle_date_required(),
+	CYCLE_DATE_FUTURE: () => m.error_cycle_date_future()
 };
 
 export function errorMessage(code: string): string {

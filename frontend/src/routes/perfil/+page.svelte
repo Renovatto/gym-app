@@ -5,12 +5,14 @@
 		ApiError,
 		localDay,
 		type ActivityLevel,
+		type CycleStatus,
 		type AchievementsResult,
 		type CutIntensity,
 		type FeedbackReport,
 		type Objective
 	} from '$lib/api';
 	import ChoiceChips from '$lib/components/ChoiceChips.svelte';
+	import CycleConfig from '$lib/components/CycleConfig.svelte';
 	import Stepper from '$lib/components/Stepper.svelte';
 	import { bootstrap, session, signOut } from '$lib/session.svelte';
 	import { sharingPending } from '$lib/sharing.svelte';
@@ -222,6 +224,45 @@
 	async function logout(): Promise<void> {
 		signOut();
 		await goto('/login');
+	}
+	// --- Ciclo menstrual (opt-in) -------------------------------------------
+	// 100% explicito: comeca sempre desligado e nada aqui olha o sexo cadastrado.
+	// Desligar nao apaga a configuracao (o backend preserva para religar).
+	let cycle = $state<CycleStatus | null>(null);
+	const cycleDay = localDay();
+	let cycleChoice = $state<'yes' | 'no'>('no');
+
+	$effect(() => {
+		api
+			.getCycle(cycleDay)
+			.then((c) => {
+				cycle = c;
+				cycleChoice = c.enabled ? 'yes' : 'no';
+			})
+			.catch(() => {
+				// sem resposta, o bloco do ciclo simplesmente nao aparece
+			});
+	});
+
+	async function cycleOptOut(v: string): Promise<void> {
+		if (v !== 'no' || !cycle || !cycle.enabled) return;
+		// desligar e leve e reversivel em 1 toque: sem confirmacao, com toast
+		try {
+			cycle = await api.saveCycle(cycleDay, {
+				enabled: false,
+				mode: cycle.mode,
+				phase: cycle.mode === 'manual' ? cycle.phase : null,
+				last_period_date: cycle.last_period_date,
+				cycle_length_days: cycle.cycle_length_days
+			});
+			showToast(m.cycle_disabled_toast());
+		} catch (e) {
+			// O chip troca ANTES da chamada (bind + onselect), entao uma falha deixaria
+			// a tela dizendo "desligado" com o servidor ligado - mentira grave num
+			// opt-in de dado sensivel. Volta para o estado real e avisa.
+			cycleChoice = 'yes';
+			showToast(errorMessage(e instanceof ApiError ? e.code : 'GENERIC_ERROR'));
+		}
 	}
 </script>
 
@@ -556,6 +597,28 @@
 						]}
 					/>
 				</div>
+				<!-- Ciclo menstrual: opt-in explicito. O bloco de configuracao e o mesmo
+					 componente da modal na Dieta - um formulario so nos dois lugares. -->
+				{#if cycle}
+					<div class="border-t border-slate-100 pt-5">
+						<p class="mb-1 font-semibold text-slate-600">{m.cycle_optin_label()}</p>
+						<p class="mb-3 text-xs text-slate-400">{m.cycle_optin_hint()}</p>
+						<ChoiceChips
+							columns={2}
+							bind:value={cycleChoice}
+							onselect={cycleOptOut}
+							options={[
+								{ value: 'yes', label: m.yes() },
+								{ value: 'no', label: m.later() }
+							]}
+						/>
+						{#if cycleChoice === 'yes'}
+							<div class="mt-4">
+								<CycleConfig value={cycle} day={cycleDay} onSaved={(c) => (cycle = c)} />
+							</div>
+						{/if}
+					</div>
+				{/if}
 			</div>
 		{/if}
 	</section>

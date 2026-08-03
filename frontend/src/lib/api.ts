@@ -853,6 +853,30 @@ async function tryRefresh(): Promise<boolean> {
 	}
 }
 
+export type CyclePhase = 'menstrual' | 'follicular' | 'ovulatory' | 'luteal';
+export type CycleMode = 'manual' | 'by_date';
+
+export interface CycleStatus {
+	enabled: boolean;
+	mode: CycleMode;
+	// fase ja RESOLVIDA pelo backend (marcada ou estimada) para o dia pedido
+	phase: CyclePhase | null;
+	phase_source: 'manual' | 'estimated' | null;
+	day_in_cycle: number | null;
+	// a data do ultimo periodo ja passou de um ciclo inteiro: hora de atualizar
+	estimate_stale: boolean;
+	last_period_date: string | null;
+	cycle_length_days: number;
+}
+
+export interface CycleInput {
+	enabled: boolean;
+	mode: CycleMode;
+	phase?: CyclePhase | null;
+	last_period_date?: string | null;
+	cycle_length_days?: number;
+}
+
 export const api = {
 	register: (email: string, password: string, locale: string) =>
 		request<TokenPair>('/auth/register', {
@@ -1011,6 +1035,11 @@ export const api = {
 		request<WeekSummary>(`/me/summary/week?day=${day}&tz_offset=${tzOffset}`),
 	getAdaptiveTdee: (day: string, tzOffset: number) =>
 		request<AdaptiveTdee>(`/me/summary/adaptive?day=${day}&tz_offset=${tzOffset}`),
+	// Ciclo menstrual (Fase A): o dia local vai na query porque a estimativa por
+	// data depende do "hoje" de quem usa, nao do fuso do servidor.
+	getCycle: (day: string) => request<CycleStatus>(`/me/cycle?day=${day}`),
+	saveCycle: (day: string, input: CycleInput) =>
+		request<CycleStatus>(`/me/cycle?day=${day}`, { method: 'PUT', body: input }),
 	getCoach: (day: string, tzOffset: number) =>
 		request<CoachResult>(`/me/coach?day=${day}&tz_offset=${tzOffset}`),
 	getAchievements: (day: string, tzOffset: number) =>
