@@ -48,10 +48,14 @@ def _utc_window(start_day: date, end_day: date, tz_offset_min: int) -> tuple[dat
 def week_summary(
     user: CurrentUser,
     session: SessionDep,
-    day: date = Query(..., description="Dia local do cliente (fim da janela de 7 dias)"),
+    day: date = Query(..., description="Dia local do cliente (dentro da semana)"),
     tz_offset: int = Query(0, description="Date.getTimezoneOffset() do cliente"),
 ) -> WeekSummaryOut:
-    start_day = day - timedelta(days=6)
+    # Semana do CALENDARIO, comecando na segunda, e nao os ultimos 7 dias. A tela diz
+    # "Esta semana": com janela movel, abrir o app numa segunda mostrava desde a terca
+    # anterior, ou seja, a semana passada. Segunda como inicio segue o isocalendar()
+    # que as conquistas ja usam - as duas telas precisam contar a mesma semana.
+    start_day = day - timedelta(days=day.weekday())
     start_utc, end_utc = _utc_window(start_day, day, tz_offset)
 
     # Treinos concluídos e volume na semana

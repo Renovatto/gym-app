@@ -300,24 +300,33 @@
 		prefilledFrom = null;
 	}
 
-	// Os sete dias da janela, do mais antigo ao de hoje, cada um sabendo se teve
-	// movimento. A inicial vem do proprio idioma (weekday: 'narrow'), entao nao ha
-	// lista de letras escrita a mao para desencontrar da traducao.
+	// A semana do CALENDARIO, de segunda a domingo, cada dia sabendo se teve movimento.
+	// Antes eram os ultimos 7 dias: numa segunda, a faixa comecava na terca anterior e
+	// misturava a semana passada com a atual embaixo do titulo "Esta semana".
+	// A inicial vem do proprio idioma (weekday: 'narrow'), entao nao ha lista de letras
+	// escrita a mao para desencontrar da traducao.
 	const weekDayInitial = new Intl.DateTimeFormat(getLocale(), { weekday: 'narrow' });
 	const weekDays = $derived.by(() => {
 		if (!week) return [];
 		const active = new Set(week.active_dates);
 		const today = new Date(localDay() + 'T12:00:00'); // meio-dia evita virada de fuso
+		// getDay() e 0 no domingo; esta conta acha a segunda desta semana em qualquer dia
+		const monday = new Date(today);
+		monday.setDate(today.getDate() - ((today.getDay() + 6) % 7));
+		const todayIso = localDay();
 		return Array.from({ length: 7 }, (_, index) => {
-			const dayDate = new Date(today);
-			dayDate.setDate(today.getDate() - (6 - index));
+			const dayDate = new Date(monday);
+			dayDate.setDate(monday.getDate() + index);
 			// montado a mao, e nao com toISOString(): aquele converte para UTC e pularia
 			// um dia em fuso adiantado (meio-dia em UTC+13 ja e o dia anterior la)
 			const iso = `${dayDate.getFullYear()}-${String(dayDate.getMonth() + 1).padStart(2, '0')}-${String(dayDate.getDate()).padStart(2, '0')}`;
 			return {
 				iso,
 				initial: weekDayInitial.format(dayDate).toUpperCase(),
-				active: active.has(iso)
+				active: active.has(iso),
+				// dia que ainda nao chegou: numa segunda, seis dos sete sao futuro, e
+				// pinta-los de "sem movimento" faria a semana parecer perdida no dia 1
+				future: iso > todayIso
 			};
 		});
 	});
@@ -528,7 +537,9 @@
 					<span
 						class="grid h-8 flex-1 place-items-center rounded-lg text-[11px] font-black {weekDay.active
 							? 'bg-emerald-500 text-white'
-							: 'bg-slate-100 text-slate-400'}"
+							: weekDay.future
+								? 'border border-dashed border-slate-200 text-slate-300'
+								: 'bg-slate-100 text-slate-400'}"
 						title={weekDay.iso}
 					>
 						{weekDay.initial}
