@@ -305,6 +305,9 @@
 
 	function maybePlayAura(): void {
 		if (!cycle?.enabled || !cycle.phase || day !== today) return;
+		// na fase menstrual a moldura ja fica permanente: um pulso por cima seria
+		// o mesmo efeito duas vezes
+		if (cycle.phase === 'menstrual') return;
 		try {
 			if (sessionStorage.getItem(AURA_KEY) === today) return;
 			sessionStorage.setItem(AURA_KEY, today);
@@ -314,6 +317,13 @@
 		auraPlaying = true;
 		setTimeout(() => (auraPlaying = false), 2600);
 	}
+
+	// A aura de tela inteira PERMANENTE fica so na fase menstrual - decisao do usuario,
+	// que a imagina como a fase mais critica. Nas outras fases continua o pulso de 2,6 s
+	// ao abrir (maybePlayAura). Fora de hoje nao acende: a moldura fala do agora.
+	const auraPermanent = $derived(
+		!!cycle?.enabled && cycle.phase === 'menstrual' && day === today
+	);
 
 	function cyclePhaseLabel(phase: CyclePhase): string {
 		return {
@@ -1085,7 +1095,16 @@
 					{#each gap.suggestions as s (s.food.id)}
 						<div class="flex items-center gap-2 rounded-2xl bg-white px-3 py-2">
 							<div class="min-w-0 flex-1">
-								<p class="truncate text-sm font-semibold text-slate-800">{s.food.name}</p>
+								<p class="flex items-center gap-1 truncate text-sm font-semibold text-slate-800">
+									{#if s.from_phase}
+										<!-- recomendacao que muda sozinha, sem dizer por que, e magica -
+											 e magica nao se confere. O selo mostra de onde veio. -->
+										<span class="shrink-0 rounded-full bg-rose-50 px-2 py-0.5 text-[10px] font-bold text-rose-700">
+											{m.cycle_badge()}
+										</span>
+									{/if}
+									<span class="truncate">{s.food.name}</span>
+								</p>
 								<p class="text-xs text-slate-500">{suggestionHint(s)}</p>
 							</div>
 							<button
@@ -1325,7 +1344,16 @@
 						{#each plan.suggestions as s (s.food.id)}
 							<div class="flex items-center gap-2 rounded-xl bg-white px-3 py-2">
 								<div class="min-w-0 flex-1">
-									<p class="truncate text-sm font-semibold text-slate-800">{s.food.name}</p>
+									<p class="flex items-center gap-1 truncate text-sm font-semibold text-slate-800">
+									{#if s.from_phase}
+										<!-- recomendacao que muda sozinha, sem dizer por que, e magica -
+											 e magica nao se confere. O selo mostra de onde veio. -->
+										<span class="shrink-0 rounded-full bg-rose-50 px-2 py-0.5 text-[10px] font-bold text-rose-700">
+											{m.cycle_badge()}
+										</span>
+									{/if}
+									<span class="truncate">{s.food.name}</span>
+								</p>
 									<p class="text-xs text-slate-500">
 										{nf.format(s.grams)} g · {nf.format(Math.round(s.macros.protein_g))}g prot · {nf.format(Math.round(s.macros.kcal))} kcal
 									</p>
@@ -2043,9 +2071,13 @@
 	/>
 {/if}
 
-{#if auraPlaying}
-	<!-- A aura da tela inteira: 2,6 s e some (ver maybePlayAura). aria-hidden porque
-		 e puro efeito - leitor de tela nao tem o que anunciar aqui. -->
+{#if auraPermanent}
+	<!-- Moldura permanente da fase menstrual: mais fina e mais lenta que o pulso, para
+		 conviver com o uso. aria-hidden porque e puro efeito - a fase ja esta escrita
+		 no card, entao nada se perde para quem usa leitor de tela. -->
+	<div class="cycle-aura cycle-aura--calm" aria-hidden="true"><i></i><i></i></div>
+{:else if auraPlaying}
+	<!-- Pulso de 2,6 s ao abrir, nas demais fases (ver maybePlayAura). -->
 	<div class="cycle-aura" aria-hidden="true"><i></i><i></i><i></i></div>
 {/if}
 
@@ -2126,7 +2158,15 @@
 	   acende ao abrir e apaga sozinha (animation forwards + timeout no script). */
 	.cycle-aura {
 		position: fixed;
-		inset: 0;
+		/* Respeita as areas seguras: o app usa viewport-fit=cover (app.html), entao
+		   inset:0 puro enfiaria a moldura sob o notch e atras do indicador de home. */
+		inset: env(safe-area-inset-top) env(safe-area-inset-right)
+			env(safe-area-inset-bottom) env(safe-area-inset-left);
+		/* O shell e uma coluna max-w-md centrada (+layout.svelte): sem este limite a
+		   moldura abracaria a janela inteira no desktop, e nao o app. */
+		max-width: 28rem;
+		margin-inline: auto;
+		border-radius: 1.5rem;
 		z-index: 60;
 		pointer-events: none;
 		animation: cycle-ignite 2.6s ease-out forwards;
@@ -2134,6 +2174,7 @@
 	.cycle-aura i {
 		position: absolute;
 		inset: 0;
+		border-radius: 1.5rem;
 		padding: 3px;
 		background: linear-gradient(120deg, #6658fe, #c33764, #8b5cf6, #6658fe);
 		background-size: 300% 300%;
@@ -2149,6 +2190,22 @@
 	.cycle-aura i:nth-child(3) {
 		filter: blur(26px);
 		opacity: 0.8;
+	}
+
+	/* Versao permanente: o que impressiona por 2 segundos cansa em 10 minutos. Borda
+	   mais fina, giro quatro vezes mais lento, duas camadas em vez de tres e brilho
+	   pela metade - presente, sem competir com os numeros. */
+	.cycle-aura--calm {
+		z-index: 5; /* acima do conteudo, ABAIXO de aba (10), modal (50) e toast (60) */
+		opacity: 0.45;
+		animation: none;
+	}
+	.cycle-aura--calm i {
+		padding: 2px;
+		animation: cycle-slide 10s linear infinite;
+	}
+	.cycle-aura--calm i:nth-child(2) {
+		filter: blur(8px);
 	}
 
 	@keyframes cycle-slide {
@@ -2180,7 +2237,9 @@
 		}
 	}
 
-	/* Quem pede menos movimento nao perde nada: a borda fica parada e a aura sai. */
+	/* Quem pede menos movimento nao perde informacao: as bordas ficam paradas. O pulso
+	   some (ele e so chegada); a permanente FICA, porque sinaliza a fase - some-la
+	   esconderia um dado de quem so pediu menos animacao. */
 	@media (prefers-reduced-motion: reduce) {
 		.cycle-card::before,
 		.cycle-card::after {
@@ -2188,6 +2247,12 @@
 		}
 		.cycle-aura {
 			display: none;
+		}
+		.cycle-aura--calm {
+			display: block;
+		}
+		.cycle-aura--calm i {
+			animation: none;
 		}
 	}
 </style>
