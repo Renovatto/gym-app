@@ -430,8 +430,8 @@ class DiaryEntry(SQLModel, table=True):
 
 class Favorite(SQLModel, table=True):
     """Alimento ou receita marcado como favorito pelo usuario (a estrelinha).
-    Tabela nova (nao coluna em foods/recipes) para o create_all criar sozinho no
-    Postgres de producao, sem migracao. ref_id = food_id quando kind=food,
+    Tabela propria, e nao coluna em foods/recipes, porque favoritar e do usuario e
+    nao do alimento. ref_id = food_id quando kind=food,
     recipe_id quando kind=recipe (receita ja adotada pelo usuario)."""
 
     __tablename__ = "favorites"
@@ -444,9 +444,9 @@ class Favorite(SQLModel, table=True):
 
 
 class FeedbackReport(SQLModel, table=True):
-    """Feedback / relato de problema enviado por um usuario. Tabela nova (o create_all
-    cria sozinho no Postgres, sem migracao). 'module' e string livre (workout, diet,
-    progress, profile, other) para evitar a friccao de enum novo no Postgres. 'read'
+    """Feedback / relato de problema enviado por um usuario. 'module' e string livre
+    (workout, diet, progress, profile, other) e nao enum, porque a lista de modulos
+    muda junto com as telas do app e nao merece uma migracao a cada ajuste. 'read'
     marca se o admin ja leu."""
 
     __tablename__ = "feedback_reports"
@@ -594,9 +594,9 @@ class SharedItem(SQLModel, table=True):
     """De quem veio cada copia aceita. E o que a pilula "Recebidas" filtra e o que
     evita copiar duas vezes o mesmo alimento de origem.
 
-    Mora em tabela propria, e nao numa coluna em recipes/foods, porque coluna nova em
-    tabela existente e a armadilha que ja quebrou este projeto em producao (ver
-    _COLUMN_MIGRATIONS no db.py)."""
+    Mora em tabela propria, e nao numa coluna em recipes/foods, porque o vinculo e
+    entre duas pessoas e nao um atributo do alimento: guardar em coluna misturaria
+    dado de compartilhamento com dado nutricional."""
 
     __tablename__ = "shared_items"
 
@@ -643,8 +643,7 @@ class CycleMode(str, Enum):
 class CycleTracking(SQLModel, table=True):
     """Acompanhamento do ciclo menstrual (Fase A) - uma linha por usuaria.
 
-    Tabela propria, e nao colunas em profiles: alem da regra da casa (coluna nova em
-    tabela existente e a armadilha de producao, ver _COLUMN_MIGRATIONS no db.py), isso
+    Tabela propria, e nao colunas em profiles: isso
     mantem o dado de saude mais sensivel do app num lugar so - facil de exportar
     (LGPD), facil de apagar, impossivel de vazar por um ProfileOut mais largo.
 

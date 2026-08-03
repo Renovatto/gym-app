@@ -4,7 +4,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from .config import settings
-from .db import init_db
+from .db import run_migrations
 from .routers import (
     account,
     achievements,
@@ -27,7 +27,8 @@ from .seed import seed_exercises, seed_foods
 
 @asynccontextmanager
 async def lifespan(_app: FastAPI):
-    init_db()
+    # As migracoes vem antes das sementes: semear so faz sentido com o schema pronto.
+    run_migrations()
     seed_exercises()
     seed_foods()
     yield
