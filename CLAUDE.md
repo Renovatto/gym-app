@@ -67,7 +67,11 @@ documentadas para o usuario na area de consulta. Nao espalhe formula por varios 
 - Backend: FastAPI + SQLModel. `session.exec(select(Model.coluna))` retorna escalar, nao tupla.
 - Ao atualizar filhos de um pai (rotina->itens, receita->ingredientes), limpe a colecao
   com `colecao.clear()` (delete-orphan). Nunca `session.delete(item)` + re-adicionar o pai.
-- Migracao leve de coluna em SQLite: adicionar em `_COLUMN_MIGRATIONS` no `db.py`.
+- **Schema: Alembic** (desde 03/08/2026). Coluna nova = editar `models.py` +
+  `alembic revision --autogenerate -m "..."` + revisar o arquivo + `alembic upgrade head`
+  local + commitar migracao e modelo JUNTOS. Enum novo = migração manual com
+  `op.get_context().autocommit_block()` + `ALTER TYPE ... ADD VALUE IF NOT EXISTS`
+  (Postgres só; SQLite não precisa). Tabela nova = autogenerate resolve.
 - Busca textual SEMPRE via `normalize_search` (sem acento, sem caixa) dos dois lados.
 - Datas locais do usuario: cliente envia dia local + `tz_offset` (Date.getTimezoneOffset()).
 - Frontend: Svelte 5 runes (`$state`/`$derived`/`$effect`), nunca stores. Componente

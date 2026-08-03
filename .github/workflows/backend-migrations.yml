@@ -1,0 +1,55 @@
+name: backend-migrations
+
+on:
+  push:
+    paths:
+      - "backend/**"
+      - ".github/workflows/backend-migrations.yml"
+  pull_request:
+    paths:
+      - "backend/**"
+
+jobs:
+  migrations:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:18
+        env:
+          POSTGRES_PASSWORD: gymapp
+          POSTGRES_DB: gymapp
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+        ports:
+          - 5432:5432
+
+    env:
+      GYMAPP_DATABASE_URL: postgresql://postgres:gymapp@localhost:5432/gymapp
+
+    defaults:
+      run:
+        working-directory: backend
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Run migrations on PostgreSQL
+        run: alembic upgrade head
+
+      - name: Check schema alignment
+        run: alembic check
+
+      - name: Test baseline on SQLite
+        env:
+          GYMAPP_DATABASE_URL: sqlite:////tmp/ci_gymapp.db
+        run: alembic upgrade head
