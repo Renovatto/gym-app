@@ -740,7 +740,7 @@
 	"cycle_phase_follicular": "Follicular",
 	"cycle_phase_ovulatory": "Ovulatory",
 	"cycle_phase_luteal": "Luteal",
-	"cycle_last_period_label": "First day of last period",
+	"cycle_last_period_label": "When did your most recent period start?",
 	"cycle_length_label": "Typical cycle length (days)",
 	"cycle_save": "Save cycle",
 	"cycle_saved_toast": "Cycle updated",
@@ -756,5 +756,8 @@
 	"cycle_focus_luteal": "Focus right now: magnesium and fibre — banana, oats, nuts, 70% chocolate",
 	"error_cycle_phase_required": "Pick the current cycle phase.",
 	"error_cycle_date_required": "Enter the first day of your last period.",
-	"error_cycle_date_future": "That date is in the future. Enter the first day of your last period."
+	"error_cycle_date_future": "That date is in the future. Enter the first day of your last period.",
+	"cycle_last_period_hint": "If you are on your period now, this is the day it started — not last month's.",
+	"cycle_started_today": "Started today",
+	"cycle_mode_hint": "Don't remember the date? Choose \"Pick the phase\" and just say how you are right now."
 }

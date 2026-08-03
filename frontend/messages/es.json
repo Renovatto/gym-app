@@ -740,7 +740,7 @@
 	"cycle_phase_follicular": "Folicular",
 	"cycle_phase_ovulatory": "Ovulatoria",
 	"cycle_phase_luteal": "Lútea",
-	"cycle_last_period_label": "Primer día del último período",
+	"cycle_last_period_label": "¿Cuándo empezó tu menstruación más reciente?",
 	"cycle_length_label": "Duración típica del ciclo (días)",
 	"cycle_save": "Guardar ciclo",
 	"cycle_saved_toast": "Ciclo actualizado",
@@ -756,5 +756,8 @@
 	"cycle_focus_luteal": "Foco ahora: magnesio y fibra — plátano, avena, nueces, chocolate 70%",
 	"error_cycle_phase_required": "Elige la fase actual del ciclo.",
 	"error_cycle_date_required": "Indica el primer día del último período.",
-	"error_cycle_date_future": "Esa fecha está en el futuro. Indica el primer día del último período."
+	"error_cycle_date_future": "Esa fecha está en el futuro. Indica el primer día del último período.",
+	"cycle_last_period_hint": "Si estás menstruando ahora, es el día en que empezó — no la del mes pasado.",
+	"cycle_started_today": "Empezó hoy",
+	"cycle_mode_hint": "¿No recuerdas la fecha? Elige \"Elegir la fase\" y di solo cómo estás ahora."
 }

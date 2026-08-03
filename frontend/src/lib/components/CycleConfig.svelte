@@ -65,6 +65,9 @@
 				{ value: 'by_date', label: m.cycle_mode_by_date() }
 			]}
 		/>
+		<!-- Nao lembrar a data e o caso comum, nao a excecao: dizer isso aqui evita
+			 que a pessoa desista achando que precisa de um dado que ela nao tem. -->
+		<p class="mt-2 text-xs text-slate-400">{m.cycle_mode_hint()}</p>
 	</div>
 
 	{#if mode === 'manual'}
@@ -93,6 +96,16 @@
 				max={day}
 				class="h-12 w-full rounded-2xl border-2 border-slate-200 bg-white px-4 outline-none focus:border-emerald-600"
 			/>
+			<!-- "ultimo periodo" lia como "o do mes passado": a duvida some dizendo o
+				 caso de quem esta menstruada AGORA, que e quando se costuma configurar. -->
+			<p class="mt-1.5 text-xs text-slate-400">{m.cycle_last_period_hint()}</p>
+			<button
+				type="button"
+				onclick={() => (lastPeriod = day)}
+				class="mt-2 w-full rounded-2xl border-2 border-emerald-200 py-2.5 text-sm font-bold text-emerald-700 active:bg-emerald-50"
+			>
+				{m.cycle_started_today()}
+			</button>
 		</div>
 		<div>
 			<p class="mb-2 text-sm font-semibold text-slate-600">{m.cycle_length_label()}</p>
