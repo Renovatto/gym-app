@@ -282,7 +282,6 @@
 		try {
 			// fase resolvida para o DIA EXIBIDO (ontem mostra a fase de ontem)
 			cycle = await api.getCycle(day);
-			maybePlayAura();
 		} catch {
 			// acompanhamento indisponivel: a tela vive sem o card
 		}
@@ -294,36 +293,12 @@
 		loading = false;
 	}
 
-	// --- Ciclo menstrual (opt-in): card + aura ------------------------------
+	// --- Ciclo menstrual (opt-in) -------------------------------------------
+	// A moldura viva do card e todo o efeito. A aura de tela inteira (pulso ao abrir
+	// e versao permanente na fase menstrual) foi testada e removida: na tela real ela
+	// nao ficou boa, e uma borda piscando em volta de tudo compete com os numeros.
 	let cycle = $state<CycleStatus | null>(null);
 	let cycleModal = $state(false);
-	// A aura "acende e assenta": percorre a borda da tela ao abrir a Dieta e se
-	// recolhe para a borda do card. Uma vez por dia por sessao - efeito especial
-	// que roda a cada toque de aba viraria papel de parede.
-	let auraPlaying = $state(false);
-	const AURA_KEY = 'gymapp.diet.cycleAuraDay';
-
-	function maybePlayAura(): void {
-		if (!cycle?.enabled || !cycle.phase || day !== today) return;
-		// na fase menstrual a moldura ja fica permanente: um pulso por cima seria
-		// o mesmo efeito duas vezes
-		if (cycle.phase === 'menstrual') return;
-		try {
-			if (sessionStorage.getItem(AURA_KEY) === today) return;
-			sessionStorage.setItem(AURA_KEY, today);
-		} catch {
-			// sessionStorage bloqueado: toca mesmo assim
-		}
-		auraPlaying = true;
-		setTimeout(() => (auraPlaying = false), 2600);
-	}
-
-	// A aura de tela inteira PERMANENTE fica so na fase menstrual - decisao do usuario,
-	// que a imagina como a fase mais critica. Nas outras fases continua o pulso de 2,6 s
-	// ao abrir (maybePlayAura). Fora de hoje nao acende: a moldura fala do agora.
-	const auraPermanent = $derived(
-		!!cycle?.enabled && cycle.phase === 'menstrual' && day === today
-	);
 
 	function cyclePhaseLabel(phase: CyclePhase): string {
 		return {
@@ -962,10 +937,9 @@
 {:else if diary}
 	<MacroSummary totals={diary.totals} goals={diary.goals} />
 
-	<!-- Ciclo menstrual (opt-in): a borda gradiente e o "assentado" da aura que
-		 percorre a tela ao abrir - o efeito escolhido no artefato (acende e assenta).
-		 So existe com o acompanhamento ligado; a informacao nunca depende do efeito
-		 (movimento reduzido desliga a animacao e fica a borda parada). -->
+	<!-- Ciclo menstrual (opt-in): a borda gradiente viva marca o card sem invadir o
+		 resto da tela. So existe com o acompanhamento ligado, e a informacao nunca
+		 depende do efeito (movimento reduzido para a animacao e a borda fica). -->
 	{#if cycle?.enabled}
 		<div class="cycle-card relative mt-3 rounded-2xl bg-white p-3.5 shadow-sm">
 			{#if cycle.phase}
@@ -2071,16 +2045,6 @@
 	/>
 {/if}
 
-{#if auraPermanent}
-	<!-- Moldura permanente da fase menstrual: mais fina e mais lenta que o pulso, para
-		 conviver com o uso. aria-hidden porque e puro efeito - a fase ja esta escrita
-		 no card, entao nada se perde para quem usa leitor de tela. -->
-	<div class="cycle-aura cycle-aura--calm" aria-hidden="true"><i></i><i></i></div>
-{:else if auraPlaying}
-	<!-- Pulso de 2,6 s ao abrir, nas demais fases (ver maybePlayAura). -->
-	<div class="cycle-aura" aria-hidden="true"><i></i><i></i><i></i></div>
-{/if}
-
 {#if cycleModal && cycle}
 	<div
 		class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
@@ -2130,9 +2094,9 @@
 {/if}
 
 <style>
-	/* Borda gradiente viva do card do ciclo (o "assentado" da aura). Duas camadas:
-	   o anel nitido e uma copia borrada por tras, respirando devagar. O truque do
-	   mask-composite recorta so a moldura, deixando o miolo do card intacto. */
+	/* Borda gradiente viva do card do ciclo. Duas camadas: o anel nitido e uma copia
+	   borrada por tras, respirando devagar. O truque do mask-composite recorta so a
+	   moldura, deixando o miolo do card intacto. */
 	.cycle-card::before,
 	.cycle-card::after {
 		content: '';
@@ -2154,60 +2118,6 @@
 		animation: cycle-slide 6s linear infinite, cycle-breathe 3.2s ease-in-out infinite;
 	}
 
-	/* A aura de tela inteira: mesma moldura, tres camadas cada vez mais borradas,
-	   acende ao abrir e apaga sozinha (animation forwards + timeout no script). */
-	.cycle-aura {
-		position: fixed;
-		/* Respeita as areas seguras: o app usa viewport-fit=cover (app.html), entao
-		   inset:0 puro enfiaria a moldura sob o notch e atras do indicador de home. */
-		inset: env(safe-area-inset-top) env(safe-area-inset-right)
-			env(safe-area-inset-bottom) env(safe-area-inset-left);
-		/* O shell e uma coluna max-w-md centrada (+layout.svelte): sem este limite a
-		   moldura abracaria a janela inteira no desktop, e nao o app. */
-		max-width: 28rem;
-		margin-inline: auto;
-		border-radius: 1.5rem;
-		z-index: 60;
-		pointer-events: none;
-		animation: cycle-ignite 2.6s ease-out forwards;
-	}
-	.cycle-aura i {
-		position: absolute;
-		inset: 0;
-		border-radius: 1.5rem;
-		padding: 3px;
-		background: linear-gradient(120deg, #6658fe, #c33764, #8b5cf6, #6658fe);
-		background-size: 300% 300%;
-		-webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
-		mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
-		-webkit-mask-composite: xor;
-		mask-composite: exclude;
-		animation: cycle-slide 2.6s linear;
-	}
-	.cycle-aura i:nth-child(2) {
-		filter: blur(10px);
-	}
-	.cycle-aura i:nth-child(3) {
-		filter: blur(26px);
-		opacity: 0.8;
-	}
-
-	/* Versao permanente: o que impressiona por 2 segundos cansa em 10 minutos. Borda
-	   mais fina, giro quatro vezes mais lento, duas camadas em vez de tres e brilho
-	   pela metade - presente, sem competir com os numeros. */
-	.cycle-aura--calm {
-		z-index: 5; /* acima do conteudo, ABAIXO de aba (10), modal (50) e toast (60) */
-		opacity: 0.45;
-		animation: none;
-	}
-	.cycle-aura--calm i {
-		padding: 2px;
-		animation: cycle-slide 10s linear infinite;
-	}
-	.cycle-aura--calm i:nth-child(2) {
-		filter: blur(8px);
-	}
-
 	@keyframes cycle-slide {
 		to {
 			background-position: 300% 0;
@@ -2222,36 +2132,13 @@
 			opacity: 0.7;
 		}
 	}
-	@keyframes cycle-ignite {
-		0% {
-			opacity: 0;
-		}
-		12% {
-			opacity: 1;
-		}
-		70% {
-			opacity: 1;
-		}
-		100% {
-			opacity: 0;
-		}
-	}
 
-	/* Quem pede menos movimento nao perde informacao: as bordas ficam paradas. O pulso
-	   some (ele e so chegada); a permanente FICA, porque sinaliza a fase - some-la
-	   esconderia um dado de quem so pediu menos animacao. */
+	/* Quem pede menos movimento nao perde informacao: a borda fica parada e visivel,
+	   porque ela sinaliza a fase - some-la esconderia um dado de quem so pediu
+	   menos animacao. */
 	@media (prefers-reduced-motion: reduce) {
 		.cycle-card::before,
 		.cycle-card::after {
-			animation: none;
-		}
-		.cycle-aura {
-			display: none;
-		}
-		.cycle-aura--calm {
-			display: block;
-		}
-		.cycle-aura--calm i {
 			animation: none;
 		}
 	}
