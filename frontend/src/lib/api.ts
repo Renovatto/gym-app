@@ -589,6 +589,8 @@ export interface FoodSuggestion {
 	food: Food;
 	grams: number;
 	macros: Macros;
+	// esta sugestao subiu por causa da fase do ciclo (a tela marca com um selo)
+	from_phase?: boolean;
 }
 
 // Sugestao de receita da biblioteca (adotar+lancar em 1 toque via slug).

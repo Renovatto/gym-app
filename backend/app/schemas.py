@@ -628,6 +628,10 @@ class FoodSuggestionOut(BaseModel):
     food: FoodOut
     grams: float
     macros: MacrosOut
+    # True quando esta sugestao subiu por causa da fase do ciclo. A tela marca o item
+    # para a influencia ser visivel: recomendacao que muda sozinha, sem dizer por que,
+    # e magica - e magica nao se confere. Default False mantem quem nao usa intacto.
+    from_phase: bool = False
 
 
 class DiaryGapOut(BaseModel):

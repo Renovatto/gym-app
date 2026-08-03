@@ -18,7 +18,7 @@ from datetime import date, timedelta
 from sqlmodel import desc, select
 from sqlmodel import Session
 
-from .cycle import PHASE_BONUS, phase_boost_food_ids
+from .cycle import PHASE_BONUS, PHASE_MIN_COVERAGE, phase_boost_food_ids
 from ..models import (
     DiaryEntry,
     EntrySource,
@@ -206,7 +206,7 @@ def _rank_suggestions(
     freq: Counter, max_freq: int, limit: int, favorite_ids: set[int],
     restrict_ids: set[int] | None = None,
     meal_freq: Counter | None = None, max_meal_freq: int = 0,
-    phase_food_ids: set[int] | None = None,
+    phase_food_ids: set[int] | None = None, exclude_ids: set[int] | None = None,
 ) -> list[FoodSuggestionOut]:
     """Ranqueia alimentos que fecham a lacuna informada (do dia ou de uma refeicao).
 
@@ -228,6 +228,8 @@ def _rank_suggestions(
     for food in _visible_foods(session, user.id):
         if restrict_ids is not None and food.id not in restrict_ids:
             continue
+        if exclude_ids and food.id in exclude_ids:
+            continue  # ja sugerido em outra refeicao do mesmo cardapio
         if _attr(food, primary_attr) <= 0:
             continue  # nao ajuda a fechar o macro-alvo
         portion = food.default_portion_g or 100.0
@@ -243,7 +245,24 @@ def _rank_suggestions(
         candidates.append((food, portion, macros, delivered, density))
 
     max_density = max((c[4] for c in candidates), default=1.0) or 1.0
-    scored: list[tuple[float, Food, float, MacrosOut]] = []
+
+    # UM alimento da fase recebe o bonus, nunca a lista toda. Sem este teto o cafe da
+    # manha da fase menstrual saia com tres carnes seguidas e o da lutea com tres
+    # peixes - a fase deixava de ajudar e passava a mandar. O escolhido e o que ja iria
+    # melhor por merito proprio; os outros da fase continuam na disputa normal, sem
+    # bonus, entao quem merece vaga sozinho nao perde nada.
+    boosted_id: int | None = None
+    if phase_food_ids:
+        elegiveis = [
+            (min(_attr(m, primary_attr) / need, 1.0) if need > 0 else 0.0, f.id)
+            for f, _p, m, _d, _dens in candidates
+            if f.id in phase_food_ids
+        ]
+        elegiveis = [(c, fid) for c, fid in elegiveis if c >= PHASE_MIN_COVERAGE]
+        if elegiveis:
+            boosted_id = max(elegiveis)[1]
+
+    scored: list[tuple[float, Food, float, MacrosOut, bool]] = []
     for food, portion, macros, delivered, density in candidates:
         # Nota = o quanto a porcao cobre da lacuna + densidade do macro + o quanto
         # voce ja usa aquele alimento (personalizacao).
@@ -253,18 +272,22 @@ def _rank_suggestions(
         meal_freq_bonus = (meal_freq.get(food.id, 0) / max_meal_freq) if meal_freq and max_meal_freq else 0.0
         # favorito e o sinal mais forte (voce DISSE que gosta); pesa acima da frequencia
         fav_bonus = 0.5 if food.id in favorite_ids else 0.0
-        # ciclo menstrual (opt-in): desempate suave pro alimento da fase - menor que
-        # favorito e que afinidade de horario, entao nunca fura objetivo nem gosto
-        phase_bonus = PHASE_BONUS if phase_food_ids and food.id in phase_food_ids else 0.0
+        # Ciclo menstrual (opt-in): forte o bastante para o alimento da fase aparecer
+        # onde a pessoa olha, mas so para UM item e so quando ele responde a lacuna do
+        # dia (ver boosted_id acima e PHASE_MIN_COVERAGE).
+        phase_bonus = PHASE_BONUS if food.id == boosted_id else 0.0
         score = coverage + 0.8 * density_norm + 0.2 * freq_bonus + 1.5 * meal_freq_bonus + fav_bonus + phase_bonus
-        scored.append((score, food, portion, macros))
+        # so marca quem REALMENTE ganhou o bonus: dizer "da fase" num item que entrou
+        # por merito proprio seria dar credito errado a fase
+        scored.append((score, food, portion, macros, phase_bonus > 0))
 
     scored.sort(key=lambda item: item[0], reverse=True)
     return [
         FoodSuggestionOut(
-            food=to_food_out(food, user.locale, favorite_ids), grams=grams, macros=macros
+            food=to_food_out(food, user.locale, favorite_ids), grams=grams, macros=macros,
+            from_phase=from_phase,
         )
-        for _, food, grams, macros in scored[:limit]
+        for _, food, grams, macros, from_phase in scored[:limit]
     ]
 
 
@@ -596,6 +619,12 @@ def meal_plan(session: Session, user: User, day: date, limit: int = 3) -> MealPl
     fav_ids = favorite_food_ids(session, user.id)
     # resolvido uma vez: a fase e a mesma para as quatro refeicoes do dia
     phase_ids = phase_boost_food_ids(session, user.id, day)
+    # Com o bonus alto, o melhor alimento da fase venceria nas QUATRO refeicoes - o
+    # cardapio viraria "feijao no cafe, no almoco, no lanche e na janta". Guardamos os
+    # que ja foram usados pela fase para a proxima refeicao pegar o seguinte da lista.
+    # So os da fase entram aqui: repeticao normal (arroz no almoco e na janta) e
+    # legitima e continua permitida.
+    phase_used: set[int] = set()
 
     meals: list[MealPlanMealOut] = []
     for meal_type, share in shares.items():
@@ -609,11 +638,12 @@ def meal_plan(session: Session, user: User, day: date, limit: int = 3) -> MealPl
             _rank_suggestions(
                 session, user, meal_remaining, chosen[0], freq, max_freq, limit, fav_ids,
                 meal_freq=meal_freq, max_meal_freq=max_meal_freq,
-                phase_food_ids=phase_ids,
+                phase_food_ids=phase_ids, exclude_ids=phase_used,
             )
             if chosen is not None
             else []
         )
+        phase_used.update(s.food.id for s in suggestions if s.from_phase)
         recipe_suggestions = suggest_recipes(session, user, meal_remaining, meal_type)
         meals.append(
             MealPlanMealOut(

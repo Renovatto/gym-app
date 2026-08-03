@@ -760,5 +760,6 @@
 	"cycle_last_period_hint": "If you are on your period now, this is the day it started — not last month's.",
 	"cycle_started_today": "Started today",
 	"cycle_mode_hint": "Don't remember the date? Choose \"Pick the phase\" and just say how you are right now.",
-	"cycle_length_hint": "Counted from the first day of one period to the day before the next starts — not how many days you bleed. The average is 28; leave it if you are not sure."
+	"cycle_length_hint": "Counted from the first day of one period to the day before the next starts — not how many days you bleed. The average is 28; leave it if you are not sure.",
+	"cycle_badge": "phase"
 }

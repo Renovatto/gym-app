@@ -760,5 +760,6 @@
 	"cycle_last_period_hint": "Si estás menstruando ahora, es el día en que empezó — no la del mes pasado.",
 	"cycle_started_today": "Empezó hoy",
 	"cycle_mode_hint": "¿No recuerdas la fecha? Elige \"Elegir la fase\" y di solo cómo estás ahora.",
-	"cycle_length_hint": "Se cuenta desde el primer día de una hasta el día antes de que empiece la siguiente — no es cuántos días sangras. El promedio es 28; si no lo sabes, déjalo así."
+	"cycle_length_hint": "Se cuenta desde el primer día de una hasta el día antes de que empiece la siguiente — no es cuántos días sangras. El promedio es 28; si no lo sabes, déjalo así.",
+	"cycle_badge": "fase"
 }

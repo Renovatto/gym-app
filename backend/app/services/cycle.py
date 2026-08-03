@@ -7,8 +7,9 @@ catalogo associados a fase, para o motor de recomendacao usar como desempate.
 O que ele NAO faz, de proposito: nao toca na meta calorica, nao le o sexo do perfil
 (opt-in explicito, nunca presumido), nao restringe nada ("coma menos na TPM" e
 exatamente o que o app recusa fazer). "Cycle syncing" como prescricao nao tem
-validacao clinica robusta - por isso a preferencia e um empurrao pequeno no ranking,
-nunca um filtro.
+validacao clinica robusta - por isso a fase entra como preferencia no ranking, nunca
+como filtro, e so quando o alimento tambem responde a lacuna do dia (ver
+PHASE_MIN_COVERAGE).
 """
 
 from datetime import date
@@ -17,10 +18,30 @@ from sqlmodel import Session, select
 
 from ..models import CycleMode, CyclePhase, CycleTracking, Food
 
-# Peso do desempate no ranking de sugestoes. Menor que favorito (0.5) e que a
-# afinidade de horario (0.3): entre dois alimentos parecidos o da fase sobe, mas
-# ele nunca atropela o que a pessoa gosta nem o que fecha a meta.
-PHASE_BONUS = 0.15
+# Peso da fase no ranking de sugestoes.
+#
+# Comecou em 0.15 e nao funcionava: medindo num dia real (faltando 50 g de proteina),
+# o melhor alimento da fase ficava em 8o e a tela mostra 4. A fase existia no codigo e
+# nao existia para quem usa.
+#
+# 0.9 poe o alimento da fase no topo quando ele serve, vence um favorito (0.5) e ainda
+# fica ABAIXO de "eu como isso nesse horario" (1.5) - o sinal mais pessoal continua
+# mandando mais que a fase.
+PHASE_BONUS = 0.9
+
+# O freio que torna o bonus alto seguro: a porcao precisa cobrir ao menos esta fatia
+# da lacuna para o bonus valer. Sem ele, num dia de proteina a couve (cobre 2%)
+# passaria na frente do peito de frango - a fase mandaria mais que o macro, que e
+# exatamente o que o escopo proibe.
+#
+# 0.15 saiu de medicao, nao de gosto: num dia comum (124 g de proteina faltando) a
+# melhor cobertura de cada fase e patinho 0.25, salmao 0.27, iogurte grego 0.09 e
+# quinoa 0.04. O corte em 0.15 deixa passar carne magra, leguminosa e peixe gordo -
+# que realmente fecham proteina - e barra folha, fruta e semente, que nao fecham.
+# Consequencia aceita: num dia de proteina, folicular e ovulatoria podem nao aparecer
+# nestas listas. E o certo - o card do ciclo continua mostrando os alimentos da fase
+# sempre, e nas refeicoes a lacuna e menor, entao elas voltam a caber.
+PHASE_MIN_COVERAGE = 0.15
 
 # Alimentos do catalogo global associados a cada fase (slugs, como _STAPLE_SLUGS no
 # recommend.py). Curadoria conservadora - associacoes nutricionais bem aceitas, nao
