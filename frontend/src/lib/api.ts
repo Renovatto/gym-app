@@ -867,6 +867,9 @@ export interface CycleStatus {
 	estimate_stale: boolean;
 	last_period_date: string | null;
 	cycle_length_days: number;
+	// alimentos da fase que cabem no que falta do dia (lista propria, para a fase
+	// ser visivel sem atropelar a recomendacao principal)
+	suggestions: FoodSuggestion[];
 }
 
 export interface CycleInput {

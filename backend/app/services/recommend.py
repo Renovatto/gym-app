@@ -379,6 +379,38 @@ def suggest_gap(
     )
 
 
+def phase_food_suggestions(
+    session: Session, user: User, day: date, limit: int = 3
+) -> list[FoodSuggestionOut]:
+    """Alimentos da fase do ciclo que cabem no que falta do dia.
+
+    Existe porque o bonus de desempate (PHASE_BONUS) e invisivel onde a pessoa olha:
+    o ranking geral e dominado pela cobertura do macro que falta, entao um alimento
+    da fase sobe algumas dezenas de posicoes sem nunca chegar aos 4 primeiros. Em vez
+    de inflar o bonus - o que faria a fase atropelar o objetivo, exatamente o que o
+    escopo proibe - a fase ganha lista propria, pequena e honesta: "isto aqui e da
+    sua fase", ao lado da recomendacao normal, sem disputar com ela.
+
+    Reusa o mesmo funil de sempre, so restringindo os candidatos (mesmo mecanismo do
+    'montar refeicao com o que tenho'), entao a ordem continua respeitando o que
+    falta no dia e a porcao continua sendo uma porcao de gente."""
+    phase_ids = phase_boost_food_ids(session, user.id, day)
+    if not phase_ids:
+        return []
+    goals = _daily_target(session, user.id)
+    if goals is None:
+        return []
+    remaining = _remaining(goals, _consumed(session, user.id, day))
+    chosen = _choose_primary(remaining)
+    if chosen is None:
+        return []  # dia fechado: nao ha lacuna para preencher
+    freq = _food_frequency(session, user.id, day)
+    return _rank_suggestions(
+        session, user, remaining, chosen[0], freq, max(freq.values(), default=1),
+        limit, favorite_food_ids(session, user.id), restrict_ids=phase_ids,
+    )
+
+
 def match_pantry_recipes(
     session: Session, user: User, remaining: MacrosOut, have_ids: set[int],
     meal_type: MealType | None, limit: int = 6,

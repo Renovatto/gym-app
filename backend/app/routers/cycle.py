@@ -14,9 +14,10 @@ from fastapi import APIRouter, HTTPException, Query, status
 from sqlmodel import select
 
 from ..deps import CurrentUser, SessionDep
-from ..models import CycleMode, CycleTracking, utcnow
+from ..models import CycleMode, CycleTracking, User, utcnow
 from ..schemas import CycleIn, CycleOut
 from ..services.cycle import resolve_phase
+from ..services.recommend import phase_food_suggestions
 
 router = APIRouter(prefix="/me/cycle", tags=["cycle"])
 
@@ -27,9 +28,14 @@ def _tracking_row(session: SessionDep, user_id: int) -> CycleTracking | None:
     ).first()
 
 
-def _to_out(tracking: CycleTracking | None, day: date) -> CycleOut:
+def _to_out(
+    tracking: CycleTracking | None, day: date, session: SessionDep, user: User
+) -> CycleOut:
     phase, source, day_in_cycle, stale = resolve_phase(tracking, day)
+    # so busca sugestao quando ha fase: desligado nao custa consulta nenhuma
+    suggestions = phase_food_suggestions(session, user, day) if phase else []
     return CycleOut(
+        suggestions=suggestions,
         enabled=bool(tracking and tracking.enabled),
         mode=tracking.mode if tracking else CycleMode.manual,
         phase=phase,
@@ -49,7 +55,7 @@ def get_cycle(
     # "hoje" de quem usa, nao do fuso do servidor
     day: date = Query(...),
 ) -> CycleOut:
-    return _to_out(_tracking_row(session, user.id), day)
+    return _to_out(_tracking_row(session, user.id), day, session, user)
 
 
 @router.put("", response_model=CycleOut)
@@ -83,4 +89,4 @@ def save_cycle(
     session.add(tracking)
     session.commit()
     session.refresh(tracking)
-    return _to_out(tracking, day)
+    return _to_out(tracking, day, session, user)

@@ -959,3 +959,6 @@ class CycleOut(BaseModel):
     estimate_stale: bool
     last_period_date: date | None
     cycle_length_days: int
+    # Alimentos da fase que cabem no que falta do dia. Lista propria (e nao um
+    # empurrao no ranking geral) para a fase ser visivel sem atropelar o objetivo.
+    suggestions: list[FoodSuggestionOut] = []

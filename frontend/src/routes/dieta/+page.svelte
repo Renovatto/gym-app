@@ -975,6 +975,19 @@
 					{/if}
 				</div>
 				<p class="mt-0.5 text-xs text-slate-500">{cycleFocusLabel(cycle.phase)}</p>
+				<!-- Alimentos DE VERDADE do catalogo, ja dimensionados para o que falta
+					 do dia. O texto acima diz o porque; estas pilulas dizem o que comer,
+					 e mudam quando a fase muda - que era o que faltava para a fase deixar
+					 de ser enfeite. -->
+				{#if cycle.suggestions.length > 0}
+					<div class="mt-2 flex flex-wrap gap-1.5">
+						{#each cycle.suggestions as s (s.food.id)}
+							<span class="rounded-full bg-slate-100 px-2.5 py-1 text-[11px] font-semibold text-slate-600">
+								{s.food.name} · {nf.format(Math.round(s.grams))} g
+							</span>
+						{/each}
+					</div>
+				{/if}
 				{#if cycle.estimate_stale}
 					<p class="mt-1.5 rounded-lg bg-amber-50 px-2 py-1 text-[11px] font-semibold text-amber-700">
 						{m.cycle_stale_hint()}
