@@ -22,6 +22,15 @@ class Settings(BaseSettings):
     # (GYMAPP_ADMIN_EMAILS) em producao. Allowlist evita adicionar coluna is_admin na
     # tabela users (que nao migraria sozinha no Postgres).
     admin_emails: list[str] = []
+    # SMTP para e-mail transacional (hoje so a redefinicao de senha). Sem
+    # smtp_user preenchido o envio cai no modo stub, que apenas imprime no log:
+    # assim o ambiente de desenvolvimento nao precisa de credencial nenhuma.
+    smtp_host: str = "smtp.gmail.com"
+    smtp_port: int = 587
+    smtp_user: str = ""
+    smtp_password: str = ""
+    # Nome que aparece como remetente na caixa de entrada de quem recebe.
+    smtp_from_name: str = "Gym App"
 
     model_config = {"env_prefix": "GYMAPP_", "env_file": ".env"}
 

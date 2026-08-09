@@ -77,7 +77,7 @@ def forgot_password(data: ForgotPasswordRequest, session: SessionDep) -> dict:
             PasswordResetToken(user_id=user.id, token=token, expires_at=expires_at)
         )
         session.commit()
-        send_password_reset_email(user.email, token)
+        send_password_reset_email(user.email, token, user.locale)
     return {"status": "ok"}
 
 
