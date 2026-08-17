@@ -1,4 +1,6 @@
-const API_PORT = 8765;
+// VITE_API_PORT permite ao start.sh avisar o front quando a porta padrão (8765)
+// estava ocupada e o backend subiu em outra.
+const API_PORT = import.meta.env.VITE_API_PORT ?? '8765';
 
 // Sem VITE_API_URL, deriva a base da API do host acessado: assim funciona em
 // localhost, no IP da rede local (celular via --host) e via túnel, sem rebuild.
