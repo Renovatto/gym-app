@@ -9,6 +9,7 @@ from .routers import (
     account,
     achievements,
     activities,
+    admin,
     auth,
     coach,
     cycle,
@@ -68,6 +69,7 @@ app.include_router(account.router)
 app.include_router(supplements.router)
 app.include_router(activities.router)
 app.include_router(sharing.router)
+app.include_router(admin.router)
 
 
 @app.get("/health")

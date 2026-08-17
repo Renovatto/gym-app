@@ -966,3 +966,94 @@ class CycleOut(BaseModel):
     # Alimentos da fase que cabem no que falta do dia. Lista propria (e nao um
     # empurrao no ranking geral) para a fase ser visivel sem atropelar o objetivo.
     suggestions: list[FoodSuggestionOut] = []
+
+
+# ---------------------------------------------------------------------------
+# Painel administrativo
+#
+# Regra que vale para TODOS os schemas daqui: o admin ve COMPORTAMENTO (se a
+# pessoa lancou, treinou, quando), nunca CONTEUDO DE SAUDE (peso, gordura, IMC,
+# ciclo). Peso e composicao corporal sao dado sensivel e quem opera o painel nao
+# precisa deles para operar. Se um campo de saude aparecer aqui, e engano.
+# ---------------------------------------------------------------------------
+
+
+class AdminUserRow(BaseModel):
+    """Uma linha da listagem de usuarios."""
+
+    id: int
+    email: str
+    name: str | None  # nome + sobrenome do perfil, quando preenchidos
+    objective: Objective | None  # nulo enquanto a pessoa nao completou o onboarding
+    plan: Plan
+    diet_enabled: bool
+    created_at: datetime
+    last_activity_at: datetime | None  # ultimo lancamento/treino/pesagem, seja qual for
+    days_since_activity: int | None  # derivado, para a tela nao repetir a conta
+
+
+class AdminUserPage(BaseModel):
+    """Fatia paginada da listagem. `total` e a contagem COM os filtros aplicados -
+    e o que a barra de paginacao precisa para saber quantas paginas existem."""
+
+    items: list[AdminUserRow]
+    total: int
+    page: int
+    page_size: int
+
+
+class AdminUserDetail(BaseModel):
+    """Detalhe de uma conta, tambem so com comportamento e configuracao."""
+
+    id: int
+    email: str
+    name: str | None
+    objective: Objective | None
+    plan: Plan
+    locale: str
+    diet_enabled: bool
+    cycle_enabled: bool  # so o liga/desliga; fase e datas nunca saem daqui
+    created_at: datetime
+    last_activity_at: datetime | None
+    days_since_activity: int | None
+    # Contagem de uso nos ultimos 30 dias - o "esta usando de verdade?"
+    meals_30d: int
+    workouts_30d: int
+    weigh_ins_30d: int  # quantas vezes pesou, nunca o valor pesado
+    connections: int  # conexoes aceitas (social fase 1)
+
+
+class AdminObjectiveSlice(BaseModel):
+    """Uma fatia da distribuicao de objetivo (alimenta a rosca do dashboard)."""
+
+    objective: Objective | None
+    users: int
+
+
+class AdminOverview(BaseModel):
+    """KPIs do topo do dashboard. Tudo derivado do que ja esta no banco - nenhum
+    evento de uso novo e coletado para isto (ver a etapa propria de eventos)."""
+
+    total_users: int
+    new_users_7d: int
+    new_users_30d: int
+    active_7d: int  # contas com ao menos um lancamento/treino/pesagem na janela
+    active_30d: int
+    meals_7d: int
+    workouts_7d: int
+    diet_enabled_users: int
+    objectives: list[AdminObjectiveSlice]
+
+
+class AdminActivityPoint(BaseModel):
+    """Um dia da serie temporal do dashboard."""
+
+    day: date
+    active_users: int
+    meals: int
+    workouts: int
+
+
+class AdminActivitySeries(BaseModel):
+    days: int
+    points: list[AdminActivityPoint]
