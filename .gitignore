@@ -10,6 +10,8 @@ node_modules/
 frontend/build/
 frontend/.svelte-kit/
 frontend/src/lib/paraglide/
+admin/build/
+admin/.svelte-kit/
 
 # Ambiente
 .env
