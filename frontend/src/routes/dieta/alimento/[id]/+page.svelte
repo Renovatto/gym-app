@@ -13,6 +13,7 @@
 	import Spinner from '$lib/components/Spinner.svelte';
 	import { showToast } from '$lib/toast.svelte';
 	import { errorMessage } from '$lib/errors';
+	import { PORTION_LABEL_KEYS, portionLabelWord } from '$lib/labels';
 	import { m } from '$lib/paraglide/messages';
 
 	const foodId = $derived(page.params.id);
@@ -25,6 +26,12 @@
 	let carbs = $state(0);
 	let fat = $state(0);
 	let portion = $state(100);
+	// Porção alternativa (ex.: "1 unidade" = 18 g) - opcional, além da porção
+	// padrão em gramas acima. Mesmo modelo (FoodPortion) que o catálogo já usa,
+	// e que já aparece como chip ao lançar o alimento no diário.
+	let hasPortion = $state(false);
+	let portionLabelKey = $state<(typeof PORTION_LABEL_KEYS)[number]>('portion');
+	let portionGrams = $state(1);
 	let loading = $state(true);
 	let busy = $state(false);
 	let deleteError = $state('');
@@ -84,6 +91,14 @@
 			carbs = food.carbs_g;
 			fat = food.fat_g;
 			portion = food.default_portion_g;
+			const existing = food.portions[0];
+			if (existing) {
+				hasPortion = true;
+				portionLabelKey = (PORTION_LABEL_KEYS as readonly string[]).includes(existing.label_key)
+					? (existing.label_key as (typeof PORTION_LABEL_KEYS)[number])
+					: 'portion';
+				portionGrams = existing.grams;
+			}
 		}
 		loading = false;
 		void loadPartners();
@@ -154,7 +169,8 @@
 			protein_g: protein,
 			carbs_g: carbs,
 			fat_g: fat,
-			default_portion_g: portion
+			default_portion_g: portion,
+			portion: hasPortion ? { label_key: portionLabelKey, grams: portionGrams } : null
 		};
 		try {
 			if (isNew) await api.createFood(payload);
@@ -327,6 +343,39 @@
 				<Stepper bind:value={portion} min={1} max={2000} step={5} unit="g" />
 			</div>
 		</div>
+	</div>
+
+	<div class="mt-3 rounded-2xl bg-white p-4 shadow-sm">
+		<div class="mb-2 flex items-center justify-between gap-2">
+			<p class="text-sm font-semibold text-slate-600">{m.food_portion_label()}</p>
+			<div class="flex gap-1 rounded-full bg-slate-100 p-0.5">
+				<button
+					type="button"
+					onclick={() => (hasPortion = false)}
+					class="rounded-full px-3 py-1 text-xs font-bold {!hasPortion ? 'bg-white text-emerald-700 shadow-sm' : 'text-slate-500'}"
+				>
+					{m.food_portion_off()}
+				</button>
+				<button
+					type="button"
+					onclick={() => (hasPortion = true)}
+					class="rounded-full px-3 py-1 text-xs font-bold {hasPortion ? 'bg-white text-emerald-700 shadow-sm' : 'text-slate-500'}"
+				>
+					{m.yes()}
+				</button>
+			</div>
+		</div>
+		{#if hasPortion}
+			<ChoiceChips
+				columns={2}
+				bind:value={portionLabelKey}
+				options={PORTION_LABEL_KEYS.map((key) => ({ value: key, label: portionLabelWord(key) }))}
+			/>
+			<div class="mt-3">
+				<p class="mb-1 text-xs font-semibold text-slate-500">{m.food_portion_weight_label()}</p>
+				<Stepper bind:value={portionGrams} min={1} max={2000} step={1} unit="g" />
+			</div>
+		{/if}
 	</div>
 
 	<button

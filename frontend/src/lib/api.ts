@@ -710,6 +710,7 @@ export interface FoodInput {
 	carbs_g: number;
 	fat_g: number;
 	default_portion_g: number;
+	portion?: FoodPortion | null;
 }
 
 export interface LibraryRecipe {

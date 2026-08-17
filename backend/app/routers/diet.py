@@ -10,6 +10,7 @@ from ..models import (
     FavoriteKind,
     Food,
     FoodCategory,
+    FoodPortion,
     FoodTranslation,
     MealType,
     Profile,
@@ -181,6 +182,10 @@ def create_food(data: FoodIn, user: CurrentUser, session: SessionDep) -> FoodOut
     session.add(food)
     session.flush()
     session.add(FoodTranslation(food_id=food.id, locale=user.locale, name=data.name.strip()))
+    if data.portion is not None:
+        session.add(
+            FoodPortion(food_id=food.id, label_key=data.portion.label_key, grams=data.portion.grams)
+        )
     session.commit()
     session.refresh(food)
     return to_food_out(food, user.locale)
@@ -198,6 +203,13 @@ def update_food(food_id: int, data: FoodIn, user: CurrentUser, session: SessionD
     food.carbs_g = data.carbs_g
     food.fat_g = data.fat_g
     food.default_portion_g = data.default_portion_g
+    # limpar pela coleção (delete-orphan) evita re-adicionar instâncias deletadas
+    food.portions.clear()
+    session.flush()
+    if data.portion is not None:
+        session.add(
+            FoodPortion(food_id=food.id, label_key=data.portion.label_key, grams=data.portion.grams)
+        )
     session.add(food)
     translation = session.exec(
         select(FoodTranslation)

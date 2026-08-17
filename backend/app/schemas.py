@@ -1,4 +1,5 @@
 from datetime import date, datetime
+from typing import Literal
 
 from pydantic import BaseModel, ConfigDict, EmailStr, Field
 
@@ -477,6 +478,20 @@ class FoodPortionOut(BaseModel):
     grams: float
 
 
+# As mesmas 10 chaves do comentario em models.py:FoodPortion.label_key, traduzidas em
+# frontend/messages/{pt-br,en,es}.json (portion_unit, portion_slice, ...). Fixas em vez
+# de texto livre porque label_key vira i18n - texto livre ficaria cru pra quem usa
+# outro idioma.
+PortionLabelKey = Literal[
+    "unit", "slice", "tbsp", "tsp", "cup", "glass", "scoop", "filet", "handful", "portion"
+]
+
+
+class FoodPortionIn(BaseModel):
+    label_key: PortionLabelKey
+    grams: float = Field(gt=0, le=2000)
+
+
 class FoodOut(BaseModel):
     id: int
     slug: str
@@ -500,6 +515,8 @@ class FoodIn(BaseModel):
     carbs_g: float = Field(ge=0, le=100)
     fat_g: float = Field(ge=0, le=100)
     default_portion_g: float = Field(default=100, gt=0, le=2000)
+    # None = alimento so tem a porcao padrao em gramas (comportamento de sempre).
+    portion: FoodPortionIn | None = None
 
 
 class RecipeIngredientIn(BaseModel):

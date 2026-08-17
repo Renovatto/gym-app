@@ -23,22 +23,46 @@ export function mealTypeLabel(meal: MealType): string {
 	}[meal];
 }
 
+// As 10 chaves aceitas para FoodPortion.label_key (mesma lista do backend,
+// schemas.py:PortionLabelKey, e das mensagens portion_* nos 3 idiomas).
+export const PORTION_LABEL_KEYS = [
+	'unit',
+	'slice',
+	'tbsp',
+	'tsp',
+	'cup',
+	'glass',
+	'scoop',
+	'filet',
+	'handful',
+	'portion'
+] as const;
+
+function portionWords(): Record<string, string> {
+	return {
+		unit: m.portion_unit(),
+		slice: m.portion_slice(),
+		tbsp: m.portion_tbsp(),
+		tsp: m.portion_tsp(),
+		cup: m.portion_cup(),
+		glass: m.portion_glass(),
+		scoop: m.portion_scoop(),
+		filet: m.portion_filet(),
+		handful: m.portion_handful(),
+		portion: m.portion_portion()
+	};
+}
+
 // Rótulo de porção: label_key + gramas, ex. "1 fatia (25 g)"
 export function portionLabel(labelKey: string, grams: number): string {
-	const word =
-		{
-			unit: m.portion_unit(),
-			slice: m.portion_slice(),
-			tbsp: m.portion_tbsp(),
-			tsp: m.portion_tsp(),
-			cup: m.portion_cup(),
-			glass: m.portion_glass(),
-			scoop: m.portion_scoop(),
-			filet: m.portion_filet(),
-			handful: m.portion_handful(),
-			portion: m.portion_portion()
-		}[labelKey] ?? labelKey;
+	const word = portionWords()[labelKey] ?? labelKey;
 	return `${word} (${grams} g)`;
+}
+
+// So a palavra, ex. "1 fatia" - usado no seletor de porção do cadastro de alimento,
+// onde o peso já é um campo à parte.
+export function portionLabelWord(labelKey: string): string {
+	return portionWords()[labelKey] ?? labelKey;
 }
 
 export const ACTIVITY_KINDS: StandaloneActivityKind[] = [
