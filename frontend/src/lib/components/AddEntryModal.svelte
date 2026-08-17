@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { api, type Food, type MealType, type Recipe } from '$lib/api';
+	import { api, type Food, type FoodPortion, type MealType, type Recipe } from '$lib/api';
 	import Stepper from '$lib/components/Stepper.svelte';
 	import { showToast } from '$lib/toast.svelte';
 	import { mealTypeLabel, portionLabel } from '$lib/labels';
@@ -67,12 +67,24 @@
 
 	// quantidade por porção (ex.: 2 unidades) ou por gramas
 	let qtyMode = $state<'portion' | 'grams'>('grams');
-	let selPortion = $state<{ label_key: string; grams: number } | null>(null);
+	let selPortion = $state<FoodPortion | null>(null);
 	let count = $state(1);
 
 	const effectiveGrams = $derived(
 		qtyMode === 'portion' && selPortion ? count * selPortion.grams : grams
 	);
+
+	// Alimento sem porcao cadastrada - todo alimento criado pelo usuario, e alguns do
+	// catalogo - ganha uma porcao generica a partir do peso padrao dele. Assim o modo
+	// "2 x" vale para qualquer alimento, e nao so para os que ja vieram com porcao.
+	// So o rotulo e generico ("1 porcao"); o peso e o mesmo que a tela ja usava.
+	function portionsOf(food: Food): FoodPortion[] {
+		if (food.portions.length > 0) return food.portions;
+		if (food.default_portion_g <= 0) return [];
+		return [{ label_key: 'portion', grams: food.default_portion_g }];
+	}
+
+	const selFoodPortions = $derived(selFood ? portionsOf(selFood) : []);
 
 	// Receita: por PORCOES (direto) ou por GRAMAS (mesma ideia do alimento). O peso de
 	// 1 porcao e a soma dos ingredientes / numero de porcoes - ja vem no proprio Recipe,
@@ -199,15 +211,15 @@
 	function pickFood(food: Food): void {
 		selFood = food;
 		count = 1;
+		grams = food.default_portion_g;
 		// se o alimento tem porções (ex.: unidade de 50g), começa no modo porção
-		if (food.portions.length > 0) {
-			selPortion = food.portions[0];
+		const portions = portionsOf(food);
+		if (portions.length > 0) {
+			selPortion = portions[0];
 			qtyMode = 'portion';
-			grams = food.default_portion_g;
 		} else {
 			selPortion = null;
 			qtyMode = 'grams';
-			grams = food.default_portion_g;
 		}
 	}
 
@@ -553,10 +565,10 @@
 		>
 			<h2 class="text-lg font-bold text-slate-900">{selFood.name}</h2>
 
-			{#if selFood.portions.length > 0}
+			{#if selFoodPortions.length > 0}
 				<p class="mt-3 mb-2 text-xs font-semibold text-slate-500">{m.measure_by()}</p>
 				<div class="flex flex-wrap gap-2">
-					{#each selFood.portions as portion (portion.label_key)}
+					{#each selFoodPortions as portion (portion.label_key)}
 						<button
 							type="button"
 							onclick={() => {
