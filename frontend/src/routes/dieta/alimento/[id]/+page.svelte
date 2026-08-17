@@ -124,12 +124,18 @@
 		}
 	}
 
+	// A base externa (Open Food Facts) vem suja com frequencia: nome+marca passa
+	// facil de 80 caracteres, e macro fora da faixa fisica acontece (erro de
+	// unidade no cadastro do produto). Sem clamp aqui, o valor entra na tela,
+	// parece normal, e so quebra ao salvar - com o form ja preenchido e o
+	// usuario sem saber o que corrigir.
 	function pickExternal(food: ExternalFood): void {
-		name = food.brand ? `${food.name} (${food.brand})` : food.name;
-		kcal = Math.round(food.kcal);
-		protein = Math.round(food.protein_g * 10) / 10;
-		carbs = Math.round(food.carbs_g * 10) / 10;
-		fat = Math.round(food.fat_g * 10) / 10;
+		const fullName = food.brand ? `${food.name} (${food.brand})` : food.name;
+		name = fullName.slice(0, 80);
+		kcal = Math.min(1000, Math.max(0, Math.round(food.kcal)));
+		protein = Math.min(100, Math.max(0, Math.round(food.protein_g * 10) / 10));
+		carbs = Math.min(100, Math.max(0, Math.round(food.carbs_g * 10) / 10));
+		fat = Math.min(100, Math.max(0, Math.round(food.fat_g * 10) / 10));
 		extResults = [];
 		extSearched = false;
 		extQuery = '';
@@ -155,6 +161,8 @@
 			else await api.updateFood(Number(foodId), payload);
 			showToast(isNew ? m.toast_created() : m.toast_saved());
 			history.back();
+		} catch (e) {
+			showToast(errorMessage(e instanceof ApiError ? e.code : 'GENERIC_ERROR'));
 		} finally {
 			busy = false;
 		}

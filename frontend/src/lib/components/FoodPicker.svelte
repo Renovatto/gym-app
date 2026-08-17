@@ -1,8 +1,9 @@
 <script lang="ts">
-	import { api, type Food, type FoodCategory } from '$lib/api';
+	import { api, ApiError, type Food, type FoodCategory } from '$lib/api';
 	import ChoiceChips from '$lib/components/ChoiceChips.svelte';
 	import Stepper from '$lib/components/Stepper.svelte';
 	import { showToast } from '$lib/toast.svelte';
+	import { errorMessage } from '$lib/errors';
 	import { m } from '$lib/paraglide/messages';
 	import { getLocale } from '$lib/paraglide/runtime';
 
@@ -77,6 +78,8 @@
 			// obrigar a pessoa a achar o que ela mesma acabou de cadastrar
 			onPick(food);
 			query = '';
+		} catch (e) {
+			showToast(errorMessage(e instanceof ApiError ? e.code : 'GENERIC_ERROR'));
 		} finally {
 			saving = false;
 		}
