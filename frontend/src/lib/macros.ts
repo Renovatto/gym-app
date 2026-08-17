@@ -33,3 +33,54 @@ export function macroTones(protein_g: number, carbs_g: number, fat_g: number): M
 		fat: fatKcal / total > FAT_SHARE_ALERT ? 'high' : 'normal'
 	};
 }
+
+// ---------------------------------------------------------------------------
+// Farol do dia (consumido x meta) - diferente do macroTones acima, que olha um
+// item isolado. Aqui a pergunta e "como esta o dia inteiro contra a meta".
+//
+// Tres estados em vez de dois: sem a faixa do meio, 1 kcal acima da meta ja
+// pintava o dia de vermelho e o alerta perdia o sentido - se qualquer dia
+// levemente acima e vermelho, vermelho nao quer dizer mais nada.
+export type GoalStatus = 'ok' | 'near' | 'over';
+
+// Tolerancia das calorias: 5% da meta, com piso absoluto de 80 kcal. O piso
+// existe porque em meta baixa (1400 kcal) 5% seriam 70 kcal, e a faixa amarela
+// ficaria estreita demais pra caber um escorregao comum.
+const KCAL_TOLERANCE_RATIO = 0.05;
+const KCAL_TOLERANCE_FLOOR = 80;
+
+// Ate quantas vezes a meta o macro ainda fica amarelo; acima disso, vermelho.
+// A gordura tem a faixa mais curta de proposito: a 9 kcal/g, o mesmo "um grama
+// a mais" custa mais que o dobro do carboidrato em calorias.
+const FAT_NEAR_LIMIT = 1.05;
+const CARB_NEAR_LIMIT = 1.1;
+
+const STATUS_SEVERITY: Record<GoalStatus, number> = { ok: 0, near: 1, over: 2 };
+
+/** O pior entre dois farois - usado pra combinar calorias e gordura no anel. */
+export function worstGoalStatus(a: GoalStatus, b: GoalStatus): GoalStatus {
+	return STATUS_SEVERITY[a] >= STATUS_SEVERITY[b] ? a : b;
+}
+
+export function kcalGoalStatus(consumed: number, goal: number): GoalStatus {
+	if (goal <= 0 || consumed <= goal) return 'ok';
+	const tolerance = Math.max(KCAL_TOLERANCE_FLOOR, goal * KCAL_TOLERANCE_RATIO);
+	return consumed <= goal + tolerance ? 'near' : 'over';
+}
+
+/** Proteina nunca chega em 'over': mais proteina e desejavel no contexto do app,
+ *  entao ela para no amarelo so pra sinalizar que passou da meta. */
+export function proteinGoalStatus(consumed: number, goal: number): GoalStatus {
+	if (goal <= 0 || consumed <= goal) return 'ok';
+	return 'near';
+}
+
+export function carbsGoalStatus(consumed: number, goal: number): GoalStatus {
+	if (goal <= 0 || consumed <= goal) return 'ok';
+	return consumed / goal <= CARB_NEAR_LIMIT ? 'near' : 'over';
+}
+
+export function fatGoalStatus(consumed: number, goal: number): GoalStatus {
+	if (goal <= 0 || consumed <= goal) return 'ok';
+	return consumed / goal <= FAT_NEAR_LIMIT ? 'near' : 'over';
+}

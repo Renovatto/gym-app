@@ -1,5 +1,13 @@
 <script lang="ts">
 	import type { Macros } from '$lib/api';
+	import {
+		carbsGoalStatus,
+		fatGoalStatus,
+		kcalGoalStatus,
+		proteinGoalStatus,
+		worstGoalStatus,
+		type GoalStatus
+	} from '$lib/macros';
 	import { m } from '$lib/paraglide/messages';
 	import { getLocale } from '$lib/paraglide/runtime';
 
@@ -22,15 +30,64 @@
 	const remaining = $derived(goals ? Math.max(0, Math.round(goals.kcal - totals.kcal)) : null);
 	const over = $derived(goals ? totals.kcal > goals.kcal : false);
 
+	// Cores do farol (verde/amarelo/vermelho) nos mesmos tons do resto do app.
+	const STATUS_COLOR: Record<GoalStatus, string> = {
+		ok: '#059669',
+		near: '#d97706',
+		over: '#dc2626'
+	};
+	const STATUS_TEXT: Record<GoalStatus, string> = {
+		ok: 'text-slate-500',
+		near: 'text-amber-600',
+		over: 'text-red-600'
+	};
+	const STATUS_CHIP: Record<GoalStatus, string> = {
+		ok: '',
+		near: 'bg-amber-100 text-amber-700',
+		over: 'bg-red-100 text-red-600'
+	};
+
+	const kcalStatus = $derived(goals ? kcalGoalStatus(totals.kcal, goals.kcal) : 'ok');
+	const fatStatus = $derived(goals ? fatGoalStatus(totals.fat_g, goals.fat_g) : 'ok');
+
+	// Cor do anel: o pior entre calorias e gordura. A gordura tem voz propria aqui
+	// porque e o macro que mais empurra o excedente calorico - estourar gordura com
+	// as calorias ainda dentro da tolerancia ja merece o vermelho.
+	const ringStatus = $derived(worstGoalStatus(kcalStatus, fatStatus === 'over' ? 'over' : 'ok'));
+
 	// barras de macro: proteína (emerald), carbo (amber), gordura (violet)
 	const macros = $derived([
-		{ label: m.protein(), value: totals.protein_g, goal: goals?.protein_g ?? 0, color: '#059669' },
-		{ label: m.carbs(), value: totals.carbs_g, goal: goals?.carbs_g ?? 0, color: '#d97706' },
-		{ label: m.fat(), value: totals.fat_g, goal: goals?.fat_g ?? 0, color: '#7c3aed' }
+		{
+			label: m.protein(),
+			value: totals.protein_g,
+			goal: goals?.protein_g ?? 0,
+			color: '#059669',
+			status: goals ? proteinGoalStatus(totals.protein_g, goals.protein_g) : ('ok' as GoalStatus)
+		},
+		{
+			label: m.carbs(),
+			value: totals.carbs_g,
+			goal: goals?.carbs_g ?? 0,
+			color: '#d97706',
+			status: goals ? carbsGoalStatus(totals.carbs_g, goals.carbs_g) : ('ok' as GoalStatus)
+		},
+		{
+			label: m.fat(),
+			value: totals.fat_g,
+			goal: goals?.fat_g ?? 0,
+			color: '#7c3aed',
+			status: goals ? fatStatus : ('ok' as GoalStatus)
+		}
 	]);
 
-	function pct(value: number, goal: number): number {
-		return goal > 0 ? Math.min(100, (value / goal) * 100) : 0;
+	// Quando o macro estoura, a barra estica a escala em vez de travar em 100% - assim
+	// o excedente fica visivel e um traco marca onde ficou a meta. Ex.: 120% da meta
+	// vira uma barra cheia com a marca da meta a 83% (= 1 / 1.2) da largura.
+	function barGeometry(value: number, goal: number): { fillPct: number; goalPct: number } {
+		if (goal <= 0) return { fillPct: 0, goalPct: 100 };
+		const ratio = value / goal;
+		const scale = Math.max(1, ratio);
+		return { fillPct: (ratio / scale) * 100, goalPct: (1 / scale) * 100 };
 	}
 </script>
 
@@ -54,7 +111,7 @@
 					cy="64"
 					r={RADIUS}
 					fill="none"
-					stroke={over ? '#dc2626' : '#059669'}
+					stroke={STATUS_COLOR[ringStatus]}
 					stroke-width="11"
 					stroke-linecap="round"
 					stroke-dasharray={CIRC}
@@ -70,7 +127,9 @@
 		<div class="min-w-0 flex-1">
 			{#if goals}
 				{#if over}
-					<p class="text-sm font-semibold text-red-600">{m.over_goal()}</p>
+					<p class="text-sm font-semibold {STATUS_TEXT[ringStatus]}">
+						{ringStatus === 'near' ? m.near_goal_limit() : m.over_goal()}
+					</p>
 					<p class="text-2xl font-bold text-slate-900">
 						+{nf.format(Math.round(totals.kcal - goals.kcal))}
 						<span class="text-sm font-medium text-slate-400">kcal</span>
@@ -93,18 +152,35 @@
 
 	<div class="mt-5 space-y-3 border-t border-slate-100 pt-4">
 		{#each macros as macro (macro.label)}
+			{@const bar = barGeometry(macro.value, macro.goal)}
 			<div>
-				<div class="mb-1 flex justify-between text-sm">
+				<div class="mb-1 flex items-baseline justify-between gap-2 text-sm">
 					<span class="font-semibold text-slate-600">{macro.label}</span>
-					<span class="text-slate-500">
-						{nf.format(Math.round(macro.value))}{#if goals}<span class="text-slate-400"> / {nf.format(Math.round(macro.goal))}</span>{/if} g
+					<span class="flex items-center gap-2">
+						{#if macro.status !== 'ok'}
+							<span class="rounded-md px-1.5 py-0.5 text-xs font-semibold tabular-nums {STATUS_CHIP[macro.status]}">
+								+{nf.format(Math.round(macro.value - macro.goal))} g
+							</span>
+						{/if}
+						<span class="text-slate-500">
+							{nf.format(Math.round(macro.value))}{#if goals}<span class="text-slate-400"> / {nf.format(Math.round(macro.goal))}</span>{/if} g
+						</span>
 					</span>
 				</div>
-				<div class="h-2 overflow-hidden rounded-full bg-slate-100">
+				<div class="relative h-2 overflow-hidden rounded-full bg-slate-100">
 					<div
 						class="h-full rounded-full transition-all duration-500"
-						style="width: {pct(macro.value, macro.goal)}%; background-color: {macro.color}"
+						style="width: {bar.fillPct}%; background-color: {macro.status === 'ok'
+							? macro.color
+							: STATUS_COLOR[macro.status]}"
 					></div>
+					{#if macro.status !== 'ok'}
+						<!-- marca da meta, que desliza pra esquerda conforme a barra estoura -->
+						<div
+							class="absolute inset-y-0 w-0.5 bg-white/80 transition-all duration-500"
+							style="left: {bar.goalPct}%"
+						></div>
+					{/if}
 				</div>
 			</div>
 		{/each}

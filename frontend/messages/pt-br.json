@@ -309,6 +309,7 @@
 	"no_entry_that_day": "Nada registrado neste dia.",
 	"use_template": "Usar modelo",
 	"template_adds_hint": "Isso adiciona novas rotinas às que você já tem.",
+	"near_goal_limit": "Perto do limite",
 	"over_goal": "Acima da meta",
 	"remaining": "Restam",
 	"goal_label": "Meta",

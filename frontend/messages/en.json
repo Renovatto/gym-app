@@ -309,6 +309,7 @@
 	"no_entry_that_day": "Nothing logged on this day.",
 	"use_template": "Use template",
 	"template_adds_hint": "This adds new routines to the ones you already have.",
+	"near_goal_limit": "Near the limit",
 	"over_goal": "Over goal",
 	"remaining": "Remaining",
 	"goal_label": "Goal",
