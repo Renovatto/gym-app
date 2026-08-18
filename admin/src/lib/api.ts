@@ -8,15 +8,20 @@
 
 const API_PORT = 8765;
 
-// Sem VITE_API_URL, deriva a base da API do host acessado. Em producao o painel
-// mora em /admin do mesmo dominio da API, entao a origem ja e a mesma.
+// Caminho onde o nginx publica a API no dominio de producao. O painel mora em
+// /admin do MESMO dominio, entao a origem ja e a mesma - o que muda e o prefixo.
+const API_BASE_PATH = '/api';
+
+// Sem VITE_API_URL, deriva a base da API do host acessado.
 function defaultApiUrl(): string {
 	if (typeof window !== 'undefined') {
 		const { protocol, hostname, port } = window.location;
-		// Em dev o vite roda numa porta propria e a API em outra; em producao o
-		// nginx serve os dois na mesma origem e nao ha porta a trocar.
+		// Em dev o vite roda numa porta propria e o backend em outra, sem nginx no
+		// meio: a API responde na raiz da porta dela, sem o prefixo /api.
 		const isDevServer = port !== '' && port !== '80' && port !== '443';
-		return isDevServer ? `${protocol}//${hostname}:${API_PORT}` : `${protocol}//${hostname}`;
+		return isDevServer
+			? `${protocol}//${hostname}:${API_PORT}`
+			: `${protocol}//${hostname}${API_BASE_PATH}`;
 	}
 	return `http://localhost:${API_PORT}`;
 }

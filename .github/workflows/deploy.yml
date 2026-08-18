@@ -26,7 +26,9 @@ jobs:
         with:
           node-version: "22"
           cache: npm
-          cache-dependency-path: frontend/package-lock.json
+          cache-dependency-path: |
+            frontend/package-lock.json
+            admin/package-lock.json
 
       - name: Instalar dependencias
         run: npm ci
@@ -48,6 +50,30 @@ jobs:
           path: frontend/build/
           retention-days: 7
 
+      # O painel admin e uma aplicacao separada (SvelteKit propria em admin/),
+      # servida em /admin do mesmo dominio. Passa pelo mesmo portao de qualidade.
+      - name: Instalar dependencias do admin
+        working-directory: admin
+        run: npm ci
+
+      # VITE_API_URL e obrigatorio aqui: o painel nao tem como adivinhar que a API
+      # mora em /api do dominio, e sem isso cada chamada cairia na raiz do site.
+      - name: Build do painel admin
+        working-directory: admin
+        env:
+          VITE_API_URL: https://rgymapp.duckdns.org/api
+        run: npm run build
+
+      - name: Checagem de tipos do admin
+        working-directory: admin
+        run: npm run check
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: admin-build
+          path: admin/build/
+          retention-days: 7
+
   deploy:
     needs: ci
     runs-on: ubuntu-latest
@@ -58,6 +84,12 @@ jobs:
         with:
           name: frontend-build
           path: build
+
+      - name: Baixar o painel admin ja buildado
+        uses: actions/download-artifact@v4
+        with:
+          name: admin-build
+          path: build-admin
 
       - name: Configurar SSH
         run: |
@@ -76,6 +108,17 @@ jobs:
           rsync -az --delete build/ \
             ${{ secrets.DEPLOY_USER }}@${{ secrets.DEPLOY_HOST }}:/var/www/gym-app/
 
+      # Pasta separada da do app, e nao uma subpasta dela: o --delete acima varre
+      # tudo que nao veio no build do frontend, e levaria o painel junto.
+      #
+      # O nivel extra "admin/" no fim nao e engano: o nginx serve isso com `root`
+      # (e nao `alias`), entao a pasta precisa ter o mesmo nome da URL. Com alias,
+      # try_files resolve o fallback pelo caminho errado - bug antigo e conhecido.
+      - name: Publicar painel admin
+        run: |
+          rsync -az --delete build-admin/ \
+            ${{ secrets.DEPLOY_USER }}@${{ secrets.DEPLOY_HOST }}:/var/www/gym-app-admin/admin/
+
       # O script no servidor faz git pull, pip install, alembic upgrade head,
       # reinicia o servico e so retorna sucesso se a API voltar a responder.
       - name: Deploy do backend
@@ -91,3 +134,14 @@ jobs:
             exit 1
           fi
           echo "aplicacao no ar"
+
+      # Confere o painel separado: publicar o build nao basta, o /admin so existe
+      # se o nginx tiver o location apontando para a pasta dele.
+      - name: Verificar o painel admin no ar
+        run: |
+          codigo=$(curl -s -o /dev/null -m 20 -w '%{http_code}' https://rgymapp.duckdns.org/admin/)
+          if [ "$codigo" != "200" ]; then
+            echo "Painel admin respondeu $codigo (esperado 200)" >&2
+            exit 1
+          fi
+          echo "painel admin no ar"
