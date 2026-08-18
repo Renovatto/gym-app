@@ -1,3 +1,4 @@
+import { ApiError } from './api';
 import type { Objective } from './api';
 
 /** Formatacao pt-BR usada em todo o painel (o admin nao tem i18n: so pt-BR). */
@@ -94,4 +95,19 @@ export function errorMessage(code: string): string {
 		default:
 			return 'Nao foi possivel completar a acao.';
 	}
+}
+
+/**
+ * Mensagem da tela de login. Tem funcao propria porque o bloqueio por excesso de
+ * tentativas precisa dizer quanto falta, e esse tempo vem no cabecalho Retry-After
+ * (em segundos), nao no codigo do erro.
+ */
+export function loginErrorMessage(error: unknown): string {
+	if (error instanceof ApiError && error.code === 'TOO_MANY_LOGIN_ATTEMPTS') {
+		// Arredonda para cima e nunca mostra "0 min": faltando 30s, "1 min" e mais
+		// honesto do que dizer que ja liberou.
+		const minutos = Math.max(1, Math.ceil((error.retryAfterSeconds ?? 0) / 60));
+		return `Muitas tentativas seguidas. Tente de novo em ${minutos} min.`;
+	}
+	return errorMessage(error instanceof ApiError ? error.code : 'GENERIC_ERROR');
 }

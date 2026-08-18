@@ -1,7 +1,7 @@
 import secrets
 from datetime import datetime, timedelta, timezone
 
-from fastapi import APIRouter, HTTPException, status
+from fastapi import APIRouter, HTTPException, Request, status
 from sqlmodel import select
 
 from ..config import settings
@@ -23,6 +23,12 @@ from ..security import (
     verify_password,
 )
 from ..services.email import send_password_reset_email
+from ..services.login_throttle import (
+    blocked_seconds,
+    clear_failures,
+    client_ip,
+    register_failure,
+)
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 
@@ -48,10 +54,29 @@ def register(data: RegisterRequest, session: SessionDep) -> TokenPair:
 
 
 @router.post("/login", response_model=TokenPair)
-def login(data: LoginRequest, session: SessionDep) -> TokenPair:
-    user = session.exec(select(User).where(User.email == data.email.lower())).first()
+def login(data: LoginRequest, session: SessionDep, request: Request) -> TokenPair:
+    email = data.email.lower()
+    ip = client_ip(request)
+
+    # Freio de forca bruta. A checagem vem ANTES de conferir a senha: quem esta
+    # trancado espera mesmo que acerte agora, senao bastaria seguir tentando ate
+    # achar a senha certa.
+    wait_seconds = blocked_seconds(session, email, ip)
+    if wait_seconds > 0:
+        raise HTTPException(
+            status.HTTP_429_TOO_MANY_REQUESTS,
+            detail="TOO_MANY_LOGIN_ATTEMPTS",
+            headers={"Retry-After": str(wait_seconds)},
+        )
+
+    user = session.exec(select(User).where(User.email == email)).first()
     if user is None or not verify_password(data.password, user.password_hash):
+        # Conta tanto para e-mail que existe quanto para e-mail que nao existe: se
+        # so contasse para os que existem, o bloqueio revelaria quem tem conta.
+        register_failure(session, email, ip)
         raise HTTPException(status.HTTP_401_UNAUTHORIZED, detail="INVALID_CREDENTIALS")
+
+    clear_failures(session, email)
     return _token_pair(user.id)
 
 

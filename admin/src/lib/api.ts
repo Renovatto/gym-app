@@ -34,7 +34,10 @@ const REFRESH_KEY = 'gymapp.admin.refresh';
 export class ApiError extends Error {
 	constructor(
 		public code: string,
-		public status: number
+		public status: number,
+		// Segundos que a API pediu para esperar antes de tentar de novo (cabecalho
+		// Retry-After). Hoje so vem no bloqueio por excesso de tentativas de login.
+		public retryAfterSeconds: number | null = null
 	) {
 		super(code);
 	}
@@ -204,7 +207,12 @@ async function request<T>(
 		} catch {
 			// resposta sem corpo JSON: mantem GENERIC_ERROR
 		}
-		throw new ApiError(code, response.status);
+		const retryAfter = Number(response.headers.get('Retry-After'));
+		throw new ApiError(
+			code,
+			response.status,
+			Number.isFinite(retryAfter) && retryAfter > 0 ? retryAfter : null
+		);
 	}
 
 	if (response.status === 204) return undefined as T;

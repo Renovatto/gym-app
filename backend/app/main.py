@@ -52,6 +52,10 @@ app.add_middleware(
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
+    # Sem expor explicitamente, o navegador esconde do JavaScript qualquer cabecalho
+    # que nao seja da lista basica do CORS. Retry-After e o que diz a tela de login
+    # quantos minutos faltam do bloqueio por tentativas.
+    expose_headers=["Retry-After"],
 )
 
 app.include_router(auth.router)

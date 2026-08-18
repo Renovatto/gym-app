@@ -483,6 +483,25 @@ class PasswordResetToken(SQLModel, table=True):
     used: bool = Field(default=False)
 
 
+class LoginAttempt(SQLModel, table=True):
+    """Contagem de tentativas de login que falharam, usada para travar forca bruta.
+
+    Fica no banco e nao em memoria porque producao roda uvicorn com 2 workers:
+    cada processo teria seu proprio contador (na pratica o limite valeria o dobro)
+    e todo bloqueio sumiria a cada deploy."""
+
+    __tablename__ = "login_attempts"
+
+    id: int | None = Field(default=None, primary_key=True)
+    # Quem esta sendo contado: "email:fulano@exemplo.com" ou "ip:203.0.113.7".
+    key: str = Field(index=True, unique=True)
+    failures: int = Field(default=0)
+    # Inicio da janela de contagem: passado o prazo, a contagem recomeca do zero.
+    window_started_at: datetime = Field(default_factory=utcnow)
+    # Preenchido so quando a chave estourou o limite; nulo enquanto pode tentar.
+    blocked_until: datetime | None = Field(default=None)
+
+
 class Supplement(SQLModel, table=True):
     """Suplemento do usuario (ex.: creatina, vitamina D). Os zero-macro sao
     acompanhados por ADESAO diaria (tomou hoje?), nao por calorias."""
