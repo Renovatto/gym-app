@@ -70,7 +70,11 @@
 		showToast(m.toast_deleted());
 	}
 
-	let routines = $state<Routine[]>([]);
+	// A API devolve ativas e arquivadas juntas; a tela separa as duas listas. Tudo o
+	// que fala de ciclo (proximo treino, periodizacao, lista principal) usa so as ativas.
+	let allRoutines = $state<Routine[]>([]);
+	const routines = $derived(allRoutines.filter((r) => !r.archived_at));
+	const archivedRoutines = $derived(allRoutines.filter((r) => r.archived_at));
 	let sessions = $state<SessionSummary[]>([]);
 	let activeSession = $state<WorkoutSession | null>(null);
 	let periodization = $state<RoutinePeriodization[]>([]);
@@ -117,6 +121,7 @@
 	async function openVariation(routineId: number): Promise<void> {
 		variationSourceId = routineId;
 		variationLoading = routineId;
+		choosingVariationFate = false;
 		try {
 			variation = await api.getRoutineVariation(routineId);
 		} finally {
@@ -154,14 +159,24 @@
 		}
 	}
 
-	async function useVariationToday(): Promise<void> {
+	// "Usar hoje" cria uma rotina NOVA a partir da variacao. Sem escolher o destino da
+	// original, as duas ficam no ciclo e a lista cresce a cada variacao - por isso o
+	// passo de decisao antes de criar.
+	let choosingVariationFate = $state(false);
+
+	async function useVariationToday(archiveOriginal: boolean): Promise<void> {
 		if (!variation) return;
 		variationBusy = true;
 		try {
 			const label = new Date().toLocaleDateString(getLocale(), { day: '2-digit', month: '2-digit' });
 			const name = `${variation.name} — ${m.variation_word()} ${label}`.slice(0, 80);
 			const created = await api.createRoutine(name, variationItems());
+			if (archiveOriginal && variationSourceId !== null) {
+				await api.archiveRoutine(variationSourceId);
+				showToast(m.routine_archived_toast());
+			}
 			variation = null;
+			choosingVariationFate = false;
 			await start(created.id);
 		} finally {
 			variationBusy = false;
@@ -178,16 +193,17 @@
 		return df.format(new Date(iso + 'T12:00:00'));
 	}
 	let creatingTemplate = $state(false);
-	let showTemplates = $state(false);
+	// null = fechado; 'choose' = escolher como montar; 'template' = escolher a frequencia
+	let addWorkoutStep = $state<'choose' | 'template' | null>(null);
 	let completingId = $state<number | null>(null);
 
 	const df = new Intl.DateTimeFormat(getLocale(), { day: '2-digit', month: 'short' });
 	const nf = new Intl.NumberFormat(getLocale());
 
 	async function load(): Promise<void> {
-		[routines, sessions, activeSession, periodization, todayActivities, activityDays] =
+		[allRoutines, sessions, activeSession, periodization, todayActivities, activityDays] =
 			await Promise.all([
-				api.getRoutines(),
+				api.getRoutines(true),
 				api.getSessions(),
 				api.getActiveSession(),
 				api.getTrainingPeriodization(localDay()),
@@ -211,12 +227,82 @@
 		creatingTemplate = true;
 		try {
 			await api.createFromTemplate(frequency);
-			showTemplates = false;
+			addWorkoutStep = null;
 			await load();
 			showToast(m.toast_created());
 		} finally {
 			creatingTemplate = false;
 		}
+	}
+
+	// --- Arquivar rotinas -------------------------------------------------
+	// Arquivar tira a rotina do ciclo sem apagar nada: exercicios e alvos ficam
+	// guardados, o historico segue intacto e da para reativar quando quiser.
+
+	let confirmingUnarchive = $state<number | null>(null);
+	let confirmingDeleteArchived = $state<number | null>(null);
+	let confirmingArchiveAll = $state(false);
+	let archiveBusy = $state(false);
+
+	async function unarchive(routineId: number): Promise<void> {
+		confirmingUnarchive = null;
+		archiveBusy = true;
+		try {
+			await api.unarchiveRoutine(routineId);
+			await load();
+			showToast(m.routine_unarchived_toast());
+		} finally {
+			archiveBusy = false;
+		}
+	}
+
+	async function deleteArchived(routineId: number): Promise<void> {
+		confirmingDeleteArchived = null;
+		archiveBusy = true;
+		try {
+			await api.deleteRoutine(routineId);
+			await load();
+			showToast(m.toast_deleted());
+		} finally {
+			archiveBusy = false;
+		}
+	}
+
+	async function archiveAll(routineIds: number[]): Promise<void> {
+		confirmingArchiveAll = false;
+		archiveBusy = true;
+		try {
+			await api.archiveRoutines(routineIds);
+			await load();
+			showToast(m.routines_archived_toast({ count: routineIds.length }));
+		} finally {
+			archiveBusy = false;
+		}
+	}
+
+	// Oferta de trocar de ciclo: so aparece quando ha sinal REAL de programa novo -
+	// entrou rotina com 0 semanas E sobraram rotinas que ja passaram da validade.
+	// Sem isso, a pergunta cairia toda vez que alguem so soma o dia C ao ABC.
+	const staleRoutines = $derived(periodization.filter((p) => p.due));
+	const hasFreshRoutine = $derived(periodization.some((p) => p.weeks_active === 0));
+
+	const OFFER_DISMISSED_KEY = 'treino:archive-offer-dismissed';
+	// guarda QUAIS rotinas foram dispensadas: se o conjunto de vencidas mudar, a
+	// oferta volta; se for o mesmo, "Manter" continua valendo e nao incomoda de novo.
+	let dismissedStaleIds = $state('');
+	const staleIdsKey = $derived(
+		staleRoutines
+			.map((p) => p.routine_id)
+			.sort((a, b) => a - b)
+			.join(',')
+	);
+	const showArchiveOffer = $derived(
+		staleRoutines.length > 0 && hasFreshRoutine && dismissedStaleIds !== staleIdsKey
+	);
+
+	function dismissArchiveOffer(): void {
+		dismissedStaleIds = staleIdsKey;
+		localStorage.setItem(OFFER_DISMISSED_KEY, staleIdsKey);
 	}
 
 	// Iniciar e marcar feito pedem confirmacao (evita inicio/duplicata por clique acidental)
@@ -327,6 +413,7 @@
 	let expandedRoutine = $state<number | null>(null);
 
 	$effect(() => {
+		dismissedStaleIds = localStorage.getItem(OFFER_DISMISSED_KEY) ?? '';
 		load();
 	});
 
@@ -661,16 +748,54 @@
 				</button>
 			{/each}
 		</div>
-		{#if showTemplates}
+		{#if addWorkoutStep === 'template'}
 			<p class="mt-3 text-xs text-slate-400">{m.template_adds_hint()}</p>
+			<!-- volta para a escolha, nao fecha tudo: quem entrou por "Comecar rapido"
+				 pode trocar para "Montar do zero" sem reabrir a modal -->
 			<button
 				type="button"
-				onclick={() => (showTemplates = false)}
+				onclick={() => (addWorkoutStep = 'choose')}
 				class="mt-2 text-sm font-semibold text-slate-500"
 			>
 				{m.cancel()}
 			</button>
 		{/if}
+	</section>
+{/snippet}
+
+<!-- Primeiro passo de "Novo treino": um botao so na tela, e a escolha de COMO
+	 montar acontece aqui, com o que cada caminho faz escrito por extenso. -->
+{#snippet addWorkoutChooser()}
+	<section class="rounded-3xl bg-white p-6 shadow-sm">
+		<h2 class="text-lg font-bold text-slate-900">{m.add_workout_how()}</h2>
+		<div class="mt-4 grid gap-2">
+			<button
+				type="button"
+				onclick={() => (addWorkoutStep = 'template')}
+				class="min-h-16 rounded-2xl border-2 border-emerald-100 bg-emerald-50 p-3 text-left font-bold text-emerald-800 active:bg-emerald-100"
+			>
+				<span class="block text-base">{m.add_workout_quick()}</span>
+				<span class="mt-0.5 block text-xs font-medium text-emerald-600">
+					{m.add_workout_quick_text()}
+				</span>
+			</button>
+			<a
+				href="/treino/rotina/nova"
+				class="block min-h-16 rounded-2xl border-2 border-emerald-100 bg-emerald-50 p-3 text-left font-bold text-emerald-800 active:bg-emerald-100"
+			>
+				<span class="block text-base">{m.add_workout_scratch()}</span>
+				<span class="mt-0.5 block text-xs font-medium text-emerald-600">
+					{m.add_workout_scratch_text()}
+				</span>
+			</a>
+		</div>
+		<button
+			type="button"
+			onclick={() => (addWorkoutStep = null)}
+			class="mt-3 text-sm font-semibold text-slate-500"
+		>
+			{m.cancel()}
+		</button>
 	</section>
 {/snippet}
 
@@ -726,13 +851,13 @@
 			</a>
 		</div>
 	{:else}
-		{#if showTemplates}
+		{#if addWorkoutStep}
 			<div
 				class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
 				role="button"
 				tabindex="-1"
-				onclick={() => (showTemplates = false)}
-				onkeydown={(e) => e.key === 'Escape' && (showTemplates = false)}
+				onclick={() => (addWorkoutStep = null)}
+				onkeydown={(e) => e.key === 'Escape' && (addWorkoutStep = null)}
 			>
 				<div
 					class="w-full max-w-md"
@@ -741,7 +866,11 @@
 					onclick={(e) => e.stopPropagation()}
 					onkeydown={() => {}}
 				>
-					{@render templatePicker()}
+					{#if addWorkoutStep === 'choose'}
+						{@render addWorkoutChooser()}
+					{:else}
+						{@render templatePicker()}
+					{/if}
 				</div>
 			</div>
 		{/if}
@@ -914,6 +1043,34 @@
 			{/if}
 		{/snippet}
 
+		<!-- Oferta de limpar o ciclo anterior. So aparece com sinal real de programa
+			 novo, e "Manter" e dispensa definitiva para este conjunto de vencidas. -->
+		{#if showArchiveOffer}
+			<section class="mb-3 rounded-3xl border-2 border-amber-200 bg-amber-50 p-4">
+				<h2 class="font-bold text-amber-900">{m.archive_offer_title()}</h2>
+				<p class="mt-1 text-sm text-amber-800">
+					{m.archive_offer_body({ count: staleRoutines.length })}
+				</p>
+				<div class="mt-3 flex gap-2">
+					<button
+						type="button"
+						onclick={dismissArchiveOffer}
+						class="h-11 flex-1 rounded-2xl border-2 border-amber-300 font-semibold text-amber-800 active:bg-amber-100"
+					>
+						{m.archive_offer_keep()}
+					</button>
+					<button
+						type="button"
+						disabled={archiveBusy}
+						onclick={() => archiveAll(staleRoutines.map((p) => p.routine_id))}
+						class="h-11 flex-1 rounded-2xl bg-amber-600 font-semibold text-white active:bg-amber-700 disabled:opacity-50"
+					>
+						{m.archive_offer_confirm()}
+					</button>
+				</div>
+			</section>
+		{/if}
+
 		<!-- O PROXIMO do ciclo em destaque: abre a tela, aperta um botao, zero decisao.
 			 Some quando ha treino em andamento (o cartao de retomar ja e o principal). -->
 		{#if nextRoutine && !activeSession}
@@ -992,21 +1149,148 @@
 			{/each}
 		</div>
 
-		<div class="mt-3 flex gap-2">
-			<a
-				href="/treino/rotina/nova"
-				class="flex h-12 flex-1 items-center justify-center rounded-2xl border-2 border-slate-200 bg-white font-semibold text-slate-700 active:bg-slate-100"
-			>
-				{m.new_routine()}
-			</a>
-			<button
-				type="button"
-				onclick={() => (showTemplates = !showTemplates)}
-				class="flex h-12 flex-1 items-center justify-center rounded-2xl border-2 border-slate-200 bg-white font-semibold text-slate-700 active:bg-slate-100"
-			>
-				{m.use_template()}
-			</button>
-		</div>
+		<button
+			type="button"
+			onclick={() => (addWorkoutStep = 'choose')}
+			class="mt-3 flex h-12 w-full items-center justify-center rounded-2xl border-2 border-slate-200 bg-white font-semibold text-slate-700 active:bg-slate-100"
+		>
+			{m.new_workout()}
+		</button>
+
+		<!-- Trocar o programa inteiro (o ABC sai junto) numa acao so, em vez de
+			 arquivar rotina por rotina. Acao de impacto: confirma antes. -->
+		{#if routines.length >= 2}
+			{#if confirmingArchiveAll}
+				<p class="mt-3 rounded-xl bg-slate-100 px-4 py-3 text-sm font-medium text-slate-700">
+					{m.archive_current_routines_confirm({ count: routines.length })}
+				</p>
+				<div class="mt-2 flex gap-2">
+					<button
+						type="button"
+						onclick={() => (confirmingArchiveAll = false)}
+						class="h-12 flex-1 rounded-2xl border-2 border-slate-200 font-semibold text-slate-700 active:bg-slate-100"
+					>
+						{m.cancel()}
+					</button>
+					<button
+						type="button"
+						disabled={archiveBusy}
+						onclick={() => archiveAll(routines.map((r) => r.id))}
+						class="h-12 flex-1 rounded-2xl bg-slate-700 font-semibold text-white active:bg-slate-800 disabled:opacity-50"
+					>
+						{m.archive_current_routines()}
+					</button>
+				</div>
+			{:else}
+				<div class="mt-3 text-center">
+					<button
+						type="button"
+						onclick={() => (confirmingArchiveAll = true)}
+						class="text-sm font-semibold text-slate-500"
+					>
+						{m.archive_current_routines()}
+					</button>
+				</div>
+			{/if}
+		{/if}
+	{/if}
+
+	<!-- Rotinas fora do ciclo: ficam guardadas para consultar, reativar ou excluir. -->
+	{#if archivedRoutines.length > 0}
+		<section class="mt-6">
+			<h2 class="mb-2 text-sm font-bold text-slate-500 uppercase">
+				{m.archived_routines()} ({archivedRoutines.length})
+			</h2>
+			<div class="space-y-2">
+				{#each archivedRoutines as routine (routine.id)}
+					<div class="rounded-3xl bg-white p-4 shadow-sm">
+						<div class="flex items-start justify-between gap-2">
+							<div class="min-w-0">
+								<h3 class="truncate font-bold text-slate-900">{routine.name}</h3>
+								<p class="text-xs text-slate-500">
+									{routine.items.length}
+									{routine.items.length === 1 ? m.exercise_singular() : m.exercise_plural()}
+									{#if routine.archived_at}
+										· {m.archived_on({ date: df.format(new Date(routine.archived_at)) })}
+									{/if}
+								</p>
+							</div>
+							{#if routine.items.length > 0}
+								<button
+									type="button"
+									aria-label={m.view_workout_details()}
+									title={m.view_workout_details()}
+									onclick={() => (previewRoutine = routine)}
+									class="grid h-9 w-9 shrink-0 place-items-center rounded-full text-slate-400 active:bg-slate-100"
+								>
+									<svg viewBox="0 0 24 24" class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3" /><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7z" /></svg>
+								</button>
+							{/if}
+						</div>
+						{#if confirmingUnarchive === routine.id}
+							<p class="mt-3 rounded-xl bg-slate-100 px-4 py-3 text-sm font-medium text-slate-700">
+								{m.unarchive_routine_confirm()}
+							</p>
+							<div class="mt-2 flex gap-2">
+								<button
+									type="button"
+									onclick={() => (confirmingUnarchive = null)}
+									class="h-12 flex-1 rounded-2xl border-2 border-slate-200 font-semibold text-slate-700 active:bg-slate-100"
+								>
+									{m.cancel()}
+								</button>
+								<button
+									type="button"
+									disabled={archiveBusy}
+									onclick={() => unarchive(routine.id)}
+									class="h-12 flex-1 rounded-2xl bg-emerald-600 font-semibold text-white active:bg-emerald-700 disabled:opacity-50"
+								>
+									{m.unarchive_routine()}
+								</button>
+							</div>
+						{:else if confirmingDeleteArchived === routine.id}
+							<p class="mt-3 rounded-xl bg-red-50 px-4 py-3 text-sm font-medium text-red-700">
+								{m.confirm_delete()}
+							</p>
+							<div class="mt-2 flex gap-2">
+								<button
+									type="button"
+									onclick={() => (confirmingDeleteArchived = null)}
+									class="h-12 flex-1 rounded-2xl border-2 border-slate-200 font-semibold text-slate-700 active:bg-slate-100"
+								>
+									{m.cancel()}
+								</button>
+								<button
+									type="button"
+									disabled={archiveBusy}
+									onclick={() => deleteArchived(routine.id)}
+									class="h-12 flex-1 rounded-2xl bg-red-600 font-semibold text-white active:bg-red-700 disabled:opacity-50"
+								>
+									{m.delete_confirm_button()}
+								</button>
+							</div>
+						{:else}
+							<div class="mt-3 flex gap-2">
+								<button
+									type="button"
+									onclick={() => (confirmingUnarchive = routine.id)}
+									class="h-11 flex-1 rounded-2xl border-2 border-emerald-200 font-semibold text-emerald-700 active:bg-emerald-50"
+								>
+									{m.unarchive_routine()}
+								</button>
+								<button
+									type="button"
+									onclick={() => (confirmingDeleteArchived = routine.id)}
+									class="h-11 flex-1 rounded-2xl border-2 border-red-200 font-semibold text-red-600 active:bg-red-50"
+								>
+									{m.delete_confirm_button()}
+								</button>
+							</div>
+						{/if}
+					</div>
+				{/each}
+			</div>
+		</section>
 	{/if}
 
 	{#if finishedSessions.length > 0}
@@ -1168,13 +1452,16 @@
 					</button>
 				{/each}
 			</div>
-			<button
-				type="button"
-				onclick={startFromPreview}
-				class="mt-3 h-12 w-full shrink-0 rounded-2xl bg-emerald-600 font-bold text-white active:bg-emerald-700"
-			>
-				{m.start_workout()}
-			</button>
+			<!-- rotina arquivada e so consulta: para treinar de novo, reativar antes -->
+			{#if !previewRoutine.archived_at}
+				<button
+					type="button"
+					onclick={startFromPreview}
+					class="mt-3 h-12 w-full shrink-0 rounded-2xl bg-emerald-600 font-bold text-white active:bg-emerald-700"
+				>
+					{m.start_workout()}
+				</button>
+			{/if}
 		</div>
 	</div>
 {/if}
@@ -1229,6 +1516,29 @@
 					</button>
 				{/each}
 			</div>
+			{#if choosingVariationFate}
+				<p class="mt-3 shrink-0 rounded-xl bg-slate-100 px-4 py-3 text-sm font-medium text-slate-700">
+					{m.vary_today_archive_question()}
+				</p>
+				<div class="mt-2 flex shrink-0 gap-2">
+					<button
+						type="button"
+						disabled={variationBusy}
+						onclick={() => useVariationToday(false)}
+						class="h-12 flex-1 rounded-2xl border-2 border-slate-200 font-semibold text-slate-700 active:bg-slate-100 disabled:opacity-50"
+					>
+						{m.vary_today_keep_both()}
+					</button>
+					<button
+						type="button"
+						disabled={variationBusy}
+						onclick={() => useVariationToday(true)}
+						class="h-12 flex-1 rounded-2xl bg-emerald-600 font-bold text-white active:bg-emerald-700 disabled:opacity-50"
+					>
+						{m.vary_today_archive_original()}
+					</button>
+				</div>
+			{:else}
 			<button
 				type="button"
 				onclick={anotherVariation}
@@ -1241,7 +1551,7 @@
 				<button
 					type="button"
 					disabled={variationBusy}
-					onclick={useVariationToday}
+					onclick={() => (choosingVariationFate = true)}
 					class="h-12 flex-1 rounded-2xl border-2 border-emerald-200 font-bold text-emerald-700 active:bg-emerald-50 disabled:opacity-50"
 				>
 					{m.vary_today()}
@@ -1255,6 +1565,7 @@
 					{m.vary_save()}
 				</button>
 			</div>
+			{/if}
 		</div>
 	</div>
 {/if}

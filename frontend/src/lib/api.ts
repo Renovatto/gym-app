@@ -254,6 +254,8 @@ export interface Routine {
 	name: string;
 	position: number;
 	items: RoutineItem[];
+	// null = ativa (no ciclo); com data = arquivada (fora do ciclo, mas consultavel)
+	archived_at: string | null;
 }
 
 export interface RoutineItemInput {
@@ -995,7 +997,8 @@ export const api = {
 		const qs = params.toString();
 		return request<Exercise[]>(`/exercises${qs ? `?${qs}` : ''}`);
 	},
-	getRoutines: () => request<Routine[]>('/me/routines'),
+	getRoutines: (includeArchived = false) =>
+		request<Routine[]>(`/me/routines${includeArchived ? '?include_archived=true' : ''}`),
 	getRoutine: (id: number) => request<Routine>(`/me/routines/${id}`),
 	getRoutineVariation: (id: number) =>
 		request<RoutineVariation>(`/me/routines/${id}/variation`),
@@ -1004,6 +1007,12 @@ export const api = {
 	updateRoutine: (id: number, name: string, items: RoutineItemInput[]) =>
 		request<Routine>(`/me/routines/${id}`, { method: 'PUT', body: { name, items } }),
 	deleteRoutine: (id: number) => request<void>(`/me/routines/${id}`, { method: 'DELETE' }),
+	// arquivar tira do ciclo sem apagar; reativar devolve como ultima do ciclo
+	archiveRoutine: (id: number) => request<Routine>(`/me/routines/${id}/archive`, { method: 'POST' }),
+	unarchiveRoutine: (id: number) =>
+		request<Routine>(`/me/routines/${id}/unarchive`, { method: 'POST' }),
+	archiveRoutines: (routineIds: number[]) =>
+		request<Routine[]>('/me/routines/archive', { method: 'POST', body: { routine_ids: routineIds } }),
 	createFromTemplate: (frequency: number) =>
 		request<Routine[]>(`/me/routines/from-template?frequency=${frequency}`, { method: 'POST' }),
 	// day ausente = treino de agora. Com day, registra um treino esquecido em data

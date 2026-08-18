@@ -102,6 +102,21 @@
 		}
 	}
 
+	// Arquivar tira do ciclo sem apagar (exercicios e alvos ficam guardados). Tambem
+	// e acao de impacto, entao confirma antes, igual a exclusao.
+	let confirmingArchive = $state(false);
+
+	async function archive(): Promise<void> {
+		busy = true;
+		try {
+			await api.archiveRoutine(Number(routineId));
+			showToast(m.routine_archived_toast());
+			await goto('/treino');
+		} finally {
+			busy = false;
+		}
+	}
+
 	$effect(() => {
 		load();
 	});
@@ -214,6 +229,36 @@
 	</button>
 
 	{#if !isNew}
+		{#if confirmingArchive}
+			<p class="mt-3 rounded-xl bg-slate-100 px-4 py-3 text-sm font-medium text-slate-700">
+				{m.archive_routine_confirm()}
+			</p>
+			<div class="mt-2 flex gap-2">
+				<button
+					type="button"
+					onclick={() => (confirmingArchive = false)}
+					class="h-12 flex-1 rounded-2xl border-2 border-slate-200 font-semibold text-slate-700 active:bg-slate-100"
+				>
+					{m.cancel()}
+				</button>
+				<button
+					type="button"
+					disabled={busy}
+					onclick={archive}
+					class="h-12 flex-1 rounded-2xl bg-slate-700 font-semibold text-white active:bg-slate-800 disabled:opacity-50"
+				>
+					{m.archive_routine()}
+				</button>
+			</div>
+		{:else}
+			<button
+				type="button"
+				onclick={() => (confirmingArchive = true)}
+				class="mt-3 h-12 w-full rounded-2xl border-2 border-slate-200 font-semibold text-slate-700 active:bg-slate-100"
+			>
+				{m.archive_routine()}
+			</button>
+		{/if}
 		{#if confirmingDelete}
 			<p class="mt-3 rounded-xl bg-red-50 px-4 py-3 text-sm font-medium text-red-700">
 				{m.confirm_delete()}

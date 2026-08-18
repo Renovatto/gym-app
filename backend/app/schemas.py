@@ -349,6 +349,12 @@ class RoutineIn(BaseModel):
     items: list[RoutineItemIn]
 
 
+class RoutineArchiveIn(BaseModel):
+    """Arquivamento em lote: usado ao trocar o ciclo inteiro de treino de uma vez."""
+
+    routine_ids: list[int] = Field(min_length=1, max_length=50)
+
+
 class RoutineItemOut(BaseModel):
     id: int
     exercise: ExerciseOut
@@ -366,6 +372,8 @@ class RoutineOut(BaseModel):
     name: str
     position: int
     items: list[RoutineItemOut]
+    # None = ativa; com data = arquivada (fora do ciclo, mas consultavel)
+    archived_at: datetime | None = None
 
 
 class SetLogIn(BaseModel):

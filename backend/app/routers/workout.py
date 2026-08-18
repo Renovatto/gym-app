@@ -20,6 +20,7 @@ from ..schemas import (
     ExerciseOut,
     ExerciseSwapIn,
     ExerciseSwapOut,
+    RoutineArchiveIn,
     RoutineCompleteIn,
     RoutineIn,
     RoutineItemOut,
@@ -126,14 +127,25 @@ def _routine_out(session: Session, routine: Routine, user: User) -> RoutineOut:
                 last_weight_kg=_last_weight(session, user.id, item.exercise_id),
             )
         )
-    return RoutineOut(id=routine.id, name=routine.name, position=routine.position, items=out_items)
+    return RoutineOut(
+        id=routine.id,
+        name=routine.name,
+        position=routine.position,
+        items=out_items,
+        archived_at=routine.archived_at,
+    )
 
 
 @router.get("/me/routines", response_model=list[RoutineOut])
-def list_routines(user: CurrentUser, session: SessionDep) -> list[RoutineOut]:
-    routines = session.exec(
-        select(Routine).where(Routine.user_id == user.id).order_by(asc(Routine.position), asc(Routine.id))
-    ).all()
+def list_routines(
+    user: CurrentUser,
+    session: SessionDep,
+    include_archived: bool = Query(default=False),
+) -> list[RoutineOut]:
+    query = select(Routine).where(Routine.user_id == user.id)
+    if not include_archived:
+        query = query.where(Routine.archived_at.is_(None))
+    routines = session.exec(query.order_by(asc(Routine.position), asc(Routine.id))).all()
     return [_routine_out(session, r, user) for r in routines]
 
 
@@ -236,6 +248,58 @@ def delete_routine(routine_id: int, user: CurrentUser, session: SessionDep) -> N
         session.add(ws)
     session.delete(routine)
     session.commit()
+
+
+# --- Arquivamento ---------------------------------------------------------
+# Arquivar tira a rotina do ciclo A -> B -> C sem apagar nada: exercicios, alvos e
+# o vinculo com o historico continuam de pe, e da para reativar quando quiser.
+
+
+def _archive(routine: Routine) -> None:
+    routine.archived_at = datetime.now(timezone.utc)
+
+
+@router.post("/me/routines/archive", response_model=list[RoutineOut])
+def archive_routines(data: RoutineArchiveIn, user: CurrentUser, session: SessionDep) -> list[RoutineOut]:
+    """Arquiva varias rotinas de uma vez (trocar o ciclo inteiro em uma acao so)."""
+    routines = [_get_owned_routine(session, rid, user.id) for rid in data.routine_ids]
+    for routine in routines:
+        if routine.archived_at is None:
+            _archive(routine)
+            session.add(routine)
+    session.commit()
+    for routine in routines:
+        session.refresh(routine)
+    return [_routine_out(session, r, user) for r in routines]
+
+
+@router.post("/me/routines/{routine_id}/archive", response_model=RoutineOut)
+def archive_routine(routine_id: int, user: CurrentUser, session: SessionDep) -> RoutineOut:
+    routine = _get_owned_routine(session, routine_id, user.id)
+    if routine.archived_at is None:
+        _archive(routine)
+        session.add(routine)
+        session.commit()
+        session.refresh(routine)
+    return _routine_out(session, routine, user)
+
+
+@router.post("/me/routines/{routine_id}/unarchive", response_model=RoutineOut)
+def unarchive_routine(routine_id: int, user: CurrentUser, session: SessionDep) -> RoutineOut:
+    """Devolve a rotina ao ciclo, sempre como a ULTIMA: reaparecer numa posicao
+    antiga bagunca a ordem de quem ja esta treinando o ciclo atual."""
+    routine = _get_owned_routine(session, routine_id, user.id)
+    positions = session.exec(
+        select(Routine.position)
+        .where(Routine.user_id == user.id)
+        .where(Routine.archived_at.is_(None))
+    ).all()
+    routine.archived_at = None
+    routine.position = (max(positions) + 1) if positions else 0
+    session.add(routine)
+    session.commit()
+    session.refresh(routine)
+    return _routine_out(session, routine, user)
 
 
 @router.post("/me/routines/from-template", response_model=list[RoutineOut], status_code=status.HTTP_201_CREATED)

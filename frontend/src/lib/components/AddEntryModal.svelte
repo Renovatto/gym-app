@@ -174,6 +174,15 @@
 		favoriteFoods.filter((f) => searchMatches(f.name, scopedTerm))
 	);
 	const filteredRecentFoods = $derived(recentFoods.filter((f) => searchMatches(f.name, scopedTerm)));
+	// Receitas ja vem inteiras do backend (com ingredientes), entao filtra no cliente.
+	// Busca por nome da receita OU por ingrediente: achar a crepioca pela tapioca.
+	const filteredRecipes = $derived(
+		recipes.filter(
+			(r) =>
+				searchMatches(r.name, scopedTerm) ||
+				r.ingredients.some((ing) => searchMatches(ing.food.name, scopedTerm))
+		)
+	);
 
 	$effect(() => {
 		if (tab !== 'foods') {
@@ -390,26 +399,28 @@
 			</button>
 		</div>
 
-		{#if tab === 'foods'}
-			<div class="relative mb-3">
-				<input
-					bind:value={query}
-					placeholder={m.search_food()}
-					class="h-12 w-full rounded-2xl border-2 border-slate-200 bg-white pr-11 pl-4 outline-none focus:border-emerald-600"
-				/>
-				{#if query}
-					<button
-						type="button"
-						aria-label={m.clear()}
-						title={m.clear()}
-						onclick={() => (query = '')}
-						class="absolute top-1/2 right-2 grid h-8 w-8 -translate-y-1/2 place-items-center rounded-full text-slate-400 active:bg-slate-100"
-					>
-						<svg viewBox="0 0 24 24" class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18" /></svg>
-					</button>
-				{/if}
-			</div>
+		<!-- busca unica das duas abas: alimento vai ao backend (debounce), receita
+			 filtra a lista ja carregada -->
+		<div class="relative mb-3">
+			<input
+				bind:value={query}
+				placeholder={tab === 'foods' ? m.search_food() : m.search_recipes()}
+				class="h-12 w-full rounded-2xl border-2 border-slate-200 bg-white pr-11 pl-4 outline-none focus:border-emerald-600"
+			/>
+			{#if query}
+				<button
+					type="button"
+					aria-label={m.clear()}
+					title={m.clear()}
+					onclick={() => (query = '')}
+					class="absolute top-1/2 right-2 grid h-8 w-8 -translate-y-1/2 place-items-center rounded-full text-slate-400 active:bg-slate-100"
+				>
+					<svg viewBox="0 0 24 24" class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18" /></svg>
+				</button>
+			{/if}
+		</div>
 
+		{#if tab === 'foods'}
 			<!-- filtro de escopo: Padrao preserva exatamente o comportamento de sempre -->
 			<div class="mb-3 flex gap-1.5 overflow-x-auto">
 				{#each FOOD_SCOPES as scope (scope)}
@@ -496,8 +507,13 @@
 				<div class="h-7 w-7 animate-spin rounded-full border-4 border-emerald-600 border-t-transparent"></div>
 			</div>
 		{:else}
+			{#if filteredRecipes.length === 0}
+				<p class="rounded-2xl bg-white px-4 py-3 text-center text-sm text-slate-400 shadow-sm">
+					{searching ? m.search_no_results() : m.no_recipes_title()}
+				</p>
+			{/if}
 			<div class="space-y-2">
-				{#each recipes as recipe (recipe.id)}
+				{#each filteredRecipes as recipe (recipe.id)}
 					<div class="flex items-center gap-1 rounded-2xl bg-white p-2 shadow-sm">
 						<button
 							type="button"

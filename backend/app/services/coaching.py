@@ -81,8 +81,12 @@ def diet_adherence(session: Session, user: User, end: date, window: int = 7) -> 
 def routines_periodization(
     session: Session, user: User, today: date
 ) -> list[RoutinePeriodizationOut]:
+    # rotina arquivada saiu do ciclo: nao faz sentido cobrar dela "hora de variar"
     routines = session.exec(
-        select(Routine).where(Routine.user_id == user.id).order_by(Routine.position)
+        select(Routine)
+        .where(Routine.user_id == user.id)
+        .where(Routine.archived_at.is_(None))
+        .order_by(Routine.position)
     ).all()
     out: list[RoutinePeriodizationOut] = []
     for routine in routines:
