@@ -66,7 +66,7 @@ documentadas para o usuario na area de consulta. Nao espalhe formula por varios 
 
 - Backend: FastAPI + SQLModel. `session.exec(select(Model.coluna))` retorna escalar, nao tupla.
 - **Dev usa Postgres, nao SQLite** (desde 19/08/2026, mesma major que producao). `docker
-  compose up -d` sobe o banco local (porta 5433). `GYMAPP_DATABASE_URL` nao tem default:
+  compose up -d` sobe o banco local (porta 5434). `GYMAPP_DATABASE_URL` nao tem default:
   precisa estar no `backend/.env`. O codigo continua agnostico (`IS_SQLITE` em `db.py`,
   `render_as_batch` condicional no alembic) e o CI ainda testa a baseline nos dois bancos
   - so o ambiente de desenvolvimento mudou.
