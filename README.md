@@ -41,7 +41,7 @@ Variáveis de ambiente com prefixo `GYMAPP_` (ou arquivo `backend/.env`):
 
 - `GYMAPP_SECRET_KEY` — **obrigatória em produção** (assina os JWTs)
 - `GYMAPP_DATABASE_URL` — **obrigatória**, sem default (ex.:
-  `postgresql://gymapp:gymapp@localhost:5433/gymapp` para o Postgres do
+  `postgresql://gymapp:gymapp@localhost:5434/gymapp` para o Postgres do
   `docker-compose.yml`). De propósito: um default silencioso já fez a gente achar
   que tinha perdido dados quando na verdade era só a variável ausente.
 - `GYMAPP_CORS_ORIGINS` — lista JSON de origens permitidas

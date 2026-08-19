@@ -1,6 +1,7 @@
 # Postgres de desenvolvimento local, para bater com o banco de producao (Lightsail).
-# Porta 5433 (nao a 5432 padrao) para nunca colidir com um Postgres que voce suba
-# por outro motivo. Ver README.md > Configuracao do backend.
+# Porta 5434 (nao a 5432 padrao) para nao colidir com outro Postgres que voce suba
+# por outro motivo - inclusive outro projeto seu que ja usa a 5433 nesta maquina.
+# Ver README.md > Configuracao do backend.
 #
 # "name" fixo: sem isso o Docker Compose nomeia o volume a partir do diretorio de
 # onde o comando roda, e "docker compose up" de dois lugares diferentes criaria
@@ -16,7 +17,7 @@ services:
       POSTGRES_PASSWORD: gymapp
       POSTGRES_DB: gymapp
     ports:
-      - "5433:5432"
+      - "5434:5432"
     volumes:
       - gymapp-db:/var/lib/postgresql/data
     healthcheck:
