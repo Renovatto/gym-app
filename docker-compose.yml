@@ -18,8 +18,11 @@ services:
       POSTGRES_DB: gymapp
     ports:
       - "5434:5432"
+    # Postgres 18 mudou a convencao: o volume vai na raiz de /var/lib/postgresql
+    # (nao em /var/lib/postgresql/data como nas imagens anteriores), porque agora
+    # o dado mora num subdiretorio com o nome da major version.
     volumes:
-      - gymapp-db:/var/lib/postgresql/data
+      - gymapp-db:/var/lib/postgresql
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U gymapp"]
       interval: 5s
