@@ -5,9 +5,17 @@ App de treino, dieta, peso, água e objetivos. Touch-first, multi-idioma (pt-BR,
 ## Stack
 
 - **Frontend**: SvelteKit (SPA estática via `adapter-static`, pronta para Capacitor) + Tailwind CSS 4 + Paraglide JS (i18n)
-- **Backend**: FastAPI + SQLite (WAL) + SQLModel, auth JWT (access + refresh)
+- **Backend**: FastAPI + PostgreSQL + SQLModel, auth JWT (access + refresh)
 
 ## Rodando em desenvolvimento
+
+Sobe o Postgres local uma vez (mesma major que produção, Postgres 18):
+
+```bash
+docker compose up -d
+```
+
+Depois:
 
 ```bash
 ./start.sh
@@ -23,12 +31,19 @@ Para rodar separado: `backend/.venv/bin/uvicorn app.main:app --reload --port 876
 e `cd frontend && npm run dev -- --port 5175`. A URL da API pode ser sobrescrita
 com `VITE_API_URL` (padrão `http://localhost:8765`).
 
+Para zerar o banco local: `docker compose down -v` (apaga o volume) e sobe de
+novo com `docker compose up -d` — o schema e o catálogo (exercícios/alimentos)
+voltam sozinhos no próximo boot do backend.
+
 ## Configuração do backend
 
 Variáveis de ambiente com prefixo `GYMAPP_` (ou arquivo `backend/.env`):
 
 - `GYMAPP_SECRET_KEY` — **obrigatória em produção** (assina os JWTs)
-- `GYMAPP_DATABASE_URL` — padrão `sqlite:///backend/gymapp.db`
+- `GYMAPP_DATABASE_URL` — **obrigatória**, sem default (ex.:
+  `postgresql://gymapp:gymapp@localhost:5433/gymapp` para o Postgres do
+  `docker-compose.yml`). De propósito: um default silencioso já fez a gente achar
+  que tinha perdido dados quando na verdade era só a variável ausente.
 - `GYMAPP_CORS_ORIGINS` — lista JSON de origens permitidas
 
 ## Fases do projeto

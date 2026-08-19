@@ -1,5 +1,3 @@
-from pathlib import Path
-
 from pydantic_settings import BaseSettings
 
 
@@ -7,7 +5,11 @@ class Settings(BaseSettings):
     secret_key: str = "dev-secret-change-me-in-production"
     access_token_minutes: int = 30
     refresh_token_days: int = 30
-    database_url: str = f"sqlite:///{Path(__file__).resolve().parent.parent / 'gymapp.db'}"
+    # Sem default de proposito: um SQLite silencioso aqui ja fez a gente "perder"
+    # dados por meia hora quando a variavel sumiu do ambiente. Sem ela, o boot
+    # falha alto em vez de criar um banco vazio sem avisar. Dev usa o Postgres do
+    # docker-compose.yml (ver README.md); CI exporta a URL explicitamente.
+    database_url: str
     # URL base do frontend, usada em links de e-mail (ex.: redefinir senha).
     frontend_url: str = "http://localhost:5175"
     # Validade do token de redefinicao de senha, em minutos.

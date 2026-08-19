@@ -1,0 +1,23 @@
+# Postgres de desenvolvimento local, para bater com o banco de producao (Lightsail).
+# Porta 5433 (nao a 5432 padrao) para nunca colidir com um Postgres que voce suba
+# por outro motivo. Ver README.md > Configuracao do backend.
+services:
+  db:
+    image: postgres:18
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: gymapp
+      POSTGRES_PASSWORD: gymapp
+      POSTGRES_DB: gymapp
+    ports:
+      - "5433:5432"
+    volumes:
+      - gymapp-db:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U gymapp"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+volumes:
+  gymapp-db:
