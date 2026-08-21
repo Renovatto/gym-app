@@ -418,6 +418,8 @@ export interface AdaptiveTdee {
 	span_days: number;
 	weigh_ins: number;
 	days_logged: number;
+	// Dias que tinham registro mas ficaram pela metade e nao entraram na media.
+	days_discarded: number;
 	// Minimos vindos do backend (fonte unica), para a tela mostrar "quanto falta".
 	min_span_days: number;
 	min_weigh_ins: number;
@@ -425,6 +427,8 @@ export interface AdaptiveTdee {
 	avg_intake_kcal: number;
 	weekly_change_kg: number;
 	estimated_maintenance_kcal: number | null;
+	// Gasto em repouso: referencia que torna a estimativa compreensivel na tela.
+	bmr_kcal: number;
 	formula_tdee_kcal: number;
 	current_target_kcal: number;
 	suggested_target_kcal: number | null;

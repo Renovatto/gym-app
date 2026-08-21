@@ -1889,12 +1889,20 @@
 				</span>
 			</div>
 
-			<!-- CTA de adotar: so aparece quando a estimativa pode virar meta. Quando nao
-			     pode, o numero e o motivo ficam na tela de Progresso, que e a de analise. -->
-			{#if periodAdaptive && periodAdaptive.has_enough_data && periodAdaptive.can_adopt && periodAdaptive.estimated_maintenance_kcal}
+			<!-- CTA de adotar: so aparece quando a estimativa pode virar meta E quando adotar
+			     realmente muda a meta. A meta sugerida pode ser identica a atual (tipico
+			     quando as duas batem no piso do BMR); ali o botao prometia uma mudanca que
+			     nao aconteceria. Mesma regra que a tela de Progresso ja usava.
+			     Quando nao pode adotar, o numero e o motivo ficam em Progresso, a tela de analise. -->
+			{#if periodAdaptive && periodAdaptive.has_enough_data && periodAdaptive.can_adopt && periodAdaptive.estimated_maintenance_kcal && periodAdaptive.suggested_target_kcal !== periodAdaptive.current_target_kcal}
 				<div class="mt-4 rounded-2xl border border-emerald-100 bg-emerald-50 p-3">
+					<!-- mostra a META resultante junto da manutencao: sozinho, o numero da
+					     manutencao e lido como "minha meta vai virar isso" -->
 					<p class="text-sm font-semibold text-emerald-800">
-						{m.diet_period_measured({ kcal: nf.format(periodAdaptive.estimated_maintenance_kcal) })}
+						{m.diet_period_measured({
+							kcal: nf.format(periodAdaptive.estimated_maintenance_kcal),
+							target: nf.format(periodAdaptive.suggested_target_kcal ?? 0)
+						})}
 					</p>
 					{#if confirmingRenew === 'adopt'}
 						<div class="mt-2 flex items-center gap-2 rounded-xl bg-white p-1.5">

@@ -10,7 +10,20 @@ Ideia central (balanco energetico):
     (peso caindo => balanco negativo => manutencao MAIOR do que voce comeu)
 
 Precisamos de dados suficientes para a estimativa fazer sentido: varias pesagens
-espalhadas e varios dias de diario. Sem isso, retornamos has_enough_data=False.
+espalhadas e varios dias de diario COMPLETOS. Sem isso, retornamos has_enough_data=False.
+
+Duas armadilhas do dado de entrada, que ja custaram uma estimativa errada em producao
+(manutencao de 1293 kcal para quem gasta 1690 so em repouso):
+
+  1. O dia de HOJE nunca entra na media. Ele esta sempre pela metade - quem abre a tela
+     as 14h tem so o cafe e o almoco lancados - e entraria como um dia inteiro de pouca
+     comida. O vies e sistematico (sempre para baixo, toda vez que a tela abre), nao
+     ruido que se cancela. Quem monta daily_intakes corta a janela em ontem.
+  2. Dia com registro pela metade nao vale como dia. Ver INCOMPLETE_DAY_BMR_SHARE.
+
+Mesmo com as duas, a estimativa pode sair impossivel se o usuario registra so os dias
+"comportados" (tipico: fim de semana sem lancar nada). Por isso existe is_below_bmr:
+manutencao abaixo do gasto em repouso denuncia o diario, e a estimativa nao vira meta.
 
 Cuidado ao mexer no KCAL_PER_KG_FAT (goals.py): ele e usado nas DUAS pontas - aqui para
 LER a balanca (inclinacao -> kcal) e em daily_deficit_for_cut para ESCREVER o deficit
@@ -28,8 +41,9 @@ from dataclasses import dataclass
 # tambem precisa dos minimos abaixo - o coach usa as duas para dizer quanto falta.
 ADAPTIVE_WINDOW_DAYS = 21
 
-# Minimos para confiar na estimativa. Como a janela e inclusiva (do dia -20 ate hoje),
-# o span entre a primeira e a ultima pesagem chega no maximo a 20.
+# Minimos para confiar na estimativa. A janela de PESAGEM e inclusiva (do dia -20 ate
+# hoje), entao o span entre a primeira e a ultima pesagem chega no maximo a 20. A janela
+# do DIARIO termina em ontem (ver item 1 no topo do arquivo).
 #
 # Os minimos sao altos de proposito. Com poucas pesagens num intervalo curto, a
 # oscilacao de agua/glicogenio domina a inclinacao da reta: 1 kg de agua convertido a
@@ -40,7 +54,17 @@ ADAPTIVE_WINDOW_DAYS = 21
 # seguindo o app). Exigir quase a janela inteira deixa a agua sair antes de estimarmos.
 MIN_SPAN_DAYS = 18  # dias entre a primeira e a ultima pesagem (a janela permite ate 20)
 MIN_WEIGH_INS = 8  # pesagens na janela: ~1 a cada 2-3 dias, o bastante para a reta
-MIN_DAYS_LOGGED = 8  # numero minimo de dias com diario alimentar
+MIN_DAYS_LOGGED = 8  # numero minimo de dias COMPLETOS com diario alimentar
+
+# Piso de plausibilidade de um dia, como fracao do BMR. Um dia com menos calorias
+# que isso quase nunca e um dia de comer pouco: e um dia em que o usuario registrou
+# so o cafe da manha e parou. A diferenca importa porque a media entra direto na
+# estimativa - um sabado com 412 kcal registradas pesa igual a uma terca com 1.951 e
+# derruba a manutencao estimada, que e justamente o numero que vira meta.
+#
+# Meio BMR e deliberadamente permissivo: quem faz jejum ou come muito pouco de
+# verdade ainda passa. So descarta o que nao tem como ser um dia inteiro de comida.
+INCOMPLETE_DAY_BMR_SHARE = 0.5
 
 
 @dataclass
@@ -48,10 +72,15 @@ class AdaptiveEstimate:
     has_enough_data: bool
     span_days: int  # dias entre a primeira e a ultima pesagem analisada
     weigh_ins: int  # pesagens na janela
-    days_logged: int  # dias com diario alimentar na janela
-    avg_intake_kcal: int  # media diaria consumida
+    days_logged: int  # dias COMPLETOS de diario usados na media
+    days_discarded: int  # dias descartados por registro incompleto (ver share acima)
+    avg_intake_kcal: int  # media diaria consumida nos dias completos
     weekly_change_kg: float  # variacao de peso por semana (negativo = perdendo)
     estimated_maintenance_kcal: int | None  # manutencao real estimada
+    # Manutencao abaixo do BMR e fisiologicamente impossivel: ninguem gasta menos
+    # em atividade do que gasta parado. Quando isso aparece, o erro esta no dado de
+    # entrada (diario incompleto), nao no metabolismo - a estimativa nao pode virar meta.
+    is_below_bmr: bool
 
 
 def weight_slope_kg_per_day(weigh_ins: list[tuple[float, float]]) -> float:
@@ -72,14 +101,29 @@ def weight_slope_kg_per_day(weigh_ins: list[tuple[float, float]]) -> float:
     return numerator / denominator
 
 
+def complete_days_only(daily_intakes: list[float], bmr_kcal: float) -> list[float]:
+    """Separa os dias com registro plausivel de dia inteiro dos dias pela metade.
+
+    Ver INCOMPLETE_DAY_BMR_SHARE: o corte e metade do BMR. Com bmr_kcal = 0 (usuario
+    sem peso registrado, logo sem BMR) nao ha como julgar e nada e descartado."""
+    if bmr_kcal <= 0:
+        return list(daily_intakes)
+    floor_kcal = bmr_kcal * INCOMPLETE_DAY_BMR_SHARE
+    return [kcal for kcal in daily_intakes if kcal >= floor_kcal]
+
+
 def estimate_maintenance(
     weigh_ins: list[tuple[float, float]],
     daily_intakes: list[float],
     kcal_per_kg_fat: int,
+    bmr_kcal: float,
 ) -> AdaptiveEstimate:
     """Estima a manutencao real. weigh_ins = [(dia_indice, peso_kg)] ordenados;
-    daily_intakes = kcal total de cada dia que teve diario."""
-    days_logged = len(daily_intakes)
+    daily_intakes = kcal total de cada dia que teve diario (o dia de hoje NAO entra:
+    quem monta a lista corta a janela no dia anterior, ver o router)."""
+    complete_days = complete_days_only(daily_intakes, bmr_kcal)
+    days_logged = len(complete_days)
+    days_discarded = len(daily_intakes) - days_logged
     span_days = int(weigh_ins[-1][0] - weigh_ins[0][0]) if len(weigh_ins) >= 2 else 0
 
     enough = (
@@ -87,7 +131,7 @@ def estimate_maintenance(
         and span_days >= MIN_SPAN_DAYS
         and days_logged >= MIN_DAYS_LOGGED
     )
-    avg_intake = round(sum(daily_intakes) / days_logged) if days_logged else 0
+    avg_intake = round(sum(complete_days) / days_logged) if days_logged else 0
 
     if not enough:
         return AdaptiveEstimate(
@@ -95,9 +139,11 @@ def estimate_maintenance(
             span_days=span_days,
             weigh_ins=len(weigh_ins),
             days_logged=days_logged,
+            days_discarded=days_discarded,
             avg_intake_kcal=avg_intake,
             weekly_change_kg=0.0,
             estimated_maintenance_kcal=None,
+            is_below_bmr=False,
         )
 
     slope_per_day = weight_slope_kg_per_day(weigh_ins)  # kg/dia
@@ -111,7 +157,9 @@ def estimate_maintenance(
         span_days=span_days,
         weigh_ins=len(weigh_ins),
         days_logged=days_logged,
+        days_discarded=days_discarded,
         avg_intake_kcal=avg_intake,
         weekly_change_kg=round(slope_per_day * 7, 2),
         estimated_maintenance_kcal=estimated_maintenance,
+        is_below_bmr=bmr_kcal > 0 and estimated_maintenance < bmr_kcal,
     )

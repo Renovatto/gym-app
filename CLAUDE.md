@@ -79,6 +79,14 @@ documentadas para o usuario na area de consulta. Nao espalhe formula por varios 
   (Postgres só; SQLite não precisa). Tabela nova = autogenerate resolve.
 - Busca textual SEMPRE via `normalize_search` (sem acento, sem caixa) dos dois lados.
 - Datas locais do usuario: cliente envia dia local + `tz_offset` (Date.getTimezoneOffset()).
+- **Media sobre dias do usuario nunca inclui HOJE.** O dia corrente esta sempre pela
+  metade e entraria como um dia inteiro de pouco - o vies e sistematico (sempre para
+  baixo, toda vez que a tela abre), nao ruido que se cancela. Janela de media termina
+  em ontem. Ja quebrou o TDEE adaptativo em producao (ver `services/adaptive.py`).
+- **Numero calculado a partir de dado do usuario passa por checagem de plausibilidade
+  antes de virar acao.** Mostrar um valor estranho e aceitavel (o usuario tem direito de
+  ver o que os dados dele deram); oferecer um botao que o adota, nao. Ex.: manutencao
+  medida abaixo do BMR e impossivel - o app exibe e explica, mas bloqueia adotar.
 - Frontend: Svelte 5 runes (`$state`/`$derived`/`$effect`), nunca stores. Componente
   `Stepper` para qualquer entrada numerica. Toast global via `showToast`.
 - i18n: toda string de UI vira chave nos 3 arquivos `messages/{pt-br,en,es}.json` e depois

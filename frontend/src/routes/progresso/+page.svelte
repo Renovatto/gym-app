@@ -431,13 +431,27 @@
 			ON_TRACK: { text: m.adaptive_on_track(), tone: 'good' },
 			TOO_SLOW: { text: m.adaptive_too_slow(), tone: 'warn' },
 			STALLED: { text: m.adaptive_stalled(), tone: 'warn' },
-			// perder rapido demais nao e neutro: sinaliza janela contaminada por agua,
-			// e e o unico codigo que tambem bloqueia adotar a meta (can_adopt=false)
+			// Os dois codigos abaixo bloqueiam adotar a meta (can_adopt=false), cada um
+			// por uma ponta: TOO_FAST acusa a balanca (agua saindo), MEASURED_BELOW_BMR
+			// acusa o diario (incompleto, gasto medido menor que o gasto em repouso).
 			TOO_FAST: { text: m.adaptive_too_fast(), tone: 'warn' },
+			MEASURED_BELOW_BMR: {
+				text: m.adaptive_below_bmr({ bmr: nf.format(adaptive.bmr_kcal) }),
+				tone: 'warn'
+			},
 			ESTIMATE_READY: { text: m.adaptive_estimate_ready(), tone: 'info' }
 		};
 		return byCode[adaptive.message_code] ?? byCode.ESTIMATE_READY;
 	});
+
+	// Por que a estimativa nao pode virar meta. Sao problemas diferentes e a acao que
+	// resolve cada um tambem e: TOO_FAST pede tempo (esperar a agua sair),
+	// MEASURED_BELOW_BMR pede diario completo.
+	const cannotAdoptReason = $derived(
+		adaptive?.message_code === 'MEASURED_BELOW_BMR'
+			? m.adaptive_cannot_adopt_below_bmr()
+			: m.adaptive_cannot_adopt()
+	);
 
 	// Meta atual ja bate com a sugerida -> a manutencao real ja foi adotada.
 	const goalAlreadyAdopted = $derived(
@@ -749,7 +763,7 @@
 				</p>
 			{:else if !adaptive.can_adopt}
 				<!-- a manutencao medida continua visivel acima, mas nao pode virar meta -->
-				<p class="mt-3 text-xs font-semibold text-amber-700">{m.adaptive_cannot_adopt()}</p>
+				<p class="mt-3 text-xs font-semibold text-amber-700">{cannotAdoptReason}</p>
 			{:else if confirmingAdoptGoal}
 				<div class="mt-3 flex items-center gap-2 rounded-2xl bg-emerald-50 p-2">
 					<span class="min-w-0 flex-1 pl-2 text-xs font-semibold text-emerald-800">{m.adaptive_adopt_confirm()}</span>

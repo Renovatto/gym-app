@@ -295,7 +295,11 @@ class AdaptiveTdeeOut(BaseModel):
     has_enough_data: bool
     span_days: int  # dias entre a primeira e a ultima pesagem analisada
     weigh_ins: int  # pesagens na janela
-    days_logged: int  # dias com diario alimentar na janela
+    days_logged: int  # dias COMPLETOS de diario usados na media
+    # Dias que tinham registro mas ficaram pela metade (so o cafe da manha lancado, por
+    # exemplo) e por isso nao entraram na media. E o numero que explica ao usuario por
+    # que a estimativa demora ou sai estranha - ver INCOMPLETE_DAY_BMR_SHARE.
+    days_discarded: int
     # Quanto falta para a estimativa ficar pronta. Vem do backend (e nao fixo no
     # frontend) para os minimos terem uma fonte unica: adaptive.py.
     min_span_days: int
@@ -304,6 +308,9 @@ class AdaptiveTdeeOut(BaseModel):
     avg_intake_kcal: int  # media diaria consumida
     weekly_change_kg: float  # variacao de peso por semana (negativo = perdendo)
     estimated_maintenance_kcal: int | None  # manutencao REAL estimada
+    # BMR (gasto em repouso). Vai junto porque e a referencia que torna a estimativa
+    # compreensivel: manutencao abaixo dele e impossivel, e e o piso da meta.
+    bmr_kcal: int
     formula_tdee_kcal: int  # manutencao ESTIMADA pela formula (para comparar)
     current_target_kcal: int  # meta atual (baseada na formula)
     suggested_target_kcal: int | None  # meta sugerida com base na manutencao real
@@ -311,7 +318,7 @@ class AdaptiveTdeeOut(BaseModel):
     # botao de adotar (mas o numero continua visivel, so que sem virar meta).
     can_adopt: bool
     # codigo traduzido no frontend: NOT_ENOUGH_DATA, ON_TRACK, TOO_SLOW, STALLED,
-    # TOO_FAST, ESTIMATE_READY
+    # TOO_FAST, MEASURED_BELOW_BMR, ESTIMATE_READY
     message_code: str
 
 
