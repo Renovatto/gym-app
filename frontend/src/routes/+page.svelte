@@ -9,6 +9,7 @@
 		type WorkoutSession
 	} from '$lib/api';
 	import { session } from '$lib/session.svelte';
+	import { news } from '$lib/news.svelte';
 	import WaterCard from '$lib/components/WaterCard.svelte';
 	import MacroSummary from '$lib/components/MacroSummary.svelte';
 	import { celebrate } from '$lib/celebration.svelte';
@@ -236,11 +237,32 @@
 	});
 </script>
 
-<header class="mb-6">
-	<h1 class="text-2xl font-bold">
-		{firstName ? m.today_greeting({ name: firstName }) : m.today_title()}
-	</h1>
-	<p class="text-slate-500">{objectiveLabel}</p>
+<header class="mb-6 flex items-start justify-between gap-3">
+	<div class="min-w-0">
+		<h1 class="text-2xl font-bold">
+			{firstName ? m.today_greeting({ name: firstName }) : m.today_title()}
+		</h1>
+		<p class="text-slate-500">{objectiveLabel}</p>
+	</div>
+	<!-- Sino: so existe quando ha novidade nao lida. Um sino permanentemente vazio vira
+	     mobilia que ninguem toca, e ainda disputa espaco com a saudacao. -->
+	{#if news.unreadCount > 0}
+		<a
+			href="/novidades"
+			aria-label={m.news_title()}
+			class="relative grid h-11 w-11 shrink-0 place-items-center rounded-full bg-slate-100 text-slate-600 active:bg-slate-200"
+		>
+			<svg viewBox="0 0 24 24" class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="2">
+				<path d="M18 8a6 6 0 10-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9" stroke-linecap="round" stroke-linejoin="round" />
+				<path d="M13.7 21a2 2 0 01-3.4 0" stroke-linecap="round" stroke-linejoin="round" />
+			</svg>
+			<span
+				class="absolute -top-0.5 -right-0.5 grid h-5 min-w-5 place-items-center rounded-full bg-emerald-600 px-1 text-[11px] font-black text-white"
+			>
+				{news.unreadCount}
+			</span>
+		</a>
+	{/if}
 </header>
 
 <!-- Surpresa de aniversario -->

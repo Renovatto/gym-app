@@ -29,6 +29,8 @@ from ..models import (
     ConnectionStatus,
     CycleTracking,
     DiaryEntry,
+    NewsItem,
+    NewsRead,
     Objective,
     PasswordResetToken,
     Profile,
@@ -40,6 +42,8 @@ from ..models import (
 from ..schemas import (
     AdminActivityPoint,
     AdminActivitySeries,
+    AdminNewsRow,
+    AdminNewsWrite,
     AdminObjectiveSlice,
     AdminOverview,
     AdminUserDetail,
@@ -422,3 +426,78 @@ def activity_series(
         for offset in range(days)
     ]
     return AdminActivitySeries(days=days, points=points)
+
+
+# --- Novidades do app ---
+#
+# Diferente do resto deste arquivo, aqui o admin ESCREVE conteudo que os usuarios veem.
+# Duas consequencias: os seis textos (titulo e corpo nos 3 idiomas) sao obrigatorios,
+# para nao existir novidade que apareca vazia para quem usa em ingles ou espanhol; e
+# despublicar existe separado de excluir, porque tirar do ar e reversivel e apagar nao.
+
+
+def _news_row(session: Session, item: NewsItem) -> AdminNewsRow:
+    read_count = session.exec(
+        select(func.count()).select_from(NewsRead).where(NewsRead.news_id == item.id)
+    ).one()
+    return AdminNewsRow(
+        id=item.id,
+        published_on=item.published_on,
+        importance=item.importance,
+        published=item.published,
+        title_pt_br=item.title_pt_br,
+        body_pt_br=item.body_pt_br,
+        title_en=item.title_en,
+        body_en=item.body_en,
+        title_es=item.title_es,
+        body_es=item.body_es,
+        created_at=item.created_at,
+        read_count=read_count,
+    )
+
+
+@router.get("/news", response_model=list[AdminNewsRow])
+def list_news(admin: AdminUser, session: SessionDep) -> list[AdminNewsRow]:
+    """Todas as novidades, publicadas ou nao. Sem paginacao: sao poucas por natureza -
+    se um dia passarem de uma centena, entra a paginacao padrao do arquivo."""
+    items = session.exec(
+        select(NewsItem).order_by(
+            col(NewsItem.published_on).desc(), col(NewsItem.id).desc()
+        )
+    ).all()
+    return [_news_row(session, item) for item in items]
+
+
+@router.post("/news", response_model=AdminNewsRow, status_code=status.HTTP_201_CREATED)
+def create_news(data: AdminNewsWrite, admin: AdminUser, session: SessionDep) -> AdminNewsRow:
+    item = NewsItem(**data.model_dump())
+    session.add(item)
+    session.commit()
+    session.refresh(item)
+    return _news_row(session, item)
+
+
+@router.put("/news/{news_id}", response_model=AdminNewsRow)
+def update_news(
+    news_id: int, data: AdminNewsWrite, admin: AdminUser, session: SessionDep
+) -> AdminNewsRow:
+    item = session.get(NewsItem, news_id)
+    if item is None:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, detail="NEWS_NOT_FOUND")
+    for campo, valor in data.model_dump().items():
+        setattr(item, campo, valor)
+    session.add(item)
+    session.commit()
+    session.refresh(item)
+    return _news_row(session, item)
+
+
+@router.delete("/news/{news_id}", status_code=status.HTTP_204_NO_CONTENT)
+def delete_news(news_id: int, admin: AdminUser, session: SessionDep) -> None:
+    """Apaga a novidade e, por cascata, as marcas de leitura dela. Irreversivel - para
+    so tirar do ar, o caminho e published=false no update."""
+    item = session.get(NewsItem, news_id)
+    if item is None:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, detail="NEWS_NOT_FOUND")
+    session.delete(item)
+    session.commit()

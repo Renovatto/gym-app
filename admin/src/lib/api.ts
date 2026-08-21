@@ -252,6 +252,25 @@ function toQuery(params: Record<string, string | number | undefined>): string {
 	return text ? `?${text}` : '';
 }
 
+// Novidade do app como o painel ve: os tres idiomas crus, sem traducao aplicada.
+// Diferente do resto do admin, aqui se ESCREVE conteudo que o usuario final le.
+export interface AdminNews {
+	id: number;
+	published_on: string;
+	importance: 'normal' | 'important';
+	published: boolean;
+	title_pt_br: string;
+	body_pt_br: string;
+	title_en: string;
+	body_en: string;
+	title_es: string;
+	body_es: string;
+	created_at: string;
+	read_count: number;
+}
+
+export type AdminNewsWrite = Omit<AdminNews, 'id' | 'created_at' | 'read_count'>;
+
 export const api = {
 	login: (email: string, password: string) =>
 		request<TokenPair>('/auth/login', {
@@ -289,5 +308,15 @@ export const api = {
 	listFeedback: () => request<FeedbackReport[]>('/me/feedback/admin'),
 
 	setFeedbackRead: (id: number, read: boolean) =>
-		request<FeedbackReport>(`/me/feedback/admin/${id}/read`, { method: 'PATCH', body: { read } })
+		request<FeedbackReport>(`/me/feedback/admin/${id}/read`, { method: 'PATCH', body: { read } }),
+
+	listNews: () => request<AdminNews[]>('/admin/news'),
+
+	createNews: (data: AdminNewsWrite) =>
+		request<AdminNews>('/admin/news', { method: 'POST', body: data }),
+
+	updateNews: (id: number, data: AdminNewsWrite) =>
+		request<AdminNews>(`/admin/news/${id}`, { method: 'PUT', body: data }),
+
+	deleteNews: (id: number) => request<void>(`/admin/news/${id}`, { method: 'DELETE' })
 };

@@ -697,3 +697,55 @@ class CycleTracking(SQLModel, table=True):
     # duracao tipica do ciclo, usada SO na estimativa por data (21-40 validado no schema)
     cycle_length_days: int = Field(default=28)
     updated_at: datetime = Field(default_factory=utcnow)
+
+
+class NewsImportance(str, Enum):
+    """Quanto uma novidade pode atrapalhar quem so queria usar o app.
+
+    A distincao existe porque interromper custa: depois de dois ou tres modais
+    seguidos a pessoa aprende a fechar sem ler, e ai o aviso nao serve nem quando
+    importa. Entao so o que muda o que o app te diz para fazer vira 'important'."""
+
+    normal = "normal"  # aparece na lista e no contador; nao interrompe
+    important = "important"  # abre a modal uma vez, na proxima abertura do app
+
+
+class NewsItem(SQLModel, table=True):
+    """Novidade do app (o que mudou, correcoes que afetam o usuario).
+
+    Titulo e corpo ficam nos tres idiomas no proprio registro. Isso foge da regra
+    geral do projeto (texto de UI vive em messages/*.json, a API devolve codigo) e o
+    motivo e simples: aqui o texto e escrito em tempo de execucao, no painel admin,
+    entao nao existe chave para o paraglide compilar. E dado, nao interface.
+
+    'published' e o controle do admin: novidade nasce publicada e pode ser tirada do ar
+    sem apagar. 'published_on' e a data que o usuario ve, separada de created_at para
+    permitir escrever hoje uma novidade datada de ontem."""
+
+    __tablename__ = "news_items"
+
+    id: int | None = Field(default=None, primary_key=True)
+    published_on: date = Field(index=True)
+    importance: NewsImportance = Field(default=NewsImportance.normal)
+    published: bool = Field(default=True, index=True)
+    title_pt_br: str
+    body_pt_br: str
+    title_en: str
+    body_en: str
+    title_es: str
+    body_es: str
+    created_at: datetime = Field(default_factory=utcnow)
+
+
+class NewsRead(SQLModel, table=True):
+    """Marca que um usuario ja viu uma novidade.
+
+    Precisa ser tabela e nao localStorage: o "ja vi" tem que atravessar troca de
+    aparelho e reinstalacao, senao a pessoa reve o mesmo aviso a cada celular novo.
+    Chave composta (user_id, news_id) para o marcar-como-lido ser idempotente."""
+
+    __tablename__ = "news_reads"
+
+    user_id: int = Field(foreign_key="users.id", primary_key=True, ondelete="CASCADE")
+    news_id: int = Field(foreign_key="news_items.id", primary_key=True, ondelete="CASCADE")
+    read_at: datetime = Field(default_factory=utcnow)

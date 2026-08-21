@@ -8,9 +8,12 @@
 	import Toast from '$lib/components/Toast.svelte';
 	import CelebrationOverlay from '$lib/components/CelebrationOverlay.svelte';
 	import TourOverlay from '$lib/components/TourOverlay.svelte';
+	import NewsModal from '$lib/components/NewsModal.svelte';
 	import { bootstrap, session } from '$lib/session.svelte';
 	import { refreshSharingPending } from '$lib/sharing.svelte';
+	import { refreshNews } from '$lib/news.svelte';
 	import { initTheme } from '$lib/theme.svelte';
+	import { tour } from '$lib/tour.svelte';
 
 	let { children } = $props();
 
@@ -34,7 +37,9 @@
 	// cronometro de descanso ja usa para se re-sincronizar.
 	$effect(() => {
 		function onVisible(): void {
-			if (document.visibilityState === 'visible' && session.user) void refreshSharingPending();
+			if (document.visibilityState !== 'visible' || !session.user) return;
+			void refreshSharingPending();
+			void refreshNews();
 		}
 		document.addEventListener('visibilitychange', onVisible);
 		return () => document.removeEventListener('visibilitychange', onVisible);
@@ -77,6 +82,13 @@
 		{#if showTabBar}
 			<FeedbackFab />
 			<TabBar />
+			<!-- Fica junto da barra de abas de proposito: assim a novidade nunca interrompe
+			     o onboarding, o login nem uma tela de foco (treino em andamento, por
+			     exemplo). E espera o tutorial terminar, para nao ter duas coisas
+			     explicando o app ao mesmo tempo. -->
+			{#if !tour.active}
+				<NewsModal />
+			{/if}
 		{/if}
 	{:else}
 		<div class="flex min-h-dvh items-center justify-center">

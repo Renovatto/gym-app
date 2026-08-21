@@ -91,6 +91,10 @@ documentadas para o usuario na area de consulta. Nao espalhe formula por varios 
   `Stepper` para qualquer entrada numerica. Toast global via `showToast`.
 - i18n: toda string de UI vira chave nos 3 arquivos `messages/{pt-br,en,es}.json` e depois
   `npx paraglide-js compile`. A API retorna codigo de erro, nunca texto pronto.
+  **Excecao unica: conteudo escrito em tempo de execucao** (novidades do app, escritas no
+  painel admin). Nao existe chave para o paraglide compilar, entao o texto mora no banco
+  nos 3 idiomas e o servidor resolve a traducao pelo `user.locale` - mesmo caminho do nome
+  de alimento. Vale so para conteudo; interface continua em `messages/*.json`.
 
 ## Antes de qualquer commit
 

@@ -19,7 +19,8 @@
 		'': { title: 'Dashboard', sub: 'Visao geral de uso, derivada do banco' },
 		usuarios: { title: 'Usuarios', sub: 'Consulta paginada no servidor' },
 		relatorios: { title: 'Relatorios', sub: 'Agregados de uso por periodo' },
-		feedbacks: { title: 'Feedbacks', sub: 'Mensagens enviadas pelo app' }
+		feedbacks: { title: 'Feedbacks', sub: 'Mensagens enviadas pelo app' },
+		novidades: { title: 'Novidades', sub: 'O que os usuarios veem no app' }
 	};
 
 	const current = $derived(page.url.pathname.replace(base, '').replace(/^\/|\/$/g, ''));
@@ -211,6 +212,27 @@
 					{#if unreadFeedback > 0}
 						<span class="nav-count is-alert mono">{unreadFeedback}</span>
 					{/if}
+				</a>
+				<a
+					class="nav-item"
+					href="{base}/novidades"
+					aria-current={isCurrent('novidades')}
+					onclick={() => (railOpen = false)}
+				>
+					<svg
+						width="17"
+						height="17"
+						viewBox="0 0 24 24"
+						fill="none"
+						stroke="currentColor"
+						stroke-width="1.9"
+						stroke-linecap="round"
+						stroke-linejoin="round"
+						><path d="M18 8a6 6 0 1 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9" /><path
+							d="M13.7 21a2 2 0 0 1-3.4 0"
+						/></svg
+					>
+					Novidades
 				</a>
 			</nav>
 

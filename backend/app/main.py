@@ -15,6 +15,7 @@ from .routers import (
     cycle,
     diet,
     feedback,
+    news,
     profile,
     sharing,
     stats,
@@ -73,6 +74,7 @@ app.include_router(account.router)
 app.include_router(supplements.router)
 app.include_router(activities.router)
 app.include_router(sharing.router)
+app.include_router(news.router)
 app.include_router(admin.router)
 
 

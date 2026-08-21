@@ -437,6 +437,25 @@ export interface AdaptiveTdee {
 	message_code: string;
 }
 
+// --- Novidades do app ---
+// O texto ja vem traduzido do servidor (o conteudo e escrito no admin em tempo de
+// execucao, entao nao passa pelo paraglide como o resto das strings de UI).
+export interface NewsItem {
+	id: number;
+	published_on: string;
+	importance: 'normal' | 'important';
+	title: string;
+	body: string;
+	read: boolean;
+}
+
+export interface NewsFeed {
+	items: NewsItem[];
+	unread_count: number;
+	// Novidade importante nao lida que deve abrir a modal; null = nao interrompe.
+	pending_important: NewsItem | null;
+}
+
 // --- Dieta ---
 export type FoodCategory =
 	| 'protein'
@@ -938,6 +957,9 @@ export const api = {
 	getAdminFeedback: () => request<FeedbackReport[]>('/me/feedback/admin'),
 	markFeedbackRead: (id: number, read: boolean) =>
 		request<FeedbackReport>(`/me/feedback/admin/${id}/read`, { method: 'PATCH', body: { read } }),
+	getNews: () => request<NewsFeed>('/me/news'),
+	markNewsRead: (id: number) =>
+		request<void>(`/me/news/${id}/read`, { method: 'POST' }),
 	updateLocale: (locale: string) =>
 		request<UserOut>('/me/locale', { method: 'PUT', body: { locale } }),
 	changePassword: (currentPassword: string, newPassword: string) =>

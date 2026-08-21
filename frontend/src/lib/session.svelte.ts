@@ -1,5 +1,6 @@
 import { api, clearTokens, getTokens, setTokens, type ProfileData, type UserOut } from './api';
 import { clearSharingPending, refreshSharingPending } from './sharing.svelte';
+import { clearNews, refreshNews } from './news.svelte';
 
 export const session = $state({
 	loaded: false,
@@ -26,6 +27,7 @@ export async function bootstrap(): Promise<void> {
 	session.loaded = true;
 	// contador do badge: so faz sentido com sessao valida, e nao pode derrubar o boot
 	if (session.user) void refreshSharingPending();
+	if (session.user) void refreshNews();
 }
 
 export async function signIn(email: string, password: string): Promise<void> {
@@ -45,4 +47,5 @@ export function signOut(): void {
 	session.user = null;
 	session.profile = null;
 	clearSharingPending();
+	clearNews();
 }

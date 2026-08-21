@@ -18,6 +18,7 @@ from .models import (
     FoodCategory,
     MealType,
     MuscleGroup,
+    NewsImportance,
     Objective,
     Plan,
     Sex,
@@ -1103,3 +1104,58 @@ class AdminActivityPoint(BaseModel):
 class AdminActivitySeries(BaseModel):
     days: int
     points: list[AdminActivityPoint]
+
+
+# --- Novidades do app ---
+
+
+class NewsItemOut(BaseModel):
+    """Uma novidade como o app do usuario ve: ja traduzida e ja sabendo se foi lida."""
+
+    id: int
+    published_on: date
+    importance: NewsImportance
+    title: str
+    body: str
+    read: bool
+
+
+class NewsFeed(BaseModel):
+    items: list[NewsItemOut]
+    # Alimenta o sino: o cabecalho so aparece quando ha nao lidas.
+    unread_count: int
+    # Novidade importante ainda nao lida que deve abrir a modal. None = nao interrompe.
+    # Vem pronta do servidor para o cliente nao ter que decidir o que e "a proxima".
+    pending_important: NewsItemOut | None = None
+
+
+class AdminNewsRow(BaseModel):
+    """Uma novidade como o painel admin ve: os tres idiomas crus, sem traducao aplicada."""
+
+    id: int
+    published_on: date
+    importance: NewsImportance
+    published: bool
+    title_pt_br: str
+    body_pt_br: str
+    title_en: str
+    body_en: str
+    title_es: str
+    body_es: str
+    created_at: datetime
+    read_count: int  # quantos usuarios ja viram
+
+
+class AdminNewsWrite(BaseModel):
+    """Criacao e edicao usam o mesmo corpo: os seis textos sao sempre obrigatorios, para
+    nao existir novidade publicada que apareca vazia em um dos idiomas."""
+
+    published_on: date
+    importance: NewsImportance = NewsImportance.normal
+    published: bool = True
+    title_pt_br: str = Field(min_length=1, max_length=120)
+    body_pt_br: str = Field(min_length=1, max_length=4000)
+    title_en: str = Field(min_length=1, max_length=120)
+    body_en: str = Field(min_length=1, max_length=4000)
+    title_es: str = Field(min_length=1, max_length=120)
+    body_es: str = Field(min_length=1, max_length=4000)
