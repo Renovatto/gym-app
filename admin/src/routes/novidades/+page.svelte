@@ -50,6 +50,13 @@
 		void carregar();
 	});
 
+	const noAr = $derived(novidades.filter((item) => item.published).length);
+	const resumo = $derived(
+		novidades.length === 0
+			? 'Nenhuma novidade criada'
+			: `${novidades.length} ${novidades.length === 1 ? 'novidade' : 'novidades'} · ${noAr} no ar`
+	);
+
 	const camposFaltando = $derived(
 		IDIOMAS.filter(
 			(idioma) => !rascunho[idioma.titulo].trim() || !rascunho[idioma.corpo].trim()
@@ -131,17 +138,12 @@
 		<div>
 			<p class="eyebrow">Novidades</p>
 			<h2 class="card-title">O que os usuarios veem no app</h2>
+			<p class="card-note">{resumo}</p>
 		</div>
 		<div class="card-head-tools">
 			<button class="btn btn-sm btn-accent" onclick={abrirNova}>Nova novidade</button>
 		</div>
 	</div>
-
-	<p class="card-note">
-		Escreva uma novidade quando a resposta a "isso muda o que o app diz para a pessoa fazer?"
-		for sim. As marcadas como <b>importante</b> abrem uma modal uma unica vez; as normais so
-		aparecem no sino.
-	</p>
 
 	{#if editandoId !== null}
 		<div class="editor">
