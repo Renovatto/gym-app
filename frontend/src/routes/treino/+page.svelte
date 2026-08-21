@@ -93,6 +93,11 @@
 		isShowingAnchor('workout-archived') && archivedRoutines.length === 0
 	);
 	const displayArchived = $derived(demoArchivedActive ? DEMO_ARCHIVED : archivedRoutines);
+
+	// Arquivadas comecam fechadas (accordion). O tutorial precisa mostrar a lista
+	// aberta quando aponta para ela, entao o passo do tour tambem abre.
+	let archivedExpanded = $state(false);
+	const archivedOpen = $derived(archivedExpanded || demoArchivedActive);
 	let sessions = $state<SessionSummary[]>([]);
 	let activeSession = $state<WorkoutSession | null>(null);
 	let periodization = $state<RoutinePeriodization[]>([]);
@@ -1237,114 +1242,127 @@
 					</button>
 				</div>
 			{:else}
-				<div class="mt-3 text-center">
-					<button
-						type="button"
-						onclick={() => (confirmingArchiveAll = true)}
-						class="text-sm font-semibold text-slate-500"
-					>
-						{m.archive_current_routines()}
-					</button>
-				</div>
+				<button
+					type="button"
+					onclick={() => (confirmingArchiveAll = true)}
+					class="mt-3 flex w-full items-center justify-center gap-2 rounded-2xl border-2 border-dashed border-slate-300 bg-white py-3 text-sm font-bold text-slate-700 active:bg-slate-50"
+				>
+					<svg viewBox="0 0 24 24" class="h-4.5 w-4.5 text-slate-500" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7h18v4H3zM5 11v9h14v-9M10 15h4" /></svg>
+					{m.archive_current_routines()}
+				</button>
 			{/if}
 		{/if}
 	{/if}
 
-	<!-- Rotinas fora do ciclo: ficam guardadas para consultar, reativar ou excluir. -->
+	<!-- Rotinas fora do ciclo: ficam guardadas para consultar, reativar ou excluir.
+	     A lista vive fechada (accordion) porque e area de consulta rara: quem tem
+	     muitas rotinas arquivadas nao quer rolar por elas toda vez que abre a tela. -->
 	{#if archivedRoutines.length > 0 || demoArchivedActive}
 		<section class="mt-6" data-tour="workout-archived">
-			<h2 class="mb-2 text-sm font-bold text-slate-500 uppercase">
+			<button
+				type="button"
+				onclick={() => (archivedExpanded = !archivedExpanded)}
+				class="flex w-full items-center gap-2 py-1 text-sm font-bold text-slate-500 uppercase active:opacity-70"
+			>
+				<svg viewBox="0 0 24 24" class="h-4 w-4 shrink-0 transition-transform {archivedOpen ? 'rotate-90' : ''}" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 6l6 6-6 6" stroke-linecap="round" stroke-linejoin="round" /></svg>
 				{m.archived_routines()} ({displayArchived.length})
-			</h2>
-			<div class="space-y-2">
-				{#each displayArchived as routine (routine.id)}
-					<div class="rounded-3xl bg-white p-4 shadow-sm">
-						<div class="flex items-start justify-between gap-2">
-							<div class="min-w-0">
-								<h3 class="truncate font-bold text-slate-900">{routine.name}</h3>
-								<p class="text-xs text-slate-500">
-									{routine.items.length}
-									{routine.items.length === 1 ? m.exercise_singular() : m.exercise_plural()}
-									{#if routine.archived_at}
-										· {m.archived_on({ date: df.format(new Date(routine.archived_at)) })}
-									{/if}
-								</p>
-							</div>
-							{#if routine.items.length > 0}
+			</button>
+			{#if archivedOpen}
+				<div class="mt-2 overflow-hidden rounded-3xl bg-white shadow-sm">
+					{#each displayArchived as routine, i (routine.id)}
+						<div class="px-4 py-3 {i > 0 ? 'border-t border-slate-100' : ''}">
+							<div class="flex items-center gap-2">
+								<div class="min-w-0 flex-1">
+									<h3 class="truncate font-semibold text-slate-900">{routine.name}</h3>
+									<p class="text-xs text-slate-500">
+										{routine.items.length}
+										{routine.items.length === 1 ? m.exercise_singular() : m.exercise_plural()}
+										{#if routine.archived_at}
+											· {m.archived_on({ date: df.format(new Date(routine.archived_at)) })}
+										{/if}
+									</p>
+								</div>
+								{#if routine.items.length > 0}
+									<button
+										type="button"
+										aria-label={m.view_workout_details()}
+										title={m.view_workout_details()}
+										onclick={() => (previewRoutine = routine)}
+										class="grid h-8 w-8 shrink-0 place-items-center rounded-full text-slate-400 active:bg-slate-100"
+									>
+										<svg viewBox="0 0 24 24" class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3" /><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7z" /></svg>
+									</button>
+								{/if}
 								<button
 									type="button"
-									aria-label={m.view_workout_details()}
-									title={m.view_workout_details()}
-									onclick={() => (previewRoutine = routine)}
-									class="grid h-9 w-9 shrink-0 place-items-center rounded-full text-slate-400 active:bg-slate-100"
+									onclick={() => {
+										confirmingDeleteArchived = null;
+										confirmingUnarchive = routine.id;
+									}}
+									class="shrink-0 rounded-xl border-2 border-emerald-200 px-3 py-1.5 text-xs font-bold text-emerald-700 active:bg-emerald-50"
 								>
-									<svg viewBox="0 0 24 24" class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3" /><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7z" /></svg>
+									{m.unarchive_routine()}
 								</button>
+								<button
+									type="button"
+									aria-label={m.delete_confirm_button()}
+									title={m.delete_confirm_button()}
+									onclick={() => {
+										confirmingUnarchive = null;
+										confirmingDeleteArchived = routine.id;
+									}}
+									class="grid h-8 w-8 shrink-0 place-items-center rounded-full text-red-500 active:bg-red-50"
+								>
+									<svg viewBox="0 0 24 24" class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M8 6V4h8v2M6 6l1 14h10l1-14" stroke-linecap="round" stroke-linejoin="round" /></svg>
+								</button>
+							</div>
+							{#if confirmingUnarchive === routine.id}
+								<p class="mt-3 rounded-xl bg-slate-100 px-4 py-3 text-sm font-medium text-slate-700">
+									{m.unarchive_routine_confirm()}
+								</p>
+								<div class="mt-2 flex gap-2">
+									<button
+										type="button"
+										onclick={() => (confirmingUnarchive = null)}
+										class="h-11 flex-1 rounded-2xl border-2 border-slate-200 font-semibold text-slate-700 active:bg-slate-100"
+									>
+										{m.cancel()}
+									</button>
+									<button
+										type="button"
+										disabled={archiveBusy}
+										onclick={() => unarchive(routine.id)}
+										class="h-11 flex-1 rounded-2xl bg-emerald-600 font-semibold text-white active:bg-emerald-700 disabled:opacity-50"
+									>
+										{m.unarchive_routine()}
+									</button>
+								</div>
+							{:else if confirmingDeleteArchived === routine.id}
+								<p class="mt-3 rounded-xl bg-red-50 px-4 py-3 text-sm font-medium text-red-700">
+									{m.confirm_delete()}
+								</p>
+								<div class="mt-2 flex gap-2">
+									<button
+										type="button"
+										onclick={() => (confirmingDeleteArchived = null)}
+										class="h-11 flex-1 rounded-2xl border-2 border-slate-200 font-semibold text-slate-700 active:bg-slate-100"
+									>
+										{m.cancel()}
+									</button>
+									<button
+										type="button"
+										disabled={archiveBusy}
+										onclick={() => deleteArchived(routine.id)}
+										class="h-11 flex-1 rounded-2xl bg-red-600 font-semibold text-white active:bg-red-700 disabled:opacity-50"
+									>
+										{m.delete_confirm_button()}
+									</button>
+								</div>
 							{/if}
 						</div>
-						{#if confirmingUnarchive === routine.id}
-							<p class="mt-3 rounded-xl bg-slate-100 px-4 py-3 text-sm font-medium text-slate-700">
-								{m.unarchive_routine_confirm()}
-							</p>
-							<div class="mt-2 flex gap-2">
-								<button
-									type="button"
-									onclick={() => (confirmingUnarchive = null)}
-									class="h-12 flex-1 rounded-2xl border-2 border-slate-200 font-semibold text-slate-700 active:bg-slate-100"
-								>
-									{m.cancel()}
-								</button>
-								<button
-									type="button"
-									disabled={archiveBusy}
-									onclick={() => unarchive(routine.id)}
-									class="h-12 flex-1 rounded-2xl bg-emerald-600 font-semibold text-white active:bg-emerald-700 disabled:opacity-50"
-								>
-									{m.unarchive_routine()}
-								</button>
-							</div>
-						{:else if confirmingDeleteArchived === routine.id}
-							<p class="mt-3 rounded-xl bg-red-50 px-4 py-3 text-sm font-medium text-red-700">
-								{m.confirm_delete()}
-							</p>
-							<div class="mt-2 flex gap-2">
-								<button
-									type="button"
-									onclick={() => (confirmingDeleteArchived = null)}
-									class="h-12 flex-1 rounded-2xl border-2 border-slate-200 font-semibold text-slate-700 active:bg-slate-100"
-								>
-									{m.cancel()}
-								</button>
-								<button
-									type="button"
-									disabled={archiveBusy}
-									onclick={() => deleteArchived(routine.id)}
-									class="h-12 flex-1 rounded-2xl bg-red-600 font-semibold text-white active:bg-red-700 disabled:opacity-50"
-								>
-									{m.delete_confirm_button()}
-								</button>
-							</div>
-						{:else}
-							<div class="mt-3 flex gap-2">
-								<button
-									type="button"
-									onclick={() => (confirmingUnarchive = routine.id)}
-									class="h-11 flex-1 rounded-2xl border-2 border-emerald-200 font-semibold text-emerald-700 active:bg-emerald-50"
-								>
-									{m.unarchive_routine()}
-								</button>
-								<button
-									type="button"
-									onclick={() => (confirmingDeleteArchived = routine.id)}
-									class="h-11 flex-1 rounded-2xl border-2 border-red-200 font-semibold text-red-600 active:bg-red-50"
-								>
-									{m.delete_confirm_button()}
-								</button>
-							</div>
-						{/if}
-					</div>
-				{/each}
-			</div>
+					{/each}
+				</div>
+			{/if}
 		</section>
 	{/if}
 

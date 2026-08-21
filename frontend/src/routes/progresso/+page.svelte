@@ -554,6 +554,15 @@
 		});
 	});
 
+	// O historico cresce sem limite (uma linha por pesagem) e a tela ficava enorme.
+	// Mostra as mais recentes e o resto so quando o usuario pedir - mesmo padrao do
+	// historico de treino.
+	const WEIGH_IN_PREVIEW = 10;
+	let historyExpanded = $state(false);
+	const visibleLogs = $derived(
+		historyExpanded ? reversedLogs : reversedLogs.slice(0, WEIGH_IN_PREVIEW)
+	);
+
 	// Formata hora local (HH:MM) a partir do timestamp da pesagem.
 	function formatClock(iso: string): string {
 		return new Date(iso).toLocaleTimeString(getLocale(), { hour: '2-digit', minute: '2-digit' });
@@ -1306,7 +1315,7 @@
 				<span class="w-4 shrink-0"></span>
 			</div>
 
-			{#each reversedLogs as { log, delta, fatDelta } (log.id)}
+			{#each visibleLogs as { log, delta, fatDelta } (log.id)}
 				<button
 					type="button"
 					onclick={() => openWeightDetail(log)}
@@ -1354,6 +1363,17 @@
 					<svg viewBox="0 0 24 24" class="h-4 w-4 shrink-0 text-slate-300" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 6l6 6-6 6" stroke-linecap="round" stroke-linejoin="round" /></svg>
 				</button>
 			{/each}
+			{#if reversedLogs.length > WEIGH_IN_PREVIEW}
+				<button
+					type="button"
+					onclick={() => (historyExpanded = !historyExpanded)}
+					class="w-full border-t border-slate-100 py-3 text-sm font-bold text-emerald-700 active:bg-slate-50"
+				>
+					{historyExpanded
+						? m.show_less()
+						: m.show_more_count({ count: reversedLogs.length - WEIGH_IN_PREVIEW })}
+				</button>
+			{/if}
 		</section>
 	{/if}
 {:else}
