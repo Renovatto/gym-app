@@ -26,6 +26,7 @@
 	import SkeletonScreen from '$lib/components/SkeletonScreen.svelte';
 	import { m } from '$lib/paraglide/messages';
 	import { getLocale } from '$lib/paraglide/runtime';
+	import { isShowingAnchor } from '$lib/tour.svelte';
 
 	let history = $state<WeightHistory | null>(null);
 
@@ -40,6 +41,72 @@
 		bodyPanel && bodyPanel.fat_percentage !== null
 			? { ...bodyPanel, fat_percentage: bodyPanel.fat_percentage }
 			: null
+	);
+
+	// Faixas de referencia (ACE) espelhando backend/app/services/body_composition.py -
+	// usadas so para montar o exemplo abaixo, sem chamar a API.
+	const DEMO_BANDS_MALE: BodyFatBand[] = [
+		{ key: 'essential', from_pct: 2, to_pct: 6 },
+		{ key: 'athlete', from_pct: 6, to_pct: 14 },
+		{ key: 'fitness', from_pct: 14, to_pct: 18 },
+		{ key: 'acceptable', from_pct: 18, to_pct: 25 },
+		{ key: 'high', from_pct: 25, to_pct: 40 }
+	];
+	const DEMO_BANDS_FEMALE: BodyFatBand[] = [
+		{ key: 'essential', from_pct: 10, to_pct: 14 },
+		{ key: 'athlete', from_pct: 14, to_pct: 21 },
+		{ key: 'fitness', from_pct: 21, to_pct: 25 },
+		{ key: 'acceptable', from_pct: 25, to_pct: 32 },
+		{ key: 'high', from_pct: 32, to_pct: 45 }
+	];
+
+	// Exemplo de composicao corporal, usado so durante o passo do tutorial que
+	// aponta para "Composicao corporal" - quando a conta e nova e nunca recebeu
+	// uma pesagem com bioimpedancia, mostra a tela de verdade preenchida com uma
+	// leitura tipica (faixa "aceitavel"), em vez de ficar vazia.
+	function demoBodyPanel(): BodyCompositionPanel & { fat_percentage: number } {
+		const female = session.profile?.sex === 'female';
+		const weight = session.profile?.weight_kg ?? 78;
+		const fat = female ? 27 : 19.5;
+		const fatMass = Math.round(weight * (fat / 100) * 10) / 10;
+		return {
+			measured_at: new Date().toISOString(),
+			weight_kg: weight,
+			fat_percentage: fat,
+			fat_mass_kg: fatMass,
+			lean_mass_kg: Math.round((weight - fatMass) * 10) / 10,
+			visceral_fat_index: female ? 6 : 8,
+			water_percentage: female ? 52 : 58,
+			bands: female ? DEMO_BANDS_FEMALE : DEMO_BANDS_MALE,
+			band_key: 'acceptable',
+			gauge_min: female ? 12 : 5,
+			gauge_max: female ? 42 : 35,
+			trend_days: null,
+			fat_percentage_delta: null,
+			lean_mass_delta_kg: null,
+			target_fat_percentage: null,
+			target_weight_min_kg: null,
+			target_weight_max_kg: null,
+			fat_source: 'scale',
+			fat_percentage_scale: fat,
+			fat_percentage_tape: null,
+			source_preference: 'auto',
+			waist_cm: null,
+			neck_cm: null,
+			hip_cm: null,
+			arm_cm: null,
+			thigh_cm: null,
+			chest_cm: null,
+			waist_risk: null,
+			waist_risk_increased_cm: null,
+			waist_risk_high_cm: null,
+			waist_delta_cm: null,
+			arm_delta_cm: null,
+			thigh_delta_cm: null
+		};
+	}
+	const displayBodyReading = $derived(
+		bodyReading === null && isShowingAnchor('progress-body') ? demoBodyPanel() : bodyReading
 	);
 	// Tons da faixa de risco da cintura. Verde nao e "parabens", e "dentro da faixa":
 	// a mensagem ao lado e que dá o sentido, a cor so orienta o olho.
@@ -519,7 +586,7 @@
 {/if}
 
 {#if week}
-	<section class="mb-4 rounded-3xl bg-white p-5 shadow-sm">
+	<section class="mb-4 rounded-3xl bg-white p-5 shadow-sm" data-tour="progress-week">
 		<p class="mb-3 text-sm font-bold text-slate-400 uppercase">{m.this_week()}</p>
 
 		<!-- Dias em movimento como numero principal: para quem nao e atleta, constancia
@@ -618,7 +685,7 @@
 {/if}
 
 {#if dietOn && adaptive}
-	<section class="mb-4 rounded-3xl bg-white p-5 shadow-sm">
+	<section class="mb-4 rounded-3xl bg-white p-5 shadow-sm" data-tour="progress-adaptive">
 		<p class="mb-1 text-sm font-bold text-slate-400 uppercase">{m.adaptive_title()}</p>
 		{#if !adaptive.has_enough_data}
 			<p class="text-sm text-slate-500">{m.adaptive_need_data()}</p>
@@ -718,7 +785,7 @@
 {/if}
 
 {#if history}
-	<section class="rounded-3xl bg-white p-6 shadow-sm">
+	<section class="rounded-3xl bg-white p-6 shadow-sm" data-tour="progress-weight">
 		<div class="flex items-end justify-between">
 			<div>
 				<p class="text-sm font-semibold text-slate-500">{m.current_weight()}</p>
@@ -753,9 +820,9 @@
 		 massa magra ganha tendencia (onde a bioimpedancia acerta) e visceral/agua
 		 viram apoio. Antes eram quatro numeros soltos sem nenhuma regua - a tela nao
 		 respondia a unica pergunta que a pessoa tem ao abrir ("isso e bom ou ruim?"). -->
-	{#if bodyReading}
-		{@const panel = bodyReading}
-		<section class="mt-3 rounded-3xl bg-white p-5 shadow-sm">
+	{#if displayBodyReading}
+		{@const panel = displayBodyReading}
+		<section class="mt-3 rounded-3xl bg-white p-5 shadow-sm" data-tour="progress-body">
 			<p class="mb-3 text-sm font-bold text-slate-400 uppercase">{m.body_composition()}</p>
 
 			<div class="mb-3 flex items-end justify-between gap-3">
@@ -1208,6 +1275,7 @@
 
 	<button
 		type="button"
+		data-tour="progress-log"
 		onclick={() => (adding = true)}
 		class="mt-3 h-14 w-full rounded-2xl bg-emerald-600 text-lg font-bold text-white active:bg-emerald-700"
 	>

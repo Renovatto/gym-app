@@ -302,10 +302,12 @@
 {#if goals}
 	{#if dietOn}
 		{#if diary}
-			<MacroSummary totals={diary.totals} goals={diary.goals} addHref="/dieta/adicionar?meal=snack" />
+			<div data-tour="home-calories">
+				<MacroSummary totals={diary.totals} goals={diary.goals} addHref="/dieta/adicionar?meal=snack" />
+			</div>
 		{/if}
 	{:else}
-		<section class="rounded-3xl bg-white p-6 shadow-sm">
+		<section class="rounded-3xl bg-white p-6 shadow-sm" data-tour="home-calories">
 			<p class="text-sm font-semibold text-slate-500">{m.daily_target()}</p>
 			<p class="mt-1 text-5xl font-black tracking-tight">
 				{nf.format(goals.target_kcal)}
@@ -328,7 +330,7 @@
 		</section>
 	{/if}
 
-	<div class="mt-3">
+	<div class="mt-3" data-tour="home-water">
 		<WaterCard />
 	</div>
 
@@ -359,7 +361,7 @@
 		<svg viewBox="0 0 24 24" class="h-5 w-5 {activeSession ? 'text-emerald-200' : 'text-slate-300'}" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 6l6 6-6 6" stroke-linecap="round" stroke-linejoin="round" /></svg>
 	</a>
 
-	<section class="mt-3 rounded-3xl border-2 bg-white p-4 shadow-sm {bmiBorderClass}">
+	<section class="mt-3 rounded-3xl border-2 bg-white p-4 shadow-sm {bmiBorderClass}" data-tour="home-numbers">
 		<div class="flex items-center justify-between">
 			<p class="text-xs font-semibold text-slate-500">{m.bmi()}</p>
 			<button

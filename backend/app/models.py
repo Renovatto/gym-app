@@ -1,6 +1,8 @@
 from datetime import date, datetime, timezone
 from enum import Enum
 
+from sqlalchemy import Column
+from sqlalchemy.types import JSON
 from sqlmodel import Field, Relationship, SQLModel
 
 
@@ -120,6 +122,16 @@ class Profile(SQLModel, table=True):
     # Existe porque quem nao tem balanca de bioimpedancia so tem a fita - e ate agora o
     # painel inteiro dependia da balanca e ficava vazio para essas pessoas.
     body_comp_source: str = Field(default="auto")
+    # Tutorial guiado (os baloes que apontam onde fica cada coisa na primeira visita
+    # de cada aba). Mora aqui, e nao numa tabela propria, porque e preferencia de uso
+    # como diet_enabled - e assim ja chega no bootstrap, sem request extra.
+    tutorial_enabled: bool = Field(default=True)
+    # Passos ja vistos por aba: {"home": 5, "workout": 2}. Um tour so reaparece
+    # enquanto vistos < total de passos daquele tour; passo novo acrescentado depois
+    # aparece sozinho, sem repetir o que a pessoa ja viu.
+    tutorial_progress: dict[str, int] = Field(
+        default_factory=dict, sa_column=Column(JSON, nullable=False, server_default="{}")
+    )
 
     user: User = Relationship(back_populates="profile")
 

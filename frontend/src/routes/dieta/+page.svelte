@@ -8,6 +8,7 @@
 		type DiaryEntry,
 		type DiaryGap,
 		type FoodSuggestion,
+		type MealGroup,
 		type MealPlan,
 		type MealPlanMeal,
 		type MealType,
@@ -36,6 +37,7 @@
 	import SkeletonScreen from '$lib/components/SkeletonScreen.svelte';
 	import { m } from '$lib/paraglide/messages';
 	import { getLocale } from '$lib/paraglide/runtime';
+	import { isShowingAnchor } from '$lib/tour.svelte';
 
 	let diary = $state<DiaryDay | null>(null);
 	let loading = $state(true);
@@ -405,8 +407,46 @@
 		showToast(m.day_copied());
 	}
 
+	// Exemplo de refeicoes preenchidas, usado so durante o passo do tutorial que
+	// aponta para "Suas refeicoes" - quando a conta e nova e nao tem nada lancado
+	// ainda, mostra o card de verdade com um dia tipico, em vez de ficar vazio.
+	// Ids negativos: nunca colidem com um DiaryEntry real (que vem do banco).
+	const DEMO_MEALS: Partial<Record<MealType, MealGroup>> = {
+		breakfast: {
+			meal_type: 'breakfast',
+			entries: [
+				{
+					id: -1,
+					meal_type: 'breakfast',
+					source: 'food',
+					food_id: null,
+					recipe_id: null,
+					name: 'Pão integral, 2 fatias',
+					quantity: 50,
+					grams: 50,
+					macros: { kcal: 130, protein_g: 5, carbs_g: 24, fat_g: 2 }
+				},
+				{
+					id: -2,
+					meal_type: 'breakfast',
+					source: 'food',
+					food_id: null,
+					recipe_id: null,
+					name: 'Ovos mexidos, 2 unidades',
+					quantity: 100,
+					grams: 100,
+					macros: { kcal: 150, protein_g: 13, carbs_g: 1, fat_g: 11 }
+				}
+			],
+			subtotal: { kcal: 280, protein_g: 18, carbs_g: 25, fat_g: 13 }
+		}
+	};
 	function mealGroup(meal: MealType) {
-		return diary?.meals.find((g) => g.meal_type === meal);
+		const real = realMealGroup(meal);
+		// grupo real com entries vazio nao vale: e o mesmo "sem nada lancado" que o
+		// exemplo existe para preencher, entao o exemplo tem prioridade aqui.
+		if (real && real.entries.length > 0) return real;
+		return demoMealsActive ? DEMO_MEALS[meal] : real;
 	}
 
 	// --- Refeicoes compactas ---
@@ -514,12 +554,41 @@
 	// acordeao: uma refeicao expandida por vez
 	let openMeal = $state<MealType | null>(null);
 
+	// So a busca real, sem o exemplo - existe para materializedMeals nao formar
+	// ciclo (materializedMeals -> mealHasEntries -> mealGroup -> demoMealsActive
+	// -> materializedMeals seria auto-referencia).
+	function realMealGroup(meal: MealType) {
+		return diary?.meals.find((g) => g.meal_type === meal);
+	}
 	function mealHasEntries(meal: MealType): boolean {
-		const group = mealGroup(meal);
+		const group = realMealGroup(meal);
 		return !!group && group.entries.length > 0;
 	}
 	const materializedMeals = $derived(
 		mealOrder.filter((meal) => dayMeals.added.includes(meal) || mealHasEntries(meal))
+	);
+	// "Suas refeicoes" preenche com exemplo (cafe da manha com itens) so quando nao
+	// ha NENHUMA refeicao materializada ainda.
+	const demoMealsActive = $derived(
+		isShowingAnchor('diet-meals') && materializedMeals.length === 0
+	);
+	// "Comeu igual ontem?": precisa de uma refeicao aberta e vazia (o botao de
+	// repetir so existe nesse estado). Prioriza uma refeicao ja materializada sem
+	// lancamento - existe em qualquer conta que tenha alguma refeicao adicionada
+	// mas ainda vazia, nao so em conta zerada. So cai no cafe da manha de exemplo
+	// quando NENHUMA refeicao foi materializada ainda.
+	const repeatMealTarget = $derived.by((): MealType | null => {
+		if (!isShowingAnchor('diet-repeat-meal')) return null;
+		const emptyReal = materializedMeals.find((meal) => !mealHasEntries(meal));
+		if (emptyReal) return emptyReal;
+		return materializedMeals.length === 0 ? 'breakfast' : null;
+	});
+	const displayMeals = $derived(
+		demoMealsActive
+			? (['breakfast', 'lunch', 'dinner'] as MealType[])
+			: repeatMealTarget && !materializedMeals.includes(repeatMealTarget)
+				? [repeatMealTarget, ...materializedMeals]
+				: materializedMeals
 	);
 	const miniPrincipals = $derived(
 		PRINCIPAL_MEALS.filter((meal) => !materializedMeals.includes(meal))
@@ -935,7 +1004,9 @@
 {#if loading}
 	<SkeletonScreen hero cards={4} cardLines={1} />
 {:else if diary}
-	<MacroSummary totals={diary.totals} goals={diary.goals} />
+	<div data-tour="diet-goals">
+		<MacroSummary totals={diary.totals} goals={diary.goals} />
+	</div>
 
 	<!-- Ciclo menstrual (opt-in): a borda gradiente viva marca o card sem invadir o
 		 resto da tela. So existe com o acompanhamento ligado, e a informacao nunca
@@ -1133,7 +1204,7 @@
 
 	<!-- inicio do dia: mini-cards das refeicoes principais + "Outros" fixo -->
 	{#if miniPrincipals.length > 0 || chooserExtras.length > 0}
-		<div class="mt-4 flex gap-2">
+		<div class="mt-4 flex gap-2" data-tour="diet-meal-start">
 			{#each miniPrincipals as meal (meal)}
 				{@const plan = mealPlanFor(meal)}
 				<button
@@ -1215,11 +1286,11 @@
 		</div>
 	{/if}
 
-	<div class="mt-3 space-y-3">
-		{#each materializedMeals as meal, index (meal)}
+	<div class="mt-3 space-y-3" data-tour="diet-meals">
+		{#each displayMeals as meal, index (meal)}
 			{@const group = mealGroup(meal)}
 			{@const plan = mealPlanFor(meal)}
-			{@const isOpen = openMeal === meal}
+			{@const isOpen = demoMealsActive ? meal === 'breakfast' : repeatMealTarget ? meal === repeatMealTarget : openMeal === meal}
 			{#if isDropTarget(index)}
 				<div class="h-1 rounded-full bg-emerald-500"></div>
 			{/if}
@@ -1407,6 +1478,7 @@
 						{#if !group || group.entries.length === 0}
 							<button
 								type="button"
+								data-tour="diet-repeat-meal"
 								aria-label={m.repeat_meal()}
 								title={m.repeat_meal()}
 								onclick={() => (confirmingRepeatMeal = meal)}
@@ -1438,7 +1510,7 @@
 	</div>
 
 	{#if supplements && supplements.total > 0}
-		<section class="mt-4 rounded-3xl bg-white p-4 shadow-sm">
+		<section class="mt-4 rounded-3xl bg-white p-4 shadow-sm" data-tour="diet-supplements">
 			<div class="mb-3 flex items-center justify-between gap-2">
 				<div>
 					<h2 class="font-bold text-slate-900">{m.supplements_title()}</h2>
@@ -1481,7 +1553,7 @@
 			</div>
 		</section>
 	{:else if !loading}
-		<section class="mt-4 rounded-3xl bg-white p-4 shadow-sm">
+		<section class="mt-4 rounded-3xl bg-white p-4 shadow-sm" data-tour="diet-supplements">
 			<h2 class="font-bold text-slate-900">{m.supplements_title()}</h2>
 			<p class="mt-1 text-xs text-slate-500">{m.supp_empty_hint()}</p>
 			<button
@@ -1518,6 +1590,7 @@
 		{:else}
 			<button
 				type="button"
+				data-tour="diet-repeat-day"
 				onclick={() => (confirmingRepeatDay = true)}
 				class="mt-4 flex h-12 w-full items-center justify-center gap-2 rounded-2xl border-2 border-slate-200 bg-white font-semibold text-slate-700 active:bg-slate-100"
 			>
@@ -1529,6 +1602,7 @@
 
 	<a
 		href="/dieta/receitas"
+		data-tour="diet-foods-recipes"
 		class="mt-3 flex h-12 w-full items-center justify-center rounded-2xl border-2 border-slate-200 bg-white font-semibold text-slate-700 active:bg-slate-100"
 	>
 		{m.foods_and_recipes()}

@@ -10,6 +10,8 @@ from ..schemas import (
     PasswordChange,
     ProfileIn,
     ProfileOut,
+    TutorialIn,
+    TutorialOut,
     UserOut,
 )
 from ..security import hash_password, verify_password
@@ -97,6 +99,8 @@ def get_profile(user: CurrentUser, session: SessionDep) -> ProfileOut:
         cut_intensity=profile.cut_intensity,
         diet_enabled=profile.diet_enabled,
         scale_mac=profile.scale_mac,
+        tutorial_enabled=profile.tutorial_enabled,
+        tutorial_progress=profile.tutorial_progress,
     )
 
 
@@ -117,6 +121,22 @@ def upsert_profile(data: ProfileIn, user: CurrentUser, session: SessionDep) -> P
         )
     session.commit()
     return get_profile(user, session)
+
+
+@router.put("/tutorial", response_model=TutorialOut)
+def save_tutorial(data: TutorialIn, user: CurrentUser, session: SessionDep) -> TutorialOut:
+    """Upsert do estado do tutorial guiado.
+
+    Endpoint separado do PUT /me/profile de proposito: o tutorial e escrito o tempo
+    todo (a cada passo que a pessoa avanca) e o perfil so quando ela toca em Salvar.
+    """
+    profile = _get_profile(session, user.id)
+    profile.tutorial_enabled = data.enabled
+    profile.tutorial_progress = data.progress
+    session.add(profile)
+    session.commit()
+    session.refresh(profile)
+    return TutorialOut(enabled=profile.tutorial_enabled, progress=profile.tutorial_progress)
 
 
 @router.get("/goals", response_model=GoalsOut)

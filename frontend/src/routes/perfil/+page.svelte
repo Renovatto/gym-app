@@ -20,6 +20,7 @@
 	import { titleIcon, titleName } from '$lib/titleContent';
 	import { triggerAchievementCelebrations } from '$lib/celebrationTrigger';
 	import { m } from '$lib/paraglide/messages';
+	import { restartTutorial, setTutorialEnabled } from '$lib/tour.svelte';
 	import { getLocale, setLocale, type Locale } from '$lib/paraglide/runtime';
 	import { setTheme, theme, type ThemePref } from '$lib/theme.svelte';
 	import { errorMessage, toBackendLocale } from '$lib/errors';
@@ -264,6 +265,40 @@
 			showToast(errorMessage(e instanceof ApiError ? e.code : 'GENERIC_ERROR'));
 		}
 	}
+
+	// --- Tutorial guiado ------------------------------------------------------
+	let tutorialChoice = $state<'yes' | 'no'>('yes');
+	let confirmingRestart = $state(false);
+
+	// O chip acompanha o perfil: religar em outro lugar reflete aqui.
+	$effect(() => {
+		tutorialChoice = session.profile?.tutorial_enabled ? 'yes' : 'no';
+	});
+
+	async function toggleTutorial(v: string): Promise<void> {
+		const enabled = v === 'yes';
+		if (session.profile?.tutorial_enabled === enabled) return;
+		// liga/desliga e leve e reversivel em 1 toque: sem confirmacao, com toast
+		try {
+			await setTutorialEnabled(enabled);
+			confirmingRestart = false;
+			showToast(enabled ? m.tour_enabled_toast() : m.tour_disabled_toast());
+		} catch (e) {
+			// o chip troca antes da chamada: uma falha deixaria a tela mentindo
+			tutorialChoice = enabled ? 'no' : 'yes';
+			showToast(errorMessage(e instanceof ApiError ? e.code : 'GENERIC_ERROR'));
+		}
+	}
+
+	async function confirmRestartTutorial(): Promise<void> {
+		try {
+			await restartTutorial();
+			confirmingRestart = false;
+			showToast(m.tour_restarted_toast());
+		} catch (e) {
+			showToast(errorMessage(e instanceof ApiError ? e.code : 'GENERIC_ERROR'));
+		}
+	}
 </script>
 
 <h1 class="mb-4 text-2xl font-bold">{m.tab_profile()}</h1>
@@ -271,6 +306,7 @@
 {#if achievements}
 	<a
 		href="/conquistas"
+		data-tour="profile-achievements"
 		class="mb-4 flex items-center gap-3 rounded-3xl bg-white p-4 shadow-sm active:bg-slate-50"
 	>
 		<span class="grid h-12 w-12 shrink-0 place-items-center rounded-2xl bg-emerald-50 text-2xl">
@@ -295,6 +331,7 @@
 
 <a
 	href="/perfil/conexoes"
+	data-tour="profile-sharing"
 	class="mb-3 flex items-center justify-between rounded-3xl bg-white p-4 shadow-sm active:bg-slate-50"
 >
 	<div class="flex items-center gap-3">
@@ -317,6 +354,7 @@
 
 <a
 	href="/guia"
+	data-tour="profile-guide"
 	class="mb-4 flex items-center justify-between rounded-3xl bg-white p-4 shadow-sm active:bg-slate-50"
 >
 	<div class="flex items-center gap-3">
@@ -567,7 +605,7 @@
 	</section>
 
 	<!-- PREFERENCIAS -->
-	<section class="overflow-hidden rounded-3xl bg-white shadow-sm">
+	<section class="overflow-hidden rounded-3xl bg-white shadow-sm" data-tour="profile-preferences">
 		{@render groupHeader('preferences', m.section_preferences())}
 		{#if openGroups.preferences}
 			<div class="space-y-5 px-5 pb-5">
@@ -619,6 +657,54 @@
 						{/if}
 					</div>
 				{/if}
+				<!-- Tutorial guiado: os baloes que apontam onde fica cada coisa na
+					 primeira visita de cada aba. -->
+				<div class="border-t border-slate-100 pt-5">
+					<p class="mb-1 font-semibold text-slate-600">{m.tour_optin_label()}</p>
+					<p class="mb-3 text-xs text-slate-400">{m.tour_optin_hint()}</p>
+					<ChoiceChips
+						columns={2}
+						bind:value={tutorialChoice}
+						onselect={toggleTutorial}
+						options={[
+							{ value: 'yes', label: m.yes() },
+							{ value: 'no', label: m.later() }
+						]}
+					/>
+					{#if tutorialChoice === 'yes'}
+						<!-- Refazer traz os baloes de volta no app inteiro: acao de impacto,
+							 entao confirma antes, como as exclusoes. -->
+						{#if confirmingRestart}
+							<p class="mt-4 rounded-xl bg-slate-50 px-4 py-3 text-sm font-medium text-slate-600">
+								{m.tour_restart_confirm()}
+							</p>
+							<div class="mt-2 flex gap-2">
+								<button
+									type="button"
+									onclick={() => (confirmingRestart = false)}
+									class="h-12 flex-1 rounded-2xl border-2 border-slate-200 font-semibold text-slate-700"
+								>
+									{m.cancel()}
+								</button>
+								<button
+									type="button"
+									onclick={confirmRestartTutorial}
+									class="h-12 flex-1 rounded-2xl bg-emerald-600 font-semibold text-white active:bg-emerald-700"
+								>
+									{m.confirm()}
+								</button>
+							</div>
+						{:else}
+							<button
+								type="button"
+								onclick={() => (confirmingRestart = true)}
+								class="mt-4 h-12 w-full rounded-2xl border-2 border-slate-200 font-semibold text-slate-700 active:bg-slate-100"
+							>
+								{m.tour_restart_cta()}
+							</button>
+						{/if}
+					{/if}
+				</div>
 			</div>
 		{/if}
 	</section>

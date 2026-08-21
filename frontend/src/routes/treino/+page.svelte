@@ -22,6 +22,7 @@
 	import SkeletonScreen from '$lib/components/SkeletonScreen.svelte';
 	import { m } from '$lib/paraglide/messages';
 	import { getLocale } from '$lib/paraglide/runtime';
+	import { isShowingAnchor } from '$lib/tour.svelte';
 
 	let showCalendar = $state(false);
 	// visualizacao (somente leitura) do dia selecionado no calendario: treino de
@@ -75,6 +76,23 @@
 	let allRoutines = $state<Routine[]>([]);
 	const routines = $derived(allRoutines.filter((r) => !r.archived_at));
 	const archivedRoutines = $derived(allRoutines.filter((r) => r.archived_at));
+
+	// Exemplo de rotina arquivada, so durante o passo do tutorial que aponta para
+	// "Arquivadas" - quando a conta e nova e nunca arquivou nada, mostra a secao de
+	// verdade com um exemplo, em vez de a secao inteira desaparecer da tela.
+	const DEMO_ARCHIVED = [
+		{
+			id: -1,
+			name: m.tour_demo_archived_routine_name(),
+			position: 0,
+			items: [1, 2, 3, 4] as unknown as Routine['items'],
+			archived_at: new Date(Date.now() - 30 * 86400000).toISOString()
+		}
+	] as unknown as Routine[];
+	const demoArchivedActive = $derived(
+		isShowingAnchor('workout-archived') && archivedRoutines.length === 0
+	);
+	const displayArchived = $derived(demoArchivedActive ? DEMO_ARCHIVED : archivedRoutines);
 	let sessions = $state<SessionSummary[]>([]);
 	let activeSession = $state<WorkoutSession | null>(null);
 	let periodization = $state<RoutinePeriodization[]>([]);
@@ -353,6 +371,32 @@
 
 	const finishedSessions = $derived(sessions.filter((s) => s.finished_at));
 
+	// Exemplo de historico, so durante o passo do tutorial que aponta para
+	// "Historico" - mesma ideia do exemplo de rotina arquivada, acima.
+	const DEMO_HISTORY = [
+		{
+			id: -1,
+			routine_id: null,
+			routine_name: m.tour_demo_history_routine_a(),
+			started_at: new Date(Date.now() - 2 * 86400000).toISOString(),
+			finished_at: new Date(Date.now() - 2 * 86400000 + 3000000).toISOString(),
+			total_sets: 18,
+			total_volume_kg: 2140
+		},
+		{
+			id: -2,
+			routine_id: null,
+			routine_name: m.tour_demo_history_routine_b(),
+			started_at: new Date(Date.now() - 4 * 86400000).toISOString(),
+			finished_at: new Date(Date.now() - 4 * 86400000 + 2700000).toISOString(),
+			total_sets: 15,
+			total_volume_kg: 1860
+		}
+	] as unknown as SessionSummary[];
+	const demoHistoryActive = $derived(
+		isShowingAnchor('workout-history') && finishedSessions.length === 0
+	);
+
 	// --- Proximo treino do ciclo ------------------------------------------
 	// A ordem das rotinas na tela E o ciclo (A -> B -> C -> A). O proximo e a rotina
 	// seguinte a do ultimo treino concluido. Treino livre e atividade avulsa nao
@@ -423,7 +467,11 @@
 	const HISTORY_PREVIEW = 8;
 	let historyExpanded = $state(false);
 	const visibleHistory = $derived(
-		historyExpanded ? finishedSessions : finishedSessions.slice(0, HISTORY_PREVIEW)
+		demoHistoryActive
+			? DEMO_HISTORY
+			: historyExpanded
+				? finishedSessions
+				: finishedSessions.slice(0, HISTORY_PREVIEW)
 	);
 
 	// dias com treino concluido, marcados no calendario (visualizacao do historico)
@@ -437,6 +485,7 @@
 	<div class="flex items-center gap-2">
 		<button
 			type="button"
+			data-tour="workout-calendar"
 			aria-label={m.workout_calendar()}
 			title={m.workout_calendar()}
 			onclick={() => (showCalendar = true)}
@@ -446,6 +495,7 @@
 		</button>
 		<a
 			href="/treino/catalogo"
+			data-tour="workout-catalog"
 			class="rounded-full bg-white px-4 py-2 text-sm font-semibold text-emerald-700 shadow-sm"
 		>
 			{m.exercise_catalog()}
@@ -460,6 +510,7 @@
 	 do historico de treino. -->
 <button
 	type="button"
+	data-tour="workout-activity"
 	onclick={() => (showLogActivity = true)}
 	class="mb-4 flex w-full items-center justify-center gap-2 rounded-2xl border-2 border-dashed border-slate-300 bg-white py-3 text-sm font-bold text-slate-700 active:bg-slate-50"
 >
@@ -844,7 +895,7 @@
 		</section>
 	{/if}
 	{#if routines.length === 0}
-		{@render templatePicker()}
+		<div data-tour="workout-create">{@render templatePicker()}</div>
 		<div class="mt-3 text-center">
 			<a href="/treino/rotina/nova" class="text-sm font-semibold text-emerald-700">
 				{m.create_routine_manual()}
@@ -1078,7 +1129,10 @@
 				lastFinishedWithRoutine?.routine_id != null
 					? recencyLabel(lastFinishedWithRoutine.routine_id)
 					: null}
-			<section class="relative mb-3 rounded-3xl border-2 border-emerald-500 bg-white p-5 shadow-sm">
+			<section
+				data-tour="workout-next"
+				class="relative mb-3 rounded-3xl border-2 border-emerald-500 bg-white p-5 shadow-sm"
+			>
 				<span class="absolute -top-3 left-4 rounded-full bg-emerald-600 px-2.5 py-1 text-[10px] font-black tracking-wider text-white uppercase">
 					{m.next_workout_badge()}
 				</span>
@@ -1151,6 +1205,7 @@
 
 		<button
 			type="button"
+			data-tour="workout-create"
 			onclick={() => (addWorkoutStep = 'choose')}
 			class="mt-3 flex h-12 w-full items-center justify-center rounded-2xl border-2 border-slate-200 bg-white font-semibold text-slate-700 active:bg-slate-100"
 		>
@@ -1196,13 +1251,13 @@
 	{/if}
 
 	<!-- Rotinas fora do ciclo: ficam guardadas para consultar, reativar ou excluir. -->
-	{#if archivedRoutines.length > 0}
-		<section class="mt-6">
+	{#if archivedRoutines.length > 0 || demoArchivedActive}
+		<section class="mt-6" data-tour="workout-archived">
 			<h2 class="mb-2 text-sm font-bold text-slate-500 uppercase">
-				{m.archived_routines()} ({archivedRoutines.length})
+				{m.archived_routines()} ({displayArchived.length})
 			</h2>
 			<div class="space-y-2">
-				{#each archivedRoutines as routine (routine.id)}
+				{#each displayArchived as routine (routine.id)}
 					<div class="rounded-3xl bg-white p-4 shadow-sm">
 						<div class="flex items-start justify-between gap-2">
 							<div class="min-w-0">
@@ -1293,8 +1348,8 @@
 		</section>
 	{/if}
 
-	{#if finishedSessions.length > 0}
-		<section class="mt-6">
+	{#if finishedSessions.length > 0 || demoHistoryActive}
+		<section class="mt-6" data-tour="workout-history">
 			<h2 class="mb-2 text-sm font-bold text-slate-500 uppercase">{m.workout_history()}</h2>
 			<div class="overflow-hidden rounded-3xl bg-white shadow-sm">
 				{#each visibleHistory as session, i (session.id)}

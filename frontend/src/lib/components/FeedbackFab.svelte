@@ -98,6 +98,7 @@
 {#if ready}
 	<button
 		type="button"
+		data-tour="feedback-fab"
 		aria-label={m.feedback_open()}
 		title={m.feedback_open()}
 		style="left: {left}px; top: {top}px; width: {SIZE}px; height: {SIZE}px;"

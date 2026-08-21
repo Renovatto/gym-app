@@ -76,6 +76,21 @@ export interface ProfileData {
 	cut_intensity: CutIntensity;
 	diet_enabled: boolean;
 	scale_mac: string | null;
+	// Estado do tutorial guiado. So chega na leitura do perfil; quem escreve e o
+	// PUT /me/tutorial, para o formulario "Meus dados" nao apagar o progresso.
+	tutorial_enabled: boolean;
+	tutorial_progress: Record<string, number>;
+}
+
+// O que o formulario "Meus dados" manda: o perfil sem os campos que ele nao edita.
+export type ProfileInput = Omit<
+	ProfileData,
+	'weight_kg' | 'tutorial_enabled' | 'tutorial_progress'
+> & { weight_kg: number };
+
+export interface TutorialState {
+	enabled: boolean;
+	progress: Record<string, number>;
 }
 
 export type BmiCategory = 'underweight' | 'normal' | 'overweight' | 'obese_1' | 'obese_2' | 'obese_3';
@@ -929,8 +944,10 @@ export const api = {
 	changeEmail: (newEmail: string) =>
 		request<UserOut>('/me/email', { method: 'PUT', body: { new_email: newEmail } }),
 	getProfile: () => request<ProfileData>('/me/profile'),
-	saveProfile: (profile: Omit<ProfileData, 'weight_kg'> & { weight_kg: number }) =>
+	saveProfile: (profile: ProfileInput) =>
 		request<ProfileData>('/me/profile', { method: 'PUT', body: profile }),
+	saveTutorial: (state: TutorialState) =>
+		request<TutorialState>('/me/tutorial', { method: 'PUT', body: state }),
 	getGoals: () => request<GoalsOut>('/me/goals'),
 	getWeightHistory: () => request<WeightHistory>('/me/weight'),
 	addWeight: (weighIn: WeighInInput) =>

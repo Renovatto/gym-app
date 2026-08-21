@@ -7,6 +7,7 @@
 	import FeedbackFab from '$lib/components/FeedbackFab.svelte';
 	import Toast from '$lib/components/Toast.svelte';
 	import CelebrationOverlay from '$lib/components/CelebrationOverlay.svelte';
+	import TourOverlay from '$lib/components/TourOverlay.svelte';
 	import { bootstrap, session } from '$lib/session.svelte';
 	import { refreshSharingPending } from '$lib/sharing.svelte';
 	import { initTheme } from '$lib/theme.svelte';
@@ -66,6 +67,7 @@
 
 <Toast />
 <CelebrationOverlay />
+<TourOverlay />
 
 <div class="min-h-dvh bg-slate-50 text-slate-900">
 	{#if session.loaded || isPublic}

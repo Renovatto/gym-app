@@ -25,6 +25,7 @@
 
 <nav
 	class="fixed inset-x-0 bottom-0 z-10 border-t border-slate-200 bg-white pb-[env(safe-area-inset-bottom)]"
+	data-tour="tabbar"
 >
 	<div class="mx-auto flex max-w-md">
 		{#each tabs as tab (tab.href)}

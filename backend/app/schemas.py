@@ -102,6 +102,20 @@ class ProfileOut(BaseModel):
     cut_intensity: CutIntensity
     diet_enabled: bool
     scale_mac: str | None
+    # Estado do tutorial guiado. So na saida: o ProfileIn e um upsert do formulario
+    # "Meus dados", e salvar aquele formulario nao pode apagar o progresso do tour.
+    tutorial_enabled: bool
+    tutorial_progress: dict[str, int]
+
+
+class TutorialIn(BaseModel):
+    enabled: bool
+    progress: dict[str, int] = {}
+
+
+class TutorialOut(BaseModel):
+    enabled: bool
+    progress: dict[str, int]
 
 
 class GoalsOut(BaseModel):
