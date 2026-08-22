@@ -10,9 +10,11 @@
 		type RecipeView,
 		type ShareOffer
 	} from '$lib/api';
+	import PillChoices from '$lib/components/PillChoices.svelte';
 	import RecipeViewModal from '$lib/components/RecipeViewModal.svelte';
 	import { errorMessage } from '$lib/errors';
 	import { refreshSharingPending } from '$lib/sharing.svelte';
+	import { FOOD_CATEGORIES, foodCategoryLabel } from '$lib/foodCategories';
 	import { normalizeSearch, searchMatches } from '$lib/text';
 	import { showToast } from '$lib/toast.svelte';
 	import { m } from '$lib/paraglide/messages';
@@ -215,20 +217,7 @@
 	let catalog = $state<Food[]>([]);
 	let catalogLoading = $state(false);
 	let catalogLoaded = $state(false);
-	const FOOD_CATEGORIES = [
-		'protein', 'carb', 'vegetable', 'fruit', 'dairy', 'legume',
-		'fat', 'sweet', 'prepared', 'beverage', 'supplement', 'other'
-	] as const;
 	let activeCategory = $state<string | null>(null);
-
-	function categoryLabel(category: string): string {
-		return {
-			protein: m.cat_protein(), carb: m.cat_carb(), vegetable: m.cat_vegetable(),
-			fruit: m.cat_fruit(), dairy: m.cat_dairy(), legume: m.cat_legume(),
-			fat: m.cat_fat(), sweet: m.cat_sweet(), prepared: m.cat_prepared(),
-			beverage: m.cat_beverage(), supplement: m.cat_supplement(), other: m.cat_other()
-		}[category] ?? category;
-	}
 
 	// O endpoint corta em 200 por chamada e o catalogo ja passa disso, entao pagina
 	// ate vir uma pagina curta - sem isso a tela mentiria dizendo que o alimento nao
@@ -545,27 +534,15 @@
 					<div class="h-7 w-7 animate-spin rounded-full border-4 border-emerald-600 border-t-transparent"></div>
 				</div>
 			{:else}
-				<div class="mt-3 flex flex-wrap gap-1.5">
-					<button
-						type="button"
-						onclick={() => (activeCategory = null)}
-						class="rounded-full border-2 px-3 py-1.5 text-sm font-semibold {activeCategory === null
-							? 'border-emerald-600 bg-emerald-50 text-emerald-800'
-							: 'border-slate-200 text-slate-600'}"
-					>
-						{m.tag_all()}
-					</button>
-					{#each FOOD_CATEGORIES as category (category)}
-						<button
-							type="button"
-							onclick={() => (activeCategory = activeCategory === category ? null : category)}
-							class="rounded-full border-2 px-3 py-1.5 text-sm font-semibold {activeCategory === category
-								? 'border-emerald-600 bg-emerald-50 text-emerald-800'
-								: 'border-slate-200 text-slate-600'}"
-						>
-							{categoryLabel(category)}
-						</button>
-					{/each}
+				<div class="mt-3">
+					<PillChoices
+						bind:value={activeCategory}
+						clearLabel={m.tag_all()}
+						options={FOOD_CATEGORIES.map((category) => ({
+							value: category,
+							label: foodCategoryLabel(category)
+						}))}
+					/>
 				</div>
 
 				{#if filteredCatalog.length === 0}
@@ -731,27 +708,12 @@
 			<h2 class="text-lg font-bold text-slate-900">{m.library_title()}</h2>
 			<p class="mt-0.5 text-sm text-slate-500">{m.library_hint()}</p>
 
-			<div class="mt-3 flex flex-wrap gap-1.5">
-				<button
-					type="button"
-					onclick={() => (activeTag = null)}
-					class="rounded-full border-2 px-3 py-1.5 text-sm font-semibold {activeTag === null
-						? 'border-emerald-600 bg-emerald-50 text-emerald-800'
-						: 'border-slate-200 text-slate-600'}"
-				>
-					{m.tag_all()}
-				</button>
-				{#each TAGS as tag (tag)}
-					<button
-						type="button"
-						onclick={() => (activeTag = activeTag === tag ? null : tag)}
-						class="rounded-full border-2 px-3 py-1.5 text-sm font-semibold {activeTag === tag
-							? 'border-emerald-600 bg-emerald-50 text-emerald-800'
-							: 'border-slate-200 text-slate-600'}"
-					>
-						{tagLabel(tag)}
-					</button>
-				{/each}
+			<div class="mt-3">
+				<PillChoices
+					bind:value={activeTag}
+					clearLabel={m.tag_all()}
+					options={TAGS.map((tag) => ({ value: tag, label: tagLabel(tag) }))}
+				/>
 			</div>
 
 			{#if filteredLibrary.length === 0}

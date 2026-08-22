@@ -51,16 +51,23 @@ from .goals import compute_goals
 from .recipes_library import library_ingredient_food_ids_map, list_library
 
 # Macro-ancora de cada categoria: o macro que a troca equivalente mantem igual.
-# Categorias mistas (bebida/outros) caem em calorias.
+# Categorias mistas (molho/bebida/prato pronto/outros) caem em calorias.
 _CATEGORY_ANCHOR: dict[FoodCategory, str] = {
-    FoodCategory.protein: "protein_g",
+    FoodCategory.meat: "protein_g",
+    FoodCategory.seafood: "protein_g",
+    FoodCategory.egg: "protein_g",
     FoodCategory.dairy: "protein_g",
     FoodCategory.legume: "protein_g",
-    FoodCategory.carb: "carbs_g",
+    FoodCategory.supplement: "protein_g",
+    FoodCategory.bakery: "carbs_g",
+    FoodCategory.cereal_grain: "carbs_g",
+    FoodCategory.tuber: "carbs_g",
     FoodCategory.fruit: "carbs_g",
     FoodCategory.sweet: "carbs_g",
     FoodCategory.vegetable: "carbs_g",
+    FoodCategory.nuts_seeds: "fat_g",
     FoodCategory.fat: "fat_g",
+    FoodCategory.sauce_condiment: "kcal",
     FoodCategory.prepared: "kcal",
     FoodCategory.beverage: "kcal",
     FoodCategory.other: "kcal",

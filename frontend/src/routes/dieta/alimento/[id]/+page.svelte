@@ -9,6 +9,8 @@
 		type FoodCategory
 	} from '$lib/api';
 	import ChoiceChips from '$lib/components/ChoiceChips.svelte';
+	import PillChoices from '$lib/components/PillChoices.svelte';
+	import { foodCategoryOptions } from '$lib/foodCategories';
 	import Stepper from '$lib/components/Stepper.svelte';
 	import Spinner from '$lib/components/Spinner.svelte';
 	import { showToast } from '$lib/toast.svelte';
@@ -20,7 +22,8 @@
 	const isNew = $derived(foodId === 'novo');
 
 	let name = $state('');
-	let category = $state<FoodCategory>('protein');
+	// Ver FoodPicker: sem palpite de categoria, o usuario escolhe o grupo certo.
+	let category = $state<FoodCategory>('other');
 	let kcal = $state(0);
 	let protein = $state(0);
 	let carbs = $state(0);
@@ -298,23 +301,7 @@
 
 	<div class="mt-3 rounded-2xl bg-white p-4 shadow-sm">
 		<p class="mb-2 text-sm font-semibold text-slate-600">{m.category_label()}</p>
-		<ChoiceChips
-			columns={3}
-			bind:value={category}
-			options={[
-				{ value: 'protein', label: m.cat_protein() },
-				{ value: 'carb', label: m.cat_carb() },
-				{ value: 'fat', label: m.cat_fat() },
-				{ value: 'fruit', label: m.cat_fruit() },
-				{ value: 'vegetable', label: m.cat_vegetable() },
-				{ value: 'dairy', label: m.cat_dairy() },
-				{ value: 'legume', label: m.cat_legume() },
-				{ value: 'sweet', label: m.cat_sweet() },
-				{ value: 'prepared', label: m.cat_prepared() },
-				{ value: 'supplement', label: m.cat_supplement() },
-				{ value: 'other', label: m.cat_other() }
-			]}
-		/>
+		<PillChoices bind:value={category} options={foodCategoryOptions()} />
 	</div>
 
 	<div class="mt-3 rounded-2xl bg-white p-4 shadow-sm">

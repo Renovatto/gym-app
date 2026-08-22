@@ -458,15 +458,21 @@ export interface NewsFeed {
 
 // --- Dieta ---
 export type FoodCategory =
-	| 'protein'
-	| 'carb'
-	| 'fruit'
-	| 'vegetable'
-	| 'dairy'
+	| 'bakery'
+	| 'cereal_grain'
+	| 'tuber'
 	| 'legume'
+	| 'meat'
+	| 'seafood'
+	| 'egg'
+	| 'dairy'
+	| 'vegetable'
+	| 'fruit'
+	| 'nuts_seeds'
 	| 'fat'
-	| 'beverage'
 	| 'sweet'
+	| 'sauce_condiment'
+	| 'beverage'
 	| 'prepared'
 	| 'supplement'
 	| 'other';

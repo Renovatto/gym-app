@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { api, ApiError, type Food, type FoodCategory } from '$lib/api';
-	import ChoiceChips from '$lib/components/ChoiceChips.svelte';
+	import PillChoices from '$lib/components/PillChoices.svelte';
+	import { foodCategoryOptions } from '$lib/foodCategories';
 	import Stepper from '$lib/components/Stepper.svelte';
 	import { showToast } from '$lib/toast.svelte';
 	import { errorMessage } from '$lib/errors';
@@ -38,7 +39,10 @@
 	let creating = $state(false);
 	let saving = $state(false);
 	let newName = $state('');
-	let newCategory = $state<FoodCategory>('protein');
+	// Comeca em "Outros" de proposito: com os grupos da TACO no lugar de macro, um
+	// palpite inicial (antes era proteina) sairia errado na maioria dos alimentos e
+	// passaria batido no salvar.
+	let newCategory = $state<FoodCategory>('other');
 	let newKcal = $state(0);
 	let newProtein = $state(0);
 	let newCarbs = $state(0);
@@ -51,7 +55,7 @@
 		// o que ja foi digitado na busca vira o nome: quem procurou e nao achou
 		// acabou de escrever o nome do alimento que quer criar
 		newName = query.trim();
-		newCategory = 'protein';
+		newCategory = 'other';
 		newKcal = 0;
 		newProtein = 0;
 		newCarbs = 0;
@@ -123,23 +127,7 @@
 				/>
 
 				<p class="mt-3 mb-2 text-sm font-semibold text-slate-600">{m.category_label()}</p>
-				<ChoiceChips
-					columns={3}
-					bind:value={newCategory}
-					options={[
-						{ value: 'protein', label: m.cat_protein() },
-						{ value: 'carb', label: m.cat_carb() },
-						{ value: 'fat', label: m.cat_fat() },
-						{ value: 'fruit', label: m.cat_fruit() },
-						{ value: 'vegetable', label: m.cat_vegetable() },
-						{ value: 'dairy', label: m.cat_dairy() },
-						{ value: 'legume', label: m.cat_legume() },
-						{ value: 'sweet', label: m.cat_sweet() },
-						{ value: 'prepared', label: m.cat_prepared() },
-						{ value: 'supplement', label: m.cat_supplement() },
-						{ value: 'other', label: m.cat_other() }
-					]}
-				/>
+				<PillChoices bind:value={newCategory} options={foodCategoryOptions()} />
 
 				<p class="mt-4 mb-3 text-sm font-semibold text-slate-600">{m.per_100g()}</p>
 				<div class="space-y-4">

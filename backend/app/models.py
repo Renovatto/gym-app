@@ -314,15 +314,29 @@ class StandaloneActivity(SQLModel, table=True):
 
 
 class FoodCategory(str, Enum):
-    protein = "protein"
-    carb = "carb"
-    fruit = "fruit"
-    vegetable = "vegetable"
-    dairy = "dairy"
-    legume = "legume"
-    fat = "fat"
-    beverage = "beverage"
-    sweet = "sweet"
+    """Grupos de alimento no padrao da TACO (tabela brasileira), adaptados ao app.
+
+    A categoria nao e so rotulo: ela e o grupo de troca do recommend.py, onde cada
+    categoria tem um macro-ancora que a substituicao equivalente mantem igual. Por
+    isso os grupos sao ao mesmo tempo reconheciveis (pao esta em "panificados", nao
+    em "carboidrato") e coerentes no macro dominante.
+    """
+
+    bakery = "bakery"  # pao, torrada, tapioca pronta: ancora = carbo
+    cereal_grain = "cereal_grain"  # arroz, macarrao, aveia, farinhas: ancora = carbo
+    tuber = "tuber"  # batata, mandioca, inhame: ancora = carbo
+    legume = "legume"  # feijao, lentilha, grao-de-bico: ancora = proteina
+    meat = "meat"  # boi, frango, porco e embutidos: ancora = proteina
+    seafood = "seafood"  # peixes e frutos do mar: ancora = proteina
+    egg = "egg"  # ovo inteiro, clara, gema: ancora = proteina
+    dairy = "dairy"  # leite, iogurte, queijos: ancora = proteina
+    vegetable = "vegetable"  # verduras e legumes: ancora = carbo
+    fruit = "fruit"  # frutas: ancora = carbo
+    nuts_seeds = "nuts_seeds"  # castanhas, pastas, sementes, abacate: ancora = gordura
+    fat = "fat"  # oleos e gorduras puras (azeite, manteiga): ancora = gordura
+    sweet = "sweet"  # acucar, chocolate, bolo, doce: ancora = carbo
+    sauce_condiment = "sauce_condiment"  # molho, maionese, sal, tempero: ancora = kcal
+    beverage = "beverage"  # refrigerante, suco, cafe, cerveja: ancora = kcal
     prepared = "prepared"  # prato pronto (pizza, feijoada...): macros mistos, ancora = kcal
     supplement = "supplement"  # whey, creatina, etc. (whey conta macro; creatina ~0 kcal)
     other = "other"
