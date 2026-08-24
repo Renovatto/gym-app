@@ -3,6 +3,7 @@
 	import { type FeedbackModule } from '$lib/api';
 	import FeedbackModal from './FeedbackModal.svelte';
 	import { m } from '$lib/paraglide/messages';
+	import { beginPointerDrag, endPointerDrag } from '$lib/drag';
 
 	// Botao flutuante de feedback: arrastavel (encosta na borda e lembra a posicao) para
 	// nao atrapalhar botoes de acao de nenhuma tela. Toque curto abre; arrasto move.
@@ -64,6 +65,9 @@
 	let moved = false;
 
 	function onPointerDown(e: PointerEvent): void {
+		// mata a selecao de texto que o navegador comecaria neste toque/clique -
+		// sem isso ela pinta a tela inteira enquanto o dedo se move (ver lib/drag.ts)
+		beginPointerDrag(e);
 		(e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
 		startX = e.clientX;
 		startY = e.clientY;
@@ -84,6 +88,7 @@
 		}
 	}
 	function onPointerUp(e: PointerEvent): void {
+		endPointerDrag();
 		(e.currentTarget as HTMLElement).releasePointerCapture(e.pointerId);
 		if (!moved) {
 			open = true; // foi um toque, nao um arrasto
@@ -92,6 +97,15 @@
 			localStorage.setItem(KEY, JSON.stringify({ left, top }));
 		}
 		dragging = false;
+	}
+
+	function onPointerCancel(e: PointerEvent): void {
+		// gesto cancelado pelo sistema (chamada, troca de app): sem isso a trava de
+		// selecao e a captura do ponteiro ficam penduradas ate o proximo toque
+		endPointerDrag();
+		(e.currentTarget as HTMLElement).releasePointerCapture(e.pointerId);
+		dragging = false;
+		moved = false;
 	}
 </script>
 
@@ -105,7 +119,8 @@
 		onpointerdown={onPointerDown}
 		onpointermove={onPointerMove}
 		onpointerup={onPointerUp}
-		class="fixed z-20 grid touch-none place-items-center rounded-2xl bg-emerald-600 text-white shadow-lg active:bg-emerald-700 {dragging
+		onpointercancel={onPointerCancel}
+		class="fixed z-20 grid touch-none select-none place-items-center rounded-2xl bg-emerald-600 text-white shadow-lg active:bg-emerald-700 {dragging
 			? 'scale-105 cursor-grabbing'
 			: 'transition-all duration-200 motion-reduce:transition-none'}"
 	>

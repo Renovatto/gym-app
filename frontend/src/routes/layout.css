@@ -43,6 +43,17 @@ input[type='date']::-webkit-calendar-picker-indicator {
 }
 
 /*
+ * Trava de selecao durante arrasto por ponteiro (reordenar refeicoes, mover o FAB
+ * de feedback). A selecao de texto e do documento, nao do elemento arrastado - por
+ * isso a classe entra no body inteiro, nao so no handle. Ver lib/drag.ts.
+ */
+.dragging-no-select {
+	user-select: none;
+	-webkit-user-select: none;
+	-webkit-touch-callout: none;
+}
+
+/*
  * Modo escuro por troca de tokens: os componentes usam a paleta neutra
  * (white/slate) e os tons claros de acento (emerald-50 etc.); aqui eles são
  * remapeados quando <html class="dark">. Tons médios (emerald-600, sky-500…)

@@ -33,6 +33,7 @@
 	import MacroBreakdown from '$lib/components/MacroBreakdown.svelte';
 	import { slide } from 'svelte/transition';
 	import { showToast } from '$lib/toast.svelte';
+	import { beginPointerDrag, endPointerDrag } from '$lib/drag';
 	import { mealTypeLabel } from '$lib/labels';
 	import SkeletonScreen from '$lib/components/SkeletonScreen.svelte';
 	import { m } from '$lib/paraglide/messages';
@@ -650,6 +651,9 @@
 	function startMealDrag(meal: MealType, event: PointerEvent): void {
 		const from = materializedMeals.indexOf(meal);
 		if (from < 0) return;
+		// mata a selecao de texto que o navegador comecaria neste toque/clique -
+		// sem isso ela pinta a tela inteira enquanto o dedo se move (ver lib/drag.ts)
+		beginPointerDrag(event);
 		dragMidpoints = materializedMeals.map((mt) => {
 			const el = mealCardEls[mt];
 			if (!el) return Number.POSITIVE_INFINITY;
@@ -669,6 +673,7 @@
 	}
 
 	function endMealDrag(): void {
+		endPointerDrag();
 		const meal = draggingMeal;
 		const target = dropIndex;
 		draggingMeal = null;
@@ -1313,7 +1318,7 @@
 						onpointerup={endMealDrag}
 						onpointercancel={endMealDrag}
 						onkeydown={() => {}}
-						class="grid h-12 w-8 shrink-0 cursor-grab touch-none place-items-center text-slate-300 active:text-emerald-600"
+						class="grid h-12 w-8 shrink-0 cursor-grab touch-none select-none place-items-center text-slate-300 active:text-emerald-600"
 					>
 						<svg viewBox="0 0 24 24" class="h-5 w-5" fill="currentColor"><circle cx="9" cy="6" r="1.5" /><circle cx="15" cy="6" r="1.5" /><circle cx="9" cy="12" r="1.5" /><circle cx="15" cy="12" r="1.5" /><circle cx="9" cy="18" r="1.5" /><circle cx="15" cy="18" r="1.5" /></svg>
 					</div>
