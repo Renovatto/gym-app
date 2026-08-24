@@ -8,6 +8,7 @@ from ..models import (
     Exercise,
     ExerciseLevel,
     MuscleGroup,
+    MuscleRegion,
     Routine,
     RoutineExercise,
     SessionExerciseSwap,
@@ -37,10 +38,12 @@ from ..schemas import (
 )
 from ..services.coaching import routine_variation, routines_periodization
 from ..services.exercises import (
+    REGIONS_BY_GROUP,
     TEMPLATES,
     exercise_by_slug,
     has_locale_translation,
     localized_name,
+    region_search_match,
     to_exercise_out,
 )
 from ..services.text import normalize_search
@@ -75,26 +78,37 @@ def list_exercises(
     session: SessionDep,
     q: str = Query(default="", max_length=60),
     muscle_group: MuscleGroup | None = Query(default=None),
+    muscle_region: MuscleRegion | None = Query(default=None),
     level: ExerciseLevel | None = Query(default=None),
     full: bool = Query(default=False, description="true = base completa; false = só traduzidos"),
     limit: int = Query(default=100, ge=1, le=300),
 ) -> list[ExerciseOut]:
+    if muscle_region is not None and muscle_region not in REGIONS_BY_GROUP.get(
+        muscle_group, []
+    ):
+        raise HTTPException(status.HTTP_400_BAD_REQUEST, detail="MUSCLE_REGION_NOT_IN_GROUP")
+
     query = select(Exercise).where(
         (Exercise.user_id.is_(None)) | (Exercise.user_id == user.id)
     )
     if muscle_group is not None:
         query = query.where(Exercise.muscle_group == muscle_group)
+    if muscle_region is not None:
+        query = query.where(Exercise.muscle_region == muscle_region)
     if level is not None:
         query = query.where(Exercise.level == level)
     exercises = session.exec(query).all()
 
     term = normalize_search(q.strip())
     if term:
-        # busca ignora acentos/caixa e vale para a base inteira (ignora `full`)
+        # busca ignora acentos/caixa e vale para a base inteira (ignora `full`); casa
+        # tanto o nome do exercicio quanto os apelidos da regiao muscular, entao
+        # "femoral" acha exercicios de posterior de coxa mesmo sem a palavra no nome
         exercises = [
             ex
             for ex in exercises
             if any(term in normalize_search(t.name) for t in ex.translations)
+            or region_search_match(ex, term)
         ]
     elif not full:
         # Modo padrão mostra só exercícios com nome no idioma do usuário (curados);
@@ -640,9 +654,12 @@ def exercise_alternatives(
 ) -> list[AlternativeExerciseOut]:
     """Substitutos plausiveis: mesmo grupo muscular e mesmo tipo (forca/cardio).
 
-    Ordena por equipamento igual primeiro - trocar supino com barra por supino com
-    halter e util; sugerir um exercicio de maquina que a pessoa nao tem por perto,
-    nem tanto. Depois pelo que ela ja usou (tem carga registrada), porque exercicio
+    Ordena por regiao muscular igual primeiro (quando o original tem uma) - e por
+    isso que sem essa checagem o endpoint podia sugerir elevacao lateral (deltoide
+    lateral) no lugar de desenvolvimento (deltoide anterior): mesmo grupo, musculo
+    bem diferente. Depois por equipamento igual - trocar supino com barra por
+    supino com halter e util; sugerir maquina que a pessoa nao tem por perto, nem
+    tanto. Por fim pelo que ela ja usou (tem carga registrada), porque exercicio
     conhecido e mais facil de encaixar no meio do treino."""
     original = _visible_exercise(session, exercise_id, user.id)
     if original is None:
@@ -659,22 +676,31 @@ def exercise_alternatives(
     # treino atrapalha mais do que ajuda
     candidates = [c for c in candidates if has_locale_translation(c, user.locale)]
 
+    def same_region(c: Exercise) -> bool:
+        # original sem regiao classificada = nenhum candidato "combina" por regiao,
+        # cai direto no criterio de equipamento
+        return original.muscle_region is not None and c.muscle_region == original.muscle_region
+
     out = [
-        AlternativeExerciseOut(
-            exercise=to_exercise_out(session, c, user.locale),
-            last_weight_kg=_last_weight(session, user.id, c.id),
-            same_equipment=c.equipment == original.equipment,
+        (
+            AlternativeExerciseOut(
+                exercise=to_exercise_out(session, c, user.locale),
+                last_weight_kg=_last_weight(session, user.id, c.id),
+                same_equipment=c.equipment == original.equipment,
+            ),
+            same_region(c),
         )
         for c in candidates
     ]
     out.sort(
-        key=lambda a: (
-            not a.same_equipment,
-            a.last_weight_kg is None,
-            a.exercise.name.lower(),
+        key=lambda item: (
+            not item[1],
+            not item[0].same_equipment,
+            item[0].last_weight_kg is None,
+            item[0].exercise.name.lower(),
         )
     )
-    return out[:limit]
+    return [alt for alt, _ in out[:limit]]
 
 
 def _owned_routine_item(

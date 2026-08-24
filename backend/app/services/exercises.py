@@ -2,8 +2,9 @@
 
 from sqlmodel import Session, select
 
-from ..models import Exercise, ExerciseTranslation
+from ..models import Exercise, ExerciseTranslation, MuscleGroup, MuscleRegion
 from ..schemas import ExerciseOut
+from .text import normalize_search
 
 FALLBACK_LOCALE = "en"
 
@@ -24,12 +25,85 @@ def to_exercise_out(session: Session, exercise: Exercise, locale: str) -> Exerci
         slug=exercise.slug,
         name=localized_name(session, exercise, locale),
         muscle_group=exercise.muscle_group,
+        muscle_region=exercise.muscle_region,
         equipment=exercise.equipment,
         kind=exercise.kind,
         level=exercise.level,
         media_urls=media,
         is_custom=exercise.user_id is not None,
     )
+
+
+# Subdivisao de cada MuscleGroup. Fonte unica da verdade da hierarquia - o
+# frontend (lib/labels.ts) espelha as MESMAS chaves para montar os chips, do
+# jeito que MUSCLE_GROUPS ja espelha os valores de MuscleGroup.
+REGIONS_BY_GROUP: dict[MuscleGroup, list[MuscleRegion]] = {
+    MuscleGroup.chest: [
+        MuscleRegion.chest_upper, MuscleRegion.chest_mid, MuscleRegion.chest_lower,
+    ],
+    MuscleGroup.back: [
+        MuscleRegion.lats, MuscleRegion.upper_back, MuscleRegion.traps,
+        MuscleRegion.lower_back,
+    ],
+    MuscleGroup.shoulders: [
+        MuscleRegion.delt_front, MuscleRegion.delt_side, MuscleRegion.delt_rear,
+    ],
+    MuscleGroup.biceps: [MuscleRegion.biceps, MuscleRegion.forearms],
+    MuscleGroup.triceps: [MuscleRegion.triceps_long, MuscleRegion.triceps_lateral],
+    MuscleGroup.legs: [
+        MuscleRegion.quads, MuscleRegion.hamstrings, MuscleRegion.adductors,
+        MuscleRegion.abductors,
+    ],
+    MuscleGroup.glutes: [MuscleRegion.glute_max, MuscleRegion.glute_med],
+    MuscleGroup.abs: [
+        MuscleRegion.abs_upper, MuscleRegion.abs_lower, MuscleRegion.obliques,
+        MuscleRegion.core,
+    ],
+    MuscleGroup.calves: [MuscleRegion.gastrocnemius, MuscleRegion.soleus],
+    MuscleGroup.cardio: [],
+}
+
+# Sinonimos de busca por regiao (pt-BR e en, o par mais usado). Nao sao texto de
+# interface - nunca aparecem na tela, so casam com o que a pessoa digita na busca
+# que ja existe. Por isso ficam aqui, e nao em messages/*.json.
+REGION_ALIASES: dict[MuscleRegion, list[str]] = {
+    MuscleRegion.chest_upper: ["peito superior", "clavicular", "upper chest", "incline chest"],
+    MuscleRegion.chest_mid: ["peito medio", "esternal", "mid chest", "flat bench"],
+    MuscleRegion.chest_lower: ["peito inferior", "declinado", "lower chest", "decline chest"],
+    MuscleRegion.lats: ["dorsal", "latissimo", "asa", "lats", "puxada"],
+    MuscleRegion.upper_back: ["meio das costas", "romboides", "middle back", "rhomboids"],
+    MuscleRegion.traps: ["trapezio", "traps", "encolhimento", "shrug"],
+    MuscleRegion.lower_back: ["lombar", "eretores", "lower back", "erector spinae"],
+    MuscleRegion.delt_front: ["ombro anterior", "deltoide anterior", "front delt", "anterior deltoid"],
+    MuscleRegion.delt_side: ["ombro lateral", "deltoide medial", "side delt", "lateral deltoid"],
+    MuscleRegion.delt_rear: ["ombro posterior", "deltoide posterior", "rear delt", "posterior deltoid"],
+    MuscleRegion.biceps: ["biceps", "anterior de braco", "biceps brachii"],
+    MuscleRegion.forearms: ["antebraco", "braquiorradial", "forearms", "punho", "wrist"],
+    MuscleRegion.triceps_long: ["triceps cabeca longa", "triceps testa", "overhead triceps"],
+    MuscleRegion.triceps_lateral: ["posterior de braco", "triceps lateral", "triceps pulley"],
+    MuscleRegion.quads: ["anterior de coxa", "quadriceps", "quads"],
+    MuscleRegion.hamstrings: ["posterior de coxa", "isquiotibiais", "femoral", "hamstrings", "hamstring"],
+    MuscleRegion.adductors: ["adutores", "parte interna da coxa", "adductors", "inner thigh"],
+    MuscleRegion.abductors: ["abdutores", "parte externa da coxa", "abductors", "outer thigh"],
+    MuscleRegion.glute_max: ["gluteo maximo", "bumbum", "hip thrust", "glute max"],
+    MuscleRegion.glute_med: ["gluteo medio", "lateral do quadril", "glute med", "hip abduction"],
+    MuscleRegion.abs_upper: ["abdomen superior", "abdominal supra", "upper abs"],
+    MuscleRegion.abs_lower: ["abdomen inferior", "infra", "lower abs"],
+    MuscleRegion.obliques: ["obliquos", "lateral do abdomen", "obliques"],
+    MuscleRegion.core: ["core", "estabilizacao", "isometria"],
+    MuscleRegion.gastrocnemius: ["gastrocnemio", "panturrilha em pe", "gastrocnemius"],
+    MuscleRegion.soleus: ["soleo", "panturrilha sentado", "soleus"],
+}
+
+
+def region_search_match(exercise: Exercise, term: str) -> bool:
+    """`term` ja normalizado (normalize_search). True se casa com os apelidos da
+    regiao do exercicio - ex.: "femoral" acha exercicios de hamstrings mesmo sem
+    a palavra no nome."""
+    if exercise.muscle_region is None:
+        return False
+    aliases = REGION_ALIASES.get(exercise.muscle_region, ())
+    return any(term in normalize_search(alias) for alias in aliases)
 
 
 def has_locale_translation(exercise: Exercise, locale: str) -> bool:

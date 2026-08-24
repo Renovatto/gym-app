@@ -13,7 +13,8 @@
       "en": "Barbell Bench Press",
       "pt-BR": "Supino reto com barra",
       "es": "Press de banca con barra"
-    }
+    },
+    "muscle_region": "chest_mid"
   },
   {
     "slug": "incline-dumbbell-press",
@@ -29,7 +30,8 @@
       "en": "Incline Dumbbell Press",
       "pt-BR": "Supino inclinado com halteres",
       "es": "Press inclinado con mancuernas"
-    }
+    },
+    "muscle_region": "chest_upper"
   },
   {
     "slug": "dumbbell-flyes",
@@ -45,7 +47,8 @@
       "en": "Dumbbell Flyes",
       "pt-BR": "Crucifixo com halteres",
       "es": "Aperturas con mancuernas"
-    }
+    },
+    "muscle_region": "chest_mid"
   },
   {
     "slug": "push-ups",
@@ -61,7 +64,8 @@
       "en": "Push-Ups",
       "pt-BR": "Flexão de braço",
       "es": "Flexiones"
-    }
+    },
+    "muscle_region": "chest_mid"
   },
   {
     "slug": "cable-crossover",
@@ -77,7 +81,8 @@
       "en": "Cable Crossover",
       "pt-BR": "Crossover na polia",
       "es": "Cruce de poleas"
-    }
+    },
+    "muscle_region": "chest_mid"
   },
   {
     "slug": "chest-dips",
@@ -93,7 +98,8 @@
       "en": "Chest Dips",
       "pt-BR": "Mergulho para peito (paralelas)",
       "es": "Fondos para pecho"
-    }
+    },
+    "muscle_region": "chest_mid"
   },
   {
     "slug": "deadlift",
@@ -109,7 +115,8 @@
       "en": "Deadlift",
       "pt-BR": "Levantamento terra",
       "es": "Peso muerto"
-    }
+    },
+    "muscle_region": "lower_back"
   },
   {
     "slug": "bent-over-barbell-row",
@@ -125,7 +132,8 @@
       "en": "Bent-Over Barbell Row",
       "pt-BR": "Remada curvada com barra",
       "es": "Remo con barra inclinado"
-    }
+    },
+    "muscle_region": "upper_back"
   },
   {
     "slug": "pull-ups",
@@ -141,7 +149,8 @@
       "en": "Pull-Ups",
       "pt-BR": "Barra fixa",
       "es": "Dominadas"
-    }
+    },
+    "muscle_region": "lats"
   },
   {
     "slug": "lat-pulldown",
@@ -157,7 +166,8 @@
       "en": "Lat Pulldown",
       "pt-BR": "Puxada alta (pulley)",
       "es": "Jalón al pecho"
-    }
+    },
+    "muscle_region": "lats"
   },
   {
     "slug": "seated-cable-row",
@@ -173,7 +183,8 @@
       "en": "Seated Cable Row",
       "pt-BR": "Remada baixa sentado",
       "es": "Remo sentado en polea"
-    }
+    },
+    "muscle_region": "upper_back"
   },
   {
     "slug": "back-extension",
@@ -189,7 +200,8 @@
       "en": "Back Extension",
       "pt-BR": "Extensão lombar (hiperextensão)",
       "es": "Extensión lumbar"
-    }
+    },
+    "muscle_region": "lower_back"
   },
   {
     "slug": "barbell-squat",
@@ -205,7 +217,8 @@
       "en": "Barbell Squat",
       "pt-BR": "Agachamento livre com barra",
       "es": "Sentadilla con barra"
-    }
+    },
+    "muscle_region": "quads"
   },
   {
     "slug": "leg-press",
@@ -221,7 +234,8 @@
       "en": "Leg Press",
       "pt-BR": "Leg press",
       "es": "Prensa de piernas"
-    }
+    },
+    "muscle_region": "quads"
   },
   {
     "slug": "barbell-lunge",
@@ -237,7 +251,8 @@
       "en": "Barbell Lunge",
       "pt-BR": "Afundo com barra",
       "es": "Zancada con barra"
-    }
+    },
+    "muscle_region": "quads"
   },
   {
     "slug": "leg-extension",
@@ -253,7 +268,8 @@
       "en": "Leg Extension",
       "pt-BR": "Cadeira extensora",
       "es": "Extensión de piernas"
-    }
+    },
+    "muscle_region": "quads"
   },
   {
     "slug": "lying-leg-curl",
@@ -269,7 +285,8 @@
       "en": "Lying Leg Curl",
       "pt-BR": "Mesa flexora (deitado)",
       "es": "Curl femoral tumbado"
-    }
+    },
+    "muscle_region": "hamstrings"
   },
   {
     "slug": "romanian-deadlift",
@@ -285,7 +302,8 @@
       "en": "Romanian Deadlift",
       "pt-BR": "Levantamento terra romeno",
       "es": "Peso muerto rumano"
-    }
+    },
+    "muscle_region": "hamstrings"
   },
   {
     "slug": "standing-calf-raise",
@@ -301,7 +319,8 @@
       "en": "Standing Calf Raise",
       "pt-BR": "Elevação de panturrilha em pé",
       "es": "Elevación de gemelos de pie"
-    }
+    },
+    "muscle_region": "gastrocnemius"
   },
   {
     "slug": "seated-calf-raise",
@@ -317,7 +336,8 @@
       "en": "Seated Calf Raise",
       "pt-BR": "Panturrilha sentado",
       "es": "Elevación de gemelos sentado"
-    }
+    },
+    "muscle_region": "soleus"
   },
   {
     "slug": "overhead-press",
@@ -333,7 +353,8 @@
       "en": "Overhead Press",
       "pt-BR": "Desenvolvimento com barra",
       "es": "Press militar con barra"
-    }
+    },
+    "muscle_region": "delt_front"
   },
   {
     "slug": "lateral-raise",
@@ -349,7 +370,8 @@
       "en": "Lateral Raise",
       "pt-BR": "Elevação lateral",
       "es": "Elevaciones laterales"
-    }
+    },
+    "muscle_region": "delt_side"
   },
   {
     "slug": "front-raise",
@@ -365,7 +387,8 @@
       "en": "Front Raise",
       "pt-BR": "Elevação frontal",
       "es": "Elevaciones frontales"
-    }
+    },
+    "muscle_region": "delt_front"
   },
   {
     "slug": "reverse-fly",
@@ -381,7 +404,8 @@
       "en": "Reverse Fly",
       "pt-BR": "Crucifixo invertido",
       "es": "Aperturas invertidas"
-    }
+    },
+    "muscle_region": "delt_rear"
   },
   {
     "slug": "arnold-press",
@@ -397,7 +421,8 @@
       "en": "Arnold Press",
       "pt-BR": "Desenvolvimento Arnold",
       "es": "Press Arnold"
-    }
+    },
+    "muscle_region": "delt_front"
   },
   {
     "slug": "face-pull",
@@ -413,7 +438,8 @@
       "en": "Face Pull",
       "pt-BR": "Face pull (puxada para o rosto)",
       "es": "Face pull"
-    }
+    },
+    "muscle_region": "delt_rear"
   },
   {
     "slug": "barbell-curl",
@@ -429,7 +455,8 @@
       "en": "Barbell Curl",
       "pt-BR": "Rosca direta com barra",
       "es": "Curl con barra"
-    }
+    },
+    "muscle_region": "biceps"
   },
   {
     "slug": "dumbbell-curl",
@@ -445,7 +472,8 @@
       "en": "Dumbbell Curl",
       "pt-BR": "Rosca alternada com halteres",
       "es": "Curl con mancuernas"
-    }
+    },
+    "muscle_region": "biceps"
   },
   {
     "slug": "hammer-curl",
@@ -461,7 +489,8 @@
       "en": "Hammer Curl",
       "pt-BR": "Rosca martelo",
       "es": "Curl martillo"
-    }
+    },
+    "muscle_region": "biceps"
   },
   {
     "slug": "preacher-curl",
@@ -477,7 +506,8 @@
       "en": "Preacher Curl",
       "pt-BR": "Rosca Scott",
       "es": "Curl predicador"
-    }
+    },
+    "muscle_region": "biceps"
   },
   {
     "slug": "triceps-pushdown",
@@ -493,7 +523,8 @@
       "en": "Triceps Pushdown",
       "pt-BR": "Tríceps na polia (corda/barra)",
       "es": "Extensión de tríceps en polea"
-    }
+    },
+    "muscle_region": "triceps_lateral"
   },
   {
     "slug": "overhead-triceps-extension",
@@ -509,7 +540,8 @@
       "en": "Overhead Triceps Extension",
       "pt-BR": "Tríceps testa com haltere (acima da cabeça)",
       "es": "Extensión de tríceps sobre la cabeza"
-    }
+    },
+    "muscle_region": "triceps_long"
   },
   {
     "slug": "bench-dips",
@@ -525,7 +557,8 @@
       "en": "Bench Dips",
       "pt-BR": "Mergulho no banco",
       "es": "Fondos en banco"
-    }
+    },
+    "muscle_region": "triceps_lateral"
   },
   {
     "slug": "close-grip-bench-press",
@@ -541,7 +574,8 @@
       "en": "Close-Grip Bench Press",
       "pt-BR": "Supino fechado (pegada fechada)",
       "es": "Press de banca agarre cerrado"
-    }
+    },
+    "muscle_region": "triceps_lateral"
   },
   {
     "slug": "crunches",
@@ -557,7 +591,8 @@
       "en": "Crunches",
       "pt-BR": "Abdominal supra (crunch)",
       "es": "Encogimientos (crunch)"
-    }
+    },
+    "muscle_region": "abs_upper"
   },
   {
     "slug": "hanging-leg-raise",
@@ -573,7 +608,8 @@
       "en": "Hanging Leg Raise",
       "pt-BR": "Elevação de pernas na barra",
       "es": "Elevación de piernas colgado"
-    }
+    },
+    "muscle_region": "abs_lower"
   },
   {
     "slug": "plank",
@@ -589,7 +625,8 @@
       "en": "Plank",
       "pt-BR": "Prancha isométrica",
       "es": "Plancha"
-    }
+    },
+    "muscle_region": "core"
   },
   {
     "slug": "russian-twist",
@@ -605,7 +642,8 @@
       "en": "Russian Twist",
       "pt-BR": "Rotação russa (russian twist)",
       "es": "Giro ruso"
-    }
+    },
+    "muscle_region": "obliques"
   },
   {
     "slug": "cable-crunch",
@@ -621,7 +659,8 @@
       "en": "Cable Crunch",
       "pt-BR": "Abdominal na polia",
       "es": "Crunch en polea"
-    }
+    },
+    "muscle_region": "abs_upper"
   },
   {
     "slug": "hip-thrust",
@@ -637,7 +676,8 @@
       "en": "Hip Thrust",
       "pt-BR": "Elevação pélvica com barra",
       "es": "Empuje de cadera con barra"
-    }
+    },
+    "muscle_region": "glute_max"
   },
   {
     "slug": "glute-bridge",
@@ -653,7 +693,8 @@
       "en": "Glute Bridge",
       "pt-BR": "Ponte de glúteo com barra",
       "es": "Puente de glúteos con barra"
-    }
+    },
+    "muscle_region": "glute_max"
   },
   {
     "slug": "treadmill-running",
@@ -781,7 +822,8 @@
       "en": "3/4 Sit-Up",
       "pt-BR": "Abdominal 3/4",
       "es": "Abdominal 3/4"
-    }
+    },
+    "muscle_region": "abs_upper"
   },
   {
     "slug": "ab-crunch-machine",
@@ -797,7 +839,8 @@
       "en": "Ab Crunch Machine",
       "pt-BR": "Abdominal na máquina",
       "es": "Crunch en máquina"
-    }
+    },
+    "muscle_region": "abs_upper"
   },
   {
     "slug": "ab-roller",
@@ -861,7 +904,8 @@
       "en": "Alternate Hammer Curl",
       "pt-BR": "Rosca martelo alternada",
       "es": "Curl martillo alterno"
-    }
+    },
+    "muscle_region": "biceps"
   },
   {
     "slug": "alternate-heel-touchers",
@@ -893,7 +937,8 @@
       "en": "Alternate Incline Dumbbell Curl",
       "pt-BR": "Rosca alternada inclinada com halteres",
       "es": "Curl alterno inclinado con mancuernas"
-    }
+    },
+    "muscle_region": "biceps"
   },
   {
     "slug": "alternate-leg-diagonal-bound",
@@ -925,7 +970,8 @@
       "en": "Alternating Cable Shoulder Press",
       "pt-BR": "Desenvolvimento alternado na polia",
       "es": "Press de hombros alterno en polea"
-    }
+    },
+    "muscle_region": "delt_front"
   },
   {
     "slug": "alternating-deltoid-raise",
@@ -941,7 +987,8 @@
       "en": "Alternating Deltoid Raise",
       "pt-BR": "Elevação para deltoide alternada",
       "es": "Elevación de deltoides alterna"
-    }
+    },
+    "muscle_region": "delt_side"
   },
   {
     "slug": "alternating-floor-press",
@@ -957,7 +1004,8 @@
       "en": "Alternating Floor Press",
       "pt-BR": "Supino no chão alternado",
       "es": "Press en el suelo alterno"
-    }
+    },
+    "muscle_region": "chest_mid"
   },
   {
     "slug": "alternating-hang-clean",
@@ -1005,7 +1053,8 @@
       "en": "Alternating Kettlebell Row",
       "pt-BR": "Remada alternada com kettlebell",
       "es": "Remo alterno con kettlebell"
-    }
+    },
+    "muscle_region": "upper_back"
   },
   {
     "slug": "alternating-renegade-row",
@@ -1021,7 +1070,8 @@
       "en": "Alternating Renegade Row",
       "pt-BR": "Remada alternada renegade",
       "es": "Remo alterno renegado"
-    }
+    },
+    "muscle_region": "upper_back"
   },
   {
     "slug": "anti-gravity-press",
@@ -1053,7 +1103,8 @@
       "en": "Around The Worlds",
       "pt-BR": "Around the world (círculo com halteres)",
       "es": "Alrededor del mundo"
-    }
+    },
+    "muscle_region": "chest_mid"
   },
   {
     "slug": "back-flyes-with-bands",
@@ -1117,7 +1168,8 @@
       "en": "Ball Leg Curl",
       "pt-BR": "Flexora de pernas na bola suíça",
       "es": "Curl femoral con fitball"
-    }
+    },
+    "muscle_region": "hamstrings"
   },
   {
     "slug": "band-assisted-pull-up",
@@ -1133,7 +1185,8 @@
       "en": "Band Assisted Pull-Up",
       "pt-BR": "Barra fixa assistida com elástico",
       "es": "Dominadas asistidas con banda elástica"
-    }
+    },
+    "muscle_region": "lats"
   },
   {
     "slug": "band-good-morning",
@@ -1181,7 +1234,8 @@
       "en": "Band Hip Adductions",
       "pt-BR": "Adução de quadril com elástico",
       "es": "Aducción de cadera con banda elástica"
-    }
+    },
+    "muscle_region": "adductors"
   },
   {
     "slug": "band-pull-apart",
@@ -1213,7 +1267,8 @@
       "en": "Band Skull Crusher",
       "pt-BR": "Tríceps testa com elástico",
       "es": "Press francés (rompecráneos) con banda elástica"
-    }
+    },
+    "muscle_region": "triceps_long"
   },
   {
     "slug": "barbell-ab-rollout",
@@ -1229,7 +1284,8 @@
       "en": "Barbell Ab Rollout",
       "pt-BR": "Rollout abdominal com barra",
       "es": "Rollout de abdominales con barra"
-    }
+    },
+    "muscle_region": "core"
   },
   {
     "slug": "barbell-ab-rollout-on-knees",
@@ -1245,7 +1301,8 @@
       "en": "Barbell Ab Rollout - On Knees",
       "pt-BR": "Rollout abdominal de joelhos com barra",
       "es": "Rollout de abdominales de rodillas con barra"
-    }
+    },
+    "muscle_region": "core"
   },
   {
     "slug": "barbell-curls-lying-against-an-incline",
@@ -1261,7 +1318,8 @@
       "en": "Barbell Curls Lying Against An Incline",
       "pt-BR": "Rosca inclinada deitado com barra",
       "es": "Curl inclinado tumbado con barra"
-    }
+    },
+    "muscle_region": "biceps"
   },
   {
     "slug": "barbell-guillotine-bench-press",
@@ -1277,7 +1335,8 @@
       "en": "Barbell Guillotine Bench Press",
       "pt-BR": "Supino guilhotina com barra",
       "es": "Press de banca guillotina con barra"
-    }
+    },
+    "muscle_region": "chest_mid"
   },
   {
     "slug": "barbell-hack-squat",
@@ -1293,7 +1352,8 @@
       "en": "Barbell Hack Squat",
       "pt-BR": "Agachamento hack com barra",
       "es": "Sentadilla hack con barra"
-    }
+    },
+    "muscle_region": "quads"
   },
   {
     "slug": "barbell-incline-bench-press-medium-grip",
@@ -1309,7 +1369,8 @@
       "en": "Barbell Incline Bench Press - Medium Grip",
       "pt-BR": "Supino com pegada média inclinado com barra",
       "es": "Press de banca con agarre medio inclinado con barra"
-    }
+    },
+    "muscle_region": "chest_upper"
   },
   {
     "slug": "barbell-incline-shoulder-raise",
@@ -1341,7 +1402,8 @@
       "en": "Barbell Rear Delt Row",
       "pt-BR": "Remada para posterior de ombro com barra",
       "es": "Remo para deltoides posterior con barra"
-    }
+    },
+    "muscle_region": "delt_rear"
   },
   {
     "slug": "barbell-rollout-from-bench",
@@ -1357,7 +1419,8 @@
       "en": "Barbell Rollout from Bench",
       "pt-BR": "Rollout abdominal com barra no banco",
       "es": "Rollout de abdominales con barra en banco"
-    }
+    },
+    "muscle_region": "core"
   },
   {
     "slug": "barbell-seated-calf-raise",
@@ -1373,7 +1436,8 @@
       "en": "Barbell Seated Calf Raise",
       "pt-BR": "Elevação de panturrilha sentado com barra",
       "es": "Elevación de gemelos sentado con barra"
-    }
+    },
+    "muscle_region": "soleus"
   },
   {
     "slug": "barbell-shrug",
@@ -1389,7 +1453,8 @@
       "en": "Barbell Shrug",
       "pt-BR": "Encolhimento de ombros com barra",
       "es": "Encogimiento de hombros con barra"
-    }
+    },
+    "muscle_region": "traps"
   },
   {
     "slug": "barbell-shrug-behind-the-back",
@@ -1405,7 +1470,8 @@
       "en": "Barbell Shrug Behind The Back",
       "pt-BR": "Encolhimento de ombros por trás do corpo com barra",
       "es": "Encogimiento de hombros por detrás de la espalda con barra"
-    }
+    },
+    "muscle_region": "traps"
   },
   {
     "slug": "barbell-side-bend",
@@ -1421,7 +1487,8 @@
       "en": "Barbell Side Bend",
       "pt-BR": "Flexão lateral de tronco com barra",
       "es": "Flexión lateral de torso con barra"
-    }
+    },
+    "muscle_region": "obliques"
   },
   {
     "slug": "barbell-side-split-squat",
@@ -1437,7 +1504,8 @@
       "en": "Barbell Side Split Squat",
       "pt-BR": "Agachamento split lateral com barra",
       "es": "Sentadilla split lateral con barra"
-    }
+    },
+    "muscle_region": "quads"
   },
   {
     "slug": "barbell-squat-to-a-bench",
@@ -1453,7 +1521,8 @@
       "en": "Barbell Squat To A Bench",
       "pt-BR": "Agachamento com barra no banco",
       "es": "Sentadilla con barra en banco"
-    }
+    },
+    "muscle_region": "quads"
   },
   {
     "slug": "barbell-step-ups",
@@ -1469,7 +1538,8 @@
       "en": "Barbell Step Ups",
       "pt-BR": "Subida no banco (step-up) com barra",
       "es": "Subida al cajón con barra"
-    }
+    },
+    "muscle_region": "quads"
   },
   {
     "slug": "barbell-walking-lunge",
@@ -1485,7 +1555,8 @@
       "en": "Barbell Walking Lunge",
       "pt-BR": "Afundo em deslocamento com barra",
       "es": "Zancada caminando con barra"
-    }
+    },
+    "muscle_region": "quads"
   },
   {
     "slug": "battling-ropes",
@@ -1533,7 +1604,8 @@
       "en": "Bench Press - Powerlifting",
       "pt-BR": "Supino estilo powerlifting",
       "es": "Press de banca estilo powerlifting"
-    }
+    },
+    "muscle_region": "triceps_lateral"
   },
   {
     "slug": "bench-press-with-bands",
@@ -1549,7 +1621,8 @@
       "en": "Bench Press - With Bands",
       "pt-BR": "Supino com elástico",
       "es": "Press de banca con banda elástica"
-    }
+    },
+    "muscle_region": "chest_mid"
   },
   {
     "slug": "bench-press-with-chains",
@@ -1565,7 +1638,8 @@
       "en": "Bench Press with Chains",
       "pt-BR": "Supino com correntes",
       "es": "Press de banca con cadenas"
-    }
+    },
+    "muscle_region": "triceps_lateral"
   },
   {
     "slug": "bench-sprint",
@@ -1597,7 +1671,8 @@
       "en": "Bent-Arm Barbell Pullover",
       "pt-BR": "Pullover com braços flexionados com barra",
       "es": "Pullover con brazos flexionados con barra"
-    }
+    },
+    "muscle_region": "lats"
   },
   {
     "slug": "bent-arm-dumbbell-pullover",
@@ -1613,7 +1688,8 @@
       "en": "Bent-Arm Dumbbell Pullover",
       "pt-BR": "Pullover com braços flexionados com halteres",
       "es": "Pullover con brazos flexionados con mancuernas"
-    }
+    },
+    "muscle_region": "chest_mid"
   },
   {
     "slug": "bent-knee-hip-raise",
@@ -1629,7 +1705,8 @@
       "en": "Bent-Knee Hip Raise",
       "pt-BR": "Elevação de quadril com joelhos flexionados",
       "es": "Elevación de cadera con rodillas flexionadas"
-    }
+    },
+    "muscle_region": "abs_lower"
   },
   {
     "slug": "bent-over-dumbbell-rear-delt-raise-with-head-on-bench",
@@ -1645,7 +1722,8 @@
       "en": "Bent Over Dumbbell Rear Delt Raise With Head On Bench",
       "pt-BR": "Elevação para posterior de ombro com a cabeça no banco curvada com halteres",
       "es": "Elevación de deltoides posterior con la cabeza en banco inclinada con mancuernas"
-    }
+    },
+    "muscle_region": "delt_rear"
   },
   {
     "slug": "bent-over-low-pulley-side-lateral",
@@ -1661,7 +1739,8 @@
       "en": "Bent Over Low-Pulley Side Lateral",
       "pt-BR": "Elevação lateral curvada baixa na polia",
       "es": "Elevación lateral inclinada baja en polea"
-    }
+    },
+    "muscle_region": "delt_side"
   },
   {
     "slug": "bent-over-one-arm-long-bar-row",
@@ -1677,7 +1756,8 @@
       "en": "Bent Over One-Arm Long Bar Row",
       "pt-BR": "Remada unilateral curvada com barra longa (landmine)",
       "es": "Remo a una mano inclinado con barra larga"
-    }
+    },
+    "muscle_region": "upper_back"
   },
   {
     "slug": "bent-over-two-arm-long-bar-row",
@@ -1693,7 +1773,8 @@
       "en": "Bent Over Two-Arm Long Bar Row",
       "pt-BR": "Remada com os dois braços curvada com barra longa (landmine)",
       "es": "Remo a dos manos inclinado con barra larga"
-    }
+    },
+    "muscle_region": "upper_back"
   },
   {
     "slug": "bent-over-two-dumbbell-row",
@@ -1709,7 +1790,8 @@
       "en": "Bent Over Two-Dumbbell Row",
       "pt-BR": "Remada curvada com dois halteres",
       "es": "Remo inclinado con dos mancuernas"
-    }
+    },
+    "muscle_region": "upper_back"
   },
   {
     "slug": "bent-over-two-dumbbell-row-with-palms-in",
@@ -1725,7 +1807,8 @@
       "en": "Bent Over Two-Dumbbell Row With Palms In",
       "pt-BR": "Remada com pegada neutra curvada com dois halteres",
       "es": "Remo con agarre neutro inclinado con dos mancuernas"
-    }
+    },
+    "muscle_region": "upper_back"
   },
   {
     "slug": "bent-press",
@@ -1773,7 +1856,8 @@
       "en": "Board Press",
       "pt-BR": "Supino com board",
       "es": "Press con tabla"
-    }
+    },
+    "muscle_region": "triceps_lateral"
   },
   {
     "slug": "body-up",
@@ -1805,7 +1889,8 @@
       "en": "Body Tricep Press",
       "pt-BR": "Desenvolvimento de tríceps de corpo",
       "es": "Press de tríceps de cuerpo"
-    }
+    },
+    "muscle_region": "triceps_lateral"
   },
   {
     "slug": "bodyweight-flyes",
@@ -1821,7 +1906,8 @@
       "en": "Bodyweight Flyes",
       "pt-BR": "Crucifixo com peso corporal",
       "es": "Aperturas con peso corporal"
-    }
+    },
+    "muscle_region": "chest_mid"
   },
   {
     "slug": "bodyweight-mid-row",
@@ -1837,7 +1923,8 @@
       "en": "Bodyweight Mid Row",
       "pt-BR": "Remada invertida com peso corporal",
       "es": "Remo invertido con peso corporal"
-    }
+    },
+    "muscle_region": "upper_back"
   },
   {
     "slug": "bodyweight-squat",
@@ -1853,7 +1940,8 @@
       "en": "Bodyweight Squat",
       "pt-BR": "Agachamento com peso corporal",
       "es": "Sentadilla con peso corporal"
-    }
+    },
+    "muscle_region": "quads"
   },
   {
     "slug": "bodyweight-walking-lunge",
@@ -1869,7 +1957,8 @@
       "en": "Bodyweight Walking Lunge",
       "pt-BR": "Afundo em deslocamento com peso corporal",
       "es": "Zancada caminando con peso corporal"
-    }
+    },
+    "muscle_region": "quads"
   },
   {
     "slug": "bosu-ball-cable-crunch-with-side-bends",
@@ -1885,7 +1974,8 @@
       "en": "Bosu Ball Cable Crunch With Side Bends",
       "pt-BR": "Abdominal na polia no bosu com flexão lateral",
       "es": "Crunch en polea en bosu con flexión lateral"
-    }
+    },
+    "muscle_region": "obliques"
   },
   {
     "slug": "bottoms-up-clean-from-the-hang-position",
@@ -1965,7 +2055,8 @@
       "en": "Box Squat",
       "pt-BR": "Agachamento na caixa",
       "es": "Sentadilla al cajón"
-    }
+    },
+    "muscle_region": "quads"
   },
   {
     "slug": "box-squat-with-bands",
@@ -1981,7 +2072,8 @@
       "en": "Box Squat with Bands",
       "pt-BR": "Agachamento com elástico na caixa",
       "es": "Sentadilla con banda elástica al cajón"
-    }
+    },
+    "muscle_region": "quads"
   },
   {
     "slug": "box-squat-with-chains",
@@ -1997,7 +2089,8 @@
       "en": "Box Squat with Chains",
       "pt-BR": "Agachamento na caixa com correntes",
       "es": "Sentadilla al cajón con cadenas"
-    }
+    },
+    "muscle_region": "quads"
   },
   {
     "slug": "bradford-rocky-presses",
@@ -2045,7 +2138,8 @@
       "en": "Butt Lift (Bridge)",
       "pt-BR": "Ponte de glúteo",
       "es": "Puente de glúteos"
-    }
+    },
+    "muscle_region": "glute_max"
   },
   {
     "slug": "butterfly",
@@ -2061,7 +2155,8 @@
       "en": "Butterfly",
       "pt-BR": "Voador (peck deck)",
       "es": "Contractor de pecho (pec deck)"
-    }
+    },
+    "muscle_region": "chest_mid"
   },
   {
     "slug": "cable-chest-press",
@@ -2077,7 +2172,8 @@
       "en": "Cable Chest Press",
       "pt-BR": "Supino na polia",
       "es": "Press de pecho en polea"
-    }
+    },
+    "muscle_region": "chest_mid"
   },
   {
     "slug": "cable-deadlifts",
@@ -2109,7 +2205,8 @@
       "en": "Cable Hammer Curls - Rope Attachment",
       "pt-BR": "Rosca martelo com corda na polia",
       "es": "Curl martillo con cuerda en polea"
-    }
+    },
+    "muscle_region": "biceps"
   },
   {
     "slug": "cable-hip-adduction",
@@ -2125,7 +2222,8 @@
       "en": "Cable Hip Adduction",
       "pt-BR": "Adução de quadril na polia",
       "es": "Aducción de cadera en polea"
-    }
+    },
+    "muscle_region": "adductors"
   },
   {
     "slug": "cable-incline-pushdown",
@@ -2189,7 +2287,8 @@
       "en": "Cable Iron Cross",
       "pt-BR": "Iron cross (crucifixo) na polia",
       "es": "Cruz de hierro en polea"
-    }
+    },
+    "muscle_region": "chest_mid"
   },
   {
     "slug": "cable-judo-flip",
@@ -2253,7 +2352,8 @@
       "en": "Cable Preacher Curl",
       "pt-BR": "Rosca Scott na polia",
       "es": "Curl predicador en polea"
-    }
+    },
+    "muscle_region": "biceps"
   },
   {
     "slug": "cable-rear-delt-fly",
@@ -2269,7 +2369,8 @@
       "en": "Cable Rear Delt Fly",
       "pt-BR": "Crucifixo invertido na polia",
       "es": "Aperturas invertidas en polea"
-    }
+    },
+    "muscle_region": "delt_rear"
   },
   {
     "slug": "cable-reverse-crunch",
@@ -2285,7 +2386,8 @@
       "en": "Cable Reverse Crunch",
       "pt-BR": "Abdominal invertido na polia",
       "es": "Crunch invertido en polea"
-    }
+    },
+    "muscle_region": "abs_lower"
   },
   {
     "slug": "cable-rope-overhead-triceps-extension",
@@ -2301,7 +2403,8 @@
       "en": "Cable Rope Overhead Triceps Extension",
       "pt-BR": "Extensão de tríceps acima da cabeça na polia com corda",
       "es": "Extensión de tríceps sobre la cabeza en polea con cuerda"
-    }
+    },
+    "muscle_region": "triceps_long"
   },
   {
     "slug": "cable-rope-rear-delt-rows",
@@ -2317,7 +2420,8 @@
       "en": "Cable Rope Rear-Delt Rows",
       "pt-BR": "Remada para posterior de ombro na polia com corda",
       "es": "Remo para deltoides posterior en polea con cuerda"
-    }
+    },
+    "muscle_region": "delt_rear"
   },
   {
     "slug": "cable-russian-twists",
@@ -2333,7 +2437,8 @@
       "en": "Cable Russian Twists",
       "pt-BR": "Rotação russa na polia",
       "es": "Giro ruso en polea"
-    }
+    },
+    "muscle_region": "obliques"
   },
   {
     "slug": "cable-seated-crunch",
@@ -2349,7 +2454,8 @@
       "en": "Cable Seated Crunch",
       "pt-BR": "Abdominal sentado na polia",
       "es": "Crunch sentado en polea"
-    }
+    },
+    "muscle_region": "abs_upper"
   },
   {
     "slug": "cable-seated-lateral-raise",
@@ -2365,7 +2471,8 @@
       "en": "Cable Seated Lateral Raise",
       "pt-BR": "Elevação lateral sentado na polia",
       "es": "Elevación lateral sentado en polea"
-    }
+    },
+    "muscle_region": "delt_side"
   },
   {
     "slug": "cable-shoulder-press",
@@ -2381,7 +2488,8 @@
       "en": "Cable Shoulder Press",
       "pt-BR": "Desenvolvimento na polia",
       "es": "Press de hombros en polea"
-    }
+    },
+    "muscle_region": "delt_front"
   },
   {
     "slug": "cable-shrugs",
@@ -2397,7 +2505,8 @@
       "en": "Cable Shrugs",
       "pt-BR": "Encolhimento de ombros na polia",
       "es": "Encogimiento de hombros en polea"
-    }
+    },
+    "muscle_region": "traps"
   },
   {
     "slug": "cable-wrist-curl",
@@ -2413,7 +2522,8 @@
       "en": "Cable Wrist Curl",
       "pt-BR": "Rosca de punho na polia",
       "es": "Curl de muñeca en polea"
-    }
+    },
+    "muscle_region": "forearms"
   },
   {
     "slug": "calf-machine-shoulder-shrug",
@@ -2429,7 +2539,8 @@
       "en": "Calf-Machine Shoulder Shrug",
       "pt-BR": "Encolhimento de ombros de ombros de panturrilha na máquina",
       "es": "Encogimiento de hombros de hombros de gemelos en máquina"
-    }
+    },
+    "muscle_region": "traps"
   },
   {
     "slug": "calf-press",
@@ -2445,7 +2556,8 @@
       "en": "Calf Press",
       "pt-BR": "Panturrilha no leg press",
       "es": "Prensa de gemelos"
-    }
+    },
+    "muscle_region": "gastrocnemius"
   },
   {
     "slug": "calf-press-on-the-leg-press-machine",
@@ -2461,7 +2573,8 @@
       "en": "Calf Press On The Leg Press Machine",
       "pt-BR": "Panturrilha no leg press",
       "es": "Prensa de gemelos"
-    }
+    },
+    "muscle_region": "gastrocnemius"
   },
   {
     "slug": "calf-raise-on-a-dumbbell",
@@ -2477,7 +2590,8 @@
       "en": "Calf Raise On A Dumbbell",
       "pt-BR": "Elevação de panturrilha com halteres",
       "es": "Elevación de gemelos con mancuernas"
-    }
+    },
+    "muscle_region": "gastrocnemius"
   },
   {
     "slug": "calf-raises-with-bands",
@@ -2493,7 +2607,8 @@
       "en": "Calf Raises - With Bands",
       "pt-BR": "Elevação de panturrilha com elástico",
       "es": "Elevación de gemelos con banda elástica"
-    }
+    },
+    "muscle_region": "gastrocnemius"
   },
   {
     "slug": "car-drivers",
@@ -2541,7 +2656,8 @@
       "en": "Catch and Overhead Throw",
       "pt-BR": "Recepção e arremesso acima da cabeça",
       "es": "Recepción y lanzamiento sobre la cabeza"
-    }
+    },
+    "muscle_region": "upper_back"
   },
   {
     "slug": "chain-handle-extension",
@@ -2573,7 +2689,8 @@
       "en": "Chain Press",
       "pt-BR": "Supino com correntes",
       "es": "Press con cadenas"
-    }
+    },
+    "muscle_region": "chest_mid"
   },
   {
     "slug": "chair-squat",
@@ -2589,7 +2706,8 @@
       "en": "Chair Squat",
       "pt-BR": "Agachamento na cadeira",
       "es": "Sentadilla en silla"
-    }
+    },
+    "muscle_region": "quads"
   },
   {
     "slug": "chest-push-from-3-point-stance",
@@ -2605,7 +2723,8 @@
       "en": "Chest Push from 3 point stance",
       "pt-BR": "Empurrada de peito (3 apoios)",
       "es": "Empuje de pecho (3 apoyos)"
-    }
+    },
+    "muscle_region": "chest_mid"
   },
   {
     "slug": "chest-push-multiple-response",
@@ -2621,7 +2740,8 @@
       "en": "Chest Push (multiple response)",
       "pt-BR": "Empurrada de peito com medicine ball",
       "es": "Empuje de pecho con balón"
-    }
+    },
+    "muscle_region": "chest_mid"
   },
   {
     "slug": "chest-push-single-response",
@@ -2637,7 +2757,8 @@
       "en": "Chest Push (single response)",
       "pt-BR": "Empurrada de peito com medicine ball (única)",
       "es": "Empuje de pecho con balón (única)"
-    }
+    },
+    "muscle_region": "chest_mid"
   },
   {
     "slug": "chest-push-with-run-release",
@@ -2653,7 +2774,8 @@
       "en": "Chest Push with Run Release",
       "pt-BR": "Empurrada de peito com saída em corrida",
       "es": "Empuje de pecho con salida en carrera"
-    }
+    },
+    "muscle_region": "chest_mid"
   },
   {
     "slug": "chin-up",
@@ -2669,7 +2791,8 @@
       "en": "Chin-Up",
       "pt-BR": "Barra fixa supinada",
       "es": "Dominadas supinas"
-    }
+    },
+    "muscle_region": "lats"
   },
   {
     "slug": "clean",
@@ -2733,7 +2856,8 @@
       "en": "Clean Shrug",
       "pt-BR": "Encolhimento de clean",
       "es": "Encogimiento de cargada"
-    }
+    },
+    "muscle_region": "traps"
   },
   {
     "slug": "clean-and-jerk",
@@ -2797,7 +2921,8 @@
       "en": "Clock Push-Up",
       "pt-BR": "Flexão relógio",
       "es": "Flexiones reloj"
-    }
+    },
+    "muscle_region": "chest_mid"
   },
   {
     "slug": "close-grip-dumbbell-press",
@@ -2813,7 +2938,8 @@
       "en": "Close-Grip Dumbbell Press",
       "pt-BR": "Desenvolvimento com pegada fechada com halteres",
       "es": "Press con agarre cerrado con mancuernas"
-    }
+    },
+    "muscle_region": "triceps_lateral"
   },
   {
     "slug": "close-grip-ez-bar-curl-with-band",
@@ -2829,7 +2955,8 @@
       "en": "Close-Grip EZ-Bar Curl with Band",
       "pt-BR": "Rosca com pegada fechada com barra W com elástico",
       "es": "Curl con agarre cerrado con barra Z con banda elástica"
-    }
+    },
+    "muscle_region": "biceps"
   },
   {
     "slug": "close-grip-ez-bar-press",
@@ -2845,7 +2972,8 @@
       "en": "Close-Grip EZ-Bar Press",
       "pt-BR": "Desenvolvimento com pegada fechada com barra W",
       "es": "Press con agarre cerrado con barra Z"
-    }
+    },
+    "muscle_region": "triceps_lateral"
   },
   {
     "slug": "close-grip-ez-bar-curl",
@@ -2861,7 +2989,8 @@
       "en": "Close-Grip EZ Bar Curl",
       "pt-BR": "Rosca com pegada fechada com barra W",
       "es": "Curl con agarre cerrado con barra Z"
-    }
+    },
+    "muscle_region": "biceps"
   },
   {
     "slug": "close-grip-front-lat-pulldown",
@@ -2877,7 +3006,8 @@
       "en": "Close-Grip Front Lat Pulldown",
       "pt-BR": "Puxada de dorsais com pegada fechada frontal",
       "es": "Jalón de dorsales con agarre cerrado frontal"
-    }
+    },
+    "muscle_region": "lats"
   },
   {
     "slug": "close-grip-push-up-off-of-a-dumbbell",
@@ -2909,7 +3039,8 @@
       "en": "Close-Grip Standing Barbell Curl",
       "pt-BR": "Rosca com pegada fechada em pé com barra",
       "es": "Curl con agarre cerrado de pie con barra"
-    }
+    },
+    "muscle_region": "biceps"
   },
   {
     "slug": "cocoons",
@@ -2941,7 +3072,8 @@
       "en": "Concentration Curls",
       "pt-BR": "Rosca concentrada",
       "es": "Curl concentrado"
-    }
+    },
+    "muscle_region": "biceps"
   },
   {
     "slug": "cross-body-crunch",
@@ -2957,7 +3089,8 @@
       "en": "Cross-Body Crunch",
       "pt-BR": "Abdominal cruzado",
       "es": "Crunch cruzado"
-    }
+    },
+    "muscle_region": "abs_upper"
   },
   {
     "slug": "cross-body-hammer-curl",
@@ -2973,7 +3106,8 @@
       "en": "Cross Body Hammer Curl",
       "pt-BR": "Rosca martelo cruzada",
       "es": "Curl martillo cruzado"
-    }
+    },
+    "muscle_region": "biceps"
   },
   {
     "slug": "cross-over-with-bands",
@@ -2989,7 +3123,8 @@
       "en": "Cross Over - With Bands",
       "pt-BR": "Crossover com elástico",
       "es": "Cruce con banda elástica"
-    }
+    },
+    "muscle_region": "chest_mid"
   },
   {
     "slug": "crunch-hands-overhead",
@@ -3005,7 +3140,8 @@
       "en": "Crunch - Hands Overhead",
       "pt-BR": "Abdominal com mãos acima da cabeça",
       "es": "Crunch manos sobre la cabeza"
-    }
+    },
+    "muscle_region": "abs_upper"
   },
   {
     "slug": "crunch-legs-on-exercise-ball",
@@ -3021,7 +3157,8 @@
       "en": "Crunch - Legs On Exercise Ball",
       "pt-BR": "Abdominal de pernas na bola suíça",
       "es": "Crunch de piernas con fitball"
-    }
+    },
+    "muscle_region": "abs_upper"
   },
   {
     "slug": "cuban-press",
@@ -3053,7 +3190,8 @@
       "en": "Dead Bug",
       "pt-BR": "Inseto morto (dead bug)",
       "es": "Bicho muerto (dead bug)"
-    }
+    },
+    "muscle_region": "core"
   },
   {
     "slug": "deadlift-with-bands",
@@ -3069,7 +3207,8 @@
       "en": "Deadlift with Bands",
       "pt-BR": "Levantamento terra com elástico",
       "es": "Peso muerto con banda elástica"
-    }
+    },
+    "muscle_region": "lower_back"
   },
   {
     "slug": "deadlift-with-chains",
@@ -3085,7 +3224,8 @@
       "en": "Deadlift with Chains",
       "pt-BR": "Levantamento terra com correntes",
       "es": "Peso muerto con cadenas"
-    }
+    },
+    "muscle_region": "lower_back"
   },
   {
     "slug": "decline-barbell-bench-press",
@@ -3101,7 +3241,8 @@
       "en": "Decline Barbell Bench Press",
       "pt-BR": "Supino declinado com barra",
       "es": "Press de banca declinado con barra"
-    }
+    },
+    "muscle_region": "chest_lower"
   },
   {
     "slug": "decline-close-grip-bench-to-skull-crusher",
@@ -3117,7 +3258,8 @@
       "en": "Decline Close-Grip Bench To Skull Crusher",
       "pt-BR": "Tríceps testa com pegada fechada declinado no banco",
       "es": "Press francés (rompecráneos) con agarre cerrado declinado en banco"
-    }
+    },
+    "muscle_region": "triceps_long"
   },
   {
     "slug": "decline-crunch",
@@ -3133,7 +3275,8 @@
       "en": "Decline Crunch",
       "pt-BR": "Abdominal declinado",
       "es": "Crunch declinado"
-    }
+    },
+    "muscle_region": "abs_upper"
   },
   {
     "slug": "decline-dumbbell-bench-press",
@@ -3149,7 +3292,8 @@
       "en": "Decline Dumbbell Bench Press",
       "pt-BR": "Supino declinado com halteres",
       "es": "Press de banca declinado con mancuernas"
-    }
+    },
+    "muscle_region": "chest_lower"
   },
   {
     "slug": "decline-dumbbell-flyes",
@@ -3165,7 +3309,8 @@
       "en": "Decline Dumbbell Flyes",
       "pt-BR": "Crucifixo declinado com halteres",
       "es": "Aperturas declinadas con mancuernas"
-    }
+    },
+    "muscle_region": "chest_lower"
   },
   {
     "slug": "decline-dumbbell-triceps-extension",
@@ -3213,7 +3358,8 @@
       "en": "Decline Oblique Crunch",
       "pt-BR": "Abdominal declinado oblíquo",
       "es": "Crunch declinado oblicuo"
-    }
+    },
+    "muscle_region": "obliques"
   },
   {
     "slug": "decline-push-up",
@@ -3229,7 +3375,8 @@
       "en": "Decline Push-Up",
       "pt-BR": "Flexão de braço declinada",
       "es": "Flexiones declinadas"
-    }
+    },
+    "muscle_region": "chest_lower"
   },
   {
     "slug": "decline-reverse-crunch",
@@ -3245,7 +3392,8 @@
       "en": "Decline Reverse Crunch",
       "pt-BR": "Abdominal declinado invertido",
       "es": "Crunch declinado invertido"
-    }
+    },
+    "muscle_region": "abs_lower"
   },
   {
     "slug": "decline-smith-press",
@@ -3261,7 +3409,8 @@
       "en": "Decline Smith Press",
       "pt-BR": "Desenvolvimento declinado no smith",
       "es": "Press declinado en multipower"
-    }
+    },
+    "muscle_region": "chest_lower"
   },
   {
     "slug": "deficit-deadlift",
@@ -3277,7 +3426,8 @@
       "en": "Deficit Deadlift",
       "pt-BR": "Levantamento terra em déficit",
       "es": "Peso muerto en déficit"
-    }
+    },
+    "muscle_region": "lower_back"
   },
   {
     "slug": "depth-jump-leap",
@@ -3309,7 +3459,8 @@
       "en": "Dip Machine",
       "pt-BR": "Mergulho na máquina",
       "es": "Fondos en máquina"
-    }
+    },
+    "muscle_region": "triceps_lateral"
   },
   {
     "slug": "dips-triceps-version",
@@ -3325,7 +3476,8 @@
       "en": "Dips - Triceps Version",
       "pt-BR": "Mergulho (paralelas) de tríceps",
       "es": "Fondos de tríceps"
-    }
+    },
+    "muscle_region": "triceps_lateral"
   },
   {
     "slug": "donkey-calf-raises",
@@ -3341,7 +3493,8 @@
       "en": "Donkey Calf Raises",
       "pt-BR": "Elevação de panturrilha burrinho",
       "es": "Elevación de gemelos burro"
-    }
+    },
+    "muscle_region": "gastrocnemius"
   },
   {
     "slug": "double-kettlebell-alternating-hang-clean",
@@ -3389,7 +3542,8 @@
       "en": "Double Kettlebell Push Press",
       "pt-BR": "Push press duplo com kettlebell",
       "es": "Push press doble con kettlebell"
-    }
+    },
+    "muscle_region": "delt_front"
   },
   {
     "slug": "double-kettlebell-snatch",
@@ -3469,7 +3623,8 @@
       "en": "Drag Curl",
       "pt-BR": "Rosca arrasto",
       "es": "Curl de arrastre"
-    }
+    },
+    "muscle_region": "biceps"
   },
   {
     "slug": "drop-push",
@@ -3485,7 +3640,8 @@
       "en": "Drop Push",
       "pt-BR": "Flexão com queda (pliométrica)",
       "es": "Flexión con caída"
-    }
+    },
+    "muscle_region": "chest_mid"
   },
   {
     "slug": "dumbbell-alternate-bicep-curl",
@@ -3501,7 +3657,8 @@
       "en": "Dumbbell Alternate Bicep Curl",
       "pt-BR": "Rosca bíceps alternada com halteres",
       "es": "Curl de bíceps alterno con mancuernas"
-    }
+    },
+    "muscle_region": "biceps"
   },
   {
     "slug": "dumbbell-bench-press",
@@ -3517,7 +3674,8 @@
       "en": "Dumbbell Bench Press",
       "pt-BR": "Supino com halteres",
       "es": "Press de banca con mancuernas"
-    }
+    },
+    "muscle_region": "chest_mid"
   },
   {
     "slug": "dumbbell-bench-press-with-neutral-grip",
@@ -3533,7 +3691,8 @@
       "en": "Dumbbell Bench Press with Neutral Grip",
       "pt-BR": "Supino com pegada neutra com halteres",
       "es": "Press de banca con agarre neutro con mancuernas"
-    }
+    },
+    "muscle_region": "chest_mid"
   },
   {
     "slug": "dumbbell-clean",
@@ -3565,7 +3724,8 @@
       "en": "Dumbbell Floor Press",
       "pt-BR": "Supino no chão com halteres",
       "es": "Press en el suelo con mancuernas"
-    }
+    },
+    "muscle_region": "triceps_lateral"
   },
   {
     "slug": "dumbbell-incline-row",
@@ -3581,7 +3741,8 @@
       "en": "Dumbbell Incline Row",
       "pt-BR": "Remada inclinada com halteres",
       "es": "Remo inclinado con mancuernas"
-    }
+    },
+    "muscle_region": "upper_back"
   },
   {
     "slug": "dumbbell-incline-shoulder-raise",
@@ -3613,7 +3774,8 @@
       "en": "Dumbbell Lunges",
       "pt-BR": "Afundo com halteres",
       "es": "Zancada con mancuernas"
-    }
+    },
+    "muscle_region": "quads"
   },
   {
     "slug": "dumbbell-lying-one-arm-rear-lateral-raise",
@@ -3629,7 +3791,8 @@
       "en": "Dumbbell Lying One-Arm Rear Lateral Raise",
       "pt-BR": "Elevação lateral unilateral deitado posterior com halteres",
       "es": "Elevación lateral a una mano tumbado posterior con mancuernas"
-    }
+    },
+    "muscle_region": "delt_rear"
   },
   {
     "slug": "dumbbell-lying-pronation",
@@ -3661,7 +3824,8 @@
       "en": "Dumbbell Lying Rear Lateral Raise",
       "pt-BR": "Elevação lateral deitado posterior com halteres",
       "es": "Elevación lateral tumbado posterior con mancuernas"
-    }
+    },
+    "muscle_region": "delt_rear"
   },
   {
     "slug": "dumbbell-lying-supination",
@@ -3693,7 +3857,8 @@
       "en": "Dumbbell One-Arm Shoulder Press",
       "pt-BR": "Desenvolvimento unilateral com halteres",
       "es": "Press de hombros a una mano con mancuernas"
-    }
+    },
+    "muscle_region": "delt_front"
   },
   {
     "slug": "dumbbell-one-arm-triceps-extension",
@@ -3725,7 +3890,8 @@
       "en": "Dumbbell One-Arm Upright Row",
       "pt-BR": "Remada alta unilateral com halteres",
       "es": "Remo al mentón a una mano con mancuernas"
-    }
+    },
+    "muscle_region": "delt_front"
   },
   {
     "slug": "dumbbell-prone-incline-curl",
@@ -3741,7 +3907,8 @@
       "en": "Dumbbell Prone Incline Curl",
       "pt-BR": "Rosca inclinada pronado com halteres",
       "es": "Curl inclinado prono con mancuernas"
-    }
+    },
+    "muscle_region": "biceps"
   },
   {
     "slug": "dumbbell-raise",
@@ -3773,7 +3940,8 @@
       "en": "Dumbbell Rear Lunge",
       "pt-BR": "Afundo posterior com halteres",
       "es": "Zancada posterior con mancuernas"
-    }
+    },
+    "muscle_region": "quads"
   },
   {
     "slug": "dumbbell-scaption",
@@ -3789,7 +3957,8 @@
       "en": "Dumbbell Scaption",
       "pt-BR": "Elevação no plano escapular (scaption) com halteres",
       "es": "Scaption con mancuernas"
-    }
+    },
+    "muscle_region": "delt_front"
   },
   {
     "slug": "dumbbell-seated-box-jump",
@@ -3821,7 +3990,8 @@
       "en": "Dumbbell Seated One-Leg Calf Raise",
       "pt-BR": "Elevação de panturrilha unilateral sentado com halteres",
       "es": "Elevación de gemelos a una pierna sentado con mancuernas"
-    }
+    },
+    "muscle_region": "soleus"
   },
   {
     "slug": "dumbbell-shoulder-press",
@@ -3837,7 +4007,8 @@
       "en": "Dumbbell Shoulder Press",
       "pt-BR": "Desenvolvimento com halteres",
       "es": "Press de hombros con mancuernas"
-    }
+    },
+    "muscle_region": "delt_front"
   },
   {
     "slug": "dumbbell-shrug",
@@ -3853,7 +4024,8 @@
       "en": "Dumbbell Shrug",
       "pt-BR": "Encolhimento de ombros com halteres",
       "es": "Encogimiento de hombros con mancuernas"
-    }
+    },
+    "muscle_region": "traps"
   },
   {
     "slug": "dumbbell-side-bend",
@@ -3869,7 +4041,8 @@
       "en": "Dumbbell Side Bend",
       "pt-BR": "Flexão lateral de tronco com halteres",
       "es": "Flexión lateral de torso con mancuernas"
-    }
+    },
+    "muscle_region": "obliques"
   },
   {
     "slug": "dumbbell-squat",
@@ -3885,7 +4058,8 @@
       "en": "Dumbbell Squat",
       "pt-BR": "Agachamento com halteres",
       "es": "Sentadilla con mancuernas"
-    }
+    },
+    "muscle_region": "quads"
   },
   {
     "slug": "dumbbell-squat-to-a-bench",
@@ -3901,7 +4075,8 @@
       "en": "Dumbbell Squat To A Bench",
       "pt-BR": "Agachamento com halteres no banco",
       "es": "Sentadilla con mancuernas en banco"
-    }
+    },
+    "muscle_region": "quads"
   },
   {
     "slug": "dumbbell-step-ups",
@@ -3917,7 +4092,8 @@
       "en": "Dumbbell Step Ups",
       "pt-BR": "Subida no banco (step-up) com halteres",
       "es": "Subida al cajón con mancuernas"
-    }
+    },
+    "muscle_region": "quads"
   },
   {
     "slug": "dumbbell-tricep-extension-pronated-grip",
@@ -3949,7 +4125,8 @@
       "en": "EZ-Bar Curl",
       "pt-BR": "Rosca com barra W",
       "es": "Curl con barra Z"
-    }
+    },
+    "muscle_region": "biceps"
   },
   {
     "slug": "ez-bar-skullcrusher",
@@ -3965,7 +4142,8 @@
       "en": "EZ-Bar Skullcrusher",
       "pt-BR": "Tríceps testa com barra W",
       "es": "Press francés (rompecráneos) con barra Z"
-    }
+    },
+    "muscle_region": "triceps_long"
   },
   {
     "slug": "elbow-to-knee",
@@ -3997,7 +4175,8 @@
       "en": "Elevated Back Lunge",
       "pt-BR": "Afundo de costas elevado",
       "es": "Zancada de espalda elevada"
-    }
+    },
+    "muscle_region": "quads"
   },
   {
     "slug": "elevated-cable-rows",
@@ -4013,7 +4192,8 @@
       "en": "Elevated Cable Rows",
       "pt-BR": "Remada elevada na polia",
       "es": "Remo elevado en polea"
-    }
+    },
+    "muscle_region": "upper_back"
   },
   {
     "slug": "exercise-ball-crunch",
@@ -4029,7 +4209,8 @@
       "en": "Exercise Ball Crunch",
       "pt-BR": "Abdominal na bola suíça",
       "es": "Crunch con fitball"
-    }
+    },
+    "muscle_region": "abs_upper"
   },
   {
     "slug": "exercise-ball-pull-in",
@@ -4061,7 +4242,8 @@
       "en": "Extended Range One-Arm Kettlebell Floor Press",
       "pt-BR": "Supino no chão com amplitude estendida unilateral com kettlebell",
       "es": "Press en el suelo con rango extendido a una mano con kettlebell"
-    }
+    },
+    "muscle_region": "chest_mid"
   },
   {
     "slug": "external-rotation",
@@ -4141,7 +4323,8 @@
       "en": "Finger Curls",
       "pt-BR": "Rosca de dedos",
       "es": "Curl de dedos"
-    }
+    },
+    "muscle_region": "forearms"
   },
   {
     "slug": "flat-bench-cable-flyes",
@@ -4157,7 +4340,8 @@
       "en": "Flat Bench Cable Flyes",
       "pt-BR": "Crucifixo reto na polia no banco",
       "es": "Aperturas planas en polea en banco"
-    }
+    },
+    "muscle_region": "chest_mid"
   },
   {
     "slug": "flat-bench-leg-pull-in",
@@ -4173,7 +4357,8 @@
       "en": "Flat Bench Leg Pull-In",
       "pt-BR": "Puxada de pernas reta no banco",
       "es": "Tirón de piernas plano en banco"
-    }
+    },
+    "muscle_region": "abs_lower"
   },
   {
     "slug": "flat-bench-lying-leg-raise",
@@ -4189,7 +4374,8 @@
       "en": "Flat Bench Lying Leg Raise",
       "pt-BR": "Elevação de pernas reta deitado no banco",
       "es": "Elevación de piernas plana tumbado en banco"
-    }
+    },
+    "muscle_region": "abs_lower"
   },
   {
     "slug": "flexor-incline-dumbbell-curls",
@@ -4205,7 +4391,8 @@
       "en": "Flexor Incline Dumbbell Curls",
       "pt-BR": "Rosca com apoio (flexor) inclinada com halteres",
       "es": "Curl flexor inclinado con mancuernas"
-    }
+    },
+    "muscle_region": "biceps"
   },
   {
     "slug": "floor-glute-ham-raise",
@@ -4221,7 +4408,8 @@
       "en": "Floor Glute-Ham Raise",
       "pt-BR": "Flexora glúteo-ísquio (GHR) no chão",
       "es": "Glute ham raise (GHR) en el suelo"
-    }
+    },
+    "muscle_region": "hamstrings"
   },
   {
     "slug": "floor-press",
@@ -4237,7 +4425,8 @@
       "en": "Floor Press",
       "pt-BR": "Supino no chão",
       "es": "Press en el suelo"
-    }
+    },
+    "muscle_region": "triceps_lateral"
   },
   {
     "slug": "floor-press-with-chains",
@@ -4253,7 +4442,8 @@
       "en": "Floor Press with Chains",
       "pt-BR": "Supino no chão com correntes",
       "es": "Press en el suelo con cadenas"
-    }
+    },
+    "muscle_region": "triceps_lateral"
   },
   {
     "slug": "flutter-kicks",
@@ -4285,7 +4475,8 @@
       "en": "Frankenstein Squat",
       "pt-BR": "Agachamento Frankenstein",
       "es": "Sentadilla Frankenstein"
-    }
+    },
+    "muscle_region": "quads"
   },
   {
     "slug": "freehand-jump-squat",
@@ -4301,7 +4492,8 @@
       "en": "Freehand Jump Squat",
       "pt-BR": "Agachamento com salto sem peso",
       "es": "Sentadilla con salto sin peso"
-    }
+    },
+    "muscle_region": "quads"
   },
   {
     "slug": "frog-sit-ups",
@@ -4317,7 +4509,8 @@
       "en": "Frog Sit-Ups",
       "pt-BR": "Abdominal rã",
       "es": "Abdominales rana"
-    }
+    },
+    "muscle_region": "abs_upper"
   },
   {
     "slug": "front-barbell-squat",
@@ -4333,7 +4526,8 @@
       "en": "Front Barbell Squat",
       "pt-BR": "Agachamento frontal com barra",
       "es": "Sentadilla frontal con barra"
-    }
+    },
+    "muscle_region": "quads"
   },
   {
     "slug": "front-barbell-squat-to-a-bench",
@@ -4349,7 +4543,8 @@
       "en": "Front Barbell Squat To A Bench",
       "pt-BR": "Agachamento frontal com barra no banco",
       "es": "Sentadilla frontal con barra en banco"
-    }
+    },
+    "muscle_region": "quads"
   },
   {
     "slug": "front-box-jump",
@@ -4381,7 +4576,8 @@
       "en": "Front Cable Raise",
       "pt-BR": "Elevação frontal na polia",
       "es": "Elevación frontal en polea"
-    }
+    },
+    "muscle_region": "delt_front"
   },
   {
     "slug": "front-cone-hops-or-hurdle-hops",
@@ -4413,7 +4609,8 @@
       "en": "Front Incline Dumbbell Raise",
       "pt-BR": "Elevação inclinada frontal com halteres",
       "es": "Elevación inclinada frontal con mancuernas"
-    }
+    },
+    "muscle_region": "delt_front"
   },
   {
     "slug": "front-plate-raise",
@@ -4429,7 +4626,8 @@
       "en": "Front Plate Raise",
       "pt-BR": "Elevação frontal com anilha",
       "es": "Elevación frontal con disco"
-    }
+    },
+    "muscle_region": "delt_front"
   },
   {
     "slug": "front-raise-and-pullover",
@@ -4445,7 +4643,8 @@
       "en": "Front Raise And Pullover",
       "pt-BR": "Elevação frontal + pullover",
       "es": "Elevación frontal y pullover"
-    }
+    },
+    "muscle_region": "chest_mid"
   },
   {
     "slug": "front-squat-clean-grip",
@@ -4461,7 +4660,8 @@
       "en": "Front Squat (Clean Grip)",
       "pt-BR": "Agachamento frontal com pegada de clean",
       "es": "Sentadilla frontal con agarre de cargada"
-    }
+    },
+    "muscle_region": "quads"
   },
   {
     "slug": "front-squats-with-two-kettlebells",
@@ -4477,7 +4677,8 @@
       "en": "Front Squats With Two Kettlebells",
       "pt-BR": "Agachamento frontal com dois kettlebells",
       "es": "Sentadilla frontal con dos kettlebells"
-    }
+    },
+    "muscle_region": "quads"
   },
   {
     "slug": "front-two-dumbbell-raise",
@@ -4509,7 +4710,8 @@
       "en": "Full Range-Of-Motion Lat Pulldown",
       "pt-BR": "Puxada alta com amplitude completa",
       "es": "Jalón con recorrido completo"
-    }
+    },
+    "muscle_region": "lats"
   },
   {
     "slug": "gironda-sternum-chins",
@@ -4525,7 +4727,8 @@
       "en": "Gironda Sternum Chins",
       "pt-BR": "Barra fixa Gironda (ao esterno)",
       "es": "Dominadas Gironda"
-    }
+    },
+    "muscle_region": "lats"
   },
   {
     "slug": "glute-ham-raise",
@@ -4541,7 +4744,8 @@
       "en": "Glute Ham Raise",
       "pt-BR": "Flexora glúteo-ísquio (GHR)",
       "es": "Glute ham raise (GHR)"
-    }
+    },
+    "muscle_region": "hamstrings"
   },
   {
     "slug": "glute-kickback",
@@ -4557,7 +4761,8 @@
       "en": "Glute Kickback",
       "pt-BR": "Coice (kickback) de glúteo",
       "es": "Patada (kickback) de glúteos"
-    }
+    },
+    "muscle_region": "glute_max"
   },
   {
     "slug": "goblet-squat",
@@ -4573,7 +4778,8 @@
       "en": "Goblet Squat",
       "pt-BR": "Agachamento goblet",
       "es": "Sentadilla goblet"
-    }
+    },
+    "muscle_region": "quads"
   },
   {
     "slug": "good-morning",
@@ -4621,7 +4827,8 @@
       "en": "Gorilla Chin/Crunch",
       "pt-BR": "Barra fixa gorila (chin + abdominal)",
       "es": "Dominadas gorila"
-    }
+    },
+    "muscle_region": "abs_upper"
   },
   {
     "slug": "hack-squat",
@@ -4637,7 +4844,8 @@
       "en": "Hack Squat",
       "pt-BR": "Agachamento hack",
       "es": "Sentadilla hack"
-    }
+    },
+    "muscle_region": "quads"
   },
   {
     "slug": "hammer-grip-incline-db-bench-press",
@@ -4653,7 +4861,8 @@
       "en": "Hammer Grip Incline DB Bench Press",
       "pt-BR": "Supino martelo inclinado com halteres",
       "es": "Press de banca martillo inclinado con mancuernas"
-    }
+    },
+    "muscle_region": "chest_upper"
   },
   {
     "slug": "handstand-push-ups",
@@ -4765,7 +4974,8 @@
       "en": "Hanging Pike",
       "pt-BR": "Pike suspenso na barra",
       "es": "Pica colgado"
-    }
+    },
+    "muscle_region": "abs_lower"
   },
   {
     "slug": "heaving-snatch-balance",
@@ -4797,7 +5007,8 @@
       "en": "Heavy Bag Thrust",
       "pt-BR": "Empurrada no saco de pancada",
       "es": "Empuje al saco de boxeo"
-    }
+    },
+    "muscle_region": "chest_mid"
   },
   {
     "slug": "high-cable-curls",
@@ -4813,7 +5024,8 @@
       "en": "High Cable Curls",
       "pt-BR": "Rosca alta na polia",
       "es": "Curl alto en polea"
-    }
+    },
+    "muscle_region": "biceps"
   },
   {
     "slug": "hip-extension-with-bands",
@@ -4829,7 +5041,8 @@
       "en": "Hip Extension with Bands",
       "pt-BR": "Extensão de quadril com elástico",
       "es": "Extensión de cadera con banda elástica"
-    }
+    },
+    "muscle_region": "glute_max"
   },
   {
     "slug": "hip-flexion-with-band",
@@ -4861,7 +5074,8 @@
       "en": "Hip Lift with Band",
       "pt-BR": "Elevação de quadril com elástico",
       "es": "Elevación de cadera con banda elástica"
-    }
+    },
+    "muscle_region": "glute_max"
   },
   {
     "slug": "hurdle-hops",
@@ -4893,7 +5107,8 @@
       "en": "Hyperextensions With No Hyperextension Bench",
       "pt-BR": "Hiperextensão lombar no solo",
       "es": "Hiperextensión en el suelo"
-    }
+    },
+    "muscle_region": "lower_back"
   },
   {
     "slug": "incline-barbell-triceps-extension",
@@ -4941,7 +5156,8 @@
       "en": "Incline Cable Chest Press",
       "pt-BR": "Supino inclinado na polia",
       "es": "Press de pecho inclinado en polea"
-    }
+    },
+    "muscle_region": "chest_upper"
   },
   {
     "slug": "incline-cable-flye",
@@ -4957,7 +5173,8 @@
       "en": "Incline Cable Flye",
       "pt-BR": "Crucifixo inclinado na polia",
       "es": "Aperturas inclinadas en polea"
-    }
+    },
+    "muscle_region": "chest_upper"
   },
   {
     "slug": "incline-dumbbell-bench-with-palms-facing-in",
@@ -4973,7 +5190,8 @@
       "en": "Incline Dumbbell Bench With Palms Facing In",
       "pt-BR": "Supino inclinado com halteres e pegada neutra",
       "es": "Press inclinado con mancuernas agarre neutro"
-    }
+    },
+    "muscle_region": "chest_upper"
   },
   {
     "slug": "incline-dumbbell-curl",
@@ -4989,7 +5207,8 @@
       "en": "Incline Dumbbell Curl",
       "pt-BR": "Rosca inclinada com halteres",
       "es": "Curl inclinado con mancuernas"
-    }
+    },
+    "muscle_region": "biceps"
   },
   {
     "slug": "incline-dumbbell-flyes",
@@ -5005,7 +5224,8 @@
       "en": "Incline Dumbbell Flyes",
       "pt-BR": "Crucifixo inclinado com halteres",
       "es": "Aperturas inclinadas con mancuernas"
-    }
+    },
+    "muscle_region": "chest_upper"
   },
   {
     "slug": "incline-dumbbell-flyes-with-a-twist",
@@ -5021,7 +5241,8 @@
       "en": "Incline Dumbbell Flyes - With A Twist",
       "pt-BR": "Crucifixo inclinado com halteres e rotação",
       "es": "Aperturas inclinadas con mancuernas y giro"
-    }
+    },
+    "muscle_region": "chest_upper"
   },
   {
     "slug": "incline-hammer-curls",
@@ -5037,7 +5258,8 @@
       "en": "Incline Hammer Curls",
       "pt-BR": "Rosca martelo inclinada",
       "es": "Curl martillo inclinado"
-    }
+    },
+    "muscle_region": "biceps"
   },
   {
     "slug": "incline-inner-biceps-curl",
@@ -5053,7 +5275,8 @@
       "en": "Incline Inner Biceps Curl",
       "pt-BR": "Rosca bíceps interna inclinada",
       "es": "Curl de bíceps interno inclinado"
-    }
+    },
+    "muscle_region": "biceps"
   },
   {
     "slug": "incline-push-up",
@@ -5069,7 +5292,8 @@
       "en": "Incline Push-Up",
       "pt-BR": "Flexão de braço inclinada",
       "es": "Flexiones inclinadas"
-    }
+    },
+    "muscle_region": "chest_upper"
   },
   {
     "slug": "incline-push-up-close-grip",
@@ -5101,7 +5325,8 @@
       "en": "Incline Push-Up Depth Jump",
       "pt-BR": "Flexão pliométrica com queda",
       "es": "Flexión pliométrica con caída"
-    }
+    },
+    "muscle_region": "chest_upper"
   },
   {
     "slug": "incline-push-up-medium",
@@ -5117,7 +5342,8 @@
       "en": "Incline Push-Up Medium",
       "pt-BR": "Flexão inclinada com pegada média",
       "es": "Flexiones inclinadas agarre medio"
-    }
+    },
+    "muscle_region": "chest_upper"
   },
   {
     "slug": "incline-push-up-reverse-grip",
@@ -5133,7 +5359,8 @@
       "en": "Incline Push-Up Reverse Grip",
       "pt-BR": "Flexão de braço com pegada invertida inclinada",
       "es": "Flexiones con agarre inverso inclinadas"
-    }
+    },
+    "muscle_region": "chest_upper"
   },
   {
     "slug": "incline-push-up-wide",
@@ -5149,7 +5376,8 @@
       "en": "Incline Push-Up Wide",
       "pt-BR": "Flexão de braço inclinada aberta",
       "es": "Flexiones inclinadas abiertas"
-    }
+    },
+    "muscle_region": "chest_upper"
   },
   {
     "slug": "internal-rotation-with-band",
@@ -5181,7 +5409,8 @@
       "en": "Inverted Row",
       "pt-BR": "Remada invertida",
       "es": "Remo invertido"
-    }
+    },
+    "muscle_region": "upper_back"
   },
   {
     "slug": "inverted-row-with-straps",
@@ -5197,7 +5426,8 @@
       "en": "Inverted Row with Straps",
       "pt-BR": "Remada invertida nas fitas",
       "es": "Remo invertido con correas"
-    }
+    },
+    "muscle_region": "upper_back"
   },
   {
     "slug": "iron-cross",
@@ -5229,7 +5459,8 @@
       "en": "Isometric Chest Squeezes",
       "pt-BR": "Contração isométrica de peito",
       "es": "Contracción isométrica de pecho"
-    }
+    },
+    "muscle_region": "chest_mid"
   },
   {
     "slug": "isometric-neck-exercise-front-and-back",
@@ -5277,7 +5508,8 @@
       "en": "Isometric Wipers",
       "pt-BR": "Limpador isométrico",
       "es": "Limpiaparabrisas isométrico"
-    }
+    },
+    "muscle_region": "chest_mid"
   },
   {
     "slug": "jm-press",
@@ -5293,7 +5525,8 @@
       "en": "JM Press",
       "pt-BR": "Desenvolvimento JM",
       "es": "Press JM"
-    }
+    },
+    "muscle_region": "triceps_lateral"
   },
   {
     "slug": "jackknife-sit-up",
@@ -5309,7 +5542,8 @@
       "en": "Jackknife Sit-Up",
       "pt-BR": "Abdominal canivete",
       "es": "Abdominales en navaja"
-    }
+    },
+    "muscle_region": "abs_upper"
   },
   {
     "slug": "janda-sit-up",
@@ -5325,7 +5559,8 @@
       "en": "Janda Sit-Up",
       "pt-BR": "Abdominal Janda",
       "es": "Abdominales Janda"
-    }
+    },
+    "muscle_region": "abs_upper"
   },
   {
     "slug": "jefferson-squats",
@@ -5341,7 +5576,8 @@
       "en": "Jefferson Squats",
       "pt-BR": "Agachamento Jefferson",
       "es": "Sentadilla Jefferson"
-    }
+    },
+    "muscle_region": "quads"
   },
   {
     "slug": "jerk-balance",
@@ -5373,7 +5609,8 @@
       "en": "Jerk Dip Squat",
       "pt-BR": "Jerk dip (meio agachamento)",
       "es": "Jerk dip"
-    }
+    },
+    "muscle_region": "quads"
   },
   {
     "slug": "jogging-treadmill",
@@ -5405,7 +5642,8 @@
       "en": "Kettlebell Arnold Press",
       "pt-BR": "Desenvolvimento Arnold com kettlebell",
       "es": "Press Arnold con kettlebell"
-    }
+    },
+    "muscle_region": "delt_front"
   },
   {
     "slug": "kettlebell-dead-clean",
@@ -5517,7 +5755,8 @@
       "en": "Kettlebell Pistol Squat",
       "pt-BR": "Agachamento pistol com kettlebell",
       "es": "Sentadilla pistol con kettlebell"
-    }
+    },
+    "muscle_region": "quads"
   },
   {
     "slug": "kettlebell-seated-press",
@@ -5645,7 +5884,8 @@
       "en": "Kipping Muscle Up",
       "pt-BR": "Muscle up com kipping",
       "es": "Muscle up con kipping"
-    }
+    },
+    "muscle_region": "lats"
   },
   {
     "slug": "knee-hip-raise-on-parallel-bars",
@@ -5661,7 +5901,8 @@
       "en": "Knee/Hip Raise On Parallel Bars",
       "pt-BR": "Elevação de joelhos nas paralelas",
       "es": "Elevación de rodillas en paralelas"
-    }
+    },
+    "muscle_region": "abs_lower"
   },
   {
     "slug": "knee-tuck-jump",
@@ -5709,7 +5950,8 @@
       "en": "Kneeling Cable Crunch With Alternating Oblique Twists",
       "pt-BR": "Abdominal na polia ajoelhado com rotação alternada",
       "es": "Crunch en polea de rodillas con giro alterno"
-    }
+    },
+    "muscle_region": "obliques"
   },
   {
     "slug": "kneeling-cable-triceps-extension",
@@ -5741,7 +5983,8 @@
       "en": "Kneeling High Pulley Row",
       "pt-BR": "Remada ajoelhado alta na polia",
       "es": "Remo de rodillas alto en polea"
-    }
+    },
+    "muscle_region": "upper_back"
   },
   {
     "slug": "kneeling-jump-squat",
@@ -5773,7 +6016,8 @@
       "en": "Kneeling Single-Arm High Pulley Row",
       "pt-BR": "Remada unilateral ajoelhado alta na polia",
       "es": "Remo a una mano de rodillas alto en polea"
-    }
+    },
+    "muscle_region": "upper_back"
   },
   {
     "slug": "kneeling-squat",
@@ -5885,7 +6129,8 @@
       "en": "Lateral Raise - With Bands",
       "pt-BR": "Elevação lateral com elástico",
       "es": "Elevación lateral con banda elástica"
-    }
+    },
+    "muscle_region": "delt_side"
   },
   {
     "slug": "leg-over-floor-press",
@@ -5901,7 +6146,8 @@
       "en": "Leg-Over Floor Press",
       "pt-BR": "Supino no chão com perna cruzada",
       "es": "Press en el suelo con pierna cruzada"
-    }
+    },
+    "muscle_region": "chest_mid"
   },
   {
     "slug": "leg-lift",
@@ -5917,7 +6163,8 @@
       "en": "Leg Lift",
       "pt-BR": "Elevação de pernas",
       "es": "Elevación de piernas"
-    }
+    },
+    "muscle_region": "glute_max"
   },
   {
     "slug": "leg-pull-in",
@@ -5933,7 +6180,8 @@
       "en": "Leg Pull-In",
       "pt-BR": "Puxada de pernas",
       "es": "Tirón de piernas"
-    }
+    },
+    "muscle_region": "abs_lower"
   },
   {
     "slug": "leverage-chest-press",
@@ -5949,7 +6197,8 @@
       "en": "Leverage Chest Press",
       "pt-BR": "Supino na máquina articulada",
       "es": "Press de pecho en máquina de palanca"
-    }
+    },
+    "muscle_region": "chest_mid"
   },
   {
     "slug": "leverage-deadlift",
@@ -5981,7 +6230,8 @@
       "en": "Leverage Decline Chest Press",
       "pt-BR": "Supino declinado na máquina articulada",
       "es": "Press de pecho declinado en máquina de palanca"
-    }
+    },
+    "muscle_region": "chest_lower"
   },
   {
     "slug": "leverage-high-row",
@@ -5997,7 +6247,8 @@
       "en": "Leverage High Row",
       "pt-BR": "Remada alta na máquina articulada",
       "es": "Remo alto en máquina de palanca"
-    }
+    },
+    "muscle_region": "upper_back"
   },
   {
     "slug": "leverage-incline-chest-press",
@@ -6013,7 +6264,8 @@
       "en": "Leverage Incline Chest Press",
       "pt-BR": "Supino inclinado na máquina articulada",
       "es": "Press de pecho inclinado en máquina de palanca"
-    }
+    },
+    "muscle_region": "chest_upper"
   },
   {
     "slug": "leverage-iso-row",
@@ -6029,7 +6281,8 @@
       "en": "Leverage Iso Row",
       "pt-BR": "Remada isolateral na máquina",
       "es": "Remo isolateral en máquina"
-    }
+    },
+    "muscle_region": "upper_back"
   },
   {
     "slug": "leverage-shoulder-press",
@@ -6045,7 +6298,8 @@
       "en": "Leverage Shoulder Press",
       "pt-BR": "Desenvolvimento na máquina articulada",
       "es": "Press de hombros en máquina de palanca"
-    }
+    },
+    "muscle_region": "delt_front"
   },
   {
     "slug": "leverage-shrug",
@@ -6061,7 +6315,8 @@
       "en": "Leverage Shrug",
       "pt-BR": "Encolhimento de ombros na máquina articulada",
       "es": "Encogimiento de hombros en máquina de palanca"
-    }
+    },
+    "muscle_region": "traps"
   },
   {
     "slug": "linear-3-part-start-technique",
@@ -6137,7 +6392,8 @@
       "en": "Low Cable Crossover",
       "pt-BR": "Crossover baixo na polia",
       "es": "Cruce de poleas bajo en polea"
-    }
+    },
+    "muscle_region": "chest_mid"
   },
   {
     "slug": "low-cable-triceps-extension",
@@ -6185,7 +6441,8 @@
       "en": "Lunge Pass Through",
       "pt-BR": "Afundo com passagem de kettlebell",
       "es": "Zancada con pase"
-    }
+    },
+    "muscle_region": "quads"
   },
   {
     "slug": "lunge-sprint",
@@ -6201,7 +6458,8 @@
       "en": "Lunge Sprint",
       "pt-BR": "Afundo com troca em salto",
       "es": "Zancada con sprint"
-    }
+    },
+    "muscle_region": "quads"
   },
   {
     "slug": "lying-cable-curl",
@@ -6217,7 +6475,8 @@
       "en": "Lying Cable Curl",
       "pt-BR": "Rosca deitado na polia",
       "es": "Curl tumbado en polea"
-    }
+    },
+    "muscle_region": "biceps"
   },
   {
     "slug": "lying-cambered-barbell-row",
@@ -6233,7 +6492,8 @@
       "en": "Lying Cambered Barbell Row",
       "pt-BR": "Remada deitado com barra camber",
       "es": "Remo tumbado con barra camber"
-    }
+    },
+    "muscle_region": "upper_back"
   },
   {
     "slug": "lying-close-grip-bar-curl-on-high-pulley",
@@ -6249,7 +6509,8 @@
       "en": "Lying Close-Grip Bar Curl On High Pulley",
       "pt-BR": "Rosca com pegada fechada deitado alta na polia na barra",
       "es": "Curl con agarre cerrado tumbado alto en polea en barra"
-    }
+    },
+    "muscle_region": "biceps"
   },
   {
     "slug": "lying-close-grip-barbell-triceps-extension-behind-the-head",
@@ -6281,7 +6542,8 @@
       "en": "Lying Close-Grip Barbell Triceps Press To Chin",
       "pt-BR": "Tríceps testa até o queixo com barra",
       "es": "Press francés hasta el mentón con barra"
-    }
+    },
+    "muscle_region": "triceps_lateral"
   },
   {
     "slug": "lying-dumbbell-tricep-extension",
@@ -6345,7 +6607,8 @@
       "en": "Lying High Bench Barbell Curl",
       "pt-BR": "Rosca deitado alta com barra no banco",
       "es": "Curl tumbado alto con barra en banco"
-    }
+    },
+    "muscle_region": "biceps"
   },
   {
     "slug": "lying-machine-squat",
@@ -6361,7 +6624,8 @@
       "en": "Lying Machine Squat",
       "pt-BR": "Agachamento deitado na máquina",
       "es": "Sentadilla tumbado en máquina"
-    }
+    },
+    "muscle_region": "quads"
   },
   {
     "slug": "lying-one-arm-lateral-raise",
@@ -6377,7 +6641,8 @@
       "en": "Lying One-Arm Lateral Raise",
       "pt-BR": "Elevação lateral unilateral deitado",
       "es": "Elevación lateral a una mano tumbado"
-    }
+    },
+    "muscle_region": "delt_side"
   },
   {
     "slug": "lying-rear-delt-raise",
@@ -6393,7 +6658,8 @@
       "en": "Lying Rear Delt Raise",
       "pt-BR": "Elevação para posterior de ombro deitado",
       "es": "Elevación de deltoides posterior tumbado"
-    }
+    },
+    "muscle_region": "delt_rear"
   },
   {
     "slug": "lying-supine-dumbbell-curl",
@@ -6409,7 +6675,8 @@
       "en": "Lying Supine Dumbbell Curl",
       "pt-BR": "Rosca deitado supinado com halteres",
       "es": "Curl tumbado supino con mancuernas"
-    }
+    },
+    "muscle_region": "biceps"
   },
   {
     "slug": "lying-t-bar-row",
@@ -6425,7 +6692,8 @@
       "en": "Lying T-Bar Row",
       "pt-BR": "Remada cavalinho (T) deitado",
       "es": "Remo en T tumbado"
-    }
+    },
+    "muscle_region": "upper_back"
   },
   {
     "slug": "lying-triceps-press",
@@ -6441,7 +6709,8 @@
       "en": "Lying Triceps Press",
       "pt-BR": "Desenvolvimento de tríceps deitado",
       "es": "Press de tríceps tumbado"
-    }
+    },
+    "muscle_region": "triceps_lateral"
   },
   {
     "slug": "machine-bench-press",
@@ -6457,7 +6726,8 @@
       "en": "Machine Bench Press",
       "pt-BR": "Supino na máquina",
       "es": "Press de banca en máquina"
-    }
+    },
+    "muscle_region": "chest_mid"
   },
   {
     "slug": "machine-bicep-curl",
@@ -6473,7 +6743,8 @@
       "en": "Machine Bicep Curl",
       "pt-BR": "Rosca bíceps na máquina",
       "es": "Curl de bíceps en máquina"
-    }
+    },
+    "muscle_region": "biceps"
   },
   {
     "slug": "machine-preacher-curls",
@@ -6489,7 +6760,8 @@
       "en": "Machine Preacher Curls",
       "pt-BR": "Rosca Scott na máquina",
       "es": "Curl predicador en máquina"
-    }
+    },
+    "muscle_region": "biceps"
   },
   {
     "slug": "machine-shoulder-military-press",
@@ -6505,7 +6777,8 @@
       "en": "Machine Shoulder (Military) Press",
       "pt-BR": "Desenvolvimento militar de ombros na máquina",
       "es": "Press militar de hombros en máquina"
-    }
+    },
+    "muscle_region": "delt_front"
   },
   {
     "slug": "machine-triceps-extension",
@@ -6537,7 +6810,8 @@
       "en": "Medicine Ball Chest Pass",
       "pt-BR": "Passe de peito com medicine ball",
       "es": "Pase de pecho con balón medicinal"
-    }
+    },
+    "muscle_region": "chest_mid"
   },
   {
     "slug": "medicine-ball-full-twist",
@@ -6553,7 +6827,8 @@
       "en": "Medicine Ball Full Twist",
       "pt-BR": "Rotação de tronco completa com medicine ball",
       "es": "Giro de torso completo con balón medicinal"
-    }
+    },
+    "muscle_region": "obliques"
   },
   {
     "slug": "medicine-ball-scoop-throw",
@@ -6585,7 +6860,8 @@
       "en": "Middle Back Shrug",
       "pt-BR": "Encolhimento para meio das costas",
       "es": "Encogimiento de espalda media"
-    }
+    },
+    "muscle_region": "traps"
   },
   {
     "slug": "mixed-grip-chin",
@@ -6601,7 +6877,8 @@
       "en": "Mixed Grip Chin",
       "pt-BR": "Barra fixa supinada com pegada mista",
       "es": "Dominadas supinas con agarre mixto"
-    }
+    },
+    "muscle_region": "lats"
   },
   {
     "slug": "monster-walk",
@@ -6679,7 +6956,8 @@
       "en": "Muscle Up",
       "pt-BR": "Muscle up",
       "es": "Muscle up"
-    }
+    },
+    "muscle_region": "lats"
   },
   {
     "slug": "narrow-stance-hack-squats",
@@ -6695,7 +6973,8 @@
       "en": "Narrow Stance Hack Squats",
       "pt-BR": "Agachamento hack com base fechada",
       "es": "Sentadilla hack con postura cerrada"
-    }
+    },
+    "muscle_region": "quads"
   },
   {
     "slug": "narrow-stance-leg-press",
@@ -6711,7 +6990,8 @@
       "en": "Narrow Stance Leg Press",
       "pt-BR": "Leg press com base fechada",
       "es": "Prensa de piernas con postura cerrada"
-    }
+    },
+    "muscle_region": "quads"
   },
   {
     "slug": "narrow-stance-squats",
@@ -6727,7 +7007,8 @@
       "en": "Narrow Stance Squats",
       "pt-BR": "Agachamento com base fechada",
       "es": "Sentadilla con postura cerrada"
-    }
+    },
+    "muscle_region": "quads"
   },
   {
     "slug": "natural-glute-ham-raise",
@@ -6743,7 +7024,8 @@
       "en": "Natural Glute Ham Raise",
       "pt-BR": "Flexora glúteo-ísquio (GHR) natural",
       "es": "Glute ham raise (GHR) natural"
-    }
+    },
+    "muscle_region": "hamstrings"
   },
   {
     "slug": "neck-press",
@@ -6759,7 +7041,8 @@
       "en": "Neck Press",
       "pt-BR": "Supino por trás da cabeça",
       "es": "Press tras nuca"
-    }
+    },
+    "muscle_region": "chest_mid"
   },
   {
     "slug": "oblique-crunches",
@@ -6775,7 +7058,8 @@
       "en": "Oblique Crunches",
       "pt-BR": "Abdominal oblíquo",
       "es": "Crunch oblicuo"
-    }
+    },
+    "muscle_region": "obliques"
   },
   {
     "slug": "oblique-crunches-on-the-floor",
@@ -6791,7 +7075,8 @@
       "en": "Oblique Crunches - On The Floor",
       "pt-BR": "Abdominal oblíquo no chão",
       "es": "Crunch oblicuo en el suelo"
-    }
+    },
+    "muscle_region": "obliques"
   },
   {
     "slug": "olympic-squat",
@@ -6807,7 +7092,8 @@
       "en": "Olympic Squat",
       "pt-BR": "Agachamento olímpico",
       "es": "Sentadilla olímpica"
-    }
+    },
+    "muscle_region": "quads"
   },
   {
     "slug": "one-arm-dumbbell-row",
@@ -6823,7 +7109,8 @@
       "en": "One-Arm Dumbbell Row",
       "pt-BR": "Remada unilateral com halteres",
       "es": "Remo a una mano con mancuernas"
-    }
+    },
+    "muscle_region": "upper_back"
   },
   {
     "slug": "one-arm-flat-bench-dumbbell-flye",
@@ -6839,7 +7126,8 @@
       "en": "One-Arm Flat Bench Dumbbell Flye",
       "pt-BR": "Crucifixo unilateral reto com halteres no banco",
       "es": "Aperturas a una mano planas con mancuernas en banco"
-    }
+    },
+    "muscle_region": "chest_mid"
   },
   {
     "slug": "one-arm-high-pulley-cable-side-bends",
@@ -6855,7 +7143,8 @@
       "en": "One-Arm High-Pulley Cable Side Bends",
       "pt-BR": "Flexão lateral de tronco unilateral alta na polia na polia",
       "es": "Flexión lateral de torso a una mano alta en polea en polea"
-    }
+    },
+    "muscle_region": "obliques"
   },
   {
     "slug": "one-arm-incline-lateral-raise",
@@ -6871,7 +7160,8 @@
       "en": "One-Arm Incline Lateral Raise",
       "pt-BR": "Elevação lateral unilateral inclinada",
       "es": "Elevación lateral a una mano inclinada"
-    }
+    },
+    "muscle_region": "delt_side"
   },
   {
     "slug": "one-arm-kettlebell-clean",
@@ -6919,7 +7209,8 @@
       "en": "One-Arm Kettlebell Floor Press",
       "pt-BR": "Supino no chão unilateral com kettlebell",
       "es": "Press en el suelo a una mano con kettlebell"
-    }
+    },
+    "muscle_region": "chest_mid"
   },
   {
     "slug": "one-arm-kettlebell-jerk",
@@ -6951,7 +7242,8 @@
       "en": "One-Arm Kettlebell Military Press To The Side",
       "pt-BR": "Desenvolvimento militar unilateral lateral com kettlebell",
       "es": "Press militar a una mano lateral con kettlebell"
-    }
+    },
+    "muscle_region": "delt_front"
   },
   {
     "slug": "one-arm-kettlebell-para-press",
@@ -6981,7 +7273,8 @@
       "en": "One-Arm Kettlebell Push Press",
       "pt-BR": "Push press unilateral com kettlebell",
       "es": "Push press a una mano con kettlebell"
-    }
+    },
+    "muscle_region": "delt_front"
   },
   {
     "slug": "one-arm-kettlebell-row",
@@ -6997,7 +7290,8 @@
       "en": "One-Arm Kettlebell Row",
       "pt-BR": "Remada unilateral com kettlebell",
       "es": "Remo a una mano con kettlebell"
-    }
+    },
+    "muscle_region": "upper_back"
   },
   {
     "slug": "one-arm-kettlebell-snatch",
@@ -7077,7 +7371,8 @@
       "en": "One-Arm Long Bar Row",
       "pt-BR": "Remada unilateral com barra longa (landmine)",
       "es": "Remo a una mano con barra larga"
-    }
+    },
+    "muscle_region": "upper_back"
   },
   {
     "slug": "one-arm-medicine-ball-slam",
@@ -7125,7 +7420,8 @@
       "en": "One-Arm Overhead Kettlebell Squats",
       "pt-BR": "Agachamento unilateral acima da cabeça com kettlebell",
       "es": "Sentadilla a una mano sobre la cabeza con kettlebell"
-    }
+    },
+    "muscle_region": "quads"
   },
   {
     "slug": "one-arm-side-deadlift",
@@ -7157,7 +7453,8 @@
       "en": "One-Arm Side Laterals",
       "pt-BR": "Elevação lateral unilateral",
       "es": "Elevación lateral a una mano"
-    }
+    },
+    "muscle_region": "delt_side"
   },
   {
     "slug": "one-legged-cable-kickback",
@@ -7173,7 +7470,8 @@
       "en": "One-Legged Cable Kickback",
       "pt-BR": "Coice (kickback) unilateral na polia",
       "es": "Patada (kickback) a una pierna en polea"
-    }
+    },
+    "muscle_region": "glute_max"
   },
   {
     "slug": "one-arm-chin-up",
@@ -7189,7 +7487,8 @@
       "en": "One Arm Chin-Up",
       "pt-BR": "Barra fixa supinada unilateral",
       "es": "Dominadas supinas a una mano"
-    }
+    },
+    "muscle_region": "lats"
   },
   {
     "slug": "one-arm-dumbbell-bench-press",
@@ -7205,7 +7504,8 @@
       "en": "One Arm Dumbbell Bench Press",
       "pt-BR": "Supino unilateral com halteres",
       "es": "Press de banca a una mano con mancuernas"
-    }
+    },
+    "muscle_region": "chest_mid"
   },
   {
     "slug": "one-arm-dumbbell-preacher-curl",
@@ -7221,7 +7521,8 @@
       "en": "One Arm Dumbbell Preacher Curl",
       "pt-BR": "Rosca Scott unilateral com halteres",
       "es": "Curl predicador a una mano con mancuernas"
-    }
+    },
+    "muscle_region": "biceps"
   },
   {
     "slug": "one-arm-floor-press",
@@ -7237,7 +7538,8 @@
       "en": "One Arm Floor Press",
       "pt-BR": "Supino no chão unilateral",
       "es": "Press en el suelo a una mano"
-    }
+    },
+    "muscle_region": "triceps_lateral"
   },
   {
     "slug": "one-arm-lat-pulldown",
@@ -7253,7 +7555,8 @@
       "en": "One Arm Lat Pulldown",
       "pt-BR": "Puxada de dorsais unilateral",
       "es": "Jalón de dorsales a una mano"
-    }
+    },
+    "muscle_region": "lats"
   },
   {
     "slug": "one-arm-pronated-dumbbell-triceps-extension",
@@ -7301,7 +7604,8 @@
       "en": "One Leg Barbell Squat",
       "pt-BR": "Agachamento unilateral com barra",
       "es": "Sentadilla a una pierna con barra"
-    }
+    },
+    "muscle_region": "quads"
   },
   {
     "slug": "open-palm-kettlebell-clean",
@@ -7349,7 +7653,8 @@
       "en": "Overhead Cable Curl",
       "pt-BR": "Rosca acima da cabeça na polia",
       "es": "Curl sobre la cabeza en polea"
-    }
+    },
+    "muscle_region": "biceps"
   },
   {
     "slug": "overhead-slam",
@@ -7381,7 +7686,8 @@
       "en": "Overhead Squat",
       "pt-BR": "Agachamento overhead",
       "es": "Sentadilla sobre la cabeza"
-    }
+    },
+    "muscle_region": "quads"
   },
   {
     "slug": "pallof-press",
@@ -7397,7 +7703,8 @@
       "en": "Pallof Press",
       "pt-BR": "Pallof press (antirrotação)",
       "es": "Press Pallof"
-    }
+    },
+    "muscle_region": "core"
   },
   {
     "slug": "pallof-press-with-rotation",
@@ -7413,7 +7720,8 @@
       "en": "Pallof Press With Rotation",
       "pt-BR": "Pallof press com rotação",
       "es": "Press Pallof con rotación"
-    }
+    },
+    "muscle_region": "core"
   },
   {
     "slug": "palms-down-dumbbell-wrist-curl-over-a-bench",
@@ -7429,7 +7737,8 @@
       "en": "Palms-Down Dumbbell Wrist Curl Over A Bench",
       "pt-BR": "Rosca de punho apoiado no banco com palmas para baixo com halteres",
       "es": "Curl de muñeca sobre banco palmas abajo con mancuernas"
-    }
+    },
+    "muscle_region": "forearms"
   },
   {
     "slug": "palms-down-wrist-curl-over-a-bench",
@@ -7445,7 +7754,8 @@
       "en": "Palms-Down Wrist Curl Over A Bench",
       "pt-BR": "Rosca de punho apoiado no banco com palmas para baixo",
       "es": "Curl de muñeca sobre banco palmas abajo"
-    }
+    },
+    "muscle_region": "forearms"
   },
   {
     "slug": "palms-up-barbell-wrist-curl-over-a-bench",
@@ -7461,7 +7771,8 @@
       "en": "Palms-Up Barbell Wrist Curl Over A Bench",
       "pt-BR": "Rosca de punho apoiado no banco com palmas para cima com barra",
       "es": "Curl de muñeca sobre banco palmas arriba con barra"
-    }
+    },
+    "muscle_region": "forearms"
   },
   {
     "slug": "palms-up-dumbbell-wrist-curl-over-a-bench",
@@ -7477,7 +7788,8 @@
       "en": "Palms-Up Dumbbell Wrist Curl Over A Bench",
       "pt-BR": "Rosca de punho apoiado no banco com palmas para cima com halteres",
       "es": "Curl de muñeca sobre banco palmas arriba con mancuernas"
-    }
+    },
+    "muscle_region": "forearms"
   },
   {
     "slug": "parallel-bar-dip",
@@ -7493,7 +7805,8 @@
       "en": "Parallel Bar Dip",
       "pt-BR": "Mergulho nas paralelas",
       "es": "Fondos en paralelas"
-    }
+    },
+    "muscle_region": "triceps_lateral"
   },
   {
     "slug": "physioball-hip-bridge",
@@ -7509,7 +7822,8 @@
       "en": "Physioball Hip Bridge",
       "pt-BR": "Ponte de quadril na bola suíça",
       "es": "Puente de cadera con fitball"
-    }
+    },
+    "muscle_region": "glute_max"
   },
   {
     "slug": "pin-presses",
@@ -7525,7 +7839,8 @@
       "en": "Pin Presses",
       "pt-BR": "Supino no pino (rack)",
       "es": "Press desde pines"
-    }
+    },
+    "muscle_region": "triceps_lateral"
   },
   {
     "slug": "plate-pinch",
@@ -7541,7 +7856,8 @@
       "en": "Plate Pinch",
       "pt-BR": "Pinça de anilhas (plate pinch)",
       "es": "Pinza de discos"
-    }
+    },
+    "muscle_region": "forearms"
   },
   {
     "slug": "plate-twist",
@@ -7557,7 +7873,8 @@
       "en": "Plate Twist",
       "pt-BR": "Rotação de tronco com anilha",
       "es": "Giro de torso con disco"
-    }
+    },
+    "muscle_region": "obliques"
   },
   {
     "slug": "platform-hamstring-slides",
@@ -7571,7 +7888,8 @@
     ],
     "names": {
       "en": "Platform Hamstring Slides"
-    }
+    },
+    "muscle_region": "hamstrings"
   },
   {
     "slug": "plie-dumbbell-squat",
@@ -7587,7 +7905,8 @@
       "en": "Plie Dumbbell Squat",
       "pt-BR": "Agachamento plié com halteres",
       "es": "Sentadilla plié con mancuernas"
-    }
+    },
+    "muscle_region": "quads"
   },
   {
     "slug": "plyo-kettlebell-pushups",
@@ -7603,7 +7922,8 @@
       "en": "Plyo Kettlebell Pushups",
       "pt-BR": "Flexão de braço pliométrica com kettlebell",
       "es": "Flexiones pliométricas con kettlebell"
-    }
+    },
+    "muscle_region": "chest_mid"
   },
   {
     "slug": "plyo-push-up",
@@ -7619,7 +7939,8 @@
       "en": "Plyo Push-up",
       "pt-BR": "Flexão de braço pliométrica",
       "es": "Flexiones pliométricas"
-    }
+    },
+    "muscle_region": "chest_mid"
   },
   {
     "slug": "power-clean",
@@ -7731,7 +8052,8 @@
       "en": "Preacher Hammer Dumbbell Curl",
       "pt-BR": "Rosca no banco Scott martelo com halteres",
       "es": "Curl en banco predicador martillo con mancuernas"
-    }
+    },
+    "muscle_region": "biceps"
   },
   {
     "slug": "press-sit-up",
@@ -7747,7 +8069,8 @@
       "en": "Press Sit-Up",
       "pt-BR": "Abdominal com press",
       "es": "Abdominales con press"
-    }
+    },
+    "muscle_region": "abs_upper"
   },
   {
     "slug": "prone-manual-hamstring",
@@ -7761,7 +8084,8 @@
     ],
     "names": {
       "en": "Prone Manual Hamstring"
-    }
+    },
+    "muscle_region": "hamstrings"
   },
   {
     "slug": "prowler-sprint",
@@ -7793,7 +8117,8 @@
       "en": "Pull Through",
       "pt-BR": "Pull through",
       "es": "Pull through"
-    }
+    },
+    "muscle_region": "glute_max"
   },
   {
     "slug": "push-up-wide",
@@ -7809,7 +8134,8 @@
       "en": "Push-Up Wide",
       "pt-BR": "Flexão de braço aberta",
       "es": "Flexiones abiertas"
-    }
+    },
+    "muscle_region": "chest_mid"
   },
   {
     "slug": "push-ups-close-triceps-position",
@@ -7841,7 +8167,8 @@
       "en": "Push-Ups With Feet Elevated",
       "pt-BR": "Flexão de braço com pés elevados",
       "es": "Flexiones con pies elevados"
-    }
+    },
+    "muscle_region": "chest_mid"
   },
   {
     "slug": "push-ups-with-feet-on-an-exercise-ball",
@@ -7857,7 +8184,8 @@
       "en": "Push-Ups With Feet On An Exercise Ball",
       "pt-BR": "Flexão com pés na bola suíça",
       "es": "Flexiones con pies en fitball"
-    }
+    },
+    "muscle_region": "chest_mid"
   },
   {
     "slug": "push-press",
@@ -7873,7 +8201,8 @@
       "en": "Push Press",
       "pt-BR": "Push press",
       "es": "Push press"
-    }
+    },
+    "muscle_region": "delt_front"
   },
   {
     "slug": "push-press-behind-the-neck",
@@ -7889,7 +8218,8 @@
       "en": "Push Press - Behind the Neck",
       "pt-BR": "Push press por trás da cabeça",
       "es": "Push press tras nuca"
-    }
+    },
+    "muscle_region": "delt_front"
   },
   {
     "slug": "push-up-to-side-plank",
@@ -7905,7 +8235,8 @@
       "en": "Push Up to Side Plank",
       "pt-BR": "Flexão com rotação para prancha lateral",
       "es": "Flexión a plancha lateral"
-    }
+    },
+    "muscle_region": "chest_mid"
   },
   {
     "slug": "pushups-close-and-wide-hand-positions",
@@ -7921,7 +8252,8 @@
       "en": "Pushups (Close and Wide Hand Positions)",
       "pt-BR": "Flexão de braço (pegadas fechada e aberta)",
       "es": "Flexiones (manos juntas y abiertas)"
-    }
+    },
+    "muscle_region": "chest_mid"
   },
   {
     "slug": "quick-leap",
@@ -7967,7 +8299,8 @@
       "en": "Rack Pull with Bands",
       "pt-BR": "Rack pull (terra parcial) com elástico",
       "es": "Rack pull con banda elástica"
-    }
+    },
+    "muscle_region": "lower_back"
   },
   {
     "slug": "rack-pulls",
@@ -7983,7 +8316,8 @@
       "en": "Rack Pulls",
       "pt-BR": "Rack pull (terra parcial)",
       "es": "Rack pull"
-    }
+    },
+    "muscle_region": "lower_back"
   },
   {
     "slug": "recumbent-bike",
@@ -8029,7 +8363,8 @@
       "en": "Reverse Band Bench Press",
       "pt-BR": "Supino invertido com elástico",
       "es": "Press de banca invertido con banda elástica"
-    }
+    },
+    "muscle_region": "triceps_lateral"
   },
   {
     "slug": "reverse-band-box-squat",
@@ -8045,7 +8380,8 @@
       "en": "Reverse Band Box Squat",
       "pt-BR": "Agachamento invertido com elástico na caixa",
       "es": "Sentadilla invertida con banda elástica al cajón"
-    }
+    },
+    "muscle_region": "quads"
   },
   {
     "slug": "reverse-band-deadlift",
@@ -8061,7 +8397,8 @@
       "en": "Reverse Band Deadlift",
       "pt-BR": "Levantamento terra invertido com elástico",
       "es": "Peso muerto invertido con banda elástica"
-    }
+    },
+    "muscle_region": "lower_back"
   },
   {
     "slug": "reverse-band-power-squat",
@@ -8077,7 +8414,8 @@
       "en": "Reverse Band Power Squat",
       "pt-BR": "Agachamento invertido power com elástico",
       "es": "Sentadilla invertida power con banda elástica"
-    }
+    },
+    "muscle_region": "quads"
   },
   {
     "slug": "reverse-band-sumo-deadlift",
@@ -8109,7 +8447,8 @@
       "en": "Reverse Barbell Curl",
       "pt-BR": "Rosca invertida com barra",
       "es": "Curl invertido con barra"
-    }
+    },
+    "muscle_region": "biceps"
   },
   {
     "slug": "reverse-barbell-preacher-curls",
@@ -8125,7 +8464,8 @@
       "en": "Reverse Barbell Preacher Curls",
       "pt-BR": "Rosca Scott invertida com barra",
       "es": "Curl predicador invertido con barra"
-    }
+    },
+    "muscle_region": "biceps"
   },
   {
     "slug": "reverse-cable-curl",
@@ -8141,7 +8481,8 @@
       "en": "Reverse Cable Curl",
       "pt-BR": "Rosca invertida na polia",
       "es": "Curl invertido en polea"
-    }
+    },
+    "muscle_region": "biceps"
   },
   {
     "slug": "reverse-crunch",
@@ -8157,7 +8498,8 @@
       "en": "Reverse Crunch",
       "pt-BR": "Abdominal invertido",
       "es": "Crunch invertido"
-    }
+    },
+    "muscle_region": "abs_lower"
   },
   {
     "slug": "reverse-flyes-with-external-rotation",
@@ -8173,7 +8515,8 @@
       "en": "Reverse Flyes With External Rotation",
       "pt-BR": "Crucifixo invertido com rotação externa",
       "es": "Aperturas invertidas con rotación externa"
-    }
+    },
+    "muscle_region": "delt_rear"
   },
   {
     "slug": "reverse-grip-bent-over-rows",
@@ -8189,7 +8532,8 @@
       "en": "Reverse Grip Bent-Over Rows",
       "pt-BR": "Remada com pegada invertida curvada",
       "es": "Remo con agarre inverso inclinado"
-    }
+    },
+    "muscle_region": "upper_back"
   },
   {
     "slug": "reverse-grip-triceps-pushdown",
@@ -8205,7 +8549,8 @@
       "en": "Reverse Grip Triceps Pushdown",
       "pt-BR": "Tríceps (pushdown) de tríceps com pegada invertida",
       "es": "Extensión de tríceps de tríceps con agarre inverso"
-    }
+    },
+    "muscle_region": "triceps_lateral"
   },
   {
     "slug": "reverse-hyperextension",
@@ -8253,7 +8598,8 @@
       "en": "Reverse Plate Curls",
       "pt-BR": "Rosca invertida com anilha",
       "es": "Curl invertido con disco"
-    }
+    },
+    "muscle_region": "biceps"
   },
   {
     "slug": "reverse-triceps-bench-press",
@@ -8269,7 +8615,8 @@
       "en": "Reverse Triceps Bench Press",
       "pt-BR": "Supino de tríceps invertido",
       "es": "Press de banca de tríceps invertido"
-    }
+    },
+    "muscle_region": "triceps_lateral"
   },
   {
     "slug": "ring-dips",
@@ -8285,7 +8632,8 @@
       "en": "Ring Dips",
       "pt-BR": "Mergulho nas argolas",
       "es": "Fondos en anillas"
-    }
+    },
+    "muscle_region": "triceps_lateral"
   },
   {
     "slug": "rocket-jump",
@@ -8317,7 +8665,8 @@
       "en": "Rocking Standing Calf Raise",
       "pt-BR": "Elevação de panturrilha com balanço em pé",
       "es": "Elevación de gemelos con balanceo de pie"
-    }
+    },
+    "muscle_region": "gastrocnemius"
   },
   {
     "slug": "rocky-pull-ups-pulldowns",
@@ -8333,7 +8682,8 @@
       "en": "Rocky Pull-Ups/Pulldowns",
       "pt-BR": "Barra fixa Rocky (sobe barra, desce puxada)",
       "es": "Dominadas Rocky"
-    }
+    },
+    "muscle_region": "lats"
   },
   {
     "slug": "romanian-deadlift-from-deficit",
@@ -8349,7 +8699,8 @@
       "en": "Romanian Deadlift from Deficit",
       "pt-BR": "Levantamento terra romeno em déficit",
       "es": "Peso muerto rumano en déficit"
-    }
+    },
+    "muscle_region": "hamstrings"
   },
   {
     "slug": "rope-climb",
@@ -8365,7 +8716,8 @@
       "en": "Rope Climb",
       "pt-BR": "Subida na corda",
       "es": "Subida de cuerda"
-    }
+    },
+    "muscle_region": "lats"
   },
   {
     "slug": "rope-crunch",
@@ -8381,7 +8733,8 @@
       "en": "Rope Crunch",
       "pt-BR": "Abdominal com corda",
       "es": "Crunch con cuerda"
-    }
+    },
+    "muscle_region": "abs_upper"
   },
   {
     "slug": "rope-straight-arm-pulldown",
@@ -8397,7 +8750,8 @@
       "en": "Rope Straight-Arm Pulldown",
       "pt-BR": "Puxada com braços estendidos com corda",
       "es": "Jalón con brazos rectos con cuerda"
-    }
+    },
+    "muscle_region": "lats"
   },
   {
     "slug": "scapular-pull-up",
@@ -8413,7 +8767,8 @@
       "en": "Scapular Pull-Up",
       "pt-BR": "Retração escapular na barra",
       "es": "Dominadas escapulares"
-    }
+    },
+    "muscle_region": "lats"
   },
   {
     "slug": "scissors-jump",
@@ -8445,7 +8800,8 @@
       "en": "Seated Band Hamstring Curl",
       "pt-BR": "Rosca de posteriores sentado com elástico",
       "es": "Curl de isquios sentado con banda elástica"
-    }
+    },
+    "muscle_region": "hamstrings"
   },
   {
     "slug": "seated-barbell-military-press",
@@ -8461,7 +8817,8 @@
       "en": "Seated Barbell Military Press",
       "pt-BR": "Desenvolvimento militar sentado com barra",
       "es": "Press militar sentado con barra"
-    }
+    },
+    "muscle_region": "delt_front"
   },
   {
     "slug": "seated-barbell-twist",
@@ -8477,7 +8834,8 @@
       "en": "Seated Barbell Twist",
       "pt-BR": "Rotação de tronco sentado com barra",
       "es": "Giro de torso sentado con barra"
-    }
+    },
+    "muscle_region": "obliques"
   },
   {
     "slug": "seated-bent-over-one-arm-dumbbell-triceps-extension",
@@ -8509,7 +8867,8 @@
       "en": "Seated Bent-Over Rear Delt Raise",
       "pt-BR": "Elevação para posterior de ombro sentado curvada",
       "es": "Elevación de deltoides posterior sentado inclinada"
-    }
+    },
+    "muscle_region": "delt_rear"
   },
   {
     "slug": "seated-bent-over-two-arm-dumbbell-triceps-extension",
@@ -8541,7 +8900,8 @@
       "en": "Seated Cable Shoulder Press",
       "pt-BR": "Desenvolvimento sentado na polia",
       "es": "Press de hombros sentado en polea"
-    }
+    },
+    "muscle_region": "delt_front"
   },
   {
     "slug": "seated-close-grip-concentration-barbell-curl",
@@ -8557,7 +8917,8 @@
       "en": "Seated Close-Grip Concentration Barbell Curl",
       "pt-BR": "Rosca com pegada fechada concentrada sentado com barra",
       "es": "Curl con agarre cerrado concentrado sentado con barra"
-    }
+    },
+    "muscle_region": "biceps"
   },
   {
     "slug": "seated-dumbbell-curl",
@@ -8573,7 +8934,8 @@
       "en": "Seated Dumbbell Curl",
       "pt-BR": "Rosca sentado com halteres",
       "es": "Curl sentado con mancuernas"
-    }
+    },
+    "muscle_region": "biceps"
   },
   {
     "slug": "seated-dumbbell-inner-biceps-curl",
@@ -8589,7 +8951,8 @@
       "en": "Seated Dumbbell Inner Biceps Curl",
       "pt-BR": "Rosca bíceps interna sentado com halteres",
       "es": "Curl de bíceps interno sentado con mancuernas"
-    }
+    },
+    "muscle_region": "biceps"
   },
   {
     "slug": "seated-dumbbell-palms-down-wrist-curl",
@@ -8605,7 +8968,8 @@
       "en": "Seated Dumbbell Palms-Down Wrist Curl",
       "pt-BR": "Rosca de punho com palmas para baixo sentado com halteres",
       "es": "Curl de muñeca palmas abajo sentado con mancuernas"
-    }
+    },
+    "muscle_region": "forearms"
   },
   {
     "slug": "seated-dumbbell-palms-up-wrist-curl",
@@ -8621,7 +8985,8 @@
       "en": "Seated Dumbbell Palms-Up Wrist Curl",
       "pt-BR": "Rosca de punho com palmas para cima sentado com halteres",
       "es": "Curl de muñeca palmas arriba sentado con mancuernas"
-    }
+    },
+    "muscle_region": "forearms"
   },
   {
     "slug": "seated-dumbbell-press",
@@ -8653,7 +9018,8 @@
       "en": "Seated Flat Bench Leg Pull-In",
       "pt-BR": "Puxada de pernas reta sentado no banco",
       "es": "Tirón de piernas plano sentado en banco"
-    }
+    },
+    "muscle_region": "abs_lower"
   },
   {
     "slug": "seated-good-mornings",
@@ -8669,7 +9035,8 @@
       "en": "Seated Good Mornings",
       "pt-BR": "Bom dia sentado",
       "es": "Buenos días sentado"
-    }
+    },
+    "muscle_region": "lower_back"
   },
   {
     "slug": "seated-head-harness-neck-resistance",
@@ -8701,7 +9068,8 @@
       "en": "Seated Leg Curl",
       "pt-BR": "Flexora de pernas sentado",
       "es": "Curl femoral sentado"
-    }
+    },
+    "muscle_region": "hamstrings"
   },
   {
     "slug": "seated-leg-tucks",
@@ -8717,7 +9085,8 @@
       "en": "Seated Leg Tucks",
       "pt-BR": "Abdominal remador no banco",
       "es": "Encogimientos de piernas sentado"
-    }
+    },
+    "muscle_region": "abs_lower"
   },
   {
     "slug": "seated-one-arm-dumbbell-palms-down-wrist-curl",
@@ -8733,7 +9102,8 @@
       "en": "Seated One-Arm Dumbbell Palms-Down Wrist Curl",
       "pt-BR": "Rosca de punho com palmas para baixo unilateral sentado com halteres",
       "es": "Curl de muñeca palmas abajo a una mano sentado con mancuernas"
-    }
+    },
+    "muscle_region": "forearms"
   },
   {
     "slug": "seated-one-arm-dumbbell-palms-up-wrist-curl",
@@ -8749,7 +9119,8 @@
       "en": "Seated One-Arm Dumbbell Palms-Up Wrist Curl",
       "pt-BR": "Rosca de punho com palmas para cima unilateral sentado com halteres",
       "es": "Curl de muñeca palmas arriba a una mano sentado con mancuernas"
-    }
+    },
+    "muscle_region": "forearms"
   },
   {
     "slug": "seated-one-arm-cable-pulley-rows",
@@ -8765,7 +9136,8 @@
       "en": "Seated One-arm Cable Pulley Rows",
       "pt-BR": "Remada unilateral sentado na polia na polia",
       "es": "Remo a una mano sentado en polea en polea"
-    }
+    },
+    "muscle_region": "upper_back"
   },
   {
     "slug": "seated-palm-up-barbell-wrist-curl",
@@ -8781,7 +9153,8 @@
       "en": "Seated Palm-Up Barbell Wrist Curl",
       "pt-BR": "Rosca de punho com palma para cima sentado com barra",
       "es": "Curl de muñeca palma arriba sentado con barra"
-    }
+    },
+    "muscle_region": "forearms"
   },
   {
     "slug": "seated-palms-down-barbell-wrist-curl",
@@ -8797,7 +9170,8 @@
       "en": "Seated Palms-Down Barbell Wrist Curl",
       "pt-BR": "Rosca de punho com palmas para baixo sentado com barra",
       "es": "Curl de muñeca palmas abajo sentado con barra"
-    }
+    },
+    "muscle_region": "forearms"
   },
   {
     "slug": "seated-side-lateral-raise",
@@ -8813,7 +9187,8 @@
       "en": "Seated Side Lateral Raise",
       "pt-BR": "Elevação lateral sentado lateral",
       "es": "Elevación lateral sentado lateral"
-    }
+    },
+    "muscle_region": "delt_side"
   },
   {
     "slug": "seated-triceps-press",
@@ -8829,7 +9204,8 @@
       "en": "Seated Triceps Press",
       "pt-BR": "Tríceps francês sentado",
       "es": "Press francés sentado"
-    }
+    },
+    "muscle_region": "triceps_lateral"
   },
   {
     "slug": "seated-two-arm-palms-up-low-pulley-wrist-curl",
@@ -8845,7 +9221,8 @@
       "en": "Seated Two-Arm Palms-Up Low-Pulley Wrist Curl",
       "pt-BR": "Rosca de punho com palmas para cima com os dois braços sentado baixa na polia",
       "es": "Curl de muñeca palmas arriba a dos manos sentado bajo en polea"
-    }
+    },
+    "muscle_region": "forearms"
   },
   {
     "slug": "see-saw-press-alternating-side-press",
@@ -8877,7 +9254,8 @@
       "en": "Shotgun Row",
       "pt-BR": "Remada shotgun (unilateral na polia)",
       "es": "Remo shotgun"
-    }
+    },
+    "muscle_region": "upper_back"
   },
   {
     "slug": "shoulder-press-with-bands",
@@ -8893,7 +9271,8 @@
       "en": "Shoulder Press - With Bands",
       "pt-BR": "Desenvolvimento com elástico",
       "es": "Press de hombros con banda elástica"
-    }
+    },
+    "muscle_region": "delt_front"
   },
   {
     "slug": "side-bridge",
@@ -8909,7 +9288,8 @@
       "en": "Side Bridge",
       "pt-BR": "Ponte lateral",
       "es": "Puente lateral"
-    }
+    },
+    "muscle_region": "core"
   },
   {
     "slug": "side-hop-sprint",
@@ -8955,7 +9335,8 @@
       "en": "Side Laterals to Front Raise",
       "pt-BR": "Elevação lateral + frontal",
       "es": "Elevación lateral y frontal"
-    }
+    },
+    "muscle_region": "delt_side"
   },
   {
     "slug": "side-standing-long-jump",
@@ -8987,7 +9368,8 @@
       "en": "Side To Side Chins",
       "pt-BR": "Barra fixa supinada lateral lateral",
       "es": "Dominadas supinas lateral lateral"
-    }
+    },
+    "muscle_region": "lats"
   },
   {
     "slug": "side-to-side-box-shuffle",
@@ -9017,7 +9399,8 @@
       "en": "Single-Arm Cable Crossover",
       "pt-BR": "Crossover unilateral na polia",
       "es": "Cruce de poleas a una mano en polea"
-    }
+    },
+    "muscle_region": "chest_mid"
   },
   {
     "slug": "single-arm-linear-jammer",
@@ -9047,7 +9430,8 @@
       "en": "Single-Arm Push-Up",
       "pt-BR": "Flexão de braço unilateral",
       "es": "Flexiones a una mano"
-    }
+    },
+    "muscle_region": "chest_mid"
   },
   {
     "slug": "single-cone-sprint-drill",
@@ -9077,7 +9461,8 @@
       "en": "Single-Leg High Box Squat",
       "pt-BR": "Agachamento unilateral alto na caixa",
       "es": "Sentadilla a una pierna alta al cajón"
-    }
+    },
+    "muscle_region": "quads"
   },
   {
     "slug": "single-leg-hop-progression",
@@ -9123,7 +9508,8 @@
       "en": "Single-Leg Leg Extension",
       "pt-BR": "Cadeira extensora unilateral",
       "es": "Extensión de piernas a una pierna"
-    }
+    },
+    "muscle_region": "quads"
   },
   {
     "slug": "single-leg-stride-jump",
@@ -9183,7 +9569,8 @@
       "en": "Single Leg Glute Bridge",
       "pt-BR": "Ponte de glúteo unilateral",
       "es": "Puente de glúteos a una pierna"
-    }
+    },
+    "muscle_region": "glute_max"
   },
   {
     "slug": "single-leg-push-off",
@@ -9213,7 +9600,8 @@
       "en": "Sit-Up",
       "pt-BR": "Abdominal",
       "es": "Abdominales"
-    }
+    },
+    "muscle_region": "abs_upper"
   },
   {
     "slug": "skating",
@@ -9261,7 +9649,8 @@
       "en": "Sled Overhead Triceps Extension",
       "pt-BR": "Extensão de tríceps acima da cabeça no trenó",
       "es": "Extensión de tríceps sobre la cabeza en trineo"
-    }
+    },
+    "muscle_region": "triceps_long"
   },
   {
     "slug": "sled-reverse-flye",
@@ -9277,7 +9666,8 @@
       "en": "Sled Reverse Flye",
       "pt-BR": "Crucifixo invertido no trenó",
       "es": "Aperturas invertidas en trineo"
-    }
+    },
+    "muscle_region": "delt_rear"
   },
   {
     "slug": "sled-row",
@@ -9293,7 +9683,8 @@
       "en": "Sled Row",
       "pt-BR": "Remada no trenó",
       "es": "Remo en trineo"
-    }
+    },
+    "muscle_region": "upper_back"
   },
   {
     "slug": "sledgehammer-swings",
@@ -9341,7 +9732,8 @@
       "en": "Smith Machine Behind the Back Shrug",
       "pt-BR": "Encolhimento de ombros por trás do corpo no smith",
       "es": "Encogimiento de hombros por detrás de la espalda en multipower"
-    }
+    },
+    "muscle_region": "traps"
   },
   {
     "slug": "smith-machine-bench-press",
@@ -9357,7 +9749,8 @@
       "en": "Smith Machine Bench Press",
       "pt-BR": "Supino no smith",
       "es": "Press de banca en multipower"
-    }
+    },
+    "muscle_region": "chest_mid"
   },
   {
     "slug": "smith-machine-bent-over-row",
@@ -9373,7 +9766,8 @@
       "en": "Smith Machine Bent Over Row",
       "pt-BR": "Remada curvada no smith",
       "es": "Remo inclinado en multipower"
-    }
+    },
+    "muscle_region": "lats"
   },
   {
     "slug": "smith-machine-calf-raise",
@@ -9389,7 +9783,8 @@
       "en": "Smith Machine Calf Raise",
       "pt-BR": "Elevação de panturrilha no smith",
       "es": "Elevación de gemelos en multipower"
-    }
+    },
+    "muscle_region": "gastrocnemius"
   },
   {
     "slug": "smith-machine-close-grip-bench-press",
@@ -9405,7 +9800,8 @@
       "en": "Smith Machine Close-Grip Bench Press",
       "pt-BR": "Supino com pegada fechada no smith",
       "es": "Press de banca con agarre cerrado en multipower"
-    }
+    },
+    "muscle_region": "triceps_lateral"
   },
   {
     "slug": "smith-machine-decline-press",
@@ -9421,7 +9817,8 @@
       "en": "Smith Machine Decline Press",
       "pt-BR": "Desenvolvimento declinado no smith",
       "es": "Press declinado en multipower"
-    }
+    },
+    "muscle_region": "chest_lower"
   },
   {
     "slug": "smith-machine-hang-power-clean",
@@ -9453,7 +9850,8 @@
       "en": "Smith Machine Hip Raise",
       "pt-BR": "Elevação de quadril no smith",
       "es": "Elevación de cadera en multipower"
-    }
+    },
+    "muscle_region": "abs_lower"
   },
   {
     "slug": "smith-machine-incline-bench-press",
@@ -9469,7 +9867,8 @@
       "en": "Smith Machine Incline Bench Press",
       "pt-BR": "Supino inclinado no smith",
       "es": "Press de banca inclinado en multipower"
-    }
+    },
+    "muscle_region": "chest_upper"
   },
   {
     "slug": "smith-machine-leg-press",
@@ -9485,7 +9884,8 @@
       "en": "Smith Machine Leg Press",
       "pt-BR": "Leg press no smith",
       "es": "Prensa de piernas en multipower"
-    }
+    },
+    "muscle_region": "quads"
   },
   {
     "slug": "smith-machine-one-arm-upright-row",
@@ -9501,7 +9901,8 @@
       "en": "Smith Machine One-Arm Upright Row",
       "pt-BR": "Remada alta unilateral no smith",
       "es": "Remo al mentón a una mano en multipower"
-    }
+    },
+    "muscle_region": "delt_front"
   },
   {
     "slug": "smith-machine-overhead-shoulder-press",
@@ -9517,7 +9918,8 @@
       "en": "Smith Machine Overhead Shoulder Press",
       "pt-BR": "Desenvolvimento acima da cabeça no smith",
       "es": "Press de hombros sobre la cabeza en multipower"
-    }
+    },
+    "muscle_region": "delt_front"
   },
   {
     "slug": "smith-machine-pistol-squat",
@@ -9533,7 +9935,8 @@
       "en": "Smith Machine Pistol Squat",
       "pt-BR": "Agachamento pistol no smith",
       "es": "Sentadilla pistol en multipower"
-    }
+    },
+    "muscle_region": "quads"
   },
   {
     "slug": "smith-machine-reverse-calf-raises",
@@ -9549,7 +9952,8 @@
       "en": "Smith Machine Reverse Calf Raises",
       "pt-BR": "Elevação de panturrilha invertida no smith",
       "es": "Elevación de gemelos invertida en multipower"
-    }
+    },
+    "muscle_region": "gastrocnemius"
   },
   {
     "slug": "smith-machine-squat",
@@ -9565,7 +9969,8 @@
       "en": "Smith Machine Squat",
       "pt-BR": "Agachamento no smith",
       "es": "Sentadilla en multipower"
-    }
+    },
+    "muscle_region": "quads"
   },
   {
     "slug": "smith-machine-stiff-legged-deadlift",
@@ -9581,7 +9986,8 @@
       "en": "Smith Machine Stiff-Legged Deadlift",
       "pt-BR": "Stiff no smith",
       "es": "Peso muerto piernas rígidas en multipower"
-    }
+    },
+    "muscle_region": "hamstrings"
   },
   {
     "slug": "smith-machine-upright-row",
@@ -9597,7 +10003,8 @@
       "en": "Smith Machine Upright Row",
       "pt-BR": "Remada alta no smith",
       "es": "Remo al mentón en multipower"
-    }
+    },
+    "muscle_region": "lats"
   },
   {
     "slug": "smith-single-leg-split-squat",
@@ -9613,7 +10020,8 @@
       "en": "Smith Single-Leg Split Squat",
       "pt-BR": "Agachamento split unilateral no smith",
       "es": "Sentadilla split a una pierna en multipower"
-    }
+    },
+    "muscle_region": "quads"
   },
   {
     "slug": "snatch",
@@ -9693,7 +10101,8 @@
       "en": "Snatch Shrug",
       "pt-BR": "Encolhimento de snatch",
       "es": "Encogimiento de arranque"
-    }
+    },
+    "muscle_region": "traps"
   },
   {
     "slug": "snatch-from-blocks",
@@ -9725,7 +10134,8 @@
       "en": "Speed Band Overhead Triceps",
       "pt-BR": "Tríceps acima da cabeça com elástico (velocidade)",
       "es": "Extensión de tríceps sobre la cabeza con banda"
-    }
+    },
+    "muscle_region": "triceps_long"
   },
   {
     "slug": "speed-box-squat",
@@ -9741,7 +10151,8 @@
       "en": "Speed Box Squat",
       "pt-BR": "Agachamento com velocidade na caixa",
       "es": "Sentadilla de velocidad al cajón"
-    }
+    },
+    "muscle_region": "quads"
   },
   {
     "slug": "speed-squats",
@@ -9757,7 +10168,8 @@
       "en": "Speed Squats",
       "pt-BR": "Agachamento com velocidade",
       "es": "Sentadilla de velocidad"
-    }
+    },
+    "muscle_region": "quads"
   },
   {
     "slug": "spell-caster",
@@ -9805,7 +10217,8 @@
       "en": "Spider Curl",
       "pt-BR": "Rosca aranha",
       "es": "Curl araña"
-    }
+    },
+    "muscle_region": "biceps"
   },
   {
     "slug": "split-clean",
@@ -9885,7 +10298,8 @@
       "en": "Split Squat with Dumbbells",
       "pt-BR": "Agachamento split com halteres",
       "es": "Sentadilla split con mancuernas"
-    }
+    },
+    "muscle_region": "quads"
   },
   {
     "slug": "squat-jerk",
@@ -9901,7 +10315,8 @@
       "en": "Squat Jerk",
       "pt-BR": "Squat jerk",
       "es": "Squat jerk"
-    }
+    },
+    "muscle_region": "quads"
   },
   {
     "slug": "squat-with-bands",
@@ -9917,7 +10332,8 @@
       "en": "Squat with Bands",
       "pt-BR": "Agachamento com elástico",
       "es": "Sentadilla con banda elástica"
-    }
+    },
+    "muscle_region": "quads"
   },
   {
     "slug": "squat-with-chains",
@@ -9933,7 +10349,8 @@
       "en": "Squat with Chains",
       "pt-BR": "Agachamento com correntes",
       "es": "Sentadilla con cadenas"
-    }
+    },
+    "muscle_region": "quads"
   },
   {
     "slug": "squat-with-plate-movers",
@@ -9949,7 +10366,8 @@
       "en": "Squat with Plate Movers",
       "pt-BR": "Agachamento com anilhas deslizantes",
       "es": "Sentadilla con discos deslizantes"
-    }
+    },
+    "muscle_region": "quads"
   },
   {
     "slug": "squats-with-bands",
@@ -9965,7 +10383,8 @@
       "en": "Squats - With Bands",
       "pt-BR": "Agachamento com elástico",
       "es": "Sentadilla con banda elástica"
-    }
+    },
+    "muscle_region": "quads"
   },
   {
     "slug": "standing-alternating-dumbbell-press",
@@ -9997,7 +10416,8 @@
       "en": "Standing Barbell Calf Raise",
       "pt-BR": "Elevação de panturrilha em pé com barra",
       "es": "Elevación de gemelos de pie con barra"
-    }
+    },
+    "muscle_region": "gastrocnemius"
   },
   {
     "slug": "standing-barbell-press-behind-neck",
@@ -10061,7 +10481,8 @@
       "en": "Standing Biceps Cable Curl",
       "pt-BR": "Rosca de bíceps em pé na polia",
       "es": "Curl de bíceps de pie en polea"
-    }
+    },
+    "muscle_region": "biceps"
   },
   {
     "slug": "standing-bradford-press",
@@ -10093,7 +10514,8 @@
       "en": "Standing Cable Chest Press",
       "pt-BR": "Supino em pé na polia",
       "es": "Press de pecho de pie en polea"
-    }
+    },
+    "muscle_region": "chest_mid"
   },
   {
     "slug": "standing-cable-lift",
@@ -10125,7 +10547,8 @@
       "en": "Standing Cable Wood Chop",
       "pt-BR": "Corte de lenhador em pé na polia",
       "es": "Leñador de pie en polea"
-    }
+    },
+    "muscle_region": "obliques"
   },
   {
     "slug": "standing-concentration-curl",
@@ -10141,7 +10564,8 @@
       "en": "Standing Concentration Curl",
       "pt-BR": "Rosca concentrada em pé",
       "es": "Curl concentrado de pie"
-    }
+    },
+    "muscle_region": "biceps"
   },
   {
     "slug": "standing-dumbbell-calf-raise",
@@ -10157,7 +10581,8 @@
       "en": "Standing Dumbbell Calf Raise",
       "pt-BR": "Elevação de panturrilha em pé com halteres",
       "es": "Elevación de gemelos de pie con mancuernas"
-    }
+    },
+    "muscle_region": "gastrocnemius"
   },
   {
     "slug": "standing-dumbbell-press",
@@ -10189,7 +10614,8 @@
       "en": "Standing Dumbbell Reverse Curl",
       "pt-BR": "Rosca invertida em pé com halteres",
       "es": "Curl inverso de pie con mancuernas"
-    }
+    },
+    "muscle_region": "biceps"
   },
   {
     "slug": "standing-dumbbell-straight-arm-front-delt-raise-above-head",
@@ -10221,7 +10647,8 @@
       "en": "Standing Dumbbell Upright Row",
       "pt-BR": "Remada alta em pé com halteres",
       "es": "Remo al mentón de pie con mancuernas"
-    }
+    },
+    "muscle_region": "upper_back"
   },
   {
     "slug": "standing-front-barbell-raise-over-head",
@@ -10253,7 +10680,8 @@
       "en": "Standing Inner-Biceps Curl",
       "pt-BR": "Rosca bíceps interna em pé",
       "es": "Curl de bíceps interno de pie"
-    }
+    },
+    "muscle_region": "biceps"
   },
   {
     "slug": "standing-leg-curl",
@@ -10269,7 +10697,8 @@
       "en": "Standing Leg Curl",
       "pt-BR": "Flexora de pernas em pé",
       "es": "Curl femoral de pie"
-    }
+    },
+    "muscle_region": "hamstrings"
   },
   {
     "slug": "standing-long-jump",
@@ -10301,7 +10730,8 @@
       "en": "Standing Low-Pulley Deltoid Raise",
       "pt-BR": "Elevação para deltoide em pé baixa na polia",
       "es": "Elevación de deltoides de pie baja en polea"
-    }
+    },
+    "muscle_region": "delt_side"
   },
   {
     "slug": "standing-low-pulley-one-arm-triceps-extension",
@@ -10333,7 +10763,8 @@
       "en": "Standing Military Press",
       "pt-BR": "Desenvolvimento militar em pé",
       "es": "Press militar de pie"
-    }
+    },
+    "muscle_region": "delt_front"
   },
   {
     "slug": "standing-olympic-plate-hand-squeeze",
@@ -10365,7 +10796,8 @@
       "en": "Standing One-Arm Cable Curl",
       "pt-BR": "Rosca unilateral em pé na polia",
       "es": "Curl a una mano de pie en polea"
-    }
+    },
+    "muscle_region": "biceps"
   },
   {
     "slug": "standing-one-arm-dumbbell-curl-over-incline-bench",
@@ -10381,7 +10813,8 @@
       "en": "Standing One-Arm Dumbbell Curl Over Incline Bench",
       "pt-BR": "Rosca apoiado no banco inclinado unilateral em pé com halteres",
       "es": "Curl sobre banco inclinado a una mano de pie con mancuernas"
-    }
+    },
+    "muscle_region": "biceps"
   },
   {
     "slug": "standing-one-arm-dumbbell-triceps-extension",
@@ -10413,7 +10846,8 @@
       "en": "Standing Overhead Barbell Triceps Extension",
       "pt-BR": "Extensão de tríceps em pé acima da cabeça com barra",
       "es": "Extensión de tríceps de pie sobre la cabeza con barra"
-    }
+    },
+    "muscle_region": "triceps_long"
   },
   {
     "slug": "standing-palm-in-one-arm-dumbbell-press",
@@ -10461,7 +10895,8 @@
       "en": "Standing Palms-Up Barbell Behind The Back Wrist Curl",
       "pt-BR": "Rosca de punho por trás do corpo com palmas para cima em pé com barra",
       "es": "Curl de muñeca por detrás de la espalda palmas arriba de pie con barra"
-    }
+    },
+    "muscle_region": "forearms"
   },
   {
     "slug": "standing-rope-crunch",
@@ -10477,7 +10912,8 @@
       "en": "Standing Rope Crunch",
       "pt-BR": "Abdominal em pé com corda",
       "es": "Crunch de pie con cuerda"
-    }
+    },
+    "muscle_region": "abs_upper"
   },
   {
     "slug": "standing-towel-triceps-extension",
@@ -10573,7 +11009,8 @@
       "en": "Stiff-Legged Barbell Deadlift",
       "pt-BR": "Levantamento terra stiff com barra",
       "es": "Peso muerto piernas rígidas con barra"
-    }
+    },
+    "muscle_region": "hamstrings"
   },
   {
     "slug": "stiff-legged-dumbbell-deadlift",
@@ -10589,7 +11026,8 @@
       "en": "Stiff-Legged Dumbbell Deadlift",
       "pt-BR": "Levantamento terra stiff com halteres",
       "es": "Peso muerto piernas rígidas con mancuernas"
-    }
+    },
+    "muscle_region": "hamstrings"
   },
   {
     "slug": "stiff-leg-barbell-good-morning",
@@ -10605,7 +11043,8 @@
       "en": "Stiff Leg Barbell Good Morning",
       "pt-BR": "Bom dia stiff com barra",
       "es": "Buenos días piernas rígidas con barra"
-    }
+    },
+    "muscle_region": "lower_back"
   },
   {
     "slug": "straight-arm-dumbbell-pullover",
@@ -10621,7 +11060,8 @@
       "en": "Straight-Arm Dumbbell Pullover",
       "pt-BR": "Pullover com braços estendidos com halteres",
       "es": "Pullover con brazos rectos con mancuernas"
-    }
+    },
+    "muscle_region": "chest_mid"
   },
   {
     "slug": "straight-arm-pulldown",
@@ -10637,7 +11077,8 @@
       "en": "Straight-Arm Pulldown",
       "pt-BR": "Puxada com braços estendidos",
       "es": "Jalón con brazos rectos"
-    }
+    },
+    "muscle_region": "lats"
   },
   {
     "slug": "straight-bar-bench-mid-rows",
@@ -10653,7 +11094,8 @@
       "en": "Straight Bar Bench Mid Rows",
       "pt-BR": "Remada média no banco com barra reta",
       "es": "Remo medio en banco con barra recta"
-    }
+    },
+    "muscle_region": "upper_back"
   },
   {
     "slug": "straight-raises-on-incline-bench",
@@ -10811,7 +11253,8 @@
       "en": "Suspended Push-Up",
       "pt-BR": "Flexão de braço suspensa",
       "es": "Flexiones suspendidas"
-    }
+    },
+    "muscle_region": "chest_mid"
   },
   {
     "slug": "suspended-reverse-crunch",
@@ -10827,7 +11270,8 @@
       "en": "Suspended Reverse Crunch",
       "pt-BR": "Abdominal invertido suspenso",
       "es": "Crunch invertido suspendido"
-    }
+    },
+    "muscle_region": "abs_lower"
   },
   {
     "slug": "suspended-row",
@@ -10843,7 +11287,8 @@
       "en": "Suspended Row",
       "pt-BR": "Remada suspensa",
       "es": "Remo suspendido"
-    }
+    },
+    "muscle_region": "upper_back"
   },
   {
     "slug": "suspended-split-squat",
@@ -10859,7 +11304,8 @@
       "en": "Suspended Split Squat",
       "pt-BR": "Agachamento split suspenso",
       "es": "Sentadilla split suspendida"
-    }
+    },
+    "muscle_region": "quads"
   },
   {
     "slug": "svend-press",
@@ -10875,7 +11321,8 @@
       "en": "Svend Press",
       "pt-BR": "Desenvolvimento Svend",
       "es": "Press Svend"
-    }
+    },
+    "muscle_region": "chest_mid"
   },
   {
     "slug": "t-bar-row-with-handle",
@@ -10891,7 +11338,8 @@
       "en": "T-Bar Row with Handle",
       "pt-BR": "Remada cavalinho (T)",
       "es": "Remo en T"
-    }
+    },
+    "muscle_region": "upper_back"
   },
   {
     "slug": "tate-press",
@@ -10907,7 +11355,8 @@
       "en": "Tate Press",
       "pt-BR": "Desenvolvimento Tate",
       "es": "Press Tate"
-    }
+    },
+    "muscle_region": "triceps_lateral"
   },
   {
     "slug": "thigh-abductor",
@@ -10923,7 +11372,8 @@
       "en": "Thigh Abductor",
       "pt-BR": "Cadeira abdutora",
       "es": "Máquina de abductores"
-    }
+    },
+    "muscle_region": "abductors"
   },
   {
     "slug": "thigh-adductor",
@@ -10939,7 +11389,8 @@
       "en": "Thigh Adductor",
       "pt-BR": "Cadeira adutora",
       "es": "Máquina de aductores"
-    }
+    },
+    "muscle_region": "adductors"
   },
   {
     "slug": "trail-running-walking",
@@ -10987,7 +11438,8 @@
       "en": "Tricep Dumbbell Kickback",
       "pt-BR": "Coice (kickback) de tríceps com halteres",
       "es": "Patada (kickback) de tríceps con mancuernas"
-    }
+    },
+    "muscle_region": "triceps_lateral"
   },
   {
     "slug": "triceps-overhead-extension-with-rope",
@@ -11003,7 +11455,8 @@
       "en": "Triceps Overhead Extension with Rope",
       "pt-BR": "Extensão de tríceps acima da cabeça com corda",
       "es": "Extensión de tríceps sobre la cabeza con cuerda"
-    }
+    },
+    "muscle_region": "triceps_long"
   },
   {
     "slug": "triceps-pushdown-rope-attachment",
@@ -11019,7 +11472,8 @@
       "en": "Triceps Pushdown - Rope Attachment",
       "pt-BR": "Tríceps (pushdown) de tríceps com corda",
       "es": "Extensión de tríceps de tríceps con cuerda"
-    }
+    },
+    "muscle_region": "triceps_lateral"
   },
   {
     "slug": "triceps-pushdown-v-bar-attachment",
@@ -11035,7 +11489,8 @@
       "en": "Triceps Pushdown - V-Bar Attachment",
       "pt-BR": "Tríceps (pushdown) de tríceps com barra V",
       "es": "Extensión de tríceps de tríceps con barra V"
-    }
+    },
+    "muscle_region": "triceps_lateral"
   },
   {
     "slug": "tuck-crunch",
@@ -11051,7 +11506,8 @@
       "en": "Tuck Crunch",
       "pt-BR": "Abdominal grupado",
       "es": "Crunch agrupado"
-    }
+    },
+    "muscle_region": "abs_upper"
   },
   {
     "slug": "two-arm-dumbbell-preacher-curl",
@@ -11067,7 +11523,8 @@
       "en": "Two-Arm Dumbbell Preacher Curl",
       "pt-BR": "Rosca Scott com os dois braços com halteres",
       "es": "Curl predicador a dos manos con mancuernas"
-    }
+    },
+    "muscle_region": "biceps"
   },
   {
     "slug": "two-arm-kettlebell-clean",
@@ -11115,7 +11572,8 @@
       "en": "Two-Arm Kettlebell Military Press",
       "pt-BR": "Desenvolvimento militar com os dois braços com kettlebell",
       "es": "Press militar a dos manos con kettlebell"
-    }
+    },
+    "muscle_region": "delt_front"
   },
   {
     "slug": "two-arm-kettlebell-row",
@@ -11131,7 +11589,8 @@
       "en": "Two-Arm Kettlebell Row",
       "pt-BR": "Remada com os dois braços com kettlebell",
       "es": "Remo a dos manos con kettlebell"
-    }
+    },
+    "muscle_region": "upper_back"
   },
   {
     "slug": "underhand-cable-pulldowns",
@@ -11147,7 +11606,8 @@
       "en": "Underhand Cable Pulldowns",
       "pt-BR": "Puxada com pegada supinada na polia",
       "es": "Jalón con agarre supino en polea"
-    }
+    },
+    "muscle_region": "lats"
   },
   {
     "slug": "upright-barbell-row",
@@ -11179,7 +11639,8 @@
       "en": "Upright Cable Row",
       "pt-BR": "Remada alta na polia",
       "es": "Remo vertical en polea"
-    }
+    },
+    "muscle_region": "upper_back"
   },
   {
     "slug": "upright-row-with-bands",
@@ -11195,7 +11656,8 @@
       "en": "Upright Row - With Bands",
       "pt-BR": "Remada alta com elástico",
       "es": "Remo al mentón con banda elástica"
-    }
+    },
+    "muscle_region": "upper_back"
   },
   {
     "slug": "v-bar-pulldown",
@@ -11211,7 +11673,8 @@
       "en": "V-Bar Pulldown",
       "pt-BR": "Puxada com barra V",
       "es": "Jalón con barra V"
-    }
+    },
+    "muscle_region": "lats"
   },
   {
     "slug": "v-bar-pullup",
@@ -11227,7 +11690,8 @@
       "en": "V-Bar Pullup",
       "pt-BR": "Barra fixa com barra V",
       "es": "Dominadas con barra V"
-    }
+    },
+    "muscle_region": "lats"
   },
   {
     "slug": "vertical-swing",
@@ -11259,7 +11723,8 @@
       "en": "Weighted Ball Hyperextension",
       "pt-BR": "Hiperextensão com bola de peso",
       "es": "Hiperextensión con balón lastrado"
-    }
+    },
+    "muscle_region": "lower_back"
   },
   {
     "slug": "weighted-ball-side-bend",
@@ -11275,7 +11740,8 @@
       "en": "Weighted Ball Side Bend",
       "pt-BR": "Flexão lateral com bola de peso",
       "es": "Flexión lateral con balón lastrado"
-    }
+    },
+    "muscle_region": "obliques"
   },
   {
     "slug": "weighted-bench-dip",
@@ -11291,7 +11757,8 @@
       "en": "Weighted Bench Dip",
       "pt-BR": "Mergulho (paralelas) com peso no banco",
       "es": "Fondos con lastre en banco"
-    }
+    },
+    "muscle_region": "triceps_lateral"
   },
   {
     "slug": "weighted-crunches",
@@ -11307,7 +11774,8 @@
       "en": "Weighted Crunches",
       "pt-BR": "Abdominal com peso",
       "es": "Crunch con lastre"
-    }
+    },
+    "muscle_region": "abs_upper"
   },
   {
     "slug": "weighted-jump-squat",
@@ -11323,7 +11791,8 @@
       "en": "Weighted Jump Squat",
       "pt-BR": "Agachamento com salto com peso",
       "es": "Sentadilla con salto con lastre"
-    }
+    },
+    "muscle_region": "quads"
   },
   {
     "slug": "weighted-pull-ups",
@@ -11339,7 +11808,8 @@
       "en": "Weighted Pull Ups",
       "pt-BR": "Barra fixa com peso",
       "es": "Dominadas con lastre"
-    }
+    },
+    "muscle_region": "lats"
   },
   {
     "slug": "weighted-sissy-squat",
@@ -11355,7 +11825,8 @@
       "en": "Weighted Sissy Squat",
       "pt-BR": "Agachamento sissy com peso",
       "es": "Sentadilla sissy con lastre"
-    }
+    },
+    "muscle_region": "quads"
   },
   {
     "slug": "weighted-sit-ups-with-bands",
@@ -11371,7 +11842,8 @@
       "en": "Weighted Sit-Ups - With Bands",
       "pt-BR": "Abdominal com peso com elástico",
       "es": "Abdominales con lastre con banda elástica"
-    }
+    },
+    "muscle_region": "abs_upper"
   },
   {
     "slug": "weighted-squat",
@@ -11387,7 +11859,8 @@
       "en": "Weighted Squat",
       "pt-BR": "Agachamento com peso",
       "es": "Sentadilla con lastre"
-    }
+    },
+    "muscle_region": "quads"
   },
   {
     "slug": "wide-grip-barbell-bench-press",
@@ -11403,7 +11876,8 @@
       "en": "Wide-Grip Barbell Bench Press",
       "pt-BR": "Supino com pegada aberta com barra",
       "es": "Press de banca con agarre abierto con barra"
-    }
+    },
+    "muscle_region": "chest_mid"
   },
   {
     "slug": "wide-grip-decline-barbell-bench-press",
@@ -11419,7 +11893,8 @@
       "en": "Wide-Grip Decline Barbell Bench Press",
       "pt-BR": "Supino com pegada aberta declinado com barra",
       "es": "Press de banca con agarre abierto declinado con barra"
-    }
+    },
+    "muscle_region": "chest_lower"
   },
   {
     "slug": "wide-grip-decline-barbell-pullover",
@@ -11435,7 +11910,8 @@
       "en": "Wide-Grip Decline Barbell Pullover",
       "pt-BR": "Pullover com pegada aberta declinado com barra",
       "es": "Pullover con agarre abierto declinado con barra"
-    }
+    },
+    "muscle_region": "chest_lower"
   },
   {
     "slug": "wide-grip-pulldown-behind-the-neck",
@@ -11451,7 +11927,8 @@
       "en": "Wide-Grip Pulldown Behind The Neck",
       "pt-BR": "Puxada por trás da cabeça com pegada aberta",
       "es": "Jalón tras nuca con agarre abierto"
-    }
+    },
+    "muscle_region": "lats"
   },
   {
     "slug": "wide-grip-rear-pull-up",
@@ -11467,7 +11944,8 @@
       "en": "Wide-Grip Rear Pull-Up",
       "pt-BR": "Barra fixa com pegada aberta posterior",
       "es": "Dominadas con agarre abierto posterior"
-    }
+    },
+    "muscle_region": "lats"
   },
   {
     "slug": "wide-grip-standing-barbell-curl",
@@ -11483,7 +11961,8 @@
       "en": "Wide-Grip Standing Barbell Curl",
       "pt-BR": "Rosca com pegada aberta em pé com barra",
       "es": "Curl con agarre abierto de pie con barra"
-    }
+    },
+    "muscle_region": "biceps"
   },
   {
     "slug": "wide-stance-barbell-squat",
@@ -11499,7 +11978,8 @@
       "en": "Wide Stance Barbell Squat",
       "pt-BR": "Agachamento com base aberta com barra",
       "es": "Sentadilla con postura abierta con barra"
-    }
+    },
+    "muscle_region": "quads"
   },
   {
     "slug": "wide-stance-stiff-legs",
@@ -11515,7 +11995,8 @@
       "en": "Wide Stance Stiff Legs",
       "pt-BR": "Stiff com base aberta",
       "es": "Peso muerto piernas rígidas postura abierta"
-    }
+    },
+    "muscle_region": "hamstrings"
   },
   {
     "slug": "wind-sprints",
@@ -11547,7 +12028,8 @@
       "en": "Wrist Roller",
       "pt-BR": "Rolo de punho (wrist roller)",
       "es": "Rodillo de muñeca"
-    }
+    },
+    "muscle_region": "forearms"
   },
   {
     "slug": "wrist-rotations-with-straight-bar",
@@ -11563,7 +12045,8 @@
       "en": "Wrist Rotations with Straight Bar",
       "pt-BR": "Rotação de punho com barra reta",
       "es": "Rotación de muñeca con barra recta"
-    }
+    },
+    "muscle_region": "forearms"
   },
   {
     "slug": "zercher-squats",
@@ -11579,7 +12062,8 @@
       "en": "Zercher Squats",
       "pt-BR": "Agachamento Zercher",
       "es": "Sentadilla Zercher"
-    }
+    },
+    "muscle_region": "quads"
   },
   {
     "slug": "zottman-curl",
@@ -11595,7 +12079,8 @@
       "en": "Zottman Curl",
       "pt-BR": "Rosca Zottman",
       "es": "Curl Zottman"
-    }
+    },
+    "muscle_region": "biceps"
   },
   {
     "slug": "zottman-preacher-curl",
@@ -11611,6 +12096,7 @@
       "en": "Zottman Preacher Curl",
       "pt-BR": "Rosca Scott Zottman",
       "es": "Curl predicador Zottman"
-    }
+    },
+    "muscle_region": "biceps"
   }
 ]

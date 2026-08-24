@@ -29,6 +29,8 @@ from ..models import (
     ConnectionStatus,
     CycleTracking,
     DiaryEntry,
+    Exercise,
+    MuscleGroup,
     NewsItem,
     NewsRead,
     Objective,
@@ -42,6 +44,9 @@ from ..models import (
 from ..schemas import (
     AdminActivityPoint,
     AdminActivitySeries,
+    AdminExercisePage,
+    AdminExerciseRegionIn,
+    AdminExerciseRow,
     AdminNewsRow,
     AdminNewsWrite,
     AdminObjectiveSlice,
@@ -51,6 +56,7 @@ from ..schemas import (
     AdminUserRow,
 )
 from ..services.email import send_password_reset_email
+from ..services.exercises import localized_name
 from ..services.text import normalize_search
 
 router = APIRouter(prefix="/admin", tags=["admin"])
@@ -501,3 +507,73 @@ def delete_news(news_id: int, admin: AdminUser, session: SessionDep) -> None:
         raise HTTPException(status.HTTP_404_NOT_FOUND, detail="NEWS_NOT_FOUND")
     session.delete(item)
     session.commit()
+
+
+# --- Curadoria da subdivisao muscular --------------------------------------
+
+
+@router.get("/exercises", response_model=AdminExercisePage)
+def list_exercises_for_curation(
+    admin: AdminUser,
+    session: SessionDep,
+    page: int = Query(default=1, ge=1),
+    page_size: int = Query(default=50, ge=1, le=200),
+    muscle_group: MuscleGroup | None = Query(default=None),
+    only_missing: bool = Query(default=True, description="so exercicio ainda sem subdivisao"),
+    q: str | None = Query(default=None),
+) -> AdminExercisePage:
+    """So o catalogo global (user_id NULO): exercicio criado por usuario nao passa
+    por curadoria do admin. Prioriza o traduzido primeiro (e o que aparece no app
+    por padrao), depois o slug - assim quem cura ve primeiro o que mais importa."""
+    base = select(Exercise).where(col(Exercise.user_id).is_(None))
+    if muscle_group is not None:
+        base = base.where(Exercise.muscle_group == muscle_group)
+    if only_missing:
+        base = base.where(col(Exercise.muscle_region).is_(None))
+
+    exercises = session.exec(base).all()
+    if q and q.strip():
+        needle = normalize_search(q.strip())
+        exercises = [
+            ex
+            for ex in exercises
+            if any(needle in normalize_search(t.name) for t in ex.translations)
+            or needle in normalize_search(ex.slug)
+        ]
+
+    rows = [
+        AdminExerciseRow(
+            id=ex.id,
+            slug=ex.slug,
+            name=localized_name(session, ex, admin.locale),
+            muscle_group=ex.muscle_group,
+            muscle_region=ex.muscle_region,
+        )
+        for ex in exercises
+    ]
+    rows.sort(key=lambda r: (r.name == r.slug, r.name.lower()))
+
+    total = len(rows)
+    start = (page - 1) * page_size
+    page_rows = rows[start : start + page_size]
+    return AdminExercisePage(items=page_rows, total=total, page=page, page_size=page_size)
+
+
+@router.put("/exercises/{exercise_id}/region", response_model=AdminExerciseRow)
+def set_exercise_region(
+    exercise_id: int, data: AdminExerciseRegionIn, admin: AdminUser, session: SessionDep
+) -> AdminExerciseRow:
+    exercise = session.get(Exercise, exercise_id)
+    if exercise is None or exercise.user_id is not None:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, detail="EXERCISE_NOT_FOUND")
+    exercise.muscle_region = data.muscle_region
+    session.add(exercise)
+    session.commit()
+    session.refresh(exercise)
+    return AdminExerciseRow(
+        id=exercise.id,
+        slug=exercise.slug,
+        name=localized_name(session, exercise, admin.locale),
+        muscle_group=exercise.muscle_group,
+        muscle_region=exercise.muscle_region,
+    )

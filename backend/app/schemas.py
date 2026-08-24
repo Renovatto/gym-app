@@ -18,6 +18,7 @@ from .models import (
     FoodCategory,
     MealType,
     MuscleGroup,
+    MuscleRegion,
     NewsImportance,
     Objective,
     Plan,
@@ -350,6 +351,7 @@ class ExerciseOut(BaseModel):
     slug: str
     name: str
     muscle_group: MuscleGroup
+    muscle_region: MuscleRegion | None
     equipment: Equipment
     kind: ExerciseKind
     level: ExerciseLevel | None
@@ -1159,3 +1161,26 @@ class AdminNewsWrite(BaseModel):
     body_en: str = Field(min_length=1, max_length=4000)
     title_es: str = Field(min_length=1, max_length=120)
     body_es: str = Field(min_length=1, max_length=4000)
+
+
+class AdminExerciseRow(BaseModel):
+    """Uma linha da curadoria de subdivisao muscular: so o catalogo global
+    (user_id NULO) passa por aqui - exercicio de usuario nao e responsabilidade
+    do admin."""
+
+    id: int
+    slug: str
+    name: str  # nome no idioma do admin, com fallback para en (ver localized_name)
+    muscle_group: MuscleGroup
+    muscle_region: MuscleRegion | None
+
+
+class AdminExercisePage(BaseModel):
+    items: list[AdminExerciseRow]
+    total: int
+    page: int
+    page_size: int
+
+
+class AdminExerciseRegionIn(BaseModel):
+    muscle_region: MuscleRegion | None

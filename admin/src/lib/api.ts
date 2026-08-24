@@ -271,6 +271,69 @@ export interface AdminNews {
 
 export type AdminNewsWrite = Omit<AdminNews, 'id' | 'created_at' | 'read_count'>;
 
+export type MuscleGroup =
+	| 'chest'
+	| 'back'
+	| 'shoulders'
+	| 'biceps'
+	| 'triceps'
+	| 'legs'
+	| 'glutes'
+	| 'abs'
+	| 'calves'
+	| 'cardio';
+
+export type MuscleRegion =
+	| 'chest_upper'
+	| 'chest_mid'
+	| 'chest_lower'
+	| 'lats'
+	| 'upper_back'
+	| 'traps'
+	| 'lower_back'
+	| 'delt_front'
+	| 'delt_side'
+	| 'delt_rear'
+	| 'biceps'
+	| 'forearms'
+	| 'triceps_long'
+	| 'triceps_lateral'
+	| 'quads'
+	| 'hamstrings'
+	| 'adductors'
+	| 'abductors'
+	| 'glute_max'
+	| 'glute_med'
+	| 'abs_upper'
+	| 'abs_lower'
+	| 'obliques'
+	| 'core'
+	| 'gastrocnemius'
+	| 'soleus';
+
+export interface AdminExerciseRow {
+	id: number;
+	slug: string;
+	name: string;
+	muscle_group: MuscleGroup;
+	muscle_region: MuscleRegion | null;
+}
+
+export interface AdminExercisePage {
+	items: AdminExerciseRow[];
+	total: number;
+	page: number;
+	page_size: number;
+}
+
+export interface AdminExerciseQuery {
+	page: number;
+	page_size: number;
+	muscle_group?: MuscleGroup;
+	only_missing: boolean;
+	q?: string;
+}
+
 export const api = {
 	login: (email: string, password: string) =>
 		request<TokenPair>('/auth/login', {
@@ -318,5 +381,22 @@ export const api = {
 	updateNews: (id: number, data: AdminNewsWrite) =>
 		request<AdminNews>(`/admin/news/${id}`, { method: 'PUT', body: data }),
 
-	deleteNews: (id: number) => request<void>(`/admin/news/${id}`, { method: 'DELETE' })
+	deleteNews: (id: number) => request<void>(`/admin/news/${id}`, { method: 'DELETE' }),
+
+	listExercisesForCuration: (query: AdminExerciseQuery) =>
+		request<AdminExercisePage>(
+			`/admin/exercises${toQuery({
+				page: query.page,
+				page_size: query.page_size,
+				muscle_group: query.muscle_group,
+				only_missing: query.only_missing ? 'true' : 'false',
+				q: query.q
+			})}`
+		),
+
+	setExerciseRegion: (id: number, muscle_region: MuscleRegion | null) =>
+		request<AdminExerciseRow>(`/admin/exercises/${id}/region`, {
+			method: 'PUT',
+			body: { muscle_region }
+		})
 };

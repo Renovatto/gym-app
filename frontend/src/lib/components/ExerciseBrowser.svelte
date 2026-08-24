@@ -1,7 +1,15 @@
 <script lang="ts">
-	import { api, type Exercise, type ExerciseLevel, type MuscleGroup } from '$lib/api';
+	import { api, type Exercise, type ExerciseLevel, type MuscleGroup, type MuscleRegion } from '$lib/api';
 	import ExercisePhotoModal from './ExercisePhotoModal.svelte';
-	import { LEVELS, MUSCLE_GROUPS, equipmentLabel, levelLabel, muscleGroupLabel } from '$lib/labels';
+	import {
+		LEVELS,
+		MUSCLE_GROUPS,
+		REGIONS_BY_GROUP,
+		equipmentLabel,
+		levelLabel,
+		muscleGroupLabel,
+		muscleRegionLabel
+	} from '$lib/labels';
 	import { m } from '$lib/paraglide/messages';
 
 	let {
@@ -10,6 +18,7 @@
 	}: { onPick?: (exercise: Exercise) => void; selectedIds?: Set<number> } = $props();
 
 	let group = $state<MuscleGroup>('chest');
+	let region = $state<MuscleRegion | null>(null);
 	let level = $state<ExerciseLevel | null>(null);
 	let full = $state(false);
 	let query = $state('');
@@ -18,12 +27,14 @@
 	let photoOf = $state<Exercise | null>(null);
 
 	const searching = $derived(query.trim().length > 0);
+	const regions = $derived(REGIONS_BY_GROUP[group]);
 
 	async function load(): Promise<void> {
 		loading = true;
 		const q = query.trim();
-		// com busca: global (sem grupo); sem busca: filtro por grupo
+		// com busca: global (sem grupo); sem busca: filtro por grupo (+ subdivisao)
 		exercises = await api.getExercises(q ? undefined : group, {
+			region: q ? undefined : (region ?? undefined),
 			level: level ?? undefined,
 			full,
 			q: q || undefined
@@ -31,10 +42,16 @@
 		loading = false;
 	}
 
+	function pickGroup(g: MuscleGroup): void {
+		group = g;
+		region = null; // a subdivisao pertence ao grupo anterior - some ao trocar
+	}
+
 	$effect(() => {
 		// dependências reativas + debounce de 300ms para a digitação
 		query;
 		group;
+		region;
 		level;
 		full;
 		const timer = setTimeout(load, 300);
@@ -66,7 +83,7 @@
 		{#each MUSCLE_GROUPS as g (g)}
 			<button
 				type="button"
-				onclick={() => (group = g)}
+				onclick={() => pickGroup(g)}
 				class="h-10 shrink-0 rounded-full px-4 text-sm font-semibold transition-colors
 					{group === g ? 'bg-emerald-600 text-white' : 'bg-white text-slate-600'}"
 			>
@@ -75,6 +92,35 @@
 		{/each}
 	</div>
 </div>
+
+{#if regions.length > 0}
+	<div class="-mx-4 mt-1.5 overflow-x-auto px-4 {searching ? 'pointer-events-none opacity-40' : ''}">
+		<div class="flex w-max gap-1.5 pb-1">
+			<button
+				type="button"
+				onclick={() => (region = null)}
+				class="h-8 shrink-0 rounded-full border px-3 text-xs font-semibold transition-colors
+					{region === null
+					? 'border-emerald-600 bg-emerald-600 text-white'
+					: 'border-emerald-200 bg-white text-emerald-700'}"
+			>
+				{m.mr_all()}
+			</button>
+			{#each regions as r (r)}
+				<button
+					type="button"
+					onclick={() => (region = r)}
+					class="h-8 shrink-0 rounded-full border px-3 text-xs font-semibold transition-colors
+						{region === r
+						? 'border-emerald-600 bg-emerald-600 text-white'
+						: 'border-emerald-200 bg-white text-emerald-700'}"
+				>
+					{muscleRegionLabel(r)}
+				</button>
+			{/each}
+		</div>
+	</div>
+{/if}
 
 <div class="mt-2 flex items-center justify-between gap-2">
 	<div class="flex gap-1.5">

@@ -227,6 +227,34 @@ export type MuscleGroup =
 	| 'calves'
 	| 'cardio';
 
+export type MuscleRegion =
+	| 'chest_upper'
+	| 'chest_mid'
+	| 'chest_lower'
+	| 'lats'
+	| 'upper_back'
+	| 'traps'
+	| 'lower_back'
+	| 'delt_front'
+	| 'delt_side'
+	| 'delt_rear'
+	| 'biceps'
+	| 'forearms'
+	| 'triceps_long'
+	| 'triceps_lateral'
+	| 'quads'
+	| 'hamstrings'
+	| 'adductors'
+	| 'abductors'
+	| 'glute_max'
+	| 'glute_med'
+	| 'abs_upper'
+	| 'abs_lower'
+	| 'obliques'
+	| 'core'
+	| 'gastrocnemius'
+	| 'soleus';
+
 export type Equipment =
 	| 'barbell'
 	| 'dumbbell'
@@ -245,6 +273,7 @@ export interface Exercise {
 	slug: string;
 	name: string;
 	muscle_group: MuscleGroup;
+	muscle_region: MuscleRegion | null;
 	equipment: Equipment;
 	kind: ExerciseKind;
 	level: ExerciseLevel | null;
@@ -1036,11 +1065,12 @@ export const api = {
 	// treino
 	getExercises: (
 		muscleGroup?: MuscleGroup,
-		opts: { level?: ExerciseLevel; full?: boolean; q?: string } = {}
+		opts: { region?: MuscleRegion; level?: ExerciseLevel; full?: boolean; q?: string } = {}
 	) => {
 		const params = new URLSearchParams();
 		if (opts.q) params.set('q', opts.q);
 		if (muscleGroup) params.set('muscle_group', muscleGroup);
+		if (opts.region) params.set('muscle_region', opts.region);
 		if (opts.level) params.set('level', opts.level);
 		if (opts.full) params.set('full', 'true');
 		const qs = params.toString();

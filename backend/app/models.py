@@ -62,6 +62,38 @@ class MuscleGroup(str, Enum):
     cardio = "cardio"
 
 
+class MuscleRegion(str, Enum):
+    """Subdivisao dentro de um MuscleGroup (ex.: legs -> hamstrings). Sempre
+    opcional: hierarquia completa em services/exercises.py:REGIONS_BY_GROUP."""
+
+    chest_upper = "chest_upper"
+    chest_mid = "chest_mid"
+    chest_lower = "chest_lower"
+    lats = "lats"
+    upper_back = "upper_back"
+    traps = "traps"
+    lower_back = "lower_back"
+    delt_front = "delt_front"
+    delt_side = "delt_side"
+    delt_rear = "delt_rear"
+    biceps = "biceps"
+    forearms = "forearms"
+    triceps_long = "triceps_long"
+    triceps_lateral = "triceps_lateral"
+    quads = "quads"
+    hamstrings = "hamstrings"
+    adductors = "adductors"
+    abductors = "abductors"
+    glute_max = "glute_max"
+    glute_med = "glute_med"
+    abs_upper = "abs_upper"
+    abs_lower = "abs_lower"
+    obliques = "obliques"
+    core = "core"
+    gastrocnemius = "gastrocnemius"
+    soleus = "soleus"
+
+
 class ExerciseKind(str, Enum):
     strength = "strength"
     cardio = "cardio"
@@ -193,6 +225,7 @@ class Exercise(SQLModel, table=True):
     id: int | None = Field(default=None, primary_key=True)
     slug: str = Field(index=True)
     muscle_group: MuscleGroup = Field(index=True)
+    muscle_region: MuscleRegion | None = Field(default=None, index=True)
     equipment: Equipment
     kind: ExerciseKind = Field(default=ExerciseKind.strength, index=True)
     level: ExerciseLevel | None = Field(default=None, index=True)

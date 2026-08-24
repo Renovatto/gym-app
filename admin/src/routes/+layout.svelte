@@ -20,7 +20,8 @@
 		usuarios: { title: 'Usuarios', sub: 'Consulta paginada no servidor' },
 		relatorios: { title: 'Relatorios', sub: 'Agregados de uso por periodo' },
 		feedbacks: { title: 'Feedbacks', sub: 'Mensagens enviadas pelo app' },
-		novidades: { title: 'Novidades', sub: 'O que os usuarios veem no app' }
+		novidades: { title: 'Novidades', sub: 'O que os usuarios veem no app' },
+		exercicios: { title: 'Exercicios', sub: 'Subdivisao muscular do catalogo' }
 	};
 
 	const current = $derived(page.url.pathname.replace(base, '').replace(/^\/|\/$/g, ''));
@@ -233,6 +234,27 @@
 						/></svg
 					>
 					Novidades
+				</a>
+				<a
+					class="nav-item"
+					href="{base}/exercicios"
+					aria-current={isCurrent('exercicios')}
+					onclick={() => (railOpen = false)}
+				>
+					<svg
+						width="17"
+						height="17"
+						viewBox="0 0 24 24"
+						fill="none"
+						stroke="currentColor"
+						stroke-width="1.9"
+						stroke-linecap="round"
+						stroke-linejoin="round"
+						><path
+							d="M4 9v6M2.5 10.5v3M7 7v10M21.5 10.5v3M20 9v6M17 7v10M7 12h10"
+						/></svg
+					>
+					Exercicios
 				</a>
 			</nav>
 

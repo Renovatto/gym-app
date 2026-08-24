@@ -4,6 +4,7 @@ import type {
 	ExerciseLevel,
 	MealType,
 	MuscleGroup,
+	MuscleRegion,
 	StandaloneActivityKind
 } from '$lib/api';
 import { m } from '$lib/paraglide/messages';
@@ -130,6 +131,53 @@ export const MUSCLE_GROUPS: MuscleGroup[] = [
 	'calves',
 	'cardio'
 ];
+
+export function muscleRegionLabel(region: MuscleRegion): string {
+	return {
+		chest_upper: m.mr_chest_upper(),
+		chest_mid: m.mr_chest_mid(),
+		chest_lower: m.mr_chest_lower(),
+		lats: m.mr_lats(),
+		upper_back: m.mr_upper_back(),
+		traps: m.mr_traps(),
+		lower_back: m.mr_lower_back(),
+		delt_front: m.mr_delt_front(),
+		delt_side: m.mr_delt_side(),
+		delt_rear: m.mr_delt_rear(),
+		biceps: m.mr_biceps(),
+		forearms: m.mr_forearms(),
+		triceps_long: m.mr_triceps_long(),
+		triceps_lateral: m.mr_triceps_lateral(),
+		quads: m.mr_quads(),
+		hamstrings: m.mr_hamstrings(),
+		adductors: m.mr_adductors(),
+		abductors: m.mr_abductors(),
+		glute_max: m.mr_glute_max(),
+		glute_med: m.mr_glute_med(),
+		abs_upper: m.mr_abs_upper(),
+		abs_lower: m.mr_abs_lower(),
+		obliques: m.mr_obliques(),
+		core: m.mr_core(),
+		gastrocnemius: m.mr_gastrocnemius(),
+		soleus: m.mr_soleus()
+	}[region];
+}
+
+// Subdivisao de cada MuscleGroup - espelha services/exercises.py:REGIONS_BY_GROUP
+// no backend (fonte unica da verdade da hierarquia). Grupo sem entrada (cardio)
+// nao tem subdivisao: a fileira de chips soma nele.
+export const REGIONS_BY_GROUP: Record<MuscleGroup, MuscleRegion[]> = {
+	chest: ['chest_upper', 'chest_mid', 'chest_lower'],
+	back: ['lats', 'upper_back', 'traps', 'lower_back'],
+	shoulders: ['delt_front', 'delt_side', 'delt_rear'],
+	biceps: ['biceps', 'forearms'],
+	triceps: ['triceps_long', 'triceps_lateral'],
+	legs: ['quads', 'hamstrings', 'adductors', 'abductors'],
+	glutes: ['glute_max', 'glute_med'],
+	abs: ['abs_upper', 'abs_lower', 'obliques', 'core'],
+	calves: ['gastrocnemius', 'soleus'],
+	cardio: []
+};
 
 export const LEVELS: ExerciseLevel[] = ['beginner', 'intermediate', 'expert'];
 

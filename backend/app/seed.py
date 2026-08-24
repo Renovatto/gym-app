@@ -19,6 +19,7 @@ from .models import (
     FoodPortion,
     FoodTranslation,
     MuscleGroup,
+    MuscleRegion,
 )
 
 SEED_FILE = Path(__file__).resolve().parent / "seed_exercises.json"
@@ -44,6 +45,7 @@ def seed_exercises() -> None:
                 session.add(ex)
                 added += 1
             ex.muscle_group = MuscleGroup(item["muscle_group"])
+            ex.muscle_region = MuscleRegion(item["muscle_region"]) if item.get("muscle_region") else None
             ex.equipment = Equipment(item["equipment"])
             ex.kind = ExerciseKind(item.get("kind", "strength"))
             ex.level = level
