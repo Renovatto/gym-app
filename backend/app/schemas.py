@@ -789,6 +789,7 @@ class DietPeriodOut(BaseModel):
     review_weeks: int
     target_kcal: int  # meta calorica efetiva atual (ja com override, se houver)
     maintenance_kcal: int | None  # manutencao real adotada (override) ou None
+    formula_target_kcal: int  # meta se renovar SEM adotar manutencao (so formula) - preview do botao "Renovar"
     days_active: int
     due: bool  # passou da validade sugerida -> hora de revisar/renovar
 

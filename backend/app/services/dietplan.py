@@ -71,11 +71,17 @@ def _out(session: Session, user: User, period: DietPeriod, today: date) -> DietP
     profile, latest = _profile_and_weight(session, user.id)
     # Meta efetiva ATUAL: reflete o override do periodo (se houver) e o peso mais recente.
     effective_target = period.target_kcal
+    # Meta se a pessoa renovar SEM adotar manutencao (o botao "Renovar" simples):
+    # mesma formula, sem override. Serve so de preview antes de confirmar - "Renovar"
+    # descarta a manutencao adotada e pode saltar bastante se ela tiver ficado presa
+    # num numero antigo (ex.: adotada antes de um ajuste no calculo adaptativo).
+    formula_target = period.target_kcal
     if profile is not None and latest is not None:
         override = float(period.maintenance_kcal) if period.maintenance_kcal is not None else None
         effective_target = compute_goals(
             profile, latest.weight_kg, maintenance_override=override
         ).target_kcal
+        formula_target = compute_goals(profile, latest.weight_kg).target_kcal
     review_on = period.started_on + timedelta(weeks=period.review_weeks)
     return DietPeriodOut(
         started_on=period.started_on,
@@ -84,6 +90,7 @@ def _out(session: Session, user: User, period: DietPeriod, today: date) -> DietP
         review_weeks=period.review_weeks,
         target_kcal=effective_target,
         maintenance_kcal=period.maintenance_kcal,
+        formula_target_kcal=formula_target,
         days_active=max(0, (today - period.started_on).days),
         due=today >= review_on,
     )

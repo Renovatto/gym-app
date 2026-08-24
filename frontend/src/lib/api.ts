@@ -767,6 +767,7 @@ export interface DietPeriod {
 	review_weeks: number;
 	target_kcal: number;
 	maintenance_kcal: number | null;
+	formula_target_kcal: number;
 	days_active: number;
 	due: boolean;
 }

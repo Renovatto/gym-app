@@ -436,6 +436,7 @@
 	"diet_period_renew_adopt": "Renovar adoptando este mantenimiento",
 	"diet_period_renew_restart": "Renovar (reiniciar período)",
 	"diet_period_renew_confirm": "¿Confirmar la renovación del período?",
+	"diet_period_restart_preview": "Tu meta pasará de {current} a {formula} kcal (calculada por fórmula, sin mantenimiento adoptado).",
 	"diet_period_renewed": "Período renovado ✓",
 	"diet_period_new_suggestion": "Nueva sugerencia de meta disponible",
 	"search_recipes": "Buscar receta o ingrediente…",

@@ -436,6 +436,7 @@
 	"diet_period_renew_adopt": "Renew adopting this maintenance",
 	"diet_period_renew_restart": "Renew (restart period)",
 	"diet_period_renew_confirm": "Confirm renewing the period?",
+	"diet_period_restart_preview": "Your target will change from {current} to {formula} kcal (formula-based, no adopted maintenance).",
 	"diet_period_renewed": "Period renewed ✓",
 	"diet_period_new_suggestion": "New goal suggestion available",
 	"search_recipes": "Search recipe or ingredient…",

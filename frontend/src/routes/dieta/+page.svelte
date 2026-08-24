@@ -1943,6 +1943,17 @@
 			{/if}
 
 			{#if confirmingRenew === 'restart'}
+				{#if dietPeriod && Math.abs(dietPeriod.formula_target_kcal - dietPeriod.target_kcal) >= 10}
+					<!-- "Renovar" simples descarta a manutencao adotada e volta pra formula - se isso
+					     muda a meta bastante, a pessoa precisa ver o numero ANTES de confirmar, nao
+					     descobrir depois. Mesma logica do aviso de acao de impacto do CLAUDE.md. -->
+					<p class="mt-2 rounded-xl bg-amber-50 px-3 py-2 text-xs font-semibold text-amber-800">
+						{m.diet_period_restart_preview({
+							current: nf.format(dietPeriod.target_kcal),
+							formula: nf.format(dietPeriod.formula_target_kcal)
+						})}
+					</p>
+				{/if}
 				<div class="mt-2 flex items-center gap-2 rounded-xl bg-slate-50 p-1.5">
 					<span class="min-w-0 flex-1 pl-1.5 text-xs font-semibold text-slate-600">{m.diet_period_renew_confirm()}</span>
 					<button
