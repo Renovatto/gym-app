@@ -3,6 +3,7 @@
 	import { page } from '$app/state';
 	import { api, type Exercise, type RoutineItemInput } from '$lib/api';
 	import ExerciseBrowser from '$lib/components/ExerciseBrowser.svelte';
+	import { beginPointerDrag, endPointerDrag } from '$lib/drag';
 	import Stepper from '$lib/components/Stepper.svelte';
 	import { showToast } from '$lib/toast.svelte';
 	import { m } from '$lib/paraglide/messages';
@@ -62,6 +63,85 @@
 
 	function removeItem(index: number): void {
 		items = items.filter((_, i) => i !== index);
+	}
+
+	// --- Arrastar para reordenar ---------------------------------------------
+	// Mesmo padrao das refeicoes na dieta: a lista NAO se reorganiza durante o
+	// arrasto - so uma linha mostra onde o card vai cair e a troca acontece ao
+	// soltar. Assim as posicoes medidas no inicio continuam validas ate o fim; se
+	// os cards se movessem junto, o alvo mudaria de lugar debaixo do dedo.
+	// A ordem so vai para o servidor no "Salvar rotina" (o backend grava a posicao
+	// pelo indice do array), igual aos demais campos desta tela.
+	let itemCardEls = $state<HTMLElement[]>([]);
+	let draggingIndex = $state<number | null>(null);
+	let dropIndex = $state<number | null>(null);
+	let dragMidpoints: number[] = [];
+
+	function startItemDrag(index: number, event: PointerEvent): void {
+		// trava a selecao de texto durante o gesto (ver lib/drag.ts) - sem isso ela
+		// pinta a tela inteira enquanto o dedo se move
+		beginPointerDrag();
+		dragMidpoints = items.map((_, i) => {
+			const el = itemCardEls[i];
+			if (!el) return Number.POSITIVE_INFINITY;
+			const rect = el.getBoundingClientRect();
+			return rect.top + rect.height / 2;
+		});
+		draggingIndex = index;
+		dropIndex = index;
+		(event.currentTarget as HTMLElement).setPointerCapture(event.pointerId);
+		// Os listeners do resto do gesto ficam na window, nao na alca: se o
+		// navegador soltar a captura do ponteiro no meio (acontece no WebKit), os
+		// eventos passam a mirar o elemento embaixo do dedo e o arrasto morreria na
+		// metade. Na window eles chegam de qualquer jeito.
+		window.addEventListener('pointermove', moveItemDrag, { passive: false });
+		window.addEventListener('pointerup', endItemDrag);
+		window.addEventListener('pointercancel', endItemDrag);
+	}
+
+	function stopItemDragListeners(): void {
+		window.removeEventListener('pointermove', moveItemDrag);
+		window.removeEventListener('pointerup', endItemDrag);
+		window.removeEventListener('pointercancel', endItemDrag);
+	}
+
+	function moveItemDrag(event: PointerEvent): void {
+		if (draggingIndex === null) return;
+		event.preventDefault();
+		// posicao de destino = quantos cards ficaram acima do dedo
+		dropIndex = dragMidpoints.filter((mid) => mid < event.clientY).length;
+	}
+
+	function endItemDrag(): void {
+		stopItemDragListeners();
+		endPointerDrag();
+		const from = draggingIndex;
+		const target = dropIndex;
+		draggingIndex = null;
+		dropIndex = null;
+		if (from === null || target === null) return;
+		const others = items.filter((_, i) => i !== from);
+		// o indice medido ainda conta o proprio card arrastado; tirando-o da lista,
+		// tudo que estava depois dele sobe uma posicao.
+		const insertAt = target > from ? target - 1 : target;
+		if (insertAt === from) return;
+		items = [...others.slice(0, insertAt), items[from], ...others.slice(insertAt)];
+	}
+
+	// sair da tela no meio do arrasto (voltar, salvar) nao pode deixar listener
+	// nem a trava de selecao pendurados na window
+	$effect(() => {
+		return () => {
+			stopItemDragListeners();
+			endPointerDrag();
+		};
+	});
+
+	// Linha de destino: escondida quando o card cairia exatamente onde ja esta.
+	function isDropTarget(index: number): boolean {
+		if (draggingIndex === null || dropIndex === null) return false;
+		if (dropIndex === draggingIndex || dropIndex === draggingIndex + 1) return false;
+		return dropIndex === index;
 	}
 
 	const selectedIds = $derived(new Set(items.map((i) => i.exercise.id)));
@@ -166,8 +246,28 @@
 
 	<div class="mt-3 space-y-3">
 		{#each items as item, index (item.exercise.id)}
-			<section class="rounded-3xl bg-white p-4 shadow-sm">
+			{#if isDropTarget(index)}
+				<div class="h-1 rounded-full bg-emerald-500"></div>
+			{/if}
+			<section
+				bind:this={itemCardEls[index]}
+				class="rounded-3xl bg-white p-4 shadow-sm transition-shadow {draggingIndex === index
+					? 'opacity-60 ring-2 ring-emerald-400'
+					: ''}"
+			>
 				<div class="mb-3 flex items-center justify-between gap-2">
+					<!-- alca de arrasto: fica fora dos botoes e steppers do card -->
+					<div
+						role="button"
+						tabindex="-1"
+						aria-label={m.exercise_reorder()}
+						title={m.exercise_reorder()}
+						onpointerdown={(e) => startItemDrag(index, e)}
+						onkeydown={() => {}}
+						class="-ml-1 grid h-10 w-7 shrink-0 cursor-grab touch-none select-none place-items-center text-slate-300 active:text-emerald-600"
+					>
+						<svg viewBox="0 0 24 24" class="h-5 w-5" fill="currentColor"><circle cx="9" cy="6" r="1.5" /><circle cx="15" cy="6" r="1.5" /><circle cx="9" cy="12" r="1.5" /><circle cx="15" cy="12" r="1.5" /><circle cx="9" cy="18" r="1.5" /><circle cx="15" cy="18" r="1.5" /></svg>
+					</div>
 					<p class="min-w-0 flex-1 truncate font-bold text-slate-900">{item.exercise.name}</p>
 					<button
 						type="button"
@@ -209,6 +309,9 @@
 				{/if}
 			</section>
 		{/each}
+		{#if isDropTarget(items.length)}
+			<div class="h-1 rounded-full bg-emerald-500"></div>
+		{/if}
 	</div>
 
 	<button

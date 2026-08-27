@@ -290,6 +290,21 @@ class WorkoutSession(SQLModel, table=True):
     routine_name: str | None = Field(default=None)
     started_at: datetime = Field(default_factory=utcnow, index=True)
     finished_at: datetime | None = Field(default=None)
+    # Pausa do treino: o tempo parado NAO conta na duracao. paused_at guarda o
+    # instante em que a pausa atual comecou (None = treino correndo) e
+    # paused_seconds acumula as pausas ja encerradas. Duracao real do treino =
+    # (finished_at - started_at) - paused_seconds.
+    paused_at: datetime | None = Field(default=None)
+    paused_seconds: int = Field(default=0)
+    # Ordem dos exercicios escolhida DENTRO deste treino, como lista de
+    # routine_exercise_id. Vale so para hoje: a rotina salva nao muda. Mora no
+    # banco (e nao na memoria da tela) pelo mesmo motivo das trocas - a tela
+    # remonta a lista lendo a rotina ao vivo e o Safari do iPhone descarta a aba
+    # sozinha; sem isto a ordem voltaria ao original no meio do treino. Lista vazia
+    # = ordem da rotina. Ver SessionExerciseSwap.
+    exercise_order: list[int] = Field(
+        default_factory=list, sa_column=Column(JSON, nullable=False, server_default="[]")
+    )
 
     sets: list["SetLog"] = Relationship(back_populates="session", cascade_delete=True)
 

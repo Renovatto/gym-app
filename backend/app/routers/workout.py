@@ -28,6 +28,7 @@ from ..schemas import (
     RoutineOut,
     RoutinePeriodizationOut,
     RoutineVariationOut,
+    SessionOrderIn,
     SessionOut,
     SessionStartIn,
     SessionSummaryOut,
@@ -49,6 +50,11 @@ from ..services.exercises import (
 from ..services.text import normalize_search
 
 router = APIRouter(tags=["workout"])
+
+
+def _as_utc(moment: datetime) -> datetime:
+    """datetime que volta do banco pode vir sem fuso; tratamos como UTC para comparar."""
+    return moment if moment.tzinfo is not None else moment.replace(tzinfo=timezone.utc)
 
 
 def _last_weight(session: Session, user_id: int, exercise_id: int) -> float | None:
@@ -384,6 +390,9 @@ def _session_out(
         routine_name=user_session.routine_name,
         started_at=user_session.started_at,
         finished_at=user_session.finished_at,
+        paused_at=user_session.paused_at,
+        paused_seconds=user_session.paused_seconds,
+        exercise_order=list(user_session.exercise_order),
         sets=[SetLogOut.model_validate(s) for s in user_session.sets],
         swaps=[] if session is None else _swaps_out(session, user_session, locale),
     )
@@ -503,6 +512,7 @@ def _workout_day_detail(session: Session, ws: WorkoutSession, locale: str) -> Wo
         routine_name=ws.routine_name,
         started_at=ws.started_at,
         finished_at=ws.finished_at,
+        paused_seconds=ws.paused_seconds,
         total_volume_kg=round(total_volume, 1),
         total_sets=total_sets,
         exercises=exercises,
@@ -595,11 +605,50 @@ def delete_set(
     session.commit()
 
 
+def _close_open_pause(ws: WorkoutSession, now: datetime) -> None:
+    """Fecha a pausa em andamento (se houver) somando o tempo parado ao acumulado.
+    Chamado ao retomar e ao concluir - concluir pausado nao pode perder a pausa."""
+    if ws.paused_at is None:
+        return
+    ws.paused_seconds += max(0, int((now - _as_utc(ws.paused_at)).total_seconds()))
+    ws.paused_at = None
+
+
+@router.post("/me/sessions/{session_id}/pause", response_model=SessionOut)
+def pause_session(session_id: int, user: CurrentUser, session: SessionDep) -> SessionOut:
+    """Pausa o treino: o tempo daqui ate retomar nao entra na duracao."""
+    ws = _get_owned_session(session, session_id, user.id)
+    if ws.finished_at is not None:
+        raise HTTPException(status.HTTP_400_BAD_REQUEST, detail="SESSION_ALREADY_FINISHED")
+    if ws.paused_at is None:
+        ws.paused_at = datetime.now(timezone.utc)
+        session.add(ws)
+        session.commit()
+        session.refresh(ws)
+    return _session_out(ws, session, user.locale)
+
+
+@router.post("/me/sessions/{session_id}/resume", response_model=SessionOut)
+def resume_session(session_id: int, user: CurrentUser, session: SessionDep) -> SessionOut:
+    """Retoma o treino pausado, somando a pausa que acabou ao total parado."""
+    ws = _get_owned_session(session, session_id, user.id)
+    if ws.finished_at is not None:
+        raise HTTPException(status.HTTP_400_BAD_REQUEST, detail="SESSION_ALREADY_FINISHED")
+    if ws.paused_at is not None:
+        _close_open_pause(ws, datetime.now(timezone.utc))
+        session.add(ws)
+        session.commit()
+        session.refresh(ws)
+    return _session_out(ws, session, user.locale)
+
+
 @router.post("/me/sessions/{session_id}/finish", response_model=SessionOut)
 def finish_session(session_id: int, user: CurrentUser, session: SessionDep) -> SessionOut:
     ws = _get_owned_session(session, session_id, user.id)
     if ws.finished_at is None:
-        ws.finished_at = datetime.now(timezone.utc)
+        now = datetime.now(timezone.utc)
+        _close_open_pause(ws, now)
+        ws.finished_at = now
         session.add(ws)
         session.commit()
         session.refresh(ws)
@@ -623,6 +672,7 @@ def list_sessions(user: CurrentUser, session: SessionDep) -> list[SessionSummary
                 routine_name=ws.routine_name,
                 started_at=ws.started_at,
                 finished_at=ws.finished_at,
+                paused_seconds=ws.paused_seconds,
                 total_sets=len([s for s in ws.sets if s.done]),
                 total_volume_kg=round(volume, 1),
             )
@@ -640,6 +690,33 @@ def discard_session(session_id: int, user: CurrentUser, session: SessionDep) -> 
     ws = _get_owned_session(session, session_id, user.id)
     session.delete(ws)
     session.commit()
+
+
+@router.put("/me/sessions/{session_id}/order", response_model=SessionOut)
+def reorder_session_exercises(
+    session_id: int, data: SessionOrderIn, user: CurrentUser, session: SessionDep
+) -> SessionOut:
+    """Ordem dos exercicios so para este treino - a rotina salva nao muda."""
+    ws = _get_owned_session(session, session_id, user.id)
+    if ws.routine_id is None:
+        raise HTTPException(status.HTTP_400_BAD_REQUEST, detail="SESSION_HAS_NO_ROUTINE")
+
+    # a ordem tem que ser uma permutacao dos exercicios da rotina: id de fora (ou
+    # repetido) sumiria com um exercicio da tela ou duplicaria outro
+    routine_item_ids = set(
+        session.exec(
+            select(RoutineExercise.id).where(RoutineExercise.routine_id == ws.routine_id)
+        ).all()
+    )
+    sent = data.routine_exercise_ids
+    if len(set(sent)) != len(sent) or set(sent) != routine_item_ids:
+        raise HTTPException(status.HTTP_400_BAD_REQUEST, detail="INVALID_EXERCISE_ORDER")
+
+    ws.exercise_order = sent
+    session.add(ws)
+    session.commit()
+    session.refresh(ws)
+    return _session_out(ws, session, user.locale)
 
 
 # --- Trocar exercicio so nesta sessao -------------------------------------

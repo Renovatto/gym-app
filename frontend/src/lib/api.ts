@@ -357,6 +357,12 @@ export interface WorkoutSession {
 	routine_name: string | null;
 	started_at: string;
 	finished_at: string | null;
+	// pausa: instante em que a pausa atual comecou (null = correndo) e o total ja
+	// acumulado de pausas encerradas, ambos descontados do tempo do treino
+	paused_at: string | null;
+	paused_seconds: number;
+	// ordem dos exercicios escolhida so para este treino (vazia = a da rotina)
+	exercise_order: number[];
 	sets: SetLog[];
 	swaps: ExerciseSwap[];
 }
@@ -368,6 +374,7 @@ export interface SessionSummary {
 	routine_name: string | null;
 	started_at: string;
 	finished_at: string | null;
+	paused_seconds: number;
 	total_sets: number;
 	total_volume_kg: number;
 }
@@ -384,6 +391,7 @@ export interface WorkoutDayDetail {
 	routine_name: string | null;
 	started_at: string;
 	finished_at: string | null;
+	paused_seconds: number;
 	total_volume_kg: number;
 	total_sets: number;
 	exercises: WorkoutDayExercise[];
@@ -1131,6 +1139,15 @@ export const api = {
 	) => request<SetLog>(`/me/sessions/${sessionId}/sets`, { method: 'POST', body: set }),
 	deleteSet: (sessionId: number, setId: number) =>
 		request<void>(`/me/sessions/${sessionId}/sets/${setId}`, { method: 'DELETE' }),
+	reorderSessionExercises: (sessionId: number, routineExerciseIds: number[]) =>
+		request<WorkoutSession>(`/me/sessions/${sessionId}/order`, {
+			method: 'PUT',
+			body: { routine_exercise_ids: routineExerciseIds }
+		}),
+	pauseSession: (sessionId: number) =>
+		request<WorkoutSession>(`/me/sessions/${sessionId}/pause`, { method: 'POST' }),
+	resumeSession: (sessionId: number) =>
+		request<WorkoutSession>(`/me/sessions/${sessionId}/resume`, { method: 'POST' }),
 	finishSession: (sessionId: number) =>
 		request<WorkoutSession>(`/me/sessions/${sessionId}/finish`, { method: 'POST' }),
 	getSessions: () => request<SessionSummary[]>('/me/sessions'),

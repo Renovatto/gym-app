@@ -449,8 +449,20 @@ class SessionOut(BaseModel):
     routine_name: str | None
     started_at: datetime
     finished_at: datetime | None
+    # pausa: instante em que a pausa atual comecou (None = correndo) e o total ja
+    # acumulado de pausas encerradas. A tela desconta os dois do tempo total.
+    paused_at: datetime | None = None
+    paused_seconds: int = 0
+    # ordem dos exercicios escolhida so para este treino (lista vazia = a da rotina)
+    exercise_order: list[int] = []
     sets: list[SetLogOut]
     swaps: list[ExerciseSwapOut] = []
+
+
+class SessionOrderIn(BaseModel):
+    """Nova ordem dos exercicios do treino de hoje, por routine_exercise_id."""
+
+    routine_exercise_ids: list[int]
 
 
 class ExerciseSwapIn(BaseModel):
@@ -473,6 +485,8 @@ class SessionSummaryOut(BaseModel):
     routine_name: str | None
     started_at: datetime
     finished_at: datetime | None
+    # tempo parado no treino; a duracao real e (fim - inicio) menos isto
+    paused_seconds: int = 0
     total_sets: int
     total_volume_kg: float
 
@@ -490,6 +504,8 @@ class WorkoutDayDetailOut(BaseModel):
     routine_name: str | None
     started_at: datetime
     finished_at: datetime | None
+    # tempo parado no treino; a duracao real e (fim - inicio) menos isto
+    paused_seconds: int = 0
     total_volume_kg: float
     total_sets: int
     exercises: list[WorkoutDayExerciseOut]

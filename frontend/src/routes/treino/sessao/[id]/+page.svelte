@@ -7,11 +7,13 @@
 		localDay,
 		type AlternativeExercise,
 		type Exercise,
-		type RoutineItem
+		type RoutineItem,
+		type WorkoutSession
 	} from '$lib/api';
 	import ExerciseBrowser from '$lib/components/ExerciseBrowser.svelte';
 	import ExercisePhotoModal from '$lib/components/ExercisePhotoModal.svelte';
 	import Stepper from '$lib/components/Stepper.svelte';
+	import { beginPointerDrag, endPointerDrag } from '$lib/drag';
 	import { triggerAchievementCelebrations } from '$lib/celebrationTrigger';
 	import { showToast } from '$lib/toast.svelte';
 	import { m } from '$lib/paraglide/messages';
@@ -64,7 +66,19 @@
 		return h > 0 ? `${h}:${mm}:${ss}` : `${mm}:${ss}`;
 	}
 
-	const elapsed = $derived(startedAtMs > 0 ? (now - startedAtMs) / 1000 : 0);
+	// Pausa do treino: o tempo parado nao conta. O servidor e a fonte da verdade
+	// (paused_at + paused_seconds vem na sessao); a tela so espelha e desconta, entao
+	// pausar, fechar o app e voltar continua batendo com o que ficou gravado.
+	let pausedAtMs = $state(0); // instante em que a pausa atual comecou (0 = correndo)
+	let pausedSeconds = $state(0); // total das pausas ja encerradas, em segundos
+	let pauseBusy = $state(false);
+	const isPaused = $derived(pausedAtMs > 0);
+
+	// tudo que ficou parado ate agora = pausas encerradas + a pausa em andamento
+	const pausedTotal = $derived(pausedSeconds + (pausedAtMs > 0 ? (now - pausedAtMs) / 1000 : 0));
+	const elapsed = $derived(
+		startedAtMs > 0 ? Math.max(0, (now - startedAtMs) / 1000 - pausedTotal) : 0
+	);
 
 	// Um unico AudioContext, DESTRAVADO num gesto do usuario (tocar no ✓). Sem esse
 	// destravamento, os navegadores mobile mantem o contexto suspenso e o bipe nao toca,
@@ -259,6 +273,7 @@
 		routineName = session.routine_name ?? m.free_workout();
 		// backend envia UTC sem sufixo Z
 		startedAtMs = new Date(session.started_at + 'Z').getTime();
+		applyPauseState(session);
 		if (session.routine_id === null) {
 			blocks = [];
 			loading = false;
@@ -308,8 +323,117 @@
 				collapsed: sets.every((s) => s.done)
 			};
 		});
+		blocks = sortByTodayOrder(blocks, session.exercise_order);
 		loading = false;
 	}
+
+	/**
+	 * Reordena os blocos pela ordem escolhida DENTRO deste treino. A lista continua
+	 * sendo montada a partir da rotina (que e a fonte dos alvos e das series), entao
+	 * a ordem de hoje e aplicada por cima. Exercicio que nao esta na ordem salva -
+	 * rotina editada no meio do treino, por exemplo - vai para o fim, no lugar
+	 * relativo que tinha na rotina, em vez de sumir da tela.
+	 */
+	function sortByTodayOrder(list: ExerciseBlock[], order: number[]): ExerciseBlock[] {
+		if (order.length === 0) return list;
+		const position = new Map(order.map((routineExerciseId, i) => [routineExerciseId, i]));
+		return [...list].sort(
+			(a, b) =>
+				(position.get(a.item.id) ?? Number.MAX_SAFE_INTEGER) -
+				(position.get(b.item.id) ?? Number.MAX_SAFE_INTEGER)
+		);
+	}
+
+	// --- Arrastar para reordenar (so neste treino) ---------------------------
+	// Mesmo padrao da dieta e do editor de rotina: a lista nao se reorganiza durante
+	// o arrasto, so uma linha marca onde o card vai cair, e a troca acontece ao
+	// soltar. A ordem nova vai para o servidor na hora - o Safari do iPhone descarta
+	// a aba sozinho e ela precisa sobreviver a isso.
+	let blockEls = $state<HTMLElement[]>([]);
+	let draggingIndex = $state<number | null>(null);
+	let dropIndex = $state<number | null>(null);
+	let dragMidpoints: number[] = [];
+
+	function startBlockDrag(index: number, event: PointerEvent): void {
+		// trava rolagem e selecao durante o gesto (ver lib/drag.ts)
+		beginPointerDrag();
+		dragMidpoints = blocks.map((_, i) => {
+			const el = blockEls[i];
+			if (!el) return Number.POSITIVE_INFINITY;
+			const rect = el.getBoundingClientRect();
+			return rect.top + rect.height / 2;
+		});
+		draggingIndex = index;
+		dropIndex = index;
+		(event.currentTarget as HTMLElement).setPointerCapture(event.pointerId);
+		// listeners na window: se a captura do ponteiro cair no meio, o dedo continua
+		// sendo seguido em vez de o arrasto morrer pela metade
+		window.addEventListener('pointermove', moveBlockDrag, { passive: false });
+		window.addEventListener('pointerup', endBlockDrag);
+		window.addEventListener('pointercancel', endBlockDrag);
+	}
+
+	function stopBlockDragListeners(): void {
+		window.removeEventListener('pointermove', moveBlockDrag);
+		window.removeEventListener('pointerup', endBlockDrag);
+		window.removeEventListener('pointercancel', endBlockDrag);
+	}
+
+	function moveBlockDrag(event: PointerEvent): void {
+		if (draggingIndex === null) return;
+		event.preventDefault();
+		// posicao de destino = quantos cards ficaram acima do dedo
+		dropIndex = dragMidpoints.filter((mid) => mid < event.clientY).length;
+	}
+
+	function endBlockDrag(): void {
+		stopBlockDragListeners();
+		endPointerDrag();
+		const from = draggingIndex;
+		const target = dropIndex;
+		draggingIndex = null;
+		dropIndex = null;
+		if (from === null || target === null) return;
+		const others = blocks.filter((_, i) => i !== from);
+		// o indice medido ainda conta o proprio card arrastado; tirando-o da lista,
+		// tudo que estava depois dele sobe uma posicao.
+		const insertAt = target > from ? target - 1 : target;
+		if (insertAt === from) return;
+		const reordered = [...others.slice(0, insertAt), blocks[from], ...others.slice(insertAt)];
+		blocks = reordered;
+		void saveBlockOrder(reordered);
+	}
+
+	async function saveBlockOrder(ordered: ExerciseBlock[]): Promise<void> {
+		try {
+			await api.reorderSessionExercises(
+				sessionId,
+				ordered.map((b) => b.item.id)
+			);
+			showToast(m.exercise_order_saved());
+		} catch {
+			// nao deu para gravar: volta para a ordem que o servidor conhece, senao a
+			// tela mostraria uma ordem que sumiria no proximo carregamento
+			await load();
+			showToast(m.error_generic());
+		}
+	}
+
+	// Linha de destino: escondida quando o card cairia exatamente onde ja esta.
+	function isDropTarget(index: number): boolean {
+		if (draggingIndex === null || dropIndex === null) return false;
+		if (dropIndex === draggingIndex || dropIndex === draggingIndex + 1) return false;
+		return dropIndex === index;
+	}
+
+	// sair da tela no meio do arrasto nao pode deixar listener nem a trava de
+	// rolagem/selecao pendurados na window
+	$effect(() => {
+		return () => {
+			stopBlockDragListeners();
+			endPointerDrag();
+		};
+	});
 
 	// --- Trocar exercicio so hoje -------------------------------------------
 	// Trocar por outro do mesmo grupo muscular e pratica normal (aparelho ocupado,
@@ -431,6 +555,34 @@
 			}
 		} finally {
 			row.saving = false;
+		}
+	}
+
+	// backend envia UTC sem sufixo Z (mesmo tratamento do started_at)
+	function applyPauseState(session: WorkoutSession): void {
+		pausedSeconds = session.paused_seconds;
+		pausedAtMs = session.paused_at ? new Date(session.paused_at + 'Z').getTime() : 0;
+	}
+
+	async function pauseWorkout(): Promise<void> {
+		if (pauseBusy || isPaused) return;
+		pauseBusy = true;
+		try {
+			applyPauseState(await api.pauseSession(sessionId));
+			showToast(m.workout_paused_toast());
+		} finally {
+			pauseBusy = false;
+		}
+	}
+
+	async function resumeWorkout(): Promise<void> {
+		if (pauseBusy || !isPaused) return;
+		pauseBusy = true;
+		try {
+			applyPauseState(await api.resumeSession(sessionId));
+			showToast(m.workout_resumed_toast());
+		} finally {
+			pauseBusy = false;
 		}
 	}
 
@@ -560,12 +712,29 @@
 			{@const doneSets = block.sets.filter((s) => s.done).length}
 			{@const allDone = doneSets === block.sets.length}
 			{@const isCurrent = blockIndex === currentIndex}
+			{#if isDropTarget(blockIndex)}
+				<div class="h-1 rounded-full bg-emerald-500"></div>
+			{/if}
 			<section
+				bind:this={blockEls[blockIndex]}
 				class="rounded-2xl bg-white p-3 shadow-sm transition-all
 					{isCurrent ? 'ring-2 ring-emerald-500' : ''}
-					{allDone ? 'opacity-60' : ''}"
+					{allDone ? 'opacity-60' : ''}
+					{draggingIndex === blockIndex ? 'opacity-60 ring-2 ring-emerald-400' : ''}"
 			>
-				<div class="flex items-center gap-3 {block.collapsed ? '' : 'mb-3'}">
+				<div class="flex items-center gap-2 {block.collapsed ? '' : 'mb-3'}">
+					<!-- alca de arrasto: muda a ordem so deste treino, nao da rotina -->
+					<div
+						role="button"
+						tabindex="-1"
+						aria-label={m.exercise_reorder()}
+						title={m.exercise_reorder()}
+						onpointerdown={(e) => startBlockDrag(blockIndex, e)}
+						onkeydown={() => {}}
+						class="-ml-1 grid h-12 w-6 shrink-0 cursor-grab touch-none select-none place-items-center text-slate-300 active:text-emerald-600"
+					>
+						<svg viewBox="0 0 24 24" class="h-5 w-5" fill="currentColor"><circle cx="9" cy="6" r="1.5" /><circle cx="15" cy="6" r="1.5" /><circle cx="9" cy="12" r="1.5" /><circle cx="15" cy="12" r="1.5" /><circle cx="9" cy="18" r="1.5" /><circle cx="15" cy="18" r="1.5" /></svg>
+					</div>
 					<button
 						type="button"
 						aria-label={m.view_photo()}
@@ -763,6 +932,9 @@
 				{/if}
 			</section>
 		{/each}
+		{#if isDropTarget(blocks.length)}
+			<div class="h-1 rounded-full bg-emerald-500"></div>
+		{/if}
 	</div>
 
 	<button
@@ -796,6 +968,17 @@
 			<p class="min-w-0 flex-1 text-center text-sm font-bold text-slate-500">
 				{m.exercise_n_of_total({ current: focusIndex + 1, total: blocks.length })}
 			</p>
+			<button
+				type="button"
+				aria-label={m.workout_pause()}
+				disabled={pauseBusy}
+				onclick={pauseWorkout}
+				class="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-white text-slate-500 shadow-sm active:bg-slate-100 disabled:opacity-50"
+			>
+				<svg viewBox="0 0 24 24" class="h-5 w-5" fill="currentColor">
+					<rect x="7" y="5" width="3.5" height="14" rx="1" /><rect x="13.5" y="5" width="3.5" height="14" rx="1" />
+				</svg>
+			</button>
 			<div class="shrink-0 rounded-2xl bg-ink-2 px-3 py-1.5 text-center">
 				<p class="font-mono text-base leading-none font-bold text-[#fff] tabular-nums">
 					{formatTime(elapsed)}
@@ -1016,10 +1199,53 @@
 			</svg>
 			<span class="text-[10px] font-semibold text-slate-400 uppercase">{m.total_time()}</span>
 			<span class="font-mono text-xl font-bold text-[#fff] tabular-nums">{formatTime(elapsed)}</span>
+			<button
+				type="button"
+				disabled={pauseBusy}
+				onclick={pauseWorkout}
+				class="ml-1 flex shrink-0 items-center gap-1.5 rounded-full border border-[#ffffff24] px-3 py-1.5 text-xs font-bold text-[#fff] active:bg-slate-500 disabled:opacity-50"
+			>
+				<svg viewBox="0 0 24 24" class="h-4 w-4" fill="currentColor">
+					<rect x="7" y="5" width="3.5" height="14" rx="1" /><rect x="13.5" y="5" width="3.5" height="14" rx="1" />
+				</svg>
+				{m.workout_pause()}
+			</button>
 		</div>
 	</div>
 {/if}
 
+
+<!-- Treino pausado: cobre a lista E o modo foco (z-45 fica acima do modo foco em
+	 z-30 e da barra de descanso em z-40). Cobrir e proposital - com o relogio parado
+	 nao da para marcar serie, entao a unica saida e retomar. -->
+{#if isPaused}
+	<div class="fixed inset-0 z-[45] flex flex-col items-center justify-center bg-slate-900/95 px-6 text-center text-[#fff]">
+		<svg viewBox="0 0 24 24" class="h-12 w-12 text-slate-400" fill="currentColor">
+			<rect x="7" y="5" width="3.5" height="14" rx="1" /><rect x="13.5" y="5" width="3.5" height="14" rx="1" />
+		</svg>
+		<h2 class="mt-4 text-2xl font-bold">{m.workout_paused_title()}</h2>
+		<p class="mt-1 max-w-xs text-sm text-slate-300">{m.workout_paused_hint()}</p>
+		<p class="mt-6 font-mono text-5xl font-bold tabular-nums">{formatTime(elapsed)}</p>
+		<span class="mt-1 text-[10px] font-semibold text-slate-400 uppercase">{m.total_time()}</span>
+		<!-- o descanso tem vida propria e continua correndo na pausa; como o overlay
+			 cobre a barra dele, repetimos aqui para o numero nao sumir da tela -->
+		{#if restActive}
+			<p class="mt-4 text-sm font-semibold text-slate-300">
+				{m.rest_label()}
+				<span class="ml-1 font-mono tabular-nums">{formatTime(restRemaining)}</span>
+			</p>
+		{/if}
+		<button
+			type="button"
+			disabled={pauseBusy}
+			onclick={resumeWorkout}
+			class="mt-8 flex h-14 w-full max-w-xs items-center justify-center gap-2 rounded-2xl bg-emerald-600 text-lg font-bold text-white active:bg-emerald-700 disabled:opacity-50"
+		>
+			<svg viewBox="0 0 24 24" class="h-5 w-5" fill="currentColor"><path d="M8 5l11 7-11 7z" /></svg>
+			{m.workout_resume()}
+		</button>
+	</div>
+{/if}
 
 <!-- Trocar exercicio: sugestoes do mesmo grupo muscular primeiro, catalogo inteiro
 	 depois. z-50 porque o modo foco usa z-30 e a barra de descanso z-40. -->
