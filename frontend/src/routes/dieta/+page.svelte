@@ -651,9 +651,9 @@
 	function startMealDrag(meal: MealType, event: PointerEvent): void {
 		const from = materializedMeals.indexOf(meal);
 		if (from < 0) return;
-		// mata a selecao de texto que o navegador comecaria neste toque/clique -
-		// sem isso ela pinta a tela inteira enquanto o dedo se move (ver lib/drag.ts)
-		beginPointerDrag(event);
+		// trava a selecao de texto durante o gesto (ver lib/drag.ts) - sem isso ela
+		// pinta a tela inteira enquanto o dedo se move
+		beginPointerDrag();
 		dragMidpoints = materializedMeals.map((mt) => {
 			const el = mealCardEls[mt];
 			if (!el) return Number.POSITIVE_INFINITY;
@@ -663,6 +663,19 @@
 		draggingMeal = meal;
 		dropIndex = from;
 		(event.currentTarget as HTMLElement).setPointerCapture(event.pointerId);
+		// Os listeners do resto do gesto ficam na window, nao na alca: se o
+		// navegador soltar a captura do ponteiro no meio (acontece no WebKit), os
+		// eventos passam a mirar o elemento embaixo do dedo e o arrasto morria na
+		// metade. Na window eles chegam de qualquer jeito.
+		window.addEventListener('pointermove', moveMealDrag, { passive: false });
+		window.addEventListener('pointerup', endMealDrag);
+		window.addEventListener('pointercancel', endMealDrag);
+	}
+
+	function stopMealDragListeners(): void {
+		window.removeEventListener('pointermove', moveMealDrag);
+		window.removeEventListener('pointerup', endMealDrag);
+		window.removeEventListener('pointercancel', endMealDrag);
 	}
 
 	function moveMealDrag(event: PointerEvent): void {
@@ -673,6 +686,7 @@
 	}
 
 	function endMealDrag(): void {
+		stopMealDragListeners();
 		endPointerDrag();
 		const meal = draggingMeal;
 		const target = dropIndex;
@@ -693,6 +707,15 @@
 		saveMealOrder();
 		showToast(m.meal_order_saved());
 	}
+
+	// sair da tela no meio do arrasto (voltar, trocar de aba) nao pode deixar
+	// listener nem a trava de selecao pendurados na window
+	$effect(() => {
+		return () => {
+			stopMealDragListeners();
+			endPointerDrag();
+		};
+	});
 
 	// Linha de destino: escondida quando o card cairia exatamente onde ja esta.
 	function isDropTarget(index: number): boolean {
@@ -1314,9 +1337,6 @@
 						aria-label={m.meal_reorder()}
 						title={m.meal_reorder()}
 						onpointerdown={(e) => startMealDrag(meal, e)}
-						onpointermove={moveMealDrag}
-						onpointerup={endMealDrag}
-						onpointercancel={endMealDrag}
 						onkeydown={() => {}}
 						class="grid h-12 w-8 shrink-0 cursor-grab touch-none select-none place-items-center text-slate-300 active:text-emerald-600"
 					>

@@ -63,12 +63,28 @@
 	let offX = 0;
 	let offY = 0;
 	let moved = false;
+	// Dedo/mouse dono do gesto atual. O controle e nosso e nao do
+	// `hasPointerCapture`: se o navegador solta a captura no meio (acontece no
+	// WebKit), os `pointermove` seguintes eram descartados e o botao parecia
+	// grudado na tela.
+	let activePointerId: number | null = null;
+	let fabEl: HTMLButtonElement | null = $state(null);
 
 	function onPointerDown(e: PointerEvent): void {
-		// mata a selecao de texto que o navegador comecaria neste toque/clique -
-		// sem isso ela pinta a tela inteira enquanto o dedo se move (ver lib/drag.ts)
-		beginPointerDrag(e);
-		(e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
+		// trava a selecao de texto durante o gesto (ver lib/drag.ts)
+		beginPointerDrag();
+		activePointerId = e.pointerId;
+		// captura e um bonus (segue o dedo fora do botao), nao a condicao do arrasto
+		try {
+			fabEl?.setPointerCapture(e.pointerId);
+		} catch {
+			// sem captura o gesto continua valendo pelo activePointerId
+		}
+		// resto do gesto escutado na window: mesmo que a captura caia, o dedo
+		// continua sendo seguido em vez de o botao ficar grudado na tela
+		window.addEventListener('pointermove', onPointerMove, { passive: false });
+		window.addEventListener('pointerup', onPointerUp);
+		window.addEventListener('pointercancel', onPointerCancel);
 		startX = e.clientX;
 		startY = e.clientY;
 		offX = e.clientX - left;
@@ -76,8 +92,7 @@
 		moved = false;
 	}
 	function onPointerMove(e: PointerEvent): void {
-		const el = e.currentTarget as HTMLElement;
-		if (!el.hasPointerCapture(e.pointerId)) return;
+		if (activePointerId !== e.pointerId) return;
 		if (!moved && Math.hypot(e.clientX - startX, e.clientY - startY) > DRAG_THRESHOLD) {
 			moved = true;
 			dragging = true;
@@ -87,39 +102,52 @@
 			top = clampTop(e.clientY - offY);
 		}
 	}
-	function onPointerUp(e: PointerEvent): void {
+
+	/** Fecha o gesto: encosta na borda e guarda a posicao (se chegou a arrastar). */
+	function endDrag(e: PointerEvent): void {
+		window.removeEventListener('pointermove', onPointerMove);
+		window.removeEventListener('pointerup', onPointerUp);
+		window.removeEventListener('pointercancel', onPointerCancel);
 		endPointerDrag();
-		(e.currentTarget as HTMLElement).releasePointerCapture(e.pointerId);
-		if (!moved) {
-			open = true; // foi um toque, nao um arrasto
-		} else {
+		activePointerId = null;
+		try {
+			fabEl?.releasePointerCapture(e.pointerId);
+		} catch {
+			// ja solta: nada a fazer
+		}
+		if (moved) {
 			left = snapLeft(left);
 			localStorage.setItem(KEY, JSON.stringify({ left, top }));
 		}
 		dragging = false;
 	}
 
+	function onPointerUp(e: PointerEvent): void {
+		if (activePointerId !== e.pointerId) return;
+		const wasTap = !moved;
+		endDrag(e);
+		if (wasTap) open = true; // foi um toque, nao um arrasto
+	}
+
 	function onPointerCancel(e: PointerEvent): void {
-		// gesto cancelado pelo sistema (chamada, troca de app): sem isso a trava de
-		// selecao e a captura do ponteiro ficam penduradas ate o proximo toque
-		endPointerDrag();
-		(e.currentTarget as HTMLElement).releasePointerCapture(e.pointerId);
-		dragging = false;
+		if (activePointerId !== e.pointerId) return;
+		// Gesto cancelado pelo sistema (chamada, troca de app) ou pelo proprio
+		// navegador. O botao ja se moveu na tela, entao fechamos igual ao soltar -
+		// descartar aqui deixava o FAB fora de lugar e sem salvar.
+		endDrag(e);
 		moved = false;
 	}
 </script>
 
 {#if ready}
 	<button
+		bind:this={fabEl}
 		type="button"
 		data-tour="feedback-fab"
 		aria-label={m.feedback_open()}
 		title={m.feedback_open()}
 		style="left: {left}px; top: {top}px; width: {SIZE}px; height: {SIZE}px;"
 		onpointerdown={onPointerDown}
-		onpointermove={onPointerMove}
-		onpointerup={onPointerUp}
-		onpointercancel={onPointerCancel}
 		class="fixed z-20 grid touch-none select-none place-items-center rounded-2xl bg-emerald-600 text-white shadow-lg active:bg-emerald-700 {dragging
 			? 'scale-105 cursor-grabbing'
 			: 'transition-all duration-200 motion-reduce:transition-none'}"
