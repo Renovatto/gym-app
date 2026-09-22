@@ -96,6 +96,92 @@
 
 	<body data-sveltekit-preload-data="hover">
 		<!--
+			Animacao da abertura. Mora aqui, e nao no layout.css, porque nesta SPA o CSS
+			do app so chega junto com o JS - e a tela estatica abaixo precisa estar
+			animada antes disso. Como este <style> fica no head, o BootScreen do Svelte
+			usa as mesmas classes depois: uma fonte so para as duas telas.
+
+			Roteiro de 4,4s: a barra entra rolando, os discos encaixam, vem o esforco
+			(agacha, treme, a barra enverga) e fecha no batimento. Quem rola e a barra
+			SOZINHA: se o halter entrasse montado, a montagem seguinte se contradiria.
+		-->
+		<style>
+			.boot-mark { width: 39vw; max-width: 200px; }
+			.boot-mark rect { fill: #10b981; }
+			.boot-lift, .boot-beat, .boot-roll, .boot-flex-e, .boot-flex-d {
+				transform-box: fill-box;
+				transform-origin: center;
+			}
+
+			.boot-lift { animation: boot-lift 4.4s ease-in-out infinite; }
+			.boot-beat { animation: boot-beat 4.4s ease-out infinite; }
+			.boot-roll { animation: boot-roll 4.4s cubic-bezier(0.25, 1.05, 0.4, 1) infinite; }
+			.boot-plate-oe, .boot-plate-ie { animation: boot-left 4.4s cubic-bezier(0.2, 0.8, 0.3, 1) infinite; }
+			.boot-plate-od, .boot-plate-id { animation: boot-right 4.4s cubic-bezier(0.2, 0.8, 0.3, 1) infinite; }
+			.boot-flex-e { animation: boot-flex-e 4.4s ease-in-out infinite; }
+			.boot-flex-d { animation: boot-flex-d 4.4s ease-in-out infinite; }
+
+			/* --boot-offset deixa o BootScreen continuar o ciclo de onde esta tela parou,
+			   em vez de recomecar do zero quando o Svelte assume (ver BootScreen.svelte). */
+			.boot-lift, .boot-beat, .boot-roll, .boot-flex-e, .boot-flex-d,
+			.boot-plate-oe, .boot-plate-od { animation-delay: var(--boot-offset, 0s); }
+			/* os discos de dentro entram um tico depois dos de fora */
+			.boot-plate-ie, .boot-plate-id { animation-delay: calc(var(--boot-offset, 0s) + 0.1s); }
+
+			@keyframes boot-roll {
+				0% { transform: translateX(-300px) rotate(-720deg); opacity: 1; }
+				20%, 94% { transform: translateX(0) rotate(0deg); opacity: 1; }
+				100% { transform: translateX(0) rotate(0deg); opacity: 0; }
+			}
+			@keyframes boot-left {
+				0%, 20% { transform: translateX(-75px); opacity: 0; }
+				34%, 92% { transform: translateX(0); opacity: 1; }
+				100% { transform: translateX(-75px); opacity: 0; }
+			}
+			@keyframes boot-right {
+				0%, 20% { transform: translateX(75px); opacity: 0; }
+				34%, 92% { transform: translateX(0); opacity: 1; }
+				100% { transform: translateX(75px); opacity: 0; }
+			}
+			/* o tremor e curto e irregular: e o que separa esforco de enfeite */
+			@keyframes boot-lift {
+				0%, 34% { transform: translate(0, 0); }
+				40% { transform: translate(0, 9%); }
+				45% { transform: translate(-1.5%, 8.6%); }
+				49% { transform: translate(1.5%, 8%); }
+				53% { transform: translate(-1%, 4%); }
+				58% { transform: translate(1%, -6%); }
+				62%, 72% { transform: translate(0, -12%); }
+				78%, 100% { transform: translate(0, 0); }
+			}
+			/* discos caem nas pontas enquanto a carga esta em cima: a barra enverga */
+			@keyframes boot-flex-e {
+				0%, 40% { transform: translateY(0) rotate(0deg); }
+				46%, 58% { transform: translateY(7px) rotate(-3deg); }
+				70%, 100% { transform: translateY(0) rotate(0deg); }
+			}
+			@keyframes boot-flex-d {
+				0%, 40% { transform: translateY(0) rotate(0deg); }
+				46%, 58% { transform: translateY(7px) rotate(3deg); }
+				70%, 100% { transform: translateY(0) rotate(0deg); }
+			}
+			@keyframes boot-beat {
+				0%, 78% { transform: scale(1); }
+				82% { transform: scale(1.11); }
+				86% { transform: scale(1); }
+				90% { transform: scale(1.06); }
+				94%, 100% { transform: scale(1); }
+			}
+
+			@media (prefers-reduced-motion: reduce) {
+				.boot-lift, .boot-beat, .boot-roll, .boot-flex-e, .boot-flex-d,
+				.boot-plate-oe, .boot-plate-od, .boot-plate-ie, .boot-plate-id {
+					animation: none;
+				}
+			}
+		</style>
+
+		<!--
 			Tela de abertura estatica: cobre a janela entre o splash do sistema (que o iOS
 			tira no primeiro pixel pintado) e o momento em que o Svelte monta. Sem ela
 			aparece um frame claro no meio da abertura. O layout remove este elemento
@@ -106,12 +192,16 @@
 			id="boot-screen"
 			style="position:fixed;inset:0;z-index:50;display:flex;align-items:center;justify-content:center;background:#0f172a"
 		>
-			<svg viewBox="96 180 320 152" style="width:39vw;max-width:200px" fill="#10b981" aria-hidden="true">
-				<rect x="96" y="206" width="32" height="100" rx="12" />
-				<rect x="136" y="180" width="40" height="152" rx="14" />
-				<rect x="176" y="238" width="160" height="36" rx="18" />
-				<rect x="336" y="180" width="40" height="152" rx="14" />
-				<rect x="384" y="206" width="32" height="100" rx="12" />
+			<svg viewBox="96 180 320 152" class="boot-mark" aria-hidden="true">
+				<g class="boot-lift">
+					<g class="boot-beat">
+						<g class="boot-plate-oe"><rect class="boot-flex-e" x="96" y="206" width="32" height="100" rx="12" /></g>
+						<g class="boot-plate-ie"><rect class="boot-flex-e" x="136" y="180" width="40" height="152" rx="14" /></g>
+						<g class="boot-roll"><rect x="176" y="238" width="160" height="36" rx="18" /></g>
+						<g class="boot-plate-id"><rect class="boot-flex-d" x="336" y="180" width="40" height="152" rx="14" /></g>
+						<g class="boot-plate-od"><rect class="boot-flex-d" x="384" y="206" width="32" height="100" rx="12" /></g>
+					</g>
+				</g>
 			</svg>
 		</div>
 
