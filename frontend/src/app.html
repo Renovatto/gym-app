@@ -94,5 +94,27 @@
 		%sveltekit.head%
 	</head>
 
-	<body data-sveltekit-preload-data="hover"><div style="display: contents">%sveltekit.body%</div></body>
+	<body data-sveltekit-preload-data="hover">
+		<!--
+			Tela de abertura estatica: cobre a janela entre o splash do sistema (que o iOS
+			tira no primeiro pixel pintado) e o momento em que o Svelte monta. Sem ela
+			aparece um frame claro no meio da abertura. O layout remove este elemento
+			assim que assume - a partir dai quem pinta a espera e o BootScreen, com a
+			mesma arte, para a troca ser invisivel.
+		-->
+		<div
+			id="boot-screen"
+			style="position:fixed;inset:0;z-index:50;display:flex;align-items:center;justify-content:center;background:#0f172a"
+		>
+			<svg viewBox="96 180 320 152" style="width:39vw;max-width:200px" fill="#10b981" aria-hidden="true">
+				<rect x="96" y="206" width="32" height="100" rx="12" />
+				<rect x="136" y="180" width="40" height="152" rx="14" />
+				<rect x="176" y="238" width="160" height="36" rx="18" />
+				<rect x="336" y="180" width="40" height="152" rx="14" />
+				<rect x="384" y="206" width="32" height="100" rx="12" />
+			</svg>
+		</div>
+
+		<div style="display: contents">%sveltekit.body%</div>
+	</body>
 </html>

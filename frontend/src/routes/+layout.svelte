@@ -6,6 +6,7 @@
 	import TabBar from '$lib/components/TabBar.svelte';
 	import FeedbackFab from '$lib/components/FeedbackFab.svelte';
 	import Toast from '$lib/components/Toast.svelte';
+	import BootScreen from '$lib/components/BootScreen.svelte';
 	import OfflineBanner from '$lib/components/OfflineBanner.svelte';
 	import CelebrationOverlay from '$lib/components/CelebrationOverlay.svelte';
 	import TourOverlay from '$lib/components/TourOverlay.svelte';
@@ -32,6 +33,12 @@
 	);
 
 	bootstrap();
+
+	// Tira a tela de abertura estatica do app.html: daqui para frente quem pinta a
+	// espera e o BootScreen, com a mesma arte. Roda uma vez, no primeiro effect.
+	$effect(() => {
+		document.getElementById('boot-screen')?.remove();
+	});
 
 	// Sem polling (a API hiberna no plano gratuito): recontamos quando a pessoa volta
 	// para o app, que e quando um convite novo teria chegado. Mesmo gatilho que o
@@ -93,10 +100,6 @@
 			{/if}
 		{/if}
 	{:else}
-		<div class="flex min-h-dvh items-center justify-center">
-			<div
-				class="h-10 w-10 animate-spin rounded-full border-4 border-emerald-600 border-t-transparent"
-			></div>
-		</div>
+		<BootScreen />
 	{/if}
 </div>
