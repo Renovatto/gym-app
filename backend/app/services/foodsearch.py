@@ -27,6 +27,9 @@ import httpx
 from ..schemas import ExternalFoodOut
 
 _OFF_URL = "https://search.openfoodfacts.org/search"
+# Busca por codigo de barras e outro servico: o codigo E a chave primaria da base,
+# entao a consulta e exata e nao passa pelo indice de texto (que e o instavel).
+_OFF_PRODUCT_URL = "https://world.openfoodfacts.org/api/v2/product/{code}"
 _TIMEOUT = 10.0
 # Open Food Facts pede um User-Agent identificavel nas chamadas de API.
 _HEADERS = {"User-Agent": "GymApp/0.1 (personal fitness app)"}
@@ -46,6 +49,64 @@ def _num(value: object) -> float:
         return round(float(value), 1)
     except (TypeError, ValueError):
         return 0.0
+
+
+def _to_food(product: dict, localized_field: str) -> ExternalFoodOut | None:
+    """Converte um produto do OFF no nosso formato, ou None se vier inaproveitavel.
+
+    Sem nome ou sem caloria por 100 g o cadastro na base esta incompleto e o item
+    nao serve para importar - a pessoa veria um alimento com macros zeradas."""
+    name = (product.get(localized_field) or product.get("product_name") or "").strip()
+    nutriments = product.get("nutriments") or {}
+    kcal = nutriments.get("energy-kcal_100g")
+    if not name or kcal is None:
+        return None
+    # "brands" vem como lista no servico de busca e como string separada por virgula
+    # no de produto; aceitamos os dois para nao quebrar se a base mudar de novo
+    brands = product.get("brands") or []
+    if isinstance(brands, str):
+        brands = brands.split(",")
+    brand = next((b.strip() for b in brands if b and b.strip()), None)
+    return ExternalFoodOut(
+        name=name,
+        brand=brand,
+        kcal=_num(kcal),
+        protein_g=_num(nutriments.get("proteins_100g")),
+        carbs_g=_num(nutriments.get("carbohydrates_100g")),
+        fat_g=_num(nutriments.get("fat_100g")),
+    )
+
+
+def fetch_by_barcode(code: str, lang: str = "en") -> ExternalFoodOut | None:
+    """Le um produto pelo codigo de barras. None = codigo nao existe na base.
+
+    Atencao ao formato da resposta: o OFF devolve HTTP 200 tambem para codigo
+    inexistente, com "status": 0 no corpo. Confiar no codigo HTTP aqui faria o app
+    tratar "nao existe" como sucesso e mostrar um alimento vazio."""
+    digits = code.strip()
+    if not digits.isdigit():
+        return None
+
+    params = {"fields": f"product_name,product_name_{lang},brands,nutriments"}
+    for attempt in range(1, _MAX_ATTEMPTS + 1):
+        try:
+            response = httpx.get(
+                _OFF_PRODUCT_URL.format(code=digits),
+                params=params,
+                headers=_HEADERS,
+                timeout=_TIMEOUT,
+            )
+            response.raise_for_status()
+            payload = response.json()
+            break
+        except Exception as error:
+            if attempt == _MAX_ATTEMPTS:
+                raise ExternalSearchUnavailable(str(error)) from error
+            time.sleep(_RETRY_DELAY_S)
+
+    if payload.get("status") != 1:
+        return None
+    return _to_food(payload.get("product") or {}, f"product_name_{lang}")
 
 
 def search_external(query: str, limit: int = 15, lang: str = "en") -> list[ExternalFoodOut]:
@@ -78,26 +139,7 @@ def search_external(query: str, limit: int = 15, lang: str = "en") -> list[Exter
 
     out: list[ExternalFoodOut] = []
     for product in hits:
-        name = (product.get(localized_field) or product.get("product_name") or "").strip()
-        nutriments = product.get("nutriments") or {}
-        kcal = nutriments.get("energy-kcal_100g")
-        # sem nome ou sem caloria por 100 g nao serve (cadastro incompleto na base)
-        if not name or kcal is None:
-            continue
-        # "brands" vem como lista neste endpoint (era string separada por virgula no
-        # antigo); aceitamos os dois para nao quebrar se a base mudar de novo
-        brands = product.get("brands") or []
-        if isinstance(brands, str):
-            brands = brands.split(",")
-        brand = next((b.strip() for b in brands if b and b.strip()), None)
-        out.append(
-            ExternalFoodOut(
-                name=name,
-                brand=brand,
-                kcal=_num(kcal),
-                protein_g=_num(nutriments.get("proteins_100g")),
-                carbs_g=_num(nutriments.get("carbohydrates_100g")),
-                fat_g=_num(nutriments.get("fat_100g")),
-            )
-        )
+        food = _to_food(product, localized_field)
+        if food is not None:
+            out.append(food)
     return out

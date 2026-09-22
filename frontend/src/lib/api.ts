@@ -1243,6 +1243,8 @@ export const api = {
 		request<RoutinePeriodization[]>(`/me/training/periodization?today=${today}`),
 	searchExternalFoods: (q: string, limit = 15) =>
 		request<ExternalFood[]>(`/me/foods/search-external?q=${encodeURIComponent(q)}&limit=${limit}`),
+	foodByBarcode: (code: string) =>
+		request<ExternalFood>(`/me/foods/by-barcode?code=${encodeURIComponent(code)}`),
 	getDiaryLoggedDays: (start: string, end: string) =>
 		request<string[]>(`/me/diary/logged-days?start=${start}&end=${end}`),
 	getSupplements: (day: string) =>

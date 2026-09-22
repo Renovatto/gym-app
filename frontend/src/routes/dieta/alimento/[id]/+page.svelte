@@ -13,6 +13,7 @@
 	import { foodCategoryOptions } from '$lib/foodCategories';
 	import Stepper from '$lib/components/Stepper.svelte';
 	import Spinner from '$lib/components/Spinner.svelte';
+	import BarcodeScanner from '$lib/components/BarcodeScanner.svelte';
 	import { showToast } from '$lib/toast.svelte';
 	import { errorMessage } from '$lib/errors';
 	import { PORTION_LABEL_KEYS, portionLabelWord } from '$lib/labels';
@@ -142,6 +143,26 @@
 		}
 	}
 
+	// Codigo de barras: mesma porta de entrada da busca por texto, so que exata - o
+	// codigo E a chave primaria da base do Open Food Facts. O resultado cai no mesmo
+	// pickExternal, entao a pessoa revisa antes de salvar, como sempre.
+	let scannerOpen = $state(false);
+	let scanLoading = $state(false);
+
+	async function onBarcode(code: string): Promise<void> {
+		scannerOpen = false;
+		scanLoading = true;
+		try {
+			pickExternal(await api.foodByBarcode(code));
+		} catch (error) {
+			// 404 aqui e informacao util, nao falha do app: o produto pode simplesmente
+			// nao estar cadastrado na base aberta.
+			showToast(error instanceof ApiError ? errorMessage(error.code) : errorMessage('NETWORK_ERROR'));
+		} finally {
+			scanLoading = false;
+		}
+	}
+
 	// A base externa (Open Food Facts) vem suja com frequencia: nome+marca passa
 	// facil de 80 caracteres, e macro fora da faixa fisica acontece (erro de
 	// unidade no cadastro do produto). Sem clamp aqui, o valor entra na tela,
@@ -262,6 +283,23 @@
 			>
 				{#if extSearching}<Spinner class="h-4 w-4" />{/if}
 				{m.ext_search_action()}
+			</button>
+			<button
+				type="button"
+				disabled={scanLoading}
+				onclick={() => (scannerOpen = true)}
+				aria-label={m.scan_title()}
+				title={m.scan_title()}
+				class="grid h-11 w-11 shrink-0 place-items-center rounded-2xl border-2 border-slate-200 bg-white text-slate-700 active:bg-slate-100 disabled:opacity-50"
+			>
+				{#if scanLoading}
+					<Spinner class="h-4 w-4" />
+				{:else}
+					<svg viewBox="0 0 24 24" class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+						<path d="M3 7V5a2 2 0 012-2h2M17 3h2a2 2 0 012 2v2M21 17v2a2 2 0 01-2 2h-2M7 21H5a2 2 0 01-2-2v-2" />
+						<path d="M7 8v8M10.5 8v8M14 8v8M17 8v8" />
+					</svg>
+				{/if}
 			</button>
 		</div>
 		{#if extResults.length > 0}
@@ -456,4 +494,8 @@
 			</div>
 		</div>
 	</div>
+{/if}
+
+{#if scannerOpen}
+	<BarcodeScanner onread={onBarcode} onclose={() => (scannerOpen = false)} />
 {/if}

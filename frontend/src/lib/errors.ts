@@ -12,6 +12,7 @@ const ERROR_MESSAGES: Record<string, () => string> = {
 	TOKEN_EXPIRED: () => m.error_token_expired(),
 	FOOD_IN_USE_RECIPE: () => m.error_food_in_use_recipe(),
 	FOOD_IN_USE_DIARY: () => m.error_food_in_use_diary(),
+	BARCODE_NOT_FOUND: () => m.error_barcode_not_found(),
 	// compartilhar entre contas
 	USER_NOT_FOUND: () => m.error_user_not_found(),
 	CANNOT_INVITE_SELF: () => m.error_cannot_invite_self(),

@@ -916,5 +916,13 @@
 	"tour_diet_foods_recipes_text": "Busca lo que vas a comer, o toca \"+\" para crear tu propio alimento o receta — los macros se calculan solos. Lo que crees puedes compartirlo con quien vive contigo, en Perfil.",
 	"tour_feedback_fab_title": "¿Encontraste un problema o tienes una idea?",
 	"tour_feedback_fab_text": "Este botón te acompaña en cualquier pantalla. Tócalo para enviar feedback directo; mantén y arrastra para moverlo a donde no estorbe.",
-	"offline_banner": "Estás sin conexión — los datos no cargan ni se guardan hasta que vuelva."
+	"offline_banner": "Estás sin conexión — los datos no cargan ni se guardan hasta que vuelva.",
+	"scan_action": "Escanear",
+	"scan_title": "Escanear código de barras",
+	"scan_hint": "Apunta la cámara al código de barras del producto.",
+	"scan_searching": "Buscando el producto…",
+	"scan_error_permission": "Sin acceso a la cámara. Permite el acceso en los ajustes del navegador e inténtalo de nuevo.",
+	"scan_error_insecure": "La cámara solo funciona en una dirección segura (https). Abre la app en su dirección oficial.",
+	"scan_error_unavailable": "No se pudo abrir la cámara en este dispositivo.",
+	"error_barcode_not_found": "Código de barras no encontrado en la base. Rellena los valores a mano."
 }

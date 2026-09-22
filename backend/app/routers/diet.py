@@ -46,7 +46,7 @@ from ..services.coaching import diet_adherence
 from ..services.dietplan import maintenance_override as diet_maintenance_override
 from ..services.dietplan import period_out as diet_period_out
 from ..services.dietplan import renew as renew_diet_period
-from ..services.foodsearch import ExternalSearchUnavailable, search_external
+from ..services.foodsearch import ExternalSearchUnavailable, fetch_by_barcode, search_external
 from ..services.diet import (
     food_macros,
     localized_food_name,
@@ -309,6 +309,29 @@ def food_substitutes(
     if food is None:
         raise HTTPException(status.HTTP_404_NOT_FOUND, detail="FOOD_NOT_FOUND")
     return compute_substitutes(session, user, food, grams, limit)
+
+
+@router.get("/me/foods/by-barcode", response_model=ExternalFoodOut)
+def food_by_barcode(
+    user: CurrentUser,
+    code: str = Query(..., min_length=6, max_length=20, description="Codigo de barras"),
+) -> ExternalFoodOut:
+    """Le um produto pelo codigo de barras (Open Food Facts) para importar ao catalogo.
+
+    Mesmo destino da busca por texto: o resultado preenche o formulario e a pessoa
+    revisa antes de salvar. O codigo e a chave primaria da base, entao aqui a
+    resposta e exata - ou o produto, ou nada."""
+    lang = user.locale.split("-")[0].lower()
+    try:
+        food = fetch_by_barcode(code, lang)
+    except ExternalSearchUnavailable:
+        # mesma distincao da busca por texto: falhar e diferente de nao achar
+        raise HTTPException(
+            status.HTTP_503_SERVICE_UNAVAILABLE, detail="EXTERNAL_SEARCH_UNAVAILABLE"
+        ) from None
+    if food is None:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, detail="BARCODE_NOT_FOUND")
+    return food
 
 
 @router.get("/me/foods/search-external", response_model=list[ExternalFoodOut])
