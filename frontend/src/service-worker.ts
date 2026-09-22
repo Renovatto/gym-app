@@ -24,10 +24,21 @@ const CACHE_NAME = `gymapp-${version}`;
 // build = JS/CSS com hash no nome; files = o que esta em static/ (icones, manifest).
 // A raiz entra separada porque o fallback da SPA (index.html) nao esta nessas listas.
 const SHELL = ['/', ...build, ...files];
+// Decidir por PERTENCIMENTO, nao por exclusao: so entra em cache o que e casca.
+// A versao anterior excluia "outro dominio" achando que a API estaria fora - mas em
+// producao ela vive no mesmo endereco, em /api. Resultado: resposta de API entrava
+// em cache-first e a tela mostrava dado velho para sempre (desfazer a agua e lancar
+// refeicao pareciam travados). Lista do que pode, nunca lista do que nao pode.
+const CASCA = new Set(SHELL);
 
 const worker = self as unknown as ServiceWorkerGlobalScope;
 
 worker.addEventListener('install', (event) => {
+	// skipWaiting porque a versao anterior servia resposta de API do cache: esperar
+	// o app ser fechado para trocar deixaria o aparelho com dado velho por dias. O
+	// custo conhecido e uma tela ainda aberta pedir um arquivo que o deploy trocou -
+	// incomodo pontual, contra um bug que faz o app parecer quebrado.
+	worker.skipWaiting();
 	event.waitUntil(caches.open(CACHE_NAME).then((cache) => cache.addAll(SHELL)));
 });
 
@@ -44,8 +55,8 @@ worker.addEventListener('fetch', (event) => {
 	const request = event.request;
 	const url = new URL(request.url);
 
-	// Fora do escopo do cache: metodo que muda dado, outro dominio (a API) e
-	// qualquer coisa que nao seja http(s).
+	// Fora do escopo do cache: metodo que muda dado, outro dominio e qualquer coisa
+	// que nao seja http(s).
 	if (request.method !== 'GET') return;
 	if (url.origin !== worker.location.origin) return;
 	if (!url.protocol.startsWith('http')) return;
@@ -62,6 +73,10 @@ worker.addEventListener('fetch', (event) => {
 		);
 		return;
 	}
+
+	// Tudo que nao e casca (a API, em primeiro lugar) vai direto para a rede e nunca
+	// e guardado. Dado do usuario tem que chegar fresco ou nao chegar.
+	if (!CASCA.has(url.pathname)) return;
 
 	// Arquivo com hash no nome nunca muda de conteudo: cache primeiro, rede so na
 	// primeira vez. Vale tambem para icone e manifest.
