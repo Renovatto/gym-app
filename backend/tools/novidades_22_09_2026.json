@@ -1,0 +1,32 @@
+[
+  {
+    "published_on": "2026-09-22",
+    "importance": "normal",
+    "title_pt_br": "Instale o GymApp na tela de início",
+    "body_pt_br": "Agora o GymApp instala no celular: abra no navegador, toque em Compartilhar e em \"Adicionar à Tela de Início\". Ele ganha ícone próprio e abre em tela cheia, sem a barra do navegador. Sem internet, o app abre e avisa que você está offline, em vez de dar erro.",
+    "title_en": "Install GymApp on your home screen",
+    "body_en": "GymApp now installs on your phone: open it in your browser, tap Share, then \"Add to Home Screen\". It gets its own icon and opens full screen, without the browser bar. With no connection, the app still opens and tells you you're offline instead of showing an error.",
+    "title_es": "Instala GymApp en tu pantalla de inicio",
+    "body_es": "Ahora GymApp se instala en el móvil: ábrelo en el navegador, toca Compartir y luego \"Añadir a pantalla de inicio\". Tendrá su propio icono y se abrirá a pantalla completa, sin la barra del navegador. Sin conexión, la app abre igual y te avisa de que estás sin internet, en vez de dar error."
+  },
+  {
+    "published_on": "2026-09-22",
+    "importance": "normal",
+    "title_pt_br": "Abertura nova",
+    "body_pt_br": "O app agora abre com uma animação: a barra entra rolando, os discos encaixam e o halter levanta. Enquanto isso, o app carrega seus dados — o que antes era uma tela em branco agora tem o que olhar.",
+    "title_en": "A new way to open",
+    "body_en": "The app now opens with an animation: the bar rolls in, the plates lock on, and the weight is lifted. Meanwhile the app loads your data — what used to be a blank screen now has something to watch.",
+    "title_es": "Nueva apertura",
+    "body_es": "La app ahora abre con una animación: la barra entra rodando, los discos encajan y la pesa sube. Mientras tanto la app carga tus datos — lo que antes era una pantalla en blanco ahora tiene algo que mirar."
+  },
+  {
+    "published_on": "2026-09-22",
+    "importance": "normal",
+    "title_pt_br": "Cadastre alimentos pelo código de barras",
+    "body_pt_br": "Ao criar um alimento, agora há um botão de código de barras ao lado da busca. Aponte a câmera para a embalagem e o nome e os macros vêm preenchidos — você confere e salva. Se a câmera não abrir, dá para tirar uma foto do código.",
+    "title_en": "Add foods by scanning the barcode",
+    "body_en": "When creating a food, there's now a barcode button next to the search. Point the camera at the package and the name and macros come filled in — you check them and save. If the camera won't open, you can take a photo of the barcode instead.",
+    "title_es": "Añade alimentos con el código de barras",
+    "body_es": "Al crear un alimento, ahora hay un botón de código de barras junto a la búsqueda. Apunta la cámara al envase y el nombre y los macros llegan rellenados — los revisas y guardas. Si la cámara no abre, puedes hacer una foto del código."
+  }
+]
