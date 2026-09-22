@@ -569,6 +569,7 @@
 	"toast_favorited": "Added to favorites ⭐",
 	"toast_unfavorited": "Removed from favorites",
 	"recent_label": "Recent",
+	"recent_in_meal_label": "Recent · {meal}",
 	"all_foods_label": "All foods",
 	"cut_intensity_title": "Deficit intensity",
 	"cut_intensity_hint": "How fast you want to lose fat. Faster demands more discipline and risks more muscle.",

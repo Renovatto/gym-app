@@ -1,4 +1,5 @@
-from datetime import date
+from collections import Counter
+from datetime import date, timedelta
 
 from fastapi import APIRouter, HTTPException, Query, status
 from sqlmodel import Session, desc, select
@@ -121,26 +122,75 @@ def favorite_foods(user: CurrentUser, session: SessionDep) -> list[FoodOut]:
     return out
 
 
+# Janela do habito por refeicao: os mesmos 60 dias que services/recommend.py ja usa
+# para ranquear sugestao pelo habito atual. Nao ha motivo para dois horizontes.
+_RECENT_MEAL_DAYS = 60
+
+
+def _meal_history(
+    session: Session, user_id: int, meal_type: MealType, source: EntrySource
+) -> list[int]:
+    """Ids lancados NAQUELA refeicao nos ultimos _RECENT_MEAL_DAYS dias, do mais
+    recente para o mais antigo e com repeticao. Da mesma lista saem as duas coisas
+    que ordenam a tela de adicionar: quantas vezes cada item foi usado (o habito)
+    e qual foi usado por ultimo (o desempate)."""
+    column = DiaryEntry.food_id if source == EntrySource.food else DiaryEntry.recipe_id
+    # date.today() e do servidor, e nao o dia local do usuario: aqui a data so move a
+    # BORDA de uma janela de 60 dias, onde um dia a mais ou a menos nao muda a ordem.
+    # Dia local continua obrigatorio onde o dia em si e o dado (o diario).
+    since = date.today() - timedelta(days=_RECENT_MEAL_DAYS)
+    rows = session.exec(
+        select(column)
+        .where(DiaryEntry.user_id == user_id)
+        .where(DiaryEntry.source == source)
+        .where(column.is_not(None))
+        .where(DiaryEntry.meal_type == meal_type)
+        .where(DiaryEntry.entry_date >= since)
+        .order_by(desc(DiaryEntry.logged_at))
+    ).all()
+    return [ref_id for ref_id in rows if ref_id is not None]
+
+
+def _rank_by_habit(history: list[int]) -> list[int]:
+    """Ids unicos ordenados por habito: mais usado primeiro, empate pelo mais recente.
+    O sort do Python e estavel e o historico ja chega em ordem de recencia, entao
+    quem empata em numero de usos mantem essa ordem."""
+    times_used = Counter(history)
+    unique: list[int] = []
+    for ref_id in history:
+        if ref_id not in unique:
+            unique.append(ref_id)
+    unique.sort(key=lambda ref_id: -times_used[ref_id])
+    return unique
+
+
 @router.get("/me/foods/recent", response_model=list[FoodOut])
 def recent_foods(
     user: CurrentUser,
     session: SessionDep,
     limit: int = Query(default=12, ge=1, le=40),
+    meal_type: MealType | None = Query(default=None),
 ) -> list[FoodOut]:
-    """Alimentos lançados mais recentemente pelo usuário, sem repetir."""
-    rows = session.exec(
-        select(DiaryEntry.food_id)
-        .where(DiaryEntry.user_id == user.id)
-        .where(DiaryEntry.source == EntrySource.food)
-        .where(DiaryEntry.food_id.is_not(None))
-        .order_by(desc(DiaryEntry.logged_at))
-    ).all()
-    seen: list[int] = []
-    for food_id in rows:
-        if food_id not in seen:
-            seen.append(food_id)
-        if len(seen) >= limit:
-            break
+    """Alimentos lançados mais recentemente pelo usuário, sem repetir.
+    Com meal_type, sao so os daquela refeicao e ordenados pelo habito nela (ver
+    _rank_by_habit): quem repete o mesmo cafe da manha acha os itens no topo, em vez
+    de disputar espaco com o almoco de ontem."""
+    if meal_type is not None:
+        seen = _rank_by_habit(_meal_history(session, user.id, meal_type, EntrySource.food))[:limit]
+    else:
+        rows = session.exec(
+            select(DiaryEntry.food_id)
+            .where(DiaryEntry.user_id == user.id)
+            .where(DiaryEntry.source == EntrySource.food)
+            .where(DiaryEntry.food_id.is_not(None))
+            .order_by(desc(DiaryEntry.logged_at))
+        ).all()
+        seen = []
+        for food_id in rows:
+            if food_id not in seen:
+                seen.append(food_id)
+            if len(seen) >= limit:
+                break
     fav_ids = favorite_food_ids(session, user.id)
     out = []
     for food_id in seen:
@@ -313,7 +363,11 @@ def _get_owned_recipe_or_none(session: Session, recipe_id: int, user_id: int) ->
 
 
 @router.get("/me/recipes", response_model=list[RecipeOut])
-def list_recipes(user: CurrentUser, session: SessionDep) -> list[RecipeOut]:
+def list_recipes(
+    user: CurrentUser,
+    session: SessionDep,
+    meal_type: MealType | None = Query(default=None),
+) -> list[RecipeOut]:
     recipes = session.exec(
         select(Recipe).where(Recipe.user_id == user.id).order_by(desc(Recipe.created_at))
     ).all()
@@ -321,6 +375,13 @@ def list_recipes(user: CurrentUser, session: SessionDep) -> list[RecipeOut]:
     out = [_recipe_out(session, r, user.locale, r.id in fav_ids) for r in recipes]
     # favoritas primeiro, mantendo a ordem por criacao dentro de cada grupo
     out.sort(key=lambda r: not r.is_favorite)
+    if meal_type is not None:
+        # E a mesma lista: so as receitas que a pessoa usa NAQUELA refeicao sobem para
+        # a frente das favoritas. Na hora de lancar o jantar de sempre, o habito acha a
+        # receita mais rapido que a estrelinha. O sort estavel preserva o resto.
+        habit = _rank_by_habit(_meal_history(session, user.id, meal_type, EntrySource.recipe))
+        position = {recipe_id: i for i, recipe_id in enumerate(habit)}
+        out.sort(key=lambda r: position.get(r.id, len(position)))
     return out
 
 

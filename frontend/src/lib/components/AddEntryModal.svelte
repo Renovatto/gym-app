@@ -158,12 +158,19 @@
 
 	async function loadRecipes(): Promise<void> {
 		loading = true;
-		recipes = await api.getRecipes();
+		// passa a refeicao: as receitas que a pessoa ja usou nela vem primeiro
+		recipes = await api.getRecipes(meal);
 		loading = false;
 	}
 
-	// recentes e favoritos carregam uma vez (mostrados quando não há busca)
-	api.getRecentFoods().then((r) => (recentFoods = r));
+	// recentes e favoritos carregam uma vez (mostrados quando não há busca). Os
+	// recentes sao os DESTA refeicao, ordenados pelo habito nela: refeicao parecida
+	// todo dia (cafe da manha, ceia) encontra os itens de sempre sem buscar. Dentro
+	// de um $effect porque agora a lista depende da refeicao - se a modal for reusada
+	// para outra, os recentes tem que vir da refeicao nova.
+	$effect(() => {
+		api.getRecentFoods(meal).then((r) => (recentFoods = r));
+	});
 	let favoriteFoods = $state<Food[]>([]);
 	api.getFavoriteFoods().then((f) => (favoriteFoods = f));
 
@@ -453,7 +460,9 @@
 					</div>
 				{/if}
 				{#if !searching && recentFoods.length > 0}
-					<p class="mb-2 text-xs font-bold text-slate-400 uppercase">{m.recent_label()}</p>
+					<p class="mb-2 text-xs font-bold text-slate-400 uppercase">
+						{m.recent_in_meal_label({ meal: label ?? mealTypeLabel(meal) })}
+					</p>
 					<div class="mb-4 space-y-2">
 						{#each recentFoods as food (food.id)}
 							{@render foodRow(food)}

@@ -569,6 +569,7 @@
 	"toast_favorited": "Adicionado aos favoritos ⭐",
 	"toast_unfavorited": "Removido dos favoritos",
 	"recent_label": "Recentes",
+	"recent_in_meal_label": "Recentes · {meal}",
 	"all_foods_label": "Todos os alimentos",
 	"cut_intensity_title": "Intensidade do déficit",
 	"cut_intensity_hint": "Quão rápido você quer perder gordura. Mais rápido exige mais disciplina e arrisca mais o músculo.",

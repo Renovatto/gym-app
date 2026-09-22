@@ -1181,7 +1181,10 @@ export const api = {
 		const qs = params.toString();
 		return request<Food[]>(`/foods${qs ? `?${qs}` : ''}`);
 	},
-	getRecentFoods: () => request<Food[]>('/me/foods/recent'),
+	// mealType filtra os recentes pela refeicao e ordena pelo habito nela (o que a
+	// pessoa mais repete no cafe da manha vem antes do almoco de ontem).
+	getRecentFoods: (mealType?: MealType) =>
+		request<Food[]>(`/me/foods/recent${mealType ? `?meal_type=${mealType}` : ''}`),
 	getFavoriteFoods: () => request<Food[]>('/me/foods/favorites'),
 	// Liga/desliga a estrelinha; retorna o novo estado (true = favorito).
 	toggleFavorite: (kind: FavoriteKind, refId: number) =>
@@ -1205,7 +1208,10 @@ export const api = {
 	getLibraryRecipe: (slug: string) => request<LibraryRecipe>(`/recipes/library/${slug}`),
 	adoptLibraryRecipe: (slug: string) =>
 		request<Recipe>(`/me/recipes/from-library/${slug}`, { method: 'POST' }),
-	getRecipes: () => request<Recipe[]>('/me/recipes'),
+	// mesma lista de sempre; com mealType as receitas usadas naquela refeicao vem
+	// na frente das favoritas.
+	getRecipes: (mealType?: MealType) =>
+		request<Recipe[]>(`/me/recipes${mealType ? `?meal_type=${mealType}` : ''}`),
 	createRecipe: (recipe: RecipeInput) =>
 		request<Recipe>('/me/recipes', { method: 'POST', body: recipe }),
 	updateRecipe: (id: number, recipe: RecipeInput) =>
