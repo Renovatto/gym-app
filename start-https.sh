@@ -63,10 +63,28 @@ for _ in $(seq 1 40); do
   sleep 1
 done
 
-echo ""
+# O endereço aparece no log antes de existir no DNS, e de vez em quando o registro
+# falha de vez (acontece ao reabrir o túnel logo depois de derrubar outro). Sem
+# esta confirmação o script anuncia um endereço que o celular não resolve.
 if [ -n "$URL" ]; then
+  echo "==> Confirmando que o endereço já responde..."
+  PRONTO=""
+  for _ in $(seq 1 30); do
+    if [ "$(curl -s -o /dev/null -m 5 -w '%{http_code}' "$URL/")" = "200" ]; then
+      PRONTO="sim"
+      break
+    fi
+    sleep 2
+  done
+fi
+
+echo ""
+if [ -n "${PRONTO:-}" ]; then
   echo "  No celular: $URL"
   echo "  (endereço novo a cada execução; o túnel é temporário)"
+elif [ -n "$URL" ]; then
+  echo "  O túnel abriu em $URL mas o endereço ainda não responde."
+  echo "  Rode o script de novo: o registro do nome falhou do lado do Cloudflare."
 else
   echo "  Não consegui ler a URL do túnel. Log: $LOG"
 fi
