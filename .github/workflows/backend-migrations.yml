@@ -43,13 +43,10 @@ jobs:
       - name: Install dependencies
         run: pip install -r requirements.txt
 
+      # A base do servico nasce vazia a cada execucao, entao este passo ja prova o
+      # que importa: o schema se constroi do zero pela cadeia de migracoes.
       - name: Run migrations on PostgreSQL
         run: alembic upgrade head
 
       - name: Check schema alignment
         run: alembic check
-
-      - name: Test baseline on SQLite
-        env:
-          GYMAPP_DATABASE_URL: sqlite:////tmp/ci_gymapp.db
-        run: alembic upgrade head

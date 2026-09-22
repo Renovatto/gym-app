@@ -65,18 +65,20 @@ documentadas para o usuario na area de consulta. Nao espalhe formula por varios 
 ## Padroes ja adotados no projeto (nao reinventar)
 
 - Backend: FastAPI + SQLModel. `session.exec(select(Model.coluna))` retorna escalar, nao tupla.
-- **Dev usa Postgres, nao SQLite** (desde 19/08/2026, mesma major que producao). `docker
-  compose up -d` sobe o banco local (porta 5434). `GYMAPP_DATABASE_URL` nao tem default:
-  precisa estar no `backend/.env`. O codigo continua agnostico (`IS_SQLITE` em `db.py`,
-  `render_as_batch` condicional no alembic) e o CI ainda testa a baseline nos dois bancos
-  - so o ambiente de desenvolvimento mudou.
+- **Postgres em todo lugar: dev, CI e producao.** Dev migrou em 19/08/2026 e o suporte a
+  SQLite saiu de vez em 22/09/2026 - nao ha mais `IS_SQLITE`, `render_as_batch` nem passo
+  de baseline SQLite no CI. Motivo: ninguem usava esse banco, e um banco que so o CI
+  exercitava custou um deploy vermelho por uma incompatibilidade (`ALTER COLUMN`) que nao
+  afetava usuario nenhum. `docker compose up -d` sobe o banco local (porta 5434).
+  `GYMAPP_DATABASE_URL` nao tem default: precisa estar no `backend/.env`.
+  Migracao nova nao precisa mais pensar em portabilidade - escreva para o Postgres.
 - Ao atualizar filhos de um pai (rotina->itens, receita->ingredientes), limpe a colecao
   com `colecao.clear()` (delete-orphan). Nunca `session.delete(item)` + re-adicionar o pai.
 - **Schema: Alembic** (desde 03/08/2026). Coluna nova = editar `models.py` +
   `alembic revision --autogenerate -m "..."` + revisar o arquivo + `alembic upgrade head`
   local + commitar migracao e modelo JUNTOS. Enum novo = migração manual com
-  `op.get_context().autocommit_block()` + `ALTER TYPE ... ADD VALUE IF NOT EXISTS`
-  (Postgres só; SQLite não precisa). Tabela nova = autogenerate resolve.
+  `op.get_context().autocommit_block()` + `ALTER TYPE ... ADD VALUE IF NOT EXISTS`.
+  Tabela nova = autogenerate resolve.
 - Busca textual SEMPRE via `normalize_search` (sem acento, sem caixa) dos dois lados.
 - Datas locais do usuario: cliente envia dia local + `tz_offset` (Date.getTimezoneOffset()).
 - **Media sobre dias do usuario nunca inclui HOJE.** O dia corrente esta sempre pela

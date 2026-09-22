@@ -1,7 +1,6 @@
 from collections.abc import Generator
 from pathlib import Path
 
-from sqlalchemy import event
 from sqlmodel import Session, create_engine
 
 from .config import settings
@@ -17,33 +16,21 @@ def _normalize_db_url(url: str) -> str:
 
 
 DATABASE_URL = _normalize_db_url(settings.database_url)
-IS_SQLITE = DATABASE_URL.startswith("sqlite")
 
-# check_same_thread e exclusivo do SQLite; no Postgres nao passamos connect_args.
-engine = create_engine(
-    DATABASE_URL,
-    connect_args={"check_same_thread": False} if IS_SQLITE else {},
-)
-
-
-if IS_SQLITE:
-    # WAL e PRAGMA so existem no SQLite (seriam SQL invalido no Postgres).
-    @event.listens_for(engine, "connect")
-    def _set_sqlite_pragmas(dbapi_connection, _record) -> None:
-        cursor = dbapi_connection.cursor()
-        cursor.execute("PRAGMA journal_mode=WAL")
-        cursor.execute("PRAGMA foreign_keys=ON")
-        cursor.close()
+# Postgres em todo lugar desde 22/09/2026: dev, CI e producao. O suporte a SQLite
+# saiu porque ninguem mais o usava - e um banco que so o CI exercitava custou um
+# deploy vermelho por uma incompatibilidade (ALTER COLUMN) que nao afetava ninguem.
+engine = create_engine(DATABASE_URL)
 
 
 def run_migrations() -> None:
     """Deixa o banco no schema mais recente, rodando o equivalente a "alembic upgrade head".
 
-    Vale para os dois bancos e para qualquer estado: base vazia nasce completa pela
-    revisao inicial, base que ja rodava recebe so as revisoes que faltam, e base ja
-    atualizada nao muda nada (a chamada e idempotente). Antes disso o schema vinha de
-    create_all mais uma lista de ALTER TABLE escrita a mao, que nao tinha como saber
-    o que ja havia sido aplicado.
+    Vale para qualquer estado: base vazia nasce completa pela revisao inicial, base
+    que ja rodava recebe so as revisoes que faltam, e base ja atualizada nao muda
+    nada (a chamada e idempotente). Antes disso o schema vinha de create_all mais uma
+    lista de ALTER TABLE escrita a mao, que nao tinha como saber o que ja havia sido
+    aplicado.
 
     Os caminhos sao absolutos porque o script_location do alembic.ini e relativo ao
     diretorio de trabalho, e o app pode subir de qualquer lugar.
