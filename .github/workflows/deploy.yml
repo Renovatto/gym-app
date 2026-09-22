@@ -24,7 +24,11 @@ jobs:
 
       - uses: actions/setup-node@v4
         with:
-          node-version: "22"
+          # node 24: o leitor de codigo de barras (@zxing/library) exige >= 24, e o
+          # frontend/.npmrc usa engine-strict=true - entao engine errada nao e aviso,
+          # e npm ci falhando antes de qualquer build. Nenhuma outra dependencia tem
+          # teto de versao (vite e o plugin do svelte ja listam >=24).
+          node-version: "24"
           cache: npm
           cache-dependency-path: |
             frontend/package-lock.json
