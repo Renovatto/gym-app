@@ -924,5 +924,8 @@
 	"scan_error_permission": "Sin acceso a la cámara. Permite el acceso en los ajustes del navegador e inténtalo de nuevo.",
 	"scan_error_insecure": "La cámara solo funciona en una dirección segura (https). Abre la app en su dirección oficial.",
 	"scan_error_unavailable": "No se pudo abrir la cámara en este dispositivo.",
-	"error_barcode_not_found": "Código de barras no encontrado en la base. Rellena los valores a mano."
+	"error_barcode_not_found": "Código de barras no encontrado en la base. Rellena los valores a mano.",
+	"scan_starting": "Abriendo la cámara…",
+	"scan_photo_action": "Hacer foto del código",
+	"scan_photo_failed": "No pude leer el código en esta foto. Prueba más cerca, con el código recto y bien iluminado."
 }

@@ -17,8 +17,95 @@
 	const ESPERA_MAXIMA_MS = 8000;
 
 	let video = $state<HTMLVideoElement | null>(null);
+	let entradaFoto = $state<HTMLInputElement | null>(null);
+	let lendoFoto = $state(false);
+	let fotoFalhou = $state(false);
 	let falha = $state<Falha | null>(null);
 	let iniciando = $state(true);
+	// Detalhe tecnico da falha (nome da excecao, estado do video). Nao e traduzido
+	// de proposito: e um codigo para diagnostico, nao texto de interface - e sem ele
+	// "nao consegui abrir a camera" nao diz em que passo parou.
+	let detalhe = $state('');
+
+
+	// Plano B: a pessoa tira UMA foto do codigo. Passa pelo mesmo decodificador da
+	// camera ao vivo, so que sem stream nenhum - por isso funciona mesmo onde o
+	// video inline nao toca (o caso do app instalado no iOS).
+	async function lerDaFoto(arquivo: File): Promise<void> {
+		lendoFoto = true;
+		fotoFalhou = false;
+		try {
+			const imagem = await criarImagem(arquivo);
+			const tela = document.createElement('canvas');
+			// Limita o lado maior: foto de celular tem muito mais pixel do que a
+			// leitura precisa, e o excesso so deixa a decodificacao lenta.
+			const escala = Math.min(1, 1600 / Math.max(imagem.width, imagem.height));
+			tela.width = Math.round(imagem.width * escala);
+			tela.height = Math.round(imagem.height * escala);
+			const pincel = tela.getContext('2d', { willReadFrequently: true });
+			if (!pincel) throw new Error('sem canvas');
+			pincel.drawImage(imagem, 0, 0, tela.width, tela.height);
+
+			const { data } = pincel.getImageData(0, 0, tela.width, tela.height);
+			const codigo = await decodificar(data, tela.width, tela.height);
+			if (codigo) {
+				onread(codigo);
+				return;
+			}
+			fotoFalhou = true;
+		} catch {
+			fotoFalhou = true;
+		} finally {
+			lendoFoto = false;
+		}
+	}
+
+	function criarImagem(arquivo: File): Promise<HTMLImageElement> {
+		return new Promise((resolve, reject) => {
+			const url = URL.createObjectURL(arquivo);
+			const imagem = new Image();
+			imagem.onload = () => {
+				URL.revokeObjectURL(url);
+				resolve(imagem);
+			};
+			imagem.onerror = () => {
+				URL.revokeObjectURL(url);
+				reject(new Error('imagem invalida'));
+			};
+			imagem.src = url;
+		});
+	}
+
+	// Converte um quadro RGBA em codigo lido, ou null quando nao ha codigo nele.
+	// E o unico lugar que fala com a biblioteca: a camera passa a faixa central do
+	// video por aqui a cada 150ms, e a foto passa a imagem inteira uma vez.
+	async function decodificar(rgba: Uint8ClampedArray, largura: number, altura: number): Promise<string | null> {
+		const { BarcodeFormat, BinaryBitmap, DecodeHintType, HybridBinarizer, MultiFormatReader, RGBLuminanceSource } =
+			await import('@zxing/library');
+		const hints = new Map();
+		hints.set(DecodeHintType.POSSIBLE_FORMATS, [
+			BarcodeFormat.EAN_13,
+			BarcodeFormat.EAN_8,
+			BarcodeFormat.UPC_A,
+			BarcodeFormat.UPC_E
+		]);
+		const leitor = new MultiFormatReader();
+		leitor.setHints(hints);
+		// RGBA -> luminancia (a formula padrao de brilho percebido). O leitor trabalha
+		// em tons de cinza; passar o quadro colorido so daria a ele a mesma conta.
+		const cinza = new Uint8ClampedArray(largura * altura);
+		for (let i = 0, p = 0; i < cinza.length; i++, p += 4) {
+			cinza[i] = (rgba[p] * 306 + rgba[p + 1] * 601 + rgba[p + 2] * 117) >> 10;
+		}
+		try {
+			const fonte = new RGBLuminanceSource(cinza, largura, altura);
+			return leitor.decode(new BinaryBitmap(new HybridBinarizer(fonte))).getText();
+		} catch {
+			return null; // nenhum codigo nesta imagem
+		} finally {
+			leitor.reset();
+		}
+	}
 
 	$effect(() => {
 		const elemento = video;
@@ -59,26 +146,26 @@
 				// ligada - o sintoma que isso aqui conserta.
 				elemento.muted = true;
 				elemento.playsInline = true;
+				elemento.autoplay = true;
 				elemento.srcObject = stream;
-				await elemento.play();
 
-				// import dinamico: a biblioteca de leitura (centenas de KB) so e baixada
-				// quando alguem abre o leitor, e nao no carregamento do app.
-				const { BarcodeFormat, BinaryBitmap, DecodeHintType, HybridBinarizer, MultiFormatReader, RGBLuminanceSource } =
-					await import('@zxing/library');
-				if (cancelado) return encerrar();
-
-				// So os formatos de produto: menos formatos, leitura mais rapida e menos
-				// chance de ler errado algo que nem e codigo de barras.
-				const hints = new Map();
-				hints.set(DecodeHintType.POSSIBLE_FORMATS, [
-					BarcodeFormat.EAN_13,
-					BarcodeFormat.EAN_8,
-					BarcodeFormat.UPC_A,
-					BarcodeFormat.UPC_E
-				]);
-				const leitor = new MultiFormatReader();
-				leitor.setHints(hints);
+				// No app instalado (standalone) o primeiro play() pode ser recusado
+				// porque os metadados do stream ainda nao chegaram. Nesse caso esperamos
+				// o loadedmetadata e tentamos de novo, em vez de desistir calado - que
+				// era a tela preta com a camera ligada.
+				try {
+					await elemento.play();
+				} catch (erroPlay) {
+					detalhe = `play: ${erroPlay instanceof Error ? erroPlay.name : 'falhou'}`;
+					await new Promise<void>((resolve) => {
+						const pronto = (): void => resolve();
+						elemento.addEventListener('loadedmetadata', pronto, { once: true });
+						setTimeout(pronto, 2000);
+					});
+					await elemento.play().catch((outro) => {
+						detalhe = `play2: ${outro instanceof Error ? outro.name : 'falhou'}`;
+					});
+				}
 
 				const tela = document.createElement('canvas');
 				const pincel = tela.getContext('2d', { willReadFrequently: true });
@@ -89,14 +176,20 @@
 				}
 
 				const comecou = Date.now();
+				let ocupado = false;
 
 				timer = setInterval(() => {
-					if (cancelado) return;
+					if (cancelado || ocupado) return;
 
 					const largura = elemento.videoWidth;
 					const altura = elemento.videoHeight;
 					if (!largura || !altura) {
 						if (Date.now() - comecou > ESPERA_MAXIMA_MS) {
+							const faixas = stream?.getVideoTracks() ?? [];
+							detalhe =
+								`${detalhe ? detalhe + ' · ' : ''}sem quadros · readyState=${elemento.readyState}` +
+								` · pausado=${elemento.paused} · trilha=${faixas[0]?.readyState ?? 'nenhuma'}` +
+								` · standalone=${window.matchMedia('(display-mode: standalone)').matches}`;
 							falha = 'indisponivel';
 							iniciando = false;
 							encerrar();
@@ -113,30 +206,22 @@
 					tela.width = largura;
 					tela.height = faixaAltura;
 					pincel.drawImage(elemento, 0, topo, largura, faixaAltura, 0, 0, largura, faixaAltura);
-
 					const { data } = pincel.getImageData(0, 0, largura, faixaAltura);
-					// RGBA -> luminancia (a formula padrao de brilho percebido). O leitor
-					// trabalha em tons de cinza; passar o quadro colorido so daria trabalho
-					// a mais para ele fazer a mesma conta.
-					const cinza = new Uint8ClampedArray(largura * faixaAltura);
-					for (let i = 0, p = 0; i < cinza.length; i++, p += 4) {
-						cinza[i] = (data[p] * 306 + data[p + 1] * 601 + data[p + 2] * 117) >> 10;
-					}
 
-					try {
-						const fonte = new RGBLuminanceSource(cinza, largura, faixaAltura);
-						const resultado = leitor.decode(new BinaryBitmap(new HybridBinarizer(fonte)));
-						const codigo = resultado.getText();
-						encerrar();
-						onread(codigo);
-					} catch {
-						// nenhum codigo neste quadro: normal, a proxima tentativa vem ai
-					} finally {
-						leitor.reset();
-					}
+					ocupado = true;
+					void decodificar(data, largura, faixaAltura)
+						.then((codigo) => {
+							if (cancelado || !codigo) return;
+							encerrar();
+							onread(codigo);
+						})
+						.finally(() => {
+							ocupado = false;
+						});
 				}, INTERVALO_MS);
 			} catch (erro) {
-				const nome = erro instanceof DOMException ? erro.name : '';
+				const nome = erro instanceof DOMException ? erro.name : String(erro);
+				detalhe = `${detalhe ? detalhe + ' · ' : ''}${nome}`;
 				falha = nome === 'NotAllowedError' || nome === 'SecurityError' ? 'permissao' : 'indisponivel';
 				iniciando = false;
 				encerrar();
@@ -174,23 +259,61 @@
 		{/if}
 
 		{#if iniciando && !falha}
-			<div class="absolute inset-0 grid place-items-center">
+			<div class="absolute inset-0 grid place-items-center gap-3">
 				<Spinner class="h-7 w-7 text-white" />
+				<p class="text-xs text-white/60">{m.scan_starting()}</p>
 			</div>
 		{/if}
 
 		{#if falha}
 			<div class="absolute inset-0 grid place-items-center px-6">
-				<p class="max-w-xs text-center text-sm font-semibold text-white">
-					{#if falha === 'permissao'}{m.scan_error_permission()}
-					{:else if falha === 'insegura'}{m.scan_error_insecure()}
-					{:else}{m.scan_error_unavailable()}{/if}
-				</p>
+				<div class="max-w-xs text-center">
+					<p class="text-sm font-semibold text-white">
+						{#if falha === 'permissao'}{m.scan_error_permission()}
+						{:else if falha === 'insegura'}{m.scan_error_insecure()}
+						{:else}{m.scan_error_unavailable()}{/if}
+					</p>
+					{#if detalhe}
+						<p class="mt-2 font-mono text-[11px] break-words text-white/45">{detalhe}</p>
+					{/if}
+				</div>
 			</div>
 		{/if}
 	</div>
 
-	<p class="px-6 pt-4 pb-[calc(env(safe-area-inset-bottom)+1.25rem)] text-center text-xs text-white/60">
-		{m.scan_hint()}
-	</p>
+	<div class="px-6 pt-4 pb-[calc(env(safe-area-inset-bottom)+1.25rem)] text-center">
+		{#if fotoFalhou}
+			<p class="mb-3 text-xs font-semibold text-amber-300">{m.scan_photo_failed()}</p>
+		{:else if !falha}
+			<p class="mb-3 text-xs text-white/60">{m.scan_hint()}</p>
+		{/if}
+
+		<!--
+			Plano B sempre a mao: onde o video ao vivo nao toca (app instalado no iOS),
+			a foto ainda funciona - ela nao depende de stream nenhum. Por isso o botao
+			existe mesmo quando a camera abriu: e a saida de quem nao consegue fazer o
+			codigo entrar em foco.
+		-->
+		<input
+			bind:this={entradaFoto}
+			type="file"
+			accept="image/*"
+			capture="environment"
+			class="hidden"
+			onchange={(e) => {
+				const arquivo = e.currentTarget.files?.[0];
+				if (arquivo) void lerDaFoto(arquivo);
+				e.currentTarget.value = '';
+			}}
+		/>
+		<button
+			type="button"
+			disabled={lendoFoto}
+			onclick={() => entradaFoto?.click()}
+			class="inline-flex h-11 items-center gap-2 rounded-2xl border-2 border-white/25 px-4 text-sm font-bold text-white active:bg-white/10 disabled:opacity-50"
+		>
+			{#if lendoFoto}<Spinner class="h-4 w-4" />{/if}
+			{m.scan_photo_action()}
+		</button>
+	</div>
 </div>

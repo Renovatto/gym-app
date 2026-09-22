@@ -924,5 +924,8 @@
 	"scan_error_permission": "No camera access. Allow the permission in your browser settings and try again.",
 	"scan_error_insecure": "The camera only works on a secure address (https). Open the app at its official address.",
 	"scan_error_unavailable": "Could not open the camera on this device.",
-	"error_barcode_not_found": "Barcode not found in the database. Fill in the values by hand."
+	"error_barcode_not_found": "Barcode not found in the database. Fill in the values by hand.",
+	"scan_starting": "Opening the camera…",
+	"scan_photo_action": "Take a photo of the barcode",
+	"scan_photo_failed": "Couldn't read the barcode in this photo. Try closer, with the code straight and well lit."
 }
