@@ -915,5 +915,6 @@
 	"tour_diet_foods_recipes_title": "Foods and recipes",
 	"tour_diet_foods_recipes_text": "Search for what you are about to eat, or tap \"+\" to add your own food or recipe — the macros are calculated for you. Anything you create can be shared with whoever lives with you, over in Profile.",
 	"tour_feedback_fab_title": "Found a bug or have an idea?",
-	"tour_feedback_fab_text": "This button follows you on every screen. Tap it to send feedback directly; press and drag to move it out of your way."
+	"tour_feedback_fab_text": "This button follows you on every screen. Tap it to send feedback directly; press and drag to move it out of your way.",
+	"offline_banner": "You're offline — data won't load or save until the connection is back."
 }

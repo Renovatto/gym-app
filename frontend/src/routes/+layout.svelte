@@ -6,6 +6,7 @@
 	import TabBar from '$lib/components/TabBar.svelte';
 	import FeedbackFab from '$lib/components/FeedbackFab.svelte';
 	import Toast from '$lib/components/Toast.svelte';
+	import OfflineBanner from '$lib/components/OfflineBanner.svelte';
 	import CelebrationOverlay from '$lib/components/CelebrationOverlay.svelte';
 	import TourOverlay from '$lib/components/TourOverlay.svelte';
 	import NewsModal from '$lib/components/NewsModal.svelte';
@@ -71,6 +72,7 @@
 <svelte:head><link rel="icon" href={favicon} /></svelte:head>
 
 <Toast />
+<OfflineBanner />
 <CelebrationOverlay />
 <TourOverlay />
 

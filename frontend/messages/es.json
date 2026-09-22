@@ -915,5 +915,6 @@
 	"tour_diet_foods_recipes_title": "Alimentos y recetas",
 	"tour_diet_foods_recipes_text": "Busca lo que vas a comer, o toca \"+\" para crear tu propio alimento o receta — los macros se calculan solos. Lo que crees puedes compartirlo con quien vive contigo, en Perfil.",
 	"tour_feedback_fab_title": "¿Encontraste un problema o tienes una idea?",
-	"tour_feedback_fab_text": "Este botón te acompaña en cualquier pantalla. Tócalo para enviar feedback directo; mantén y arrastra para moverlo a donde no estorbe."
+	"tour_feedback_fab_text": "Este botón te acompaña en cualquier pantalla. Tócalo para enviar feedback directo; mantén y arrastra para moverlo a donde no estorbe.",
+	"offline_banner": "Estás sin conexión — los datos no cargan ni se guardan hasta que vuelva."
 }
