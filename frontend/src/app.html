@@ -106,7 +106,14 @@
 			SOZINHA: se o halter entrasse montado, a montagem seguinte se contradiria.
 		-->
 		<style>
-			.boot-mark { width: 39vw; max-width: 200px; }
+			/*
+			   A caixa do SVG e do tamanho da TELA, nao do desenho: o SVG recorta tudo
+			   que sai da sua area, e a barra entrando e os discos vindos de fora saem.
+			   Com a caixa ocupando a largura toda, o unico recorte que sobra acontece
+			   na borda do celular - que e onde ele deve acontecer. O viewBox de 820 de
+			   largura deixa a marca (320) ocupando os mesmos ~39% de antes.
+			*/
+			.boot-mark { width: 100vw; max-width: 520px; }
 			.boot-mark rect { fill: #10b981; }
 			.boot-lift, .boot-beat, .boot-roll, .boot-flex-e, .boot-flex-d {
 				transform-box: fill-box;
@@ -129,7 +136,8 @@
 			.boot-plate-ie, .boot-plate-id { animation-delay: calc(var(--boot-offset, 0s) + 0.1s); }
 
 			@keyframes boot-roll {
-				0% { transform: translateX(-300px) rotate(-720deg); opacity: 1; }
+				/* -500 poe a barra inteira fora da caixa: ela entra pela borda da tela */
+				0% { transform: translateX(-500px) rotate(-720deg); opacity: 1; }
 				20%, 94% { transform: translateX(0) rotate(0deg); opacity: 1; }
 				100% { transform: translateX(0) rotate(0deg); opacity: 0; }
 			}
@@ -192,7 +200,7 @@
 			id="boot-screen"
 			style="position:fixed;inset:0;z-index:50;display:flex;align-items:center;justify-content:center;background:#0f172a"
 		>
-			<svg viewBox="96 180 320 152" class="boot-mark" aria-hidden="true">
+			<svg viewBox="-154 148 820 216" class="boot-mark" aria-hidden="true">
 				<g class="boot-lift">
 					<g class="boot-beat">
 						<g class="boot-plate-oe"><rect class="boot-flex-e" x="96" y="206" width="32" height="100" rx="12" /></g>

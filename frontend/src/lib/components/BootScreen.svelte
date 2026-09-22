@@ -25,7 +25,7 @@
 	class="fixed inset-0 z-50 flex items-center justify-center bg-ink"
 	style="--boot-offset: {offset}"
 >
-	<svg viewBox="96 180 320 152" class="boot-mark" aria-hidden="true">
+	<svg viewBox="-154 148 820 216" class="boot-mark" aria-hidden="true">
 		<g class="boot-lift">
 			<g class="boot-beat">
 				<g class="boot-plate-oe"><rect class="boot-flex-e" x="96" y="206" width="32" height="100" rx="12" /></g>
