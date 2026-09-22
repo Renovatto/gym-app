@@ -32,7 +32,11 @@ def upgrade() -> None:
         'workout_sessions',
         sa.Column('paused_seconds', sa.Integer(), nullable=False, server_default='0'),
     )
-    op.alter_column('workout_sessions', 'paused_seconds', server_default=None)
+    # batch_alter_table porque o SQLite nao tem ALTER COLUMN: no Postgres sai o ALTER
+    # normal, no SQLite o alembic recria a tabela. Mesmo padrao de
+    # f8888d54dcd1_arquivar_rotinas_de_treino.
+    with op.batch_alter_table('workout_sessions', schema=None) as batch_op:
+        batch_op.alter_column('paused_seconds', server_default=None)
     # ### end Alembic commands ###
 
 
