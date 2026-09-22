@@ -32,10 +32,17 @@
 		if (busy || !data) return;
 		busy = true;
 		// otimista: soma na hora, confirma com o servidor depois
+		const previous = data;
 		data = { ...data, total_ml: data.total_ml + amount };
 		try {
 			await api.addWater(amount);
 			await load();
+			showToast(m.toast_saved());
+		} catch {
+			// desfaz o otimismo: sem isso o card mostrava um total que o servidor
+			// nunca recebeu, e o usuario achava que o segundo lancamento "nao ia"
+			data = previous;
+			showToast(m.error_generic());
 		} finally {
 			busy = false;
 		}

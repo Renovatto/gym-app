@@ -3,7 +3,7 @@
 	import { api, type ActivityLevel, type Objective, type Sex } from '$lib/api';
 	import ChoiceChips from '$lib/components/ChoiceChips.svelte';
 	import Stepper from '$lib/components/Stepper.svelte';
-	import { bootstrap } from '$lib/session.svelte';
+	import { bootstrap, session } from '$lib/session.svelte';
 	import { m } from '$lib/paraglide/messages';
 	import { getLocale, setLocale, type Locale } from '$lib/paraglide/runtime';
 	import { toBackendLocale } from '$lib/errors';
@@ -70,7 +70,17 @@
 				scale_mac: null
 			});
 			await bootstrap();
-			await goto('/');
+			if (!session.user) {
+				// bootstrap pode falhar por instabilidade passageira de rede logo apos
+				// o perfil ser salvo; tenta mais uma vez antes de admitir erro, porque
+				// o perfil ja existe no backend e so falta carregar a sessao atualizada
+				await bootstrap();
+			}
+			if (session.user) {
+				await goto('/');
+			} else {
+				error = m.error_generic();
+			}
 		} catch {
 			error = m.error_generic();
 		} finally {

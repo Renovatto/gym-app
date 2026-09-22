@@ -1,4 +1,4 @@
-import { api, clearTokens, getTokens, setTokens, type ProfileData, type UserOut } from './api';
+import { api, ApiError, clearTokens, getTokens, setTokens, type ProfileData, type UserOut } from './api';
 import { clearSharingPending, refreshSharingPending } from './sharing.svelte';
 import { clearNews, refreshNews } from './news.svelte';
 
@@ -19,10 +19,16 @@ export async function bootstrap(): Promise<void> {
 		if (session.user.has_profile) {
 			session.profile = await api.getProfile();
 		}
-	} catch {
-		clearTokens();
-		session.user = null;
-		session.profile = null;
+	} catch (e) {
+		// so desloga de verdade quando o token e invalido/expirado (401 mesmo apos
+		// o refresh automatico do request()). Falha de rede/timeout passageira nao
+		// pode apagar uma sessao valida - fazia o cadastro recem-criado ser jogado
+		// de volta pro login sem aviso, mesmo com a conta ja salva no backend.
+		if (e instanceof ApiError && e.status === 401) {
+			clearTokens();
+			session.user = null;
+			session.profile = null;
+		}
 	}
 	session.loaded = true;
 	// contador do badge: so faz sentido com sessao valida, e nao pode derrubar o boot
