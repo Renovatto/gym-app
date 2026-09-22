@@ -1,0 +1,42 @@
+[
+  {
+    "published_on": "2026-09-22",
+    "importance": "normal",
+    "title_pt_br": "O app instalado sempre mostra o dado atual",
+    "body_pt_br": "No app instalado na tela de início, algumas ações pareciam travar: você desfazia a água ou lançava uma refeição e a tela continuava mostrando o valor antigo. A ação ia — quem vinha guardada de antes era a leitura seguinte. Agora o app guarda só os próprios arquivos e busca os seus dados sempre atualizados.",
+    "title_en": "The installed app always shows current data",
+    "body_en": "In the app installed on your home screen, some actions seemed stuck: you would undo your water or log a meal and the screen kept showing the old value. The action did go through — it was the next read that came from an old copy. The app now stores only its own files and always fetches your data fresh.",
+    "title_es": "La app instalada siempre muestra el dato actual",
+    "body_es": "En la app instalada en la pantalla de inicio, algunas acciones parecían atascadas: deshacías el agua o registrabas una comida y la pantalla seguía mostrando el valor anterior. La acción sí se enviaba — lo que venía de una copia antigua era la lectura siguiente. Ahora la app guarda solo sus propios archivos y busca tus datos siempre actualizados."
+  },
+  {
+    "published_on": "2026-09-22",
+    "importance": "normal",
+    "title_pt_br": "O registro de água agora confirma",
+    "body_pt_br": "Cada quantidade de água que você registra agora confirma na tela. E se o envio falhar, o app avisa em vez de somar um valor que não chegou a ser salvo — antes o total podia mostrar uma quantidade que o servidor nunca recebeu.",
+    "title_en": "Logging water now confirms",
+    "body_en": "Every amount of water you log now confirms on screen. And if it fails to send, the app tells you instead of adding a value that was never saved — before, the total could show an amount the server never received.",
+    "title_es": "El registro de agua ahora confirma",
+    "body_es": "Cada cantidad de agua que registras ahora confirma en pantalla. Y si el envío falla, la app te avisa en vez de sumar un valor que no llegó a guardarse — antes el total podía mostrar una cantidad que el servidor nunca recibió."
+  },
+  {
+    "published_on": "2026-09-22",
+    "importance": "normal",
+    "title_pt_br": "O cadastro não volta mais para o login",
+    "body_pt_br": "Ao terminar de criar a conta, o app entra direto, mesmo se a conexão oscilar no último passo. Antes, uma falha passageira de rede podia jogar você de volta na tela de login — com a conta já criada, o que só confundia.",
+    "title_en": "Signing up no longer sends you back to login",
+    "body_en": "When you finish creating your account, the app takes you straight in, even if the connection wavers on the last step. Before, a brief network glitch could drop you back on the login screen — with the account already created, which was only confusing.",
+    "title_es": "El registro ya no te devuelve al inicio de sesión",
+    "body_es": "Al terminar de crear la cuenta, la app entra directo, aunque la conexión falle en el último paso. Antes, un fallo pasajero de red podía devolverte a la pantalla de inicio de sesión — con la cuenta ya creada, lo que solo confundía."
+  },
+  {
+    "published_on": "2026-09-22",
+    "importance": "normal",
+    "title_pt_br": "O e-mail de redefinir senha ganhou a cara do app",
+    "body_pt_br": "Quando você pede uma senha nova, o e-mail chega com a identidade do GymApp — logo, cores e um botão que abre a redefinição direto. Antes era texto puro, fácil de confundir com spam.",
+    "title_en": "The password reset email now looks like the app",
+    "body_en": "When you ask for a new password, the email arrives with GymApp's identity — logo, colors, and a button that opens the reset right away. It used to be plain text, easy to mistake for spam.",
+    "title_es": "El correo para restablecer la contraseña ahora tiene la cara de la app",
+    "body_es": "Cuando pides una contraseña nueva, el correo llega con la identidad de GymApp — logo, colores y un botón que abre el restablecimiento directamente. Antes era texto plano, fácil de confundir con spam."
+  }
+]

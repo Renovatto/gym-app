@@ -26,9 +26,22 @@ logger = logging.getLogger(__name__)
 # provedor penduraria o worker que atende a requisicao.
 SMTP_TIMEOUT_SECONDS = 15
 
+# Mesma pilha do app (Tailwind v4 usa ui-sans-serif/system-ui como font-sans
+# padrao, e o projeto nao carrega fonte propria), com os nomes explicitos atras:
+# leitor de e-mail que nao conhece ui-sans-serif/system-ui cai em Times se nao
+# achar nenhuma familia com nome de verdade na lista.
 _FONT_STACK = (
-    "-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif"
+    "ui-sans-serif,system-ui,-apple-system,'Segoe UI',Roboto,Helvetica,Arial,sans-serif"
 )
+
+# Hex equivalentes dos tokens do app. O Tailwind v4 declara as cores em oklch, que
+# leitor de e-mail nao entende - aqui vao as mesmas cores ja convertidas para sRGB.
+_EMERALD_600 = "#009966"  # acao primaria, igual ao bg-emerald-600 dos botoes
+_SLATE_900 = "#0f172a"  # faixa escura e titulo; hardcoded assim no favicon/manifest
+_SLATE_500 = "#62748e"  # texto de apoio
+_SLATE_400 = "#90a1b9"  # rodape
+_SLATE_200 = "#e2e8f0"  # linha divisoria
+_SLATE_50 = "#f8fafc"  # fundo da pagina
 
 # Textos por idioma, espelhando os locales suportados no frontend
 # (messages/{pt-br,en,es}.json). A API nunca devolve texto pronto, mas e-mail e
@@ -106,10 +119,17 @@ def _render_email_html(
     costura da maquete original: sao efeitos que dependem de recursos (SVG
     animado, position:absolute) que a maioria dos leitores de e-mail descarta.
     """
-    logo_url = f"{settings.frontend_url}/icon-192.png"
+    # email-logo.png, e nao icon-192/512.png: o icone do app tem ~35% de fundo
+    # vazio acima e abaixo do halter, desenhado dentro da propria imagem. Como
+    # esse fundo e o mesmo #0f172a da faixa, ele some visualmente e vira
+    # distancia - que cresce junto com a imagem e afasta o nome do app quanto
+    # maior o logo. email-logo.png e o mesmo desenho recortado no halter, entao
+    # o tamanho da imagem e o tamanho do que se ve, e o respiro vem so do HTML.
+    logo_url = f"{settings.frontend_url}/email-logo.png"
+    # 16px/slate-500: mesmo corpo de texto da tela de recuperar senha no app
     paragraphs_html = "".join(
         f'<tr><td align="center" style="padding:0 0 16px;font-family:{_FONT_STACK};'
-        f'font-size:15px;line-height:24px;color:#475569;">{p}</td></tr>'
+        f'font-size:16px;line-height:26px;color:{_SLATE_500};">{p}</td></tr>'
         for p in paragraphs
     )
     return f"""<!doctype html>
@@ -119,44 +139,42 @@ def _render_email_html(
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>{heading}</title>
 </head>
-<body style="margin:0;padding:0;background-color:#f8fafc;">
-<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color:#f8fafc;">
+<body style="margin:0;padding:0;background-color:{_SLATE_50};">
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color:{_SLATE_50};">
 <tr><td align="center" style="padding:32px 16px;">
 <table role="presentation" width="600" cellpadding="0" cellspacing="0" style="max-width:600px;width:100%;background-color:#ffffff;border-radius:20px;">
 <tr>
-<td align="center" valign="middle" height="170" style="background-color:#0f172a;padding:0 24px;border-radius:20px 20px 0 0;font-size:0;line-height:0;">
+<td align="center" valign="middle" height="136" style="background-color:{_SLATE_900};padding:0 24px;border-radius:20px 20px 0 0;font-size:0;line-height:0;">
 <!--
-  Tabela aninhada em vez de img+div+span soltos: texto solto entre tags vira
-  espaco em branco com a altura de linha padrao do navegador (~19px por
-  quebra), que se soma ao espacador de proposito e cresce sozinho a cada
-  ajuste de tamanho - o motivo do logo e do nome nunca ficarem colados por
-  mais que o espacador diminuisse. font-size/line-height:0 em cada td anula
-  esse espaco invisivel; a unica distancia real vem do height da linha do meio.
+  Tabela aninhada em vez de img+span soltos: texto solto entre tags vira espaco
+  em branco com a altura de linha padrao do navegador e se soma ao espacador.
+  font-size/line-height:0 em cada td anula esse espaco invisivel, entao a unica
+  distancia entre o halter e o nome e o height da linha do meio.
 --><table role="presentation" cellpadding="0" cellspacing="0" border="0"><tr>
-<td align="center" style="font-size:0;line-height:0;"><img src="{logo_url}" width="140" height="140" alt="Gym App" style="display:block;border:0;border-radius:32px;"></td>
+<td align="center" style="font-size:0;line-height:0;"><img src="{logo_url}" width="145" height="75" alt="Gym App" style="display:block;border:0;"></td>
 </tr><tr>
-<td align="center" height="6" style="font-size:0;line-height:6px;">&nbsp;</td>
+<td align="center" height="10" style="font-size:0;line-height:10px;">&nbsp;</td>
 </tr><tr>
-<td align="center" style="font-size:0;line-height:0;"><span style="font-family:{_FONT_STACK};font-size:13px;line-height:13px;font-weight:800;letter-spacing:4px;color:#e2e8f0;text-transform:uppercase;">Gym App</span></td>
+<td align="center" style="font-size:0;line-height:0;"><span style="font-family:{_FONT_STACK};font-size:13px;line-height:13px;font-weight:700;letter-spacing:4px;color:{_SLATE_200};text-transform:uppercase;">Gym App</span></td>
 </tr></table>
 </td>
 </tr>
 <tr>
 <td style="padding:40px 40px 8px;">
 <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
-<tr><td align="center" style="padding:0 0 18px;"><h1 style="margin:0;font-family:{_FONT_STACK};font-size:22px;font-weight:800;color:#0f172a;">{heading}</h1></td></tr>
+<tr><td align="center" style="padding:0 0 18px;"><h1 style="margin:0;font-family:{_FONT_STACK};font-size:24px;line-height:30px;font-weight:900;letter-spacing:-0.6px;color:{_SLATE_900};">{heading}</h1></td></tr>
 {paragraphs_html}
 <tr><td align="center" style="padding:8px 0 4px;">
 <table role="presentation" cellpadding="0" cellspacing="0">
-<tr><td align="center" style="background-color:#059669;border-radius:16px;">
-<a href="{button_url}" style="display:inline-block;padding:14px 36px;font-family:{_FONT_STACK};font-size:16px;font-weight:700;color:#ffffff;text-decoration:none;">{button_text}</a>
+<tr><td align="center" style="background-color:{_EMERALD_600};border-radius:16px;">
+<a href="{button_url}" style="display:inline-block;padding:17px 40px;font-family:{_FONT_STACK};font-size:18px;line-height:22px;font-weight:700;color:#ffffff;text-decoration:none;">{button_text}</a>
 </td></tr>
 </table>
 </td></tr>
-<tr><td align="center" style="padding:12px 0 4px;"><p style="margin:0;font-family:{_FONT_STACK};font-size:13px;color:#94a3b8;">{footnote}</p></td></tr>
-<tr><td style="padding:24px 0 0;"><div style="border-top:1px solid #e2e8f0;font-size:1px;line-height:1px;">&nbsp;</div></td></tr>
-<tr><td align="center" style="padding:20px 0 4px;"><p style="margin:0;font-family:{_FONT_STACK};font-size:12px;line-height:18px;color:#94a3b8;">Gym App &middot; rgymapp.duckdns.org<br>{ignore_note}</p></td></tr>
-<tr><td align="center" style="padding:12px 0 32px;"><p style="margin:0;font-family:{_FONT_STACK};font-size:11px;line-height:16px;color:#cbd5e1;word-break:break-all;">{link_fallback_lead}<br><a href="{button_url}" style="color:#94a3b8;">{button_url}</a></p></td></tr>
+<tr><td align="center" style="padding:14px 0 4px;"><p style="margin:0;font-family:{_FONT_STACK};font-size:14px;line-height:20px;color:{_SLATE_500};">{footnote}</p></td></tr>
+<tr><td style="padding:24px 0 0;"><div style="border-top:1px solid {_SLATE_200};font-size:1px;line-height:1px;">&nbsp;</div></td></tr>
+<tr><td align="center" style="padding:20px 0 4px;"><p style="margin:0;font-family:{_FONT_STACK};font-size:12px;line-height:18px;color:{_SLATE_400};">Gym App &middot; rgymapp.duckdns.org<br>{ignore_note}</p></td></tr>
+<tr><td align="center" style="padding:12px 0 32px;"><p style="margin:0;font-family:{_FONT_STACK};font-size:12px;line-height:18px;color:{_SLATE_400};word-break:break-all;">{link_fallback_lead}<br><a href="{button_url}" style="color:{_SLATE_500};">{button_url}</a></p></td></tr>
 </table>
 </td>
 </tr>
