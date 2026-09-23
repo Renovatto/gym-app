@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { closeOnBack } from '$lib/modalBack';
 	import type { RecipeView } from '$lib/api';
 	import MacroBreakdown from '$lib/components/MacroBreakdown.svelte';
 	import { m } from '$lib/paraglide/messages';
@@ -22,6 +23,9 @@
 		actionBusy?: boolean;
 	} = $props();
 
+
+	// Voltar fecha a receita aberta em vez de sair da lista.
+	$effect(() => closeOnBack(() => onClose()));
 	const nf = new Intl.NumberFormat(getLocale());
 
 	function tagLabel(tag: string): string {

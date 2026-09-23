@@ -24,6 +24,7 @@
 	import { showToast } from '$lib/toast.svelte';
 	import { triggerAchievementCelebrations } from '$lib/celebrationTrigger';
 	import SkeletonScreen from '$lib/components/SkeletonScreen.svelte';
+	import { closeOnBack } from '$lib/modalBack';
 	import { m } from '$lib/paraglide/messages';
 	import { getLocale } from '$lib/paraglide/runtime';
 	import { isShowingAnchor } from '$lib/tour.svelte';
@@ -579,6 +580,17 @@
 				value: selectedLog![field.key]
 			}))
 			.filter((row) => row.value !== null && row.value !== undefined);
+	});
+
+	// Voltar fecha a modal aberta em vez de sair da tela (ver lib/modalBack.ts).
+	$effect(() => {
+		if (adding) return closeOnBack(() => (adding = false));
+	});
+	$effect(() => {
+		if (showTargetHelp) return closeOnBack(() => (showTargetHelp = false));
+	});
+	$effect(() => {
+		if (selectedLog) return closeOnBack(() => (selectedLog = null));
 	});
 </script>
 

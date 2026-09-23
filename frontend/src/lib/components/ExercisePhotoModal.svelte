@@ -1,10 +1,14 @@
 <script lang="ts">
+	import { closeOnBack } from '$lib/modalBack';
 	import type { Exercise } from '$lib/api';
 	import { equipmentLabel, muscleGroupLabel } from '$lib/labels';
 	import { m } from '$lib/paraglide/messages';
 
 	let { exercise, onClose }: { exercise: Exercise; onClose: () => void } = $props();
 
+
+	// Voltar fecha a foto do exercicio em vez de sair do treino.
+	$effect(() => closeOnBack(() => onClose()));
 	const images = $derived(exercise.media_urls);
 	let index = $state(0);
 	let animating = $state(false);

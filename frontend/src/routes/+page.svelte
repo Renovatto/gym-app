@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { closeOnBack } from '$lib/modalBack';
 	import {
 		api,
 		localDay,
@@ -234,6 +235,11 @@
 			const def = POOL_HOLIDAY.find((d) => d.slug === holidayCode);
 			if (def) celebrate(def, HOLIDAY_CONTENT[holidayCode]);
 		}
+	});
+
+	// Voltar fecha a modal aberta em vez de sair da tela (ver lib/modalBack.ts).
+	$effect(() => {
+		if (infoModal) return closeOnBack(() => (infoModal = null));
 	});
 </script>
 

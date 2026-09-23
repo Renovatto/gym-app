@@ -8,6 +8,7 @@
 		type PantryRecipeMatch,
 		type RecipeView
 	} from '$lib/api';
+	import { closeOnBack } from '$lib/modalBack';
 	import MacroBreakdown from '$lib/components/MacroBreakdown.svelte';
 	import RecipeViewModal from '$lib/components/RecipeViewModal.svelte';
 	import Spinner from '$lib/components/Spinner.svelte';
@@ -31,6 +32,9 @@
 		onClose: () => void;
 		onAdded: () => void;
 	} = $props();
+
+	// Voltar fecha a modal em vez de descartar a refeicao sendo montada.
+	$effect(() => closeOnBack(() => onClose()));
 
 	const nf = new Intl.NumberFormat(getLocale());
 

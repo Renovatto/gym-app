@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { closeOnBack } from '$lib/modalBack';
 	import {
 		api,
 		localDay,
@@ -956,6 +957,23 @@
 	$effect(() => {
 		day;
 		load();
+	});
+
+	// Voltar fecha a modal aberta em vez de sair da tela (ver lib/modalBack.ts).
+	$effect(() => {
+		if (editing) return closeOnBack(() => (editing = null));
+	});
+	$effect(() => {
+		if (suggSubs) return closeOnBack(() => (suggSubs = null));
+	});
+	$effect(() => {
+		if (showPeriodModal) return closeOnBack(() => (showPeriodModal = false));
+	});
+	$effect(() => {
+		if (showSupplementManager) return closeOnBack(() => (showSupplementManager = false));
+	});
+	$effect(() => {
+		if (cycleModal) return closeOnBack(() => (cycleModal = false));
 	});
 </script>
 

@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { api, type Food, type FoodPortion, type MealType, type Recipe } from '$lib/api';
+	import { closeOnBack } from '$lib/modalBack';
 	import Stepper from '$lib/components/Stepper.svelte';
 	import { showToast } from '$lib/toast.svelte';
 	import { mealTypeLabel, portionLabel } from '$lib/labels';
@@ -15,7 +16,8 @@
 		day,
 		onClose,
 		onAdded,
-		label = null
+		label = null,
+		trapBack = true
 	}: {
 		meal: MealType;
 		day: string;
@@ -23,7 +25,16 @@
 		onAdded: () => void;
 		// rotulo customizado da refeicao (ex.: nome digitado no "Outros")
 		label?: string | null;
+		// false quando este componente E a tela inteira (rota /dieta/adicionar), e nao
+		// uma modal por cima de outra: ali o Voltar do aparelho ja faz a coisa certa
+		// sozinho, e prender o historico so atrapalharia.
+		trapBack?: boolean;
 	} = $props();
+
+	// Voltar fecha a modal em vez de sair da tela de refeicoes.
+	$effect(() => {
+		if (trapBack) return closeOnBack(() => onClose());
+	});
 
 	const nf = new Intl.NumberFormat(getLocale());
 

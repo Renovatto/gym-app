@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { closeOnBack } from '$lib/modalBack';
 	import { untrack } from 'svelte';
 	import { api, type FeedbackModule } from '$lib/api';
 	import { showToast } from '$lib/toast.svelte';
@@ -11,6 +12,9 @@
 		onClose
 	}: { initialModule?: FeedbackModule; onClose: () => void } = $props();
 
+
+	// Voltar fecha o formulario de feedback em vez de sair da tela.
+	$effect(() => closeOnBack(() => onClose()));
 	const MODULES: FeedbackModule[] = ['workout', 'diet', 'progress', 'profile', 'other'];
 	// valor inicial vem do prop (modulo da tela atual); untrack deixa claro que e so o inicial
 	let selectedModule = $state<FeedbackModule>(untrack(() => initialModule));

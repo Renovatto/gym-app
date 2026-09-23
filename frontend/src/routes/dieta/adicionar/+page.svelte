@@ -11,4 +11,13 @@
 	const entryDay = $derived(page.url.searchParams.get('day') ?? localDay());
 </script>
 
-<AddEntryModal {meal} day={entryDay} onClose={() => goto('/dieta')} onAdded={() => {}} />
+<!-- trapBack={false}: aqui a "modal" e a tela toda, entao o Voltar do aparelho ja
+	 devolve para de onde a pessoa veio. replaceState no Concluido pelo mesmo motivo -
+	 sem ele, voltar da Dieta traria esta tela de novo, que e de onde acabou de sair. -->
+<AddEntryModal
+	{meal}
+	day={entryDay}
+	trapBack={false}
+	onClose={() => goto('/dieta', { replaceState: true })}
+	onAdded={() => {}}
+/>

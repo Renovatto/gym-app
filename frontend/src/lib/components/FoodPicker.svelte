@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { api, ApiError, type Food, type FoodCategory } from '$lib/api';
+	import { closeOnBack } from '$lib/modalBack';
 	import PillChoices from '$lib/components/PillChoices.svelte';
 	import { foodCategoryOptions } from '$lib/foodCategories';
 	import Stepper from '$lib/components/Stepper.svelte';
@@ -15,6 +16,9 @@
 		onClose,
 		addedCount = 0
 	}: { onPick: (food: Food) => void; onClose: () => void; addedCount?: number } = $props();
+
+	// Voltar fecha o picker em vez de sair da tela e perder a receita em edicao.
+	$effect(() => closeOnBack(() => onClose()));
 
 	const nf = new Intl.NumberFormat(getLocale());
 	let query = $state('');

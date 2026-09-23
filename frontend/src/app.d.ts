@@ -5,7 +5,11 @@ declare global {
 		// interface Error {}
 		// interface Locals {}
 		// interface PageData {}
-		// interface PageState {}
+		interface PageState {
+			// Marca a entrada de historico empurrada por uma modal aberta, para o
+			// Voltar fechar a modal em vez de sair da tela (ver lib/modalBack.ts).
+			modalDepth?: number;
+		}
 		// interface Platform {}
 	}
 }

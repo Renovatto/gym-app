@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { closeOnBack } from '$lib/modalBack';
 	import { api, localDay, type AchievementItem, type AchievementsResult } from '$lib/api';
 	import { achievementText } from '$lib/achievementsContent';
 	import { titleIcon, titleName } from '$lib/titleContent';
@@ -217,6 +218,11 @@
 
 	$effect(() => {
 		load();
+	});
+
+	// Voltar fecha a modal aberta em vez de sair da tela (ver lib/modalBack.ts).
+	$effect(() => {
+		if (openedAchievement) return closeOnBack(() => (openedAchievement = null));
 	});
 </script>
 

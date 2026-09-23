@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { closeOnBack } from '$lib/modalBack';
 	import { untrack } from 'svelte';
 	import { api, type ActivityIntensity, type StandaloneActivityKind } from '$lib/api';
 	import { ACTIVITY_DISTANCE_KINDS, ACTIVITY_KINDS, activityIntensityLabel, activityKindLabel } from '$lib/labels';
@@ -14,6 +15,9 @@
 		onAdded: (savedDay: string) => void;
 	} = $props();
 
+
+	// Voltar fecha a modal em vez de descartar a atividade em preenchimento.
+	$effect(() => closeOnBack(() => onClose()));
 	function nowHHMM(): string {
 		const d = new Date();
 		return `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;

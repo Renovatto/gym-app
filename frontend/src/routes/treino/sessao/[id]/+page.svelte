@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { closeOnBack } from '$lib/modalBack';
 	import { goto } from '$app/navigation';
 	import { page } from '$app/state';
 	import { slide } from 'svelte/transition';
@@ -661,6 +662,14 @@
 	function focusNext(): void {
 		if (focusIndex < blocks.length - 1) focusIndex += 1;
 	}
+
+	// Voltar fecha a modal aberta em vez de sair da tela (ver lib/modalBack.ts).
+	$effect(() => {
+		if (focusMode) return closeOnBack(() => (focusMode = false));
+	});
+	$effect(() => {
+		if (swapFor) return closeOnBack(() => (swapFor = null));
+	});
 </script>
 
 {#if loading}

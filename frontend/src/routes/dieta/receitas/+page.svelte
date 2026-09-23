@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { closeOnBack } from '$lib/modalBack';
 	import {
 		ApiError,
 		api,
@@ -295,6 +296,14 @@
 			adopting = null;
 		}
 	}
+
+	// Voltar fecha a modal aberta em vez de sair da tela (ver lib/modalBack.ts).
+	$effect(() => {
+		if (pickingPartner) return closeOnBack(() => (pickingPartner = false));
+	});
+	$effect(() => {
+		if (showInbox) return closeOnBack(() => (showInbox = false));
+	});
 </script>
 
 <div class="mb-4 flex items-center gap-2">

@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { closeOnBack } from '$lib/modalBack';
 	import { untrack } from 'svelte';
 	import { m } from '$lib/paraglide/messages';
 	import { getLocale } from '$lib/paraglide/runtime';
@@ -30,6 +31,9 @@
 		onmonth?: (year: number, month: number) => void;
 	} = $props();
 
+
+	// Voltar fecha o calendario em vez de sair da tela.
+	$effect(() => closeOnBack(() => onclose()));
 	function pad(n: number): string {
 		return String(n).padStart(2, '0');
 	}

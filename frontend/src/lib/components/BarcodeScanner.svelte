@@ -1,9 +1,13 @@
 <script lang="ts">
+	import { closeOnBack } from '$lib/modalBack';
 	import { m } from '$lib/paraglide/messages';
 	import Spinner from '$lib/components/Spinner.svelte';
 
 	let { onread, onclose }: { onread: (code: string) => void; onclose: () => void } = $props();
 
+
+	// Voltar fecha o leitor em vez de sair da tela de alimento.
+	$effect(() => closeOnBack(() => onclose()));
 	// Motivos de falha separados porque a acao da pessoa muda em cada um: permissao
 	// ela resolve nos ajustes, conexao insegura so o endereco https resolve, e
 	// camera que nao da quadros tem a foto como saida.

@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { closeOnBack } from '$lib/modalBack';
 	import { goto } from '$app/navigation';
 	import { page } from '$app/state';
 	import { api, type Exercise, type RoutineItemInput } from '$lib/api';
@@ -199,6 +200,11 @@
 
 	$effect(() => {
 		load();
+	});
+
+	// Voltar fecha a modal aberta em vez de sair da tela (ver lib/modalBack.ts).
+	$effect(() => {
+		if (picking) return closeOnBack(() => (picking = false));
 	});
 </script>
 

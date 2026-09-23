@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { closeOnBack } from '$lib/modalBack';
 	import { slide } from 'svelte/transition';
 	import { goto } from '$app/navigation';
 	import {
@@ -483,6 +484,23 @@
 	const trainedDays = $derived(new Set(finishedSessions.map((s) => s.started_at.slice(0, 10))));
 	// dias com atividade avulsa: marcados na segunda cor, podem coincidir com treino
 	const activityDaysSet = $derived(new Set(activityDays));
+
+	// Voltar fecha a modal aberta em vez de sair da tela (ver lib/modalBack.ts).
+	$effect(() => {
+		if (selectedPeriod) return closeOnBack(() => (selectedPeriod = null));
+	});
+	$effect(() => {
+		if (dayWorkouts) return closeOnBack(() => (dayWorkouts = null));
+	});
+	$effect(() => {
+		if (addWorkoutStep) return closeOnBack(() => (addWorkoutStep = null));
+	});
+	$effect(() => {
+		if (previewRoutine) return closeOnBack(() => (previewRoutine = null));
+	});
+	$effect(() => {
+		if (variation) return closeOnBack(() => (variation = null));
+	});
 </script>
 
 <div class="mb-6 flex items-center justify-between gap-2">
