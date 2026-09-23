@@ -1,11 +1,14 @@
 <script lang="ts">
 	import { closeOnBack } from '$lib/modalBack';
 	import { untrack } from 'svelte';
-	import { api, type ActivityIntensity, type StandaloneActivityKind } from '$lib/api';
+	import { ApiError, api, type ActivityIntensity, type StandaloneActivityKind } from '$lib/api';
+	import { errorMessage } from '$lib/errors';
 	import { ACTIVITY_DISTANCE_KINDS, ACTIVITY_KINDS, activityIntensityLabel, activityKindLabel } from '$lib/labels';
+	import CalendarModal from '$lib/components/CalendarModal.svelte';
 	import Stepper from '$lib/components/Stepper.svelte';
 	import { showToast } from '$lib/toast.svelte';
 	import { m } from '$lib/paraglide/messages';
+	import { getLocale } from '$lib/paraglide/runtime';
 
 	// onAdded recebe o dia salvo: pode nao ser o de hoje, e quem chama precisa saber
 	// se deve recarregar a lista do dia ou so as marcacoes do calendario.
@@ -29,6 +32,8 @@
 	// trocar aqui lanca uma atividade que ele esqueceu de registrar. Lemos o prop uma
 	// vez so (untrack) - depois disso quem manda no campo e quem esta digitando.
 	let entryDate = $state(untrack(() => day));
+	let showCalendar = $state(false);
+	const df = new Intl.DateTimeFormat(getLocale(), { day: '2-digit', month: 'short' });
 	let timeOfDay = $state(nowHHMM());
 	let durationMin = $state(30);
 	let distanceKm = $state(5);
@@ -92,6 +97,10 @@
 			showToast(m.activity_added());
 			kcalTouched = false;
 			onAdded(entryDate);
+		} catch (e) {
+			// sem isto, uma recusa do servidor (data futura, rede) nao dizia nada e a
+			// pessoa apertava Salvar de novo sem saber o que houve
+			showToast(errorMessage(e instanceof ApiError ? e.code : 'GENERIC_ERROR'));
 		} finally {
 			saving = false;
 		}
@@ -143,16 +152,20 @@
 				<label class="mb-1.5 block text-xs font-bold text-slate-500" for="activity-date">
 					{m.activity_date_label()}
 				</label>
-				<input
+				<!-- Calendario do app, nao input[type=date]: o calendario nativo do celular
+					 ignora o max e deixa escolher dia futuro. O CalendarModal desenha o dia
+					 acima do max apagado e com disabled - a trava aparece antes do toque. -->
+				<button
 					id="activity-date"
-					type="date"
-					bind:value={entryDate}
-					max={day}
+					type="button"
+					onclick={() => (showCalendar = true)}
 					class="h-12 w-full rounded-xl border-2 px-3 text-center font-bold text-slate-900 {entryDate !==
 					day
 						? 'border-amber-300 bg-amber-50'
 						: 'border-slate-200'}"
-				/>
+				>
+					{df.format(new Date(`${entryDate}T12:00:00`))}
+				</button>
 			</div>
 			<div>
 				<label class="mb-1.5 block text-xs font-bold text-slate-500" for="activity-time">
@@ -226,3 +239,13 @@
 		</button>
 	</div>
 </div>
+
+<!-- z-50 contra o z-40 da modal: fica por cima sem depender da ordem do markup. -->
+{#if showCalendar}
+	<CalendarModal
+		value={entryDate}
+		max={day}
+		onselect={(d) => (entryDate = d)}
+		onclose={() => (showCalendar = false)}
+	/>
+{/if}

@@ -932,5 +932,6 @@
 	"weigh_in_yesterday": "Ayer",
 	"weigh_in_today": "Hoy",
 	"weigh_in_other_date": "Otra",
-	"error_weigh_in_future": "El peso solo puede registrarse hoy o en días que ya pasaron."
+	"error_weigh_in_future": "El peso solo puede registrarse hoy o en días que ya pasaron.",
+	"error_activity_date_future": "La actividad solo puede registrarse hoy o en días que ya pasaron."
 }

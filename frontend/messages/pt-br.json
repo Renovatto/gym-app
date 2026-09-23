@@ -932,5 +932,6 @@
 	"weigh_in_yesterday": "Ontem",
 	"weigh_in_today": "Hoje",
 	"weigh_in_other_date": "Outra",
-	"error_weigh_in_future": "Peso só pode ser lançado hoje ou em dias que já passaram."
+	"error_weigh_in_future": "Peso só pode ser lançado hoje ou em dias que já passaram.",
+	"error_activity_date_future": "Atividade só pode ser lançada hoje ou em dias que já passaram."
 }

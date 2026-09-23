@@ -24,7 +24,8 @@ const ERROR_MESSAGES: Record<string, () => string> = {
 	CYCLE_PHASE_REQUIRED: () => m.error_cycle_phase_required(),
 	CYCLE_DATE_REQUIRED: () => m.error_cycle_date_required(),
 	CYCLE_DATE_FUTURE: () => m.error_cycle_date_future(),
-	WEIGH_IN_FUTURE_DATE: () => m.error_weigh_in_future()
+	WEIGH_IN_FUTURE_DATE: () => m.error_weigh_in_future(),
+	ACTIVITY_DATE_FUTURE: () => m.error_activity_date_future()
 };
 
 export function errorMessage(code: string): string {

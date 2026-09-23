@@ -1,4 +1,4 @@
-from datetime import date
+from datetime import date, timedelta
 
 from fastapi import APIRouter, HTTPException, Query, status
 from sqlmodel import Session, asc, desc, select
@@ -65,6 +65,12 @@ def list_activities(user: CurrentUser, session: SessionDep, day: date = Query(..
 
 @router.post("", response_model=StandaloneActivityOut, status_code=status.HTTP_201_CREATED)
 def add_activity(data: StandaloneActivityIn, user: CurrentUser, session: SessionDep) -> StandaloneActivity:
+    # Atividade no futuro suja o historico e o gasto extra do dia. A tela ja impede
+    # escolher (o calendario desenha o dia acima de hoje com disabled); aqui e a
+    # guarda de quem nao veio pela tela. +1 dia de folga pelo mesmo motivo do ciclo:
+    # entry_date e o dia LOCAL do cliente, que pode estar a frente do UTC do servidor.
+    if data.entry_date > date.today() + timedelta(days=1):
+        raise HTTPException(status.HTTP_400_BAD_REQUEST, detail="ACTIVITY_DATE_FUTURE")
     if data.kcal is not None:
         kcal, kcal_is_manual = data.kcal, True
     else:
