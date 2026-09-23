@@ -6,8 +6,13 @@ entrada, e digitar isso no painel a cada release e onde o passo costuma ser pula
     GYMAPP_ADMIN_TOKEN=... python tools/publicar_novidades.py tools/novidades_X.json
 
 O token e o mesmo que o painel usa: abra o /admin logado e copie
-localStorage.getItem('gymapp.access') do console. Ele fica so no seu ambiente - o
-script le da variavel e nunca o escreve em lugar nenhum.
+localStorage.getItem('gymapp.admin.access') do console. Ele fica so no seu ambiente -
+o script le da variavel e nunca o escreve em lugar nenhum.
+
+A chave e 'gymapp.admin.access', com o 'admin' no meio: o painel guarda o token dele
+separado do app principal, que usa 'gymapp.access'. Ler a chave errada devolve o
+token do app - que existe, parece certo e esta quase sempre vencido, porque ninguem
+abre o app no mesmo navegador do painel.
 
 Por padrao aponta para producao; use --api para outro destino (ex.: o backend local
 em http://localhost:8765). Antes de enviar, o script MOSTRA o que vai publicar e
