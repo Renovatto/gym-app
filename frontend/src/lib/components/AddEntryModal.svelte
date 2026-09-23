@@ -419,22 +419,37 @@
 
 		<!-- busca unica das duas abas: alimento vai ao backend (debounce), receita
 			 filtra a lista ja carregada -->
-		<div class="relative mb-3">
-			<input
-				bind:value={query}
-				placeholder={tab === 'foods' ? m.search_food() : m.search_recipes()}
-				class="h-12 w-full rounded-2xl border-2 border-slate-200 bg-white pr-11 pl-4 outline-none focus:border-emerald-600"
-			/>
-			{#if query}
-				<button
-					type="button"
-					aria-label={m.clear()}
-					title={m.clear()}
-					onclick={() => (query = '')}
-					class="absolute top-1/2 right-2 grid h-8 w-8 -translate-y-1/2 place-items-center rounded-full text-slate-400 active:bg-slate-100"
+		<div class="mb-3 flex items-center gap-2">
+			<div class="relative min-w-0 flex-1">
+				<input
+					bind:value={query}
+					placeholder={tab === 'foods' ? m.search_food() : m.search_recipes()}
+					class="h-12 w-full rounded-2xl border-2 border-slate-200 bg-white pr-11 pl-4 outline-none focus:border-emerald-600"
+				/>
+				{#if query}
+					<button
+						type="button"
+						aria-label={m.clear()}
+						title={m.clear()}
+						onclick={() => (query = '')}
+						class="absolute top-1/2 right-2 grid h-8 w-8 -translate-y-1/2 place-items-center rounded-full text-slate-400 active:bg-slate-100"
+					>
+						<svg viewBox="0 0 24 24" class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18" /></svg>
+					</button>
+				{/if}
+			</div>
+			<!-- Mesmo motivo do FoodPicker: a lista de alimentos e paginada e empurra o
+				 link de cadastrar cada vez mais para baixo. So na aba de alimentos - na
+				 de receitas este "+" criaria a coisa errada. -->
+			{#if tab === 'foods'}
+				<a
+					href="/dieta/alimento/novo"
+					aria-label={m.create_food()}
+					title={m.create_food()}
+					class="grid h-12 w-12 shrink-0 place-items-center rounded-2xl border-2 border-dashed border-emerald-300 text-emerald-700 active:bg-emerald-50"
 				>
-					<svg viewBox="0 0 24 24" class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18" /></svg>
-				</button>
+					<svg viewBox="0 0 24 24" class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 5v14M5 12h14" stroke-linecap="round" /></svg>
+				</a>
 			{/if}
 		</div>
 

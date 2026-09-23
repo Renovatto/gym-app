@@ -169,11 +169,25 @@
 				</button>
 			</div>
 		{:else}
-			<input
-				bind:value={query}
-				placeholder={m.search_food()}
-				class="mb-3 h-12 w-full rounded-2xl border-2 border-slate-200 bg-white px-4 outline-none focus:border-emerald-600"
-			/>
+			<!-- O "+" fica na linha da busca porque a lista e longa: quem ja sabe que o
+				 alimento nao existe nao deveria rolar centenas de itens para cadastrar.
+				 O botao escrito continua no fim, para quem descobre navegando. -->
+			<div class="mb-3 flex items-center gap-2">
+				<input
+					bind:value={query}
+					placeholder={m.search_food()}
+					class="h-12 min-w-0 flex-1 rounded-2xl border-2 border-slate-200 bg-white px-4 outline-none focus:border-emerald-600"
+				/>
+				<button
+					type="button"
+					aria-label={m.create_food()}
+					title={m.create_food()}
+					onclick={openCreate}
+					class="grid h-12 w-12 shrink-0 place-items-center rounded-2xl border-2 border-dashed border-emerald-300 text-emerald-700 active:bg-emerald-50"
+				>
+					<svg viewBox="0 0 24 24" class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 5v14M5 12h14" stroke-linecap="round" /></svg>
+				</button>
+			</div>
 			{#if loading}
 				<div class="flex justify-center py-10">
 					<div class="h-7 w-7 animate-spin rounded-full border-4 border-emerald-600 border-t-transparent"></div>

@@ -375,23 +375,38 @@
 	</div>
 
 	<!-- busca sem acento/caixa; na biblioteca vale tambem por INGREDIENTE -->
-	<div class="relative mb-4">
-		<svg viewBox="0 0 24 24" class="pointer-events-none absolute top-1/2 left-4 h-5 w-5 -translate-y-1/2 text-slate-400" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7" /><path d="M21 21l-4.3-4.3" stroke-linecap="round" /></svg>
-		<input
-			bind:value={query}
-			placeholder={tab === 'foods' ? m.search_food() : m.search_recipes()}
-			class="h-12 w-full rounded-2xl border-2 border-slate-200 bg-white pr-11 pl-11 outline-none focus:border-emerald-600"
-		/>
-		{#if query}
-			<button
-				type="button"
-				aria-label={m.clear()}
-				title={m.clear()}
-				onclick={() => (query = '')}
-				class="absolute top-1/2 right-2 grid h-8 w-8 -translate-y-1/2 place-items-center rounded-full text-slate-400 active:bg-slate-100"
+	<div class="mb-4 flex items-center gap-2">
+		<div class="relative min-w-0 flex-1">
+			<svg viewBox="0 0 24 24" class="pointer-events-none absolute top-1/2 left-4 h-5 w-5 -translate-y-1/2 text-slate-400" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7" /><path d="M21 21l-4.3-4.3" stroke-linecap="round" /></svg>
+			<input
+				bind:value={query}
+				placeholder={tab === 'foods' ? m.search_food() : m.search_recipes()}
+				class="h-12 w-full rounded-2xl border-2 border-slate-200 bg-white pr-11 pl-11 outline-none focus:border-emerald-600"
+			/>
+			{#if query}
+				<button
+					type="button"
+					aria-label={m.clear()}
+					title={m.clear()}
+					onclick={() => (query = '')}
+					class="absolute top-1/2 right-2 grid h-8 w-8 -translate-y-1/2 place-items-center rounded-full text-slate-400 active:bg-slate-100"
+				>
+					<svg viewBox="0 0 24 24" class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18" /></svg>
+				</button>
+			{/if}
+		</div>
+		<!-- Criar sem rolar a lista inteira, igual as modais de lancar. Segue a aba:
+			 na de receitas este "+" criaria um alimento, que e a coisa errada. Some
+			 durante a selecao multipla, como os botoes escritos la embaixo. -->
+		{#if !selecting}
+			<a
+				href={tab === 'foods' ? '/dieta/alimento/novo' : '/dieta/receita/nova'}
+				aria-label={tab === 'foods' ? m.create_food() : m.create_recipe()}
+				title={tab === 'foods' ? m.create_food() : m.create_recipe()}
+				class="grid h-12 w-12 shrink-0 place-items-center rounded-2xl border-2 border-dashed border-emerald-300 text-emerald-700 active:bg-emerald-50"
 			>
-				<svg viewBox="0 0 24 24" class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18" /></svg>
-			</button>
+				<svg viewBox="0 0 24 24" class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 5v14M5 12h14" stroke-linecap="round" /></svg>
+			</a>
 		{/if}
 	</div>
 
