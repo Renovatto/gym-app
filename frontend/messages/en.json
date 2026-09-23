@@ -927,5 +927,10 @@
 	"scan_starting": "Opening the camera…",
 	"scan_photo_action": "Take a photo of the barcode",
 	"scan_photo_failed": "Couldn't read the barcode in this photo. Try closer, with the code straight and well lit.",
-	"scan_error_no_video": "The live camera didn't open on this device. Use the photo option below."
+	"scan_error_no_video": "The live camera didn't open on this device. Use the photo option below.",
+	"weigh_in_date_label": "Weigh-in day",
+	"weigh_in_yesterday": "Yesterday",
+	"weigh_in_today": "Today",
+	"weigh_in_other_date": "Other",
+	"error_weigh_in_future": "A weigh-in can only be logged for today or a day that has already passed."
 }

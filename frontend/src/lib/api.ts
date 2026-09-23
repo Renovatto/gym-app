@@ -199,7 +199,8 @@ export interface WeightHistory {
 }
 
 // Entrada da pesagem: peso obrigatorio + composicao corporal opcional.
-export type WeighInInput = { weight_kg: number } & Partial<BodyComposition> &
+// logged_at so vai quando a pesagem e retroativa; sem ele o servidor carimba agora.
+export type WeighInInput = { weight_kg: number; logged_at?: string } & Partial<BodyComposition> &
 	Partial<TapeMeasurements>;
 
 export interface WaterLog {

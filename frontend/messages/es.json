@@ -927,5 +927,10 @@
 	"scan_starting": "Abriendo la cámara…",
 	"scan_photo_action": "Hacer foto del código",
 	"scan_photo_failed": "No pude leer el código en esta foto. Prueba más cerca, con el código recto y bien iluminado.",
-	"scan_error_no_video": "La cámara en vivo no se abrió en este dispositivo. Usa la foto del código, abajo."
+	"scan_error_no_video": "La cámara en vivo no se abrió en este dispositivo. Usa la foto del código, abajo.",
+	"weigh_in_date_label": "Día del pesaje",
+	"weigh_in_yesterday": "Ayer",
+	"weigh_in_today": "Hoy",
+	"weigh_in_other_date": "Otra",
+	"error_weigh_in_future": "El peso solo puede registrarse hoy o en días que ya pasaron."
 }

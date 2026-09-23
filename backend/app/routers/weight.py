@@ -1,8 +1,10 @@
+from datetime import timedelta, timezone
+
 from fastapi import APIRouter, HTTPException, status
 from sqlmodel import asc, select
 
 from ..deps import CurrentUser, SessionDep
-from ..models import Profile, WeightLog
+from ..models import Profile, WeightLog, utcnow
 from ..schemas import (
     BodyCompositionPanelOut,
     BodyCompSourceIn,
@@ -40,6 +42,13 @@ WEIGH_IN_OPTIONAL_FIELDS = (
 )
 
 TAPE_FIELDS = ("waist_cm", "neck_cm", "hip_cm", "arm_cm", "thigh_cm", "chest_cm")
+
+# Pesagem no futuro nao e so um numero estranho na lista: o "peso atual" e o
+# registro mais recente do historico, entao um peso de amanha passa a mandar nas
+# metas, no TDEE adaptativo e na faixa do alvo - e continua mandando ate o dia
+# chegar. Os minutos de folga absorvem diferenca de relogio entre aparelho e
+# servidor; nao sao espaco para o dia seguinte.
+FUTURE_TOLERANCE = timedelta(minutes=5)
 
 
 def _has_scale_data(log: WeightLog) -> bool:
@@ -90,6 +99,13 @@ def history(user: CurrentUser, session: SessionDep) -> WeightHistoryOut:
 def add(data: WeightLogIn, user: CurrentUser, session: SessionDep) -> WeightLog:
     log = WeightLog(user_id=user.id, weight_kg=data.weight_kg, source=data.source)
     if data.logged_at is not None:
+        # Data sem fuso e tratada como UTC: o schema aceita qualquer datetime, e
+        # comparar uma ingenua com uma com fuso levantaria TypeError aqui dentro.
+        enviado = data.logged_at
+        if enviado.tzinfo is None:
+            enviado = enviado.replace(tzinfo=timezone.utc)
+        if enviado > utcnow() + FUTURE_TOLERANCE:
+            raise HTTPException(status.HTTP_400_BAD_REQUEST, detail="WEIGH_IN_FUTURE_DATE")
         log.logged_at = data.logged_at
     # copia os campos opcionais informados (os nao informados ficam nulos)
     for field_name in WEIGH_IN_OPTIONAL_FIELDS:

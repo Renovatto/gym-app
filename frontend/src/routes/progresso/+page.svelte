@@ -1,6 +1,7 @@
 <script lang="ts">
 	import {
 		api,
+		ApiError,
 		localDay,
 		type AchievementsResult,
 		type AdaptiveTdee,
@@ -15,6 +16,8 @@
 		type WeightHistory,
 		type WeightLog
 	} from '$lib/api';
+	import CalendarModal from '$lib/components/CalendarModal.svelte';
+	import { errorMessage } from '$lib/errors';
 	import Stepper from '$lib/components/Stepper.svelte';
 	import WeightChart from '$lib/components/WeightChart.svelte';
 	import BodyMetricIcon from '$lib/components/BodyMetricIcon.svelte';
@@ -279,6 +282,33 @@
 	let busy = $state(false);
 	let adding = $state(false);
 
+	// Dia da pesagem. Comeca sempre em hoje; existe porque esquecer de pesar no dia
+	// custava o registro inteiro - o historico e uma serie, e um buraco nela estraga
+	// a tendencia que o app calcula em cima.
+	let weighInDate = $state(localDay());
+	let weighInCalendar = $state(false);
+
+	function openWeighIn(): void {
+		weighInDate = localDay();
+		adding = true;
+	}
+
+	// setDate com -1 resolve virada de mes e de ano sozinho (dia 1 vira o ultimo do
+	// mes anterior), entao nao ha conta de calendario para errar aqui.
+	function yesterdayLocalDay(): string {
+		const d = new Date();
+		d.setDate(d.getDate() - 1);
+		const mes = String(d.getMonth() + 1).padStart(2, '0');
+		const dia = String(d.getDate()).padStart(2, '0');
+		return `${d.getFullYear()}-${mes}-${dia}`;
+	}
+
+	// Qual pilula esta marcada. Escolher hoje ou ontem PELO calendario acende a
+	// pilula correspondente, em vez de deixar duas parecendo ativas.
+	const isToday = $derived(weighInDate === localDay());
+	const isYesterday = $derived(weighInDate === yesterdayLocalDay());
+	const isOtherDay = $derived(!isToday && !isYesterday);
+
 	// Campos opcionais da balanca de bioimpedancia. A ordem aqui e a ordem na tela.
 	// O usuario le esses valores na propria balanca e digita; por isso sao inputs de
 	// texto (mais rapido para valor exato) e nao steppers.
@@ -481,6 +511,14 @@
 	// Campos vazios ou invalidos sao ignorados (ficam nulos no banco).
 	function buildWeighIn(): WeighInInput {
 		const weighIn: WeighInInput = { weight_kg: newWeight };
+		// Pesagem de hoje segue sem logged_at: quem carimba a hora e o servidor, como
+		// sempre foi. Retroativa vai ao MEIO-DIA local do dia escolhido - horario que
+		// cai dentro do dia em qualquer fuso, entao a conversao de volta (tz_offset)
+		// nunca joga o registro para o dia vizinho.
+		if (weighInDate !== localDay()) {
+			const [year, month, day] = weighInDate.split('-').map(Number);
+			weighIn.logged_at = new Date(year, month - 1, day, 12, 0, 0).toISOString();
+		}
 		for (const field of bodyCompositionInputs) {
 			const raw = (scaleValues[field.key] ?? '').replace(',', '.').trim();
 			if (raw === '') continue;
@@ -506,6 +544,10 @@
 			await bootstrap(); // metas dependem do peso mais recente
 			adding = false;
 			showToast(m.weigh_in_saved());
+		} catch (e) {
+			// sem isto, uma recusa do servidor (data futura, rede) fechava nada e nao
+			// dizia nada: a pessoa apertava Salvar de novo sem saber o que houve
+			showToast(errorMessage(e instanceof ApiError ? e.code : 'GENERIC_ERROR'));
 		} finally {
 			busy = false;
 		}
@@ -536,7 +578,7 @@
 
 	// Vindo do atalho "Pesar" da tela inicial (/progresso?novo=1): ja abre o formulario.
 	onMount(() => {
-		if (page.url.searchParams.get('novo')) adding = true;
+		if (page.url.searchParams.get('novo')) openWeighIn();
 	});
 
 	// Historico do mais recente para o mais antigo, com a variacao (peso e gordura)
@@ -1311,7 +1353,7 @@
 	<button
 		type="button"
 		data-tour="progress-log"
-		onclick={() => (adding = true)}
+		onclick={openWeighIn}
 		class="mt-3 h-14 w-full rounded-2xl bg-emerald-600 text-lg font-bold text-white active:bg-emerald-700"
 	>
 		{m.register_weight()}
@@ -1411,6 +1453,49 @@
 		>
 			<p class="mb-3 font-semibold text-slate-600">{m.new_weight()}</p>
 			<Stepper bind:value={newWeight} min={30} max={300} step={0.1} decimals={1} unit="kg" />
+
+			<!-- Dia da pesagem em pilulas, para nao inchar a modal: Hoje ja vem marcado,
+				 e so quem esqueceu de pesar precisa mexer aqui. A terceira abre o
+				 calendario e, com uma data escolhida, passa a mostrar ela mesma - assim
+				 a pilula marcada sempre diz em que dia a pesagem vai entrar. -->
+			<div class="mt-3 flex items-center gap-2">
+				<button
+					type="button"
+					onclick={() => (weighInDate = localDay())}
+					class="h-9 rounded-full px-4 text-xs font-bold {isToday
+						? 'bg-emerald-600 text-white'
+						: 'bg-slate-100 text-slate-600 active:bg-slate-200'}"
+				>
+					{m.weigh_in_today()}
+				</button>
+				<button
+					type="button"
+					onclick={() => (weighInDate = yesterdayLocalDay())}
+					class="h-9 rounded-full px-4 text-xs font-bold {isYesterday
+						? 'bg-emerald-600 text-white'
+						: 'bg-slate-100 text-slate-600 active:bg-slate-200'}"
+				>
+					{m.weigh_in_yesterday()}
+				</button>
+				<!-- Calendario do app, nao o input[type=date]: o calendario nativo do
+					 celular ignora o max e deixa tocar num dia futuro, e a data voltar para
+					 hoje depois - com ou sem aviso - e sempre pior do que o dia futuro nem
+					 responder ao toque. O CalendarModal desenha dia depois do max apagado e
+					 com disabled, que e a trava que se ve antes de tentar. -->
+				<button
+					type="button"
+					aria-label={m.weigh_in_date_label()}
+					onclick={() => (weighInCalendar = true)}
+					class="flex h-9 items-center gap-1.5 rounded-full px-4 text-xs font-bold {isOtherDay
+						? 'bg-emerald-600 text-white'
+						: 'bg-slate-100 text-slate-600 active:bg-slate-200'}"
+				>
+					<svg viewBox="0 0 24 24" class="h-3.5 w-3.5 shrink-0" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+						<rect x="3" y="5" width="18" height="16" rx="2" /><path d="M3 10h18M8 3v4M16 3v4" />
+					</svg>
+					{isOtherDay ? df.format(new Date(`${weighInDate}T12:00:00`)) : m.weigh_in_other_date()}
+				</button>
+			</div>
 
 			<!-- Dados opcionais da balanca de bioimpedancia (BIA) -->
 			<button
@@ -1531,6 +1616,17 @@
 			</div>
 		</div>
 	</div>
+{/if}
+
+<!-- Depois da modal de pesagem no markup de proposito: as duas sao z-50, entao
+	 quem vem por ultimo fica por cima. -->
+{#if weighInCalendar}
+	<CalendarModal
+		value={weighInDate}
+		max={localDay()}
+		onselect={(d) => (weighInDate = d)}
+		onclose={() => (weighInCalendar = false)}
+	/>
 {/if}
 
 <!-- Modal de detalhes de uma pesagem -->
