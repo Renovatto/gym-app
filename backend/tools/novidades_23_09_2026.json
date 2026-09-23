@@ -1,0 +1,32 @@
+[
+  {
+    "published_on": "2026-09-23",
+    "importance": "normal",
+    "title_pt_br": "O Voltar fecha a janela aberta, não o app",
+    "body_pt_br": "Antes, com uma janela aberta — lançar alimento, montar refeição, registrar peso —, o Voltar do celular saía da tela inteira e te deixava na início, perdendo o que você estava preenchendo. Agora ele fecha só a janela e você continua de onde estava. Vale para todo o app, e também para o gesto de deslizar do iPhone.",
+    "title_en": "Back now closes the open window, not the app",
+    "body_en": "Before, with a window open — logging a food, building a meal, recording your weight — your phone's Back button left the whole screen and dropped you on the home tab, losing what you were filling in. Now it closes just that window and you carry on where you were. This works across the app, and with the iPhone swipe gesture too.",
+    "title_es": "Atrás cierra la ventana abierta, no la app",
+    "body_es": "Antes, con una ventana abierta — registrar un alimento, armar una comida, anotar tu peso —, el botón Atrás del móvil salía de la pantalla entera y te dejaba en el inicio, perdiendo lo que estabas completando. Ahora cierra solo esa ventana y sigues donde estabas. Funciona en toda la app, y también con el gesto de deslizar del iPhone."
+  },
+  {
+    "published_on": "2026-09-23",
+    "importance": "normal",
+    "title_pt_br": "Cadastre um alimento sem rolar a lista inteira",
+    "body_pt_br": "Quando você já sabe que o alimento não existe, agora há um botão + ao lado da busca — em Alimentos e Receitas e também na hora de lançar uma refeição. Antes o botão de cadastrar ficava só depois da lista toda, e com centenas de itens dava uma rolagem longa. Na tela de Alimentos e Receitas ele segue a aba: cria alimento ou receita, conforme onde você está.",
+    "title_en": "Add a food without scrolling the whole list",
+    "body_en": "When you already know the food isn't there, there's now a + button next to the search — in Foods and Recipes, and also when logging a meal. Before, the create button sat only after the entire list, which meant a long scroll past hundreds of items. On the Foods and Recipes screen it follows the tab: it creates a food or a recipe, depending on where you are.",
+    "title_es": "Añade un alimento sin recorrer toda la lista",
+    "body_es": "Cuando ya sabes que el alimento no existe, ahora hay un botón + junto al buscador — en Alimentos y Recetas, y también al registrar una comida. Antes el botón de crear estaba solo después de toda la lista, lo que suponía bajar por cientos de elementos. En la pantalla de Alimentos y Recetas sigue la pestaña: crea un alimento o una receta, según dónde estés."
+  },
+  {
+    "published_on": "2026-09-23",
+    "importance": "normal",
+    "title_pt_br": "Registre o peso de um dia que você esqueceu",
+    "body_pt_br": "Ao lançar o peso agora dá para escolher o dia: Hoje, Ontem ou uma data no calendário. Esquecer de pesar não custa mais o registro — e isso importa porque seu histórico é uma série: um buraco nela atrapalha a tendência e a média que o app calcula. O calendário não deixa escolher dia futuro, nem aqui nem no registro de atividades: peso de amanhã passaria a valer como seu peso atual e bagunçaria suas metas.",
+    "title_en": "Log a weight for a day you forgot",
+    "body_en": "When recording your weight you can now pick the day: Today, Yesterday, or a date from the calendar. Forgetting to weigh in no longer costs you the entry — and that matters because your history is a series: a gap in it throws off the trend and the average the app works out. The calendar won't let you pick a future day, here or when logging an activity: a weight dated tomorrow would count as your current weight and skew your targets.",
+    "title_es": "Registra el peso de un día que olvidaste",
+    "body_es": "Al anotar tu peso ahora puedes elegir el día: Hoy, Ayer o una fecha del calendario. Olvidarte de pesarte ya no te cuesta el registro — y eso importa porque tu historial es una serie: un hueco en ella estropea la tendencia y la media que la app calcula. El calendario no permite elegir un día futuro, ni aquí ni al registrar una actividad: un peso de mañana pasaría a contar como tu peso actual y desajustaría tus objetivos."
+  }
+]
