@@ -24,9 +24,11 @@ from ..schemas import (
     RoutineArchiveIn,
     RoutineCompleteIn,
     RoutineIn,
+    RoutineItemIn,
     RoutineItemOut,
     RoutineOut,
     RoutinePeriodizationOut,
+    RoutineRenewIn,
     RoutineVariationOut,
     SessionOrderIn,
     SessionOut,
@@ -194,8 +196,17 @@ def create_routine(data: RoutineIn, user: CurrentUser, session: SessionDep) -> R
     routine = Routine(user_id=user.id, name=data.name, position=count)
     session.add(routine)
     session.flush()
-    for position, item in enumerate(data.items):
-        if _visible_exercise(session, item.exercise_id, user.id) is None:
+    _add_items(session, routine, data.items, user.id)
+    session.commit()
+    session.refresh(routine)
+    return _routine_out(session, routine, user)
+
+
+def _add_items(
+    session: Session, routine: Routine, items: list[RoutineItemIn], user_id: int
+) -> None:
+    for position, item in enumerate(items):
+        if _visible_exercise(session, item.exercise_id, user_id) is None:
             raise HTTPException(status.HTTP_400_BAD_REQUEST, detail="EXERCISE_NOT_FOUND")
         session.add(
             RoutineExercise(
@@ -209,9 +220,15 @@ def create_routine(data: RoutineIn, user: CurrentUser, session: SessionDep) -> R
                 rest_seconds=item.rest_seconds,
             )
         )
-    session.commit()
-    session.refresh(routine)
-    return _routine_out(session, routine, user)
+
+
+def _replace_items(
+    session: Session, routine: Routine, items: list[RoutineItemIn], user_id: int
+) -> None:
+    # limpar pela colecao (delete-orphan) evita re-adicionar instancias deletadas
+    routine.items.clear()
+    session.flush()
+    _add_items(session, routine, items, user_id)
 
 
 def _get_owned_routine(session: Session, routine_id: int, user_id: int) -> Routine:
@@ -232,28 +249,30 @@ def update_routine(
 ) -> RoutineOut:
     routine = _get_owned_routine(session, routine_id, user.id)
     routine.name = data.name
-    # limpar pela coleção (delete-orphan) evita re-adicionar instâncias deletadas
-    routine.items.clear()
-    session.flush()
-    for position, item in enumerate(data.items):
-        if _visible_exercise(session, item.exercise_id, user.id) is None:
-            raise HTTPException(status.HTTP_400_BAD_REQUEST, detail="EXERCISE_NOT_FOUND")
-        session.add(
-            RoutineExercise(
-                routine_id=routine.id,
-                exercise_id=item.exercise_id,
-                position=position,
-                target_sets=item.target_sets,
-                target_reps=item.target_reps,
-                target_weight_kg=item.target_weight_kg,
-                target_duration_min=item.target_duration_min,
-                rest_seconds=item.rest_seconds,
-            )
-        )
+    _replace_items(session, routine, data.items, user.id)
     session.add(routine)
     session.commit()
     session.refresh(routine)
     return _routine_out(session, routine, user)
+
+
+@router.post("/me/routines/renew", response_model=list[RoutineOut])
+def renew_routines(data: RoutineRenewIn, user: CurrentUser, session: SessionDep) -> list[RoutineOut]:
+    """Renova o ciclo de uma ou varias rotinas: troca os exercicios pela variacao
+    escolhida e reinicia a validade. Tudo numa transacao so - ou renova todas, ou
+    nenhuma (um exercicio invalido no meio nao deixa o programa pela metade)."""
+    renewed_at = datetime.now(timezone.utc)
+    routines: list[Routine] = []
+    for renewal in data.renewals:
+        routine = _get_owned_routine(session, renewal.routine_id, user.id)
+        _replace_items(session, routine, renewal.items, user.id)
+        routine.cycle_started_at = renewed_at
+        session.add(routine)
+        routines.append(routine)
+    session.commit()
+    for routine in routines:
+        session.refresh(routine)
+    return [_routine_out(session, r, user) for r in routines]
 
 
 @router.delete("/me/routines/{routine_id}", status_code=status.HTTP_204_NO_CONTENT)
@@ -316,6 +335,9 @@ def unarchive_routine(routine_id: int, user: CurrentUser, session: SessionDep) -
     ).all()
     routine.archived_at = None
     routine.position = (max(positions) + 1) if positions else 0
+    # volta ao ciclo com validade nova: contar o tempo em que ficou arquivada a faria
+    # reaparecer ja vencida, cobrando "hora de variar" de um treino que nem foi feito
+    routine.cycle_started_at = datetime.now(timezone.utc)
     session.add(routine)
     session.commit()
     session.refresh(routine)

@@ -90,7 +90,7 @@ def routines_periodization(
     ).all()
     out: list[RoutinePeriodizationOut] = []
     for routine in routines:
-        started = routine.created_at.date()
+        started = routine.cycle_started_at.date()
         weeks = max(0, (today - started).days // 7)
         out.append(
             RoutinePeriodizationOut(

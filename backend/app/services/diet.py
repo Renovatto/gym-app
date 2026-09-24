@@ -84,6 +84,27 @@ def recipe_breakdown(
     return ing_outs, total, per_serving
 
 
+def recipe_entry_macros(
+    session: Session, recipe: Recipe, locale: str, servings: float
+) -> MacrosOut:
+    """Macros de um lancamento de receita: macros de UMA porcao x porcoes comidas."""
+    _, _, per_serving = recipe_breakdown(session, recipe, locale)
+    return MacrosOut(
+        kcal=_round(per_serving.kcal * servings),
+        protein_g=_round(per_serving.protein_g * servings),
+        carbs_g=_round(per_serving.carbs_g * servings),
+        fat_g=_round(per_serving.fat_g * servings),
+    )
+
+
+def recipe_grams_per_serving(recipe: Recipe) -> float:
+    """Peso de UMA porcao da receita: soma dos ingredientes dividida pelo rendimento."""
+    if recipe.servings <= 0:
+        return 0.0
+    total = sum(item.grams for item in recipe.ingredients)
+    return total / recipe.servings
+
+
 def recipe_serving_macros(session: Session, recipe: Recipe) -> MacrosOut:
     _, total, per_serving = recipe_breakdown(session, recipe, FALLBACK_LOCALE)
     return per_serving

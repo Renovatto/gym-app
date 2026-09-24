@@ -1095,6 +1095,10 @@ export const api = {
 		request<Routine>('/me/routines', { method: 'POST', body: { name, items } }),
 	updateRoutine: (id: number, name: string, items: RoutineItemInput[]) =>
 		request<Routine>(`/me/routines/${id}`, { method: 'PUT', body: { name, items } }),
+	// renovar = trocar os exercicios pela variacao E reiniciar a validade do ciclo.
+	// Em lote para renovar o programa inteiro numa confirmacao so.
+	renewRoutines: (renewals: { routine_id: number; items: RoutineItemInput[] }[]) =>
+		request<Routine[]>('/me/routines/renew', { method: 'POST', body: { renewals } }),
 	deleteRoutine: (id: number) => request<void>(`/me/routines/${id}`, { method: 'DELETE' }),
 	// arquivar tira do ciclo sem apagar; reativar devolve como ultima do ciclo
 	archiveRoutine: (id: number) => request<Routine>(`/me/routines/${id}/archive`, { method: 'POST' }),

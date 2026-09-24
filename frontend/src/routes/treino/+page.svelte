@@ -158,9 +158,9 @@
 		variation = await api.getRoutineVariation(variationSourceId);
 	}
 
-	function variationItems(): RoutineItemInput[] {
-		if (!variation) return [];
-		return variation.items.map((it) => ({
+	// itens de rotina a partir da variacao (troca o exercicio, mantem series/alvos)
+	function variationToItems(source: RoutineVariation): RoutineItemInput[] {
+		return source.items.map((it) => ({
 			exercise_id: it.new_exercise.id,
 			target_sets: it.target_sets,
 			target_reps: it.target_reps,
@@ -170,11 +170,16 @@
 		}));
 	}
 
+	function variationItems(): RoutineItemInput[] {
+		return variation ? variationToItems(variation) : [];
+	}
+
 	async function saveVariation(): Promise<void> {
 		if (!variation) return;
 		variationBusy = true;
 		try {
-			await api.updateRoutine(variation.routine_id, variation.name, variationItems());
+			// salvar na rotina E renovar: reinicia a validade do ciclo junto
+			await api.renewRoutines([{ routine_id: variation.routine_id, items: variationItems() }]);
 			variation = null;
 			await load();
 			showToast(m.vary_saved());
@@ -204,6 +209,54 @@
 			await start(created.id);
 		} finally {
 			variationBusy = false;
+		}
+	}
+
+	// Renovar o ciclo inteiro de uma vez: uma variacao por rotina vencida, revisadas
+	// juntas e confirmadas num toque so, em vez de abrir rotina por rotina.
+	let bulkRenewal = $state<RoutineVariation[] | null>(null);
+	let bulkRenewalLoading = $state(false);
+	let bulkRenewalBusy = $state(false);
+	// rotina cuja variacao esta sendo sorteada de novo (desabilita so o botao dela)
+	let rerollingRoutineId = $state<number | null>(null);
+
+	async function openBulkRenewal(): Promise<void> {
+		selectedPeriod = null;
+		bulkRenewalLoading = true;
+		try {
+			bulkRenewal = await Promise.all(
+				renewableRoutines.map((p) => api.getRoutineVariation(p.routine_id))
+			);
+		} finally {
+			bulkRenewalLoading = false;
+		}
+	}
+
+	async function rerollBulkVariation(index: number): Promise<void> {
+		if (!bulkRenewal) return;
+		const routineId = bulkRenewal[index].routine_id;
+		rerollingRoutineId = routineId;
+		try {
+			const fresh = await api.getRoutineVariation(routineId);
+			if (bulkRenewal) bulkRenewal[index] = fresh;
+		} finally {
+			rerollingRoutineId = null;
+		}
+	}
+
+	async function confirmBulkRenewal(): Promise<void> {
+		if (!bulkRenewal) return;
+		bulkRenewalBusy = true;
+		try {
+			const count = bulkRenewal.length;
+			await api.renewRoutines(
+				bulkRenewal.map((v) => ({ routine_id: v.routine_id, items: variationToItems(v) }))
+			);
+			bulkRenewal = null;
+			await load();
+			showToast(m.renew_all_toast({ count }));
+		} finally {
+			bulkRenewalBusy = false;
 		}
 	}
 
@@ -308,6 +361,12 @@
 	// entrou rotina com 0 semanas E sobraram rotinas que ja passaram da validade.
 	// Sem isso, a pergunta cairia toda vez que alguem so soma o dia C ao ABC.
 	const staleRoutines = $derived(periodization.filter((p) => p.due));
+	// vencidas que da para variar: rotina sem exercicio nao tem o que trocar
+	const renewableRoutines = $derived(
+		staleRoutines.filter((p) => (routines.find((r) => r.id === p.routine_id)?.items.length ?? 0) > 0)
+	);
+	// com uma so vencida o fluxo individual ja resolve; o lote vale a partir de duas
+	const canRenewAll = $derived(renewableRoutines.length >= 2);
 	const hasFreshRoutine = $derived(periodization.some((p) => p.weeks_active === 0));
 
 	const OFFER_DISMISSED_KEY = 'treino:archive-offer-dismissed';
@@ -501,6 +560,9 @@
 	$effect(() => {
 		if (variation) return closeOnBack(() => (variation = null));
 	});
+	$effect(() => {
+		if (bulkRenewal !== null) return closeOnBack(() => (bulkRenewal = null));
+	});
 </script>
 
 <div class="mb-6 flex items-center justify-between gap-2">
@@ -561,6 +623,14 @@
 			<p class="mt-0.5 text-sm text-amber-700">
 				{m.periodization_text({ name: dueRoutine.name, weeks: dueRoutine.weeks_active })}
 			</p>
+			<button
+				type="button"
+				disabled={bulkRenewalLoading || variationLoading !== null}
+				onclick={() => (canRenewAll ? openBulkRenewal() : openVariation(dueRoutine.routine_id))}
+				class="mt-2 h-10 rounded-2xl bg-amber-500 px-4 text-sm font-bold text-white active:bg-amber-600 disabled:opacity-50"
+			>
+				{canRenewAll ? m.renew_all_action({ count: renewableRoutines.length }) : m.renew_now()}
+			</button>
 		</div>
 	</div>
 {/if}
@@ -637,6 +707,16 @@
 				<svg viewBox="0 0 24 24" class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 17c5 0 5-10 11-10" /><path d="M4 7c5 0 5 10 11 10" /><path d="M12 4l3 3-3 3" /><path d="M12 20l3-3-3-3" /></svg>
 				{m.cycle_renew_action()}
 			</button>
+			{#if selectedPeriod.due && canRenewAll}
+				<button
+					type="button"
+					disabled={bulkRenewalLoading}
+					onclick={openBulkRenewal}
+					class="mt-2 h-12 w-full rounded-2xl border-2 border-amber-300 font-semibold text-amber-800 active:bg-amber-100 disabled:opacity-50"
+				>
+					{m.renew_all_action({ count: renewableRoutines.length })}
+				</button>
+			{/if}
 		</div>
 	</div>
 {/if}
@@ -1657,6 +1737,95 @@
 				</button>
 			</div>
 			{/if}
+		</div>
+	</div>
+{/if}
+
+<!-- Renovar o ciclo inteiro: previa de todas as rotinas vencidas e um confirmar so -->
+{#if bulkRenewal}
+	<div
+		class="fixed inset-0 z-40 flex items-center justify-center bg-black/50 p-4"
+		role="button"
+		tabindex="-1"
+		onclick={() => (bulkRenewal = null)}
+		onkeydown={(e) => e.key === 'Escape' && (bulkRenewal = null)}
+	>
+		<div
+			class="flex max-h-[85dvh] w-full max-w-md flex-col rounded-3xl bg-white p-5"
+			role="dialog"
+			tabindex="-1"
+			onclick={(e) => e.stopPropagation()}
+			onkeydown={() => {}}
+		>
+			<div class="mb-1 flex items-center justify-between gap-2">
+				<h2 class="truncate text-lg font-bold text-slate-900">{m.renew_all_title()}</h2>
+				<button
+					type="button"
+					aria-label={m.close()}
+					onclick={() => (bulkRenewal = null)}
+					class="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-slate-100 text-slate-500 active:bg-slate-200"
+				>
+					<svg viewBox="0 0 24 24" class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 6l12 12M18 6L6 18" stroke-linecap="round" /></svg>
+				</button>
+			</div>
+			<p class="mb-3 text-sm text-slate-500">{m.renew_all_intro()}</p>
+			<div class="space-y-4 overflow-y-auto">
+				{#each bulkRenewal as routineVariation, index (routineVariation.routine_id)}
+					<section>
+						<div class="mb-1.5 flex items-center justify-between gap-2">
+							<h3 class="truncate text-sm font-bold text-slate-900">{routineVariation.name}</h3>
+							<button
+								type="button"
+								aria-label={m.vary_another()}
+								title={m.vary_another()}
+								disabled={rerollingRoutineId === routineVariation.routine_id}
+								onclick={() => rerollBulkVariation(index)}
+								class="grid h-9 w-9 shrink-0 place-items-center rounded-full text-emerald-700 active:bg-emerald-50 disabled:opacity-50"
+							>
+								<svg viewBox="0 0 24 24" class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4v6h6M20 20v-6h-6M20 8a8 8 0 00-14-3M4 16a8 8 0 0014 3" /></svg>
+							</button>
+						</div>
+						<div class="space-y-1.5">
+							{#each routineVariation.items as it, i (i)}
+								<button
+									type="button"
+									onclick={() => (photoOf = it.new_exercise)}
+									class="flex w-full items-center gap-3 rounded-2xl bg-slate-50 p-2 text-left active:bg-slate-100"
+								>
+									<span class="grid h-10 w-10 shrink-0 place-items-center overflow-hidden rounded-xl bg-slate-100">
+										{#if it.new_exercise.media_urls.length > 0}
+											<img src={it.new_exercise.media_urls[0]} alt="" class="h-full w-full object-cover" loading="lazy" />
+										{:else}
+											<svg viewBox="0 0 24 24" class="h-5 w-5 text-slate-400" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3" /><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7z" /></svg>
+										{/if}
+									</span>
+									<div class="min-w-0 flex-1">
+										<p class="truncate text-xs text-slate-400 line-through">{it.original_exercise.name}</p>
+										<p class="truncate text-sm font-bold text-slate-900">{it.new_exercise.name}</p>
+									</div>
+								</button>
+							{/each}
+						</div>
+					</section>
+				{/each}
+			</div>
+			<div class="mt-3 flex shrink-0 gap-2">
+				<button
+					type="button"
+					onclick={() => (bulkRenewal = null)}
+					class="h-12 flex-1 rounded-2xl border-2 border-slate-200 font-semibold text-slate-700 active:bg-slate-100"
+				>
+					{m.cancel()}
+				</button>
+				<button
+					type="button"
+					disabled={bulkRenewalBusy || rerollingRoutineId !== null}
+					onclick={confirmBulkRenewal}
+					class="h-12 flex-1 rounded-2xl bg-emerald-600 font-bold text-white active:bg-emerald-700 disabled:opacity-50"
+				>
+					{m.renew_all_confirm({ count: bulkRenewal.length })}
+				</button>
+			</div>
 		</div>
 	</div>
 {/if}

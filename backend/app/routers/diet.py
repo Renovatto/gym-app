@@ -51,6 +51,8 @@ from ..services.diet import (
     food_macros,
     localized_food_name,
     recipe_breakdown,
+    recipe_entry_macros,
+    recipe_grams_per_serving,
     sum_macros,
     to_food_out,
 )
@@ -449,7 +451,7 @@ def add_from_library(
     macros, name = _entry_macros_and_name(
         session, user.id, user.locale, EntrySource.recipe, None, recipe.id, data.quantity
     )
-    per_serving_g = _recipe_grams_per_serving(recipe)
+    per_serving_g = recipe_grams_per_serving(recipe)
     recipe_grams = round(per_serving_g * data.quantity, 1) if per_serving_g > 0 else None
     entry = DiaryEntry(
         user_id=user.id,
@@ -578,7 +580,7 @@ def _grams_per_serving_map(session: Session, entries: list[DiaryEntry]) -> dict[
     if not recipe_ids:
         return {}
     recipes = session.exec(select(Recipe).where(Recipe.id.in_(recipe_ids))).all()
-    return {r.id: _recipe_grams_per_serving(r) for r in recipes}
+    return {r.id: recipe_grams_per_serving(r) for r in recipes}
 
 
 @router.get("/me/diary/logged-days", response_model=list[date])
@@ -705,16 +707,8 @@ def _entry_grams(
     recipe = session.get(Recipe, recipe_id)
     if recipe is None or recipe.user_id != user_id:
         return None
-    per_serving = _recipe_grams_per_serving(recipe)
+    per_serving = recipe_grams_per_serving(recipe)
     return round(per_serving * quantity, 1) if per_serving > 0 else None
-
-
-def _recipe_grams_per_serving(recipe: Recipe) -> float:
-    """Peso de UMA porcao da receita: soma dos ingredientes dividida pelo rendimento."""
-    if recipe.servings <= 0:
-        return 0.0
-    total = sum(item.grams for item in recipe.ingredients)
-    return total / recipe.servings
 
 
 def _entry_macros_and_name(
@@ -731,14 +725,7 @@ def _entry_macros_and_name(
     if recipe_id is None:
         raise HTTPException(status.HTTP_400_BAD_REQUEST, detail="RECIPE_REQUIRED")
     recipe = _get_owned_recipe(session, recipe_id, user_id)
-    _, _, per_serving = recipe_breakdown(session, recipe, locale)
-    macros = MacrosOut(
-        kcal=round(per_serving.kcal * quantity, 1),
-        protein_g=round(per_serving.protein_g * quantity, 1),
-        carbs_g=round(per_serving.carbs_g * quantity, 1),
-        fat_g=round(per_serving.fat_g * quantity, 1),
-    )
-    return macros, recipe.name
+    return recipe_entry_macros(session, recipe, locale, quantity), recipe.name
 
 
 @router.post("/me/diary", response_model=DiaryEntryOut, status_code=status.HTTP_201_CREATED)

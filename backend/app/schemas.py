@@ -24,6 +24,7 @@ from .models import (
     Plan,
     Sex,
     SharedItemKind,
+    ShareOfferStatus,
     StandaloneActivityKind,
     WeightSource,
 )
@@ -379,6 +380,18 @@ class RoutineArchiveIn(BaseModel):
     routine_ids: list[int] = Field(min_length=1, max_length=50)
 
 
+class RoutineRenewalIn(BaseModel):
+    routine_id: int
+    items: list[RoutineItemIn]
+
+
+class RoutineRenewIn(BaseModel):
+    """Renovacao de ciclo: troca os exercicios e reinicia a validade. Em lote para
+    renovar o programa inteiro (A, B, C...) numa confirmacao so."""
+
+    renewals: list[RoutineRenewalIn] = Field(min_length=1, max_length=50)
+
+
 class RoutineItemOut(BaseModel):
     id: int
     exercise: ExerciseOut
@@ -629,6 +642,8 @@ class DiaryEntryOut(BaseModel):
     # Nulo so quando a receita sumiu e nao da para converter.
     grams: float | None = None
     macros: MacrosOut
+    # nome de quem enviou, quando o lancamento veio de uma refeicao compartilhada
+    received_from: str | None = None
 
 
 class MealGroupOut(BaseModel):
@@ -791,7 +806,7 @@ class DietAdherenceOut(BaseModel):
 class RoutinePeriodizationOut(BaseModel):
     routine_id: int
     name: str
-    started_on: date  # inicio do ciclo (criacao da rotina)
+    started_on: date  # inicio do ciclo atual (criacao ou ultima renovacao)
     renew_on: date  # validade sugerida = inicio + mesociclo
     weeks_active: int
     weeks_remaining: int  # semanas ate a validade (0 = ja venceu)
@@ -896,19 +911,42 @@ class ShareOfferIn(BaseModel):
     items: list[ShareItemRefIn] = Field(min_length=1, max_length=50)
 
 
+class MealShareOfferIn(BaseModel):
+    """Oferecer uma refeicao do diario: o dia e a refeicao identificam os lancamentos."""
+
+    connection_id: int
+    entry_date: date
+    meal_type: MealType
+
+
 class ShareOfferOut(BaseModel):
     id: int
     item_kind: SharedItemKind
     item_name: str
     from_name: str
     created_at: datetime
+    # So em refeicao: o card do convite mostra "o almoco de 24/09 - 3 itens - 640 kcal"
+    meal_date: date | None = None
+    meal_type: MealType | None = None
+    item_count: int = 0
+    kcal: float = 0
+
+
+class SentMealOfferOut(BaseModel):
+    """Refeicao que voce enviou - o selo "Enviada a Ana - aceitou" no seu diario."""
+
+    id: int
+    meal_type: MealType
+    to_name: str
+    status: ShareOfferStatus
 
 
 class ReceivedItemOut(BaseModel):
     """Copia aceita, com a origem - e o que a pilula "Recebidas" usa para filtrar."""
 
     item_kind: SharedItemKind
-    item_id: int
+    # nulo no aceite de refeicao: ela vira varios lancamentos, nao um item so
+    item_id: int | None
     from_name: str
 
 
@@ -996,7 +1034,7 @@ class SharingPendingCountOut(BaseModel):
     um numero - a chamada roda a cada abertura do app."""
 
     invites: int  # convites de conexao que voce recebeu e ainda nao respondeu
-    offers: int  # receitas/alimentos oferecidos, esperando aceite
+    offers: int  # receitas/alimentos/refeicoes oferecidos, esperando aceite
     total: int
 
 

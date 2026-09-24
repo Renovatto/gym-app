@@ -258,6 +258,9 @@ class Routine(SQLModel, table=True):
     name: str
     position: int = Field(default=0)
     created_at: datetime = Field(default_factory=utcnow)
+    # inicio do ciclo (mesociclo) atual: a validade de 6 semanas conta daqui, nao da
+    # criacao. Renovar (variar os exercicios) ou reativar a rotina zera esta data.
+    cycle_started_at: datetime = Field(default_factory=utcnow)
     # NULL = rotina ativa (no ciclo). Preenchido = arquivada: sai do ciclo e da
     # periodizacao, mas mantem exercicios, alvos e o vinculo com o historico.
     archived_at: datetime | None = Field(default=None)
@@ -650,6 +653,12 @@ class ShareOfferStatus(str, Enum):
 class SharedItemKind(str, Enum):
     recipe = "recipe"
     food = "food"
+    # refeicao do diario: so existe como OFERTA (ShareOffer). No aceite ela vira
+    # lancamentos, e cada um ganha um vinculo do tipo diary_entry.
+    meal = "meal"
+    # lancamento do diario recebido de alguem: so existe em SharedItem (o selo
+    # "Recebido de Fulana")
+    diary_entry = "diary_entry"
 
 
 class Connection(SQLModel, table=True):
@@ -677,13 +686,40 @@ class ShareOffer(SQLModel, table=True):
     from_user_id: int = Field(foreign_key="users.id", index=True, ondelete="CASCADE")
     to_user_id: int = Field(foreign_key="users.id", index=True, ondelete="CASCADE")
     item_kind: SharedItemKind
-    item_id: int  # id na conta de QUEM ENVIOU
+    # id na conta de QUEM ENVIOU. Nulo em refeicao: ela nao tem id proprio (os itens
+    # ficam em ShareOfferMealItem).
+    item_id: int | None = Field(default=None)
     # nome no momento do envio: a lista da caixa de entrada mostra isso sem precisar
     # ler a conta alheia (e continua legivel se o original for renomeado depois).
     item_name: str
+    # So em refeicao: dia e refeicao de origem. O aceite lanca no MESMO dia de quem
+    # enviou (foi quando as duas comeram), e quem enviou acha o status da oferta no
+    # proprio diario por esses dois campos.
+    meal_date: date | None = Field(default=None, index=True)
+    meal_type: MealType | None = Field(default=None)
     status: ShareOfferStatus = Field(default=ShareOfferStatus.pending)
     created_at: datetime = Field(default_factory=utcnow)
     responded_at: datetime | None = Field(default=None)
+
+
+class ShareOfferMealItem(SQLModel, table=True):
+    """Um item da refeicao oferecida, congelado no momento do envio.
+
+    Congela porque refeicao nao e um objeto: e so uma lista de lancamentos que quem
+    enviou pode mudar depois. Assim quem recebe ganha exatamente o que foi enviado.
+    Guarda a referencia (e nao os macros) porque no aceite o lancamento e recalculado
+    na conta de quem recebe - nome no idioma dela, alimento copiado para ela."""
+
+    __tablename__ = "share_offer_meal_items"
+
+    id: int | None = Field(default=None, primary_key=True)
+    offer_id: int = Field(foreign_key="share_offers.id", index=True, ondelete="CASCADE")
+    source: EntrySource
+    food_id: int | None = Field(default=None)  # id na conta de quem enviou
+    recipe_id: int | None = Field(default=None)  # id na conta de quem enviou
+    quantity: float  # gramas (alimento) ou porcoes (receita), igual ao lancamento
+    # kcal no envio: so para o card do convite mostrar o total sem recalcular
+    kcal: float
 
 
 class SharedItem(SQLModel, table=True):
