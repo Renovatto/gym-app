@@ -939,5 +939,15 @@
 	"weigh_in_today": "Hoy",
 	"weigh_in_other_date": "Otra",
 	"error_weigh_in_future": "El peso solo puede registrarse hoy o en días que ya pasaron.",
-	"error_activity_date_future": "La actividad solo puede registrarse hoy o en días que ya pasaron."
+	"error_activity_date_future": "La actividad solo puede registrarse hoy o en días que ya pasaron.",
+	"sharing_kind_meal": "Comida",
+	"sharing_meal_share": "Compartir comida",
+	"sharing_meal_offer_title": "{meal} del {date}",
+	"sharing_meal_offer_summary": "{count} ítems · {kcal} kcal",
+	"sharing_meal_offer_from": "{name} compartió una comida",
+	"sharing_meal_added_toast": "¡Comida añadida a tu diario!",
+	"sharing_meal_sent_pending": "Enviada a {name} · esperando",
+	"sharing_meal_sent_accepted": "Enviada a {name} · aceptó",
+	"sharing_meal_sent_declined": "Enviada a {name} · rechazó",
+	"error_empty_meal": "Esta comida está vacía. Registra algo antes de compartir."
 }

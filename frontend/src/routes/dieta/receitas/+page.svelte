@@ -62,11 +62,14 @@
 	);
 
 	async function loadSharing(): Promise<void> {
-		[connections, offers, received] = await Promise.all([
+		let allOffers: ShareOffer[];
+		[connections, allOffers, received] = await Promise.all([
 			api.getConnections(),
 			api.getShareOffers(),
 			api.getReceivedItems()
 		]);
+		// refeicao se aceita na tela da Dieta: aqui ela nao tem lista onde entrar
+		offers = allOffers.filter((offer) => offer.item_kind !== 'meal');
 		// o badge da barra de abas precisa cair no mesmo instante em que a pilula cai
 		await refreshSharingPending();
 	}

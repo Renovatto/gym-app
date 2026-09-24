@@ -540,7 +540,9 @@ export type ActivityIntensity = 'light' | 'moderate' | 'hard';
 
 // --- Compartilhar entre contas -------------------------------------------
 export type ConnectionStatus = 'pending' | 'accepted' | 'blocked';
-export type SharedItemKind = 'recipe' | 'food';
+// meal = refeicao do diario (so aparece como oferta); diary_entry fica so no servidor
+export type SharedItemKind = 'recipe' | 'food' | 'meal';
+export type ShareOfferStatus = 'pending' | 'accepted' | 'declined';
 
 export interface Connection {
 	id: number;
@@ -558,6 +560,19 @@ export interface ShareOffer {
 	item_name: string;
 	from_name: string;
 	created_at: string;
+	// so em refeicao: dia e refeicao de origem, quantos itens e o total de kcal
+	meal_date: string | null;
+	meal_type: MealType | null;
+	item_count: number;
+	kcal: number;
+}
+
+// refeicao que voce enviou e o que a outra pessoa respondeu (selo no seu diario)
+export interface SentMealOffer {
+	id: number;
+	meal_type: MealType;
+	to_name: string;
+	status: ShareOfferStatus;
 }
 
 export interface ShareItemRef {
@@ -573,7 +588,8 @@ export interface SharingPendingCount {
 
 export interface ReceivedItem {
 	item_kind: SharedItemKind;
-	item_id: number;
+	// nulo no aceite de refeicao: ela vira varios lancamentos, nao um item so
+	item_id: number | null;
 	from_name: string;
 }
 
@@ -655,6 +671,8 @@ export interface DiaryEntry {
 	// Nulo so quando a receita sumiu e nao da para converter.
 	grams: number | null;
 	macros: Macros;
+	// nome de quem enviou, quando o lancamento veio de uma refeicao compartilhada
+	received_from: string | null;
 }
 
 export interface MealGroup {
@@ -1064,6 +1082,12 @@ export const api = {
 	declineShareOffer: (id: number) =>
 		request<void>(`/me/sharing/offers/${id}/decline`, { method: 'POST' }),
 	getReceivedItems: () => request<ReceivedItem[]>('/me/sharing/received'),
+	shareMeal: (connectionId: number, entryDate: string, mealType: MealType) =>
+		request<ShareOffer>('/me/sharing/meal-offers', {
+			method: 'POST',
+			body: { connection_id: connectionId, entry_date: entryDate, meal_type: mealType }
+		}),
+	getSentMeals: (day: string) => request<SentMealOffer[]>(`/me/sharing/sent-meals?day=${day}`),
 	getSharingPendingCount: () =>
 		request<SharingPendingCount>('/me/sharing/pending-count'),
 	getActivities: (day: string) => request<StandaloneActivity[]>(`/me/activities?day=${day}`),

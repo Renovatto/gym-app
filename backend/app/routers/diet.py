@@ -65,6 +65,7 @@ from ..services.recommend import build_meal as compute_build_meal
 from ..services.recommend import meal_plan as compute_meal_plan
 from ..services.recommend import substitutes as compute_substitutes
 from ..services.recommend import suggest_gap
+from ..services.sharing import forget_received_entry, received_from_names
 from ..services.text import normalize_search
 
 router = APIRouter(tags=["diet"])
@@ -544,7 +545,9 @@ def _daily_goals(session: Session, user_id: int) -> MacrosOut | None:
 
 
 def _entry_out(
-    entry: DiaryEntry, grams_per_serving: dict[int, float] | None = None
+    entry: DiaryEntry,
+    grams_per_serving: dict[int, float] | None = None,
+    received_from: str | None = None,
 ) -> DiaryEntryOut:
     """Lancamento para a API.
 
@@ -571,6 +574,7 @@ def _entry_out(
         macros=MacrosOut(
             kcal=entry.kcal, protein_g=entry.protein_g, carbs_g=entry.carbs_g, fat_g=entry.fat_g
         ),
+        received_from=received_from,
     )
 
 
@@ -612,10 +616,11 @@ def get_diary(
         .where(DiaryEntry.entry_date == day)
     ).all()
     per_serving = _grams_per_serving_map(session, list(entries))
+    senders = received_from_names(session, user.id, [e.id for e in entries])
     meals: list[MealGroupOut] = []
     for meal_type in MealType:
         group = [e for e in entries if e.meal_type == meal_type]
-        entry_outs = [_entry_out(e, per_serving) for e in group]
+        entry_outs = [_entry_out(e, per_serving, senders.get(e.id)) for e in group]
         subtotal = sum_macros([e.macros for e in entry_outs])
         meals.append(MealGroupOut(meal_type=meal_type, entries=entry_outs, subtotal=subtotal))
     totals = sum_macros([_entry_out(e).macros for e in entries])
@@ -776,7 +781,9 @@ def update_diary_entry(
     session.add(entry)
     session.commit()
     session.refresh(entry)
-    return _entry_out(entry)
+    # editar nao apaga a origem: a tela troca o item pela resposta, entao o selo vem junto
+    senders = received_from_names(session, user.id, [entry.id])
+    return _entry_out(entry, received_from=senders.get(entry.id))
 
 
 @router.delete("/me/diary/{entry_id}", status_code=status.HTTP_204_NO_CONTENT)
@@ -784,6 +791,7 @@ def delete_diary_entry(entry_id: int, user: CurrentUser, session: SessionDep) ->
     entry = session.get(DiaryEntry, entry_id)
     if entry is None or entry.user_id != user.id:
         raise HTTPException(status.HTTP_404_NOT_FOUND, detail="ENTRY_NOT_FOUND")
+    forget_received_entry(session, user.id, entry.id)
     session.delete(entry)
     session.commit()
 

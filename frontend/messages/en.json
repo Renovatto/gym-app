@@ -939,5 +939,15 @@
 	"weigh_in_today": "Today",
 	"weigh_in_other_date": "Other",
 	"error_weigh_in_future": "A weigh-in can only be logged for today or a day that has already passed.",
-	"error_activity_date_future": "An activity can only be logged for today or a day that has already passed."
+	"error_activity_date_future": "An activity can only be logged for today or a day that has already passed.",
+	"sharing_kind_meal": "Meal",
+	"sharing_meal_share": "Share meal",
+	"sharing_meal_offer_title": "{meal} on {date}",
+	"sharing_meal_offer_summary": "{count} items · {kcal} kcal",
+	"sharing_meal_offer_from": "{name} shared a meal",
+	"sharing_meal_added_toast": "Meal added to your diary!",
+	"sharing_meal_sent_pending": "Sent to {name} · waiting",
+	"sharing_meal_sent_accepted": "Sent to {name} · accepted",
+	"sharing_meal_sent_declined": "Sent to {name} · declined",
+	"error_empty_meal": "This meal is empty. Log something before sharing."
 }

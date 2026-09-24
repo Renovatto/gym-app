@@ -1,8 +1,10 @@
 <script lang="ts">
 	import { closeOnBack } from '$lib/modalBack';
 	import {
+		ApiError,
 		api,
 		localDay,
+		type Connection,
 		type CyclePhase,
 		type CycleStatus,
 		type DiaryDay,
@@ -16,6 +18,8 @@
 		type Recipe,
 		type RecipeSuggestion,
 		type RecipeView,
+		type SentMealOffer,
+		type ShareOffer,
 		type SubstituteItem,
 		type Substitutes,
 		type Supplement,
@@ -34,6 +38,13 @@
 	import MacroBreakdown from '$lib/components/MacroBreakdown.svelte';
 	import { slide } from 'svelte/transition';
 	import { showToast } from '$lib/toast.svelte';
+	import { errorMessage } from '$lib/errors';
+	import {
+		mealOfferSummary,
+		mealOfferTitle,
+		refreshSharingPending,
+		sentMealLabel
+	} from '$lib/sharing.svelte';
 	import { beginPointerDrag, endPointerDrag } from '$lib/drag';
 	import { mealTypeLabel } from '$lib/labels';
 	import SkeletonScreen from '$lib/components/SkeletonScreen.svelte';
@@ -270,6 +281,7 @@
 	// Recarrega os dados SEM o spinner de tela cheia: usado quando a modal de
 	// adicionar lanca um item, para a lista atualizar mantendo a posicao de rolagem.
 	async function reloadSilent(): Promise<void> {
+		const mealSharingLoaded = loadMealSharing();
 		[diary, gap, mealPlan, supplements, dietPeriod] = await Promise.all([
 			api.getDiary(day),
 			api.getDiaryGap(day, 4, mealByTime()),
@@ -289,6 +301,7 @@
 		} catch {
 			// acompanhamento indisponivel: a tela vive sem o card
 		}
+		await mealSharingLoaded;
 	}
 
 	async function load(): Promise<void> {
@@ -409,6 +422,94 @@
 		showToast(m.day_copied());
 	}
 
+	// --- Compartilhar refeicao --------------------------------------------------
+	// Enviar vai direto, com toast e sem confirmacao: nada muda na conta de ninguem
+	// ate a outra pessoa aceitar (mesmo criterio de compartilhar receita).
+	let partners = $state<Connection[]>([]);
+	// convites de refeicao esperando o SEU aceite (receita/alimento ficam em Receitas)
+	let incomingMeals = $state<ShareOffer[]>([]);
+	// refeicoes que VOCE enviou no dia aberto: o selo "Enviada a Ana - aceitou"
+	let sentMeals = $state<SentMealOffer[]>([]);
+	// com mais de uma conexao, a refeicao espera aqui a escolha de para quem vai
+	let sharingMeal = $state<MealType | null>(null);
+	let sendingMeal = $state(false);
+	let answeringOffer = $state<number | null>(null);
+
+	async function loadMealSharing(): Promise<void> {
+		try {
+			const [connections, offers, sent] = await Promise.all([
+				api.getConnections(),
+				api.getShareOffers(),
+				api.getSentMeals(day)
+			]);
+			partners = connections.filter((c) => c.status === 'accepted');
+			incomingMeals = offers.filter((offer) => offer.item_kind === 'meal');
+			sentMeals = sent;
+		} catch {
+			// compartilhar e acessorio: se falhar, o diario continua funcionando
+		}
+	}
+
+	function sentMealsFor(meal: MealType): SentMealOffer[] {
+		return sentMeals.filter((sent) => sent.meal_type === meal);
+	}
+
+	function startShareMeal(meal: MealType): void {
+		// com uma conexao so nao ha o que escolher: vai direto
+		if (partners.length === 1) {
+			void shareMealWith(meal, partners[0]);
+			return;
+		}
+		sharingMeal = meal;
+	}
+
+	async function shareMealWith(meal: MealType, partner: Connection): Promise<void> {
+		sendingMeal = true;
+		try {
+			await api.shareMeal(partner.id, day, meal);
+			sharingMeal = null;
+			sentMeals = await api.getSentMeals(day);
+			showToast(m.sharing_sent_toast({ name: partner.person_name }));
+		} catch (e) {
+			showToast(errorMessage(e instanceof ApiError ? e.code : 'GENERIC_ERROR'));
+		} finally {
+			sendingMeal = false;
+		}
+	}
+
+	async function acceptMealOffer(offer: ShareOffer): Promise<void> {
+		answeringOffer = offer.id;
+		try {
+			await api.acceptShareOffer(offer.id);
+			showToast(m.sharing_meal_added_toast());
+			void refreshSharingPending();
+			// a refeicao entra no dia de quem enviou: se nao e o dia aberto, leva ate
+			// ele (trocar o dia ja recarrega tudo)
+			if (offer.meal_date && offer.meal_date !== day) {
+				day = offer.meal_date;
+			} else {
+				await reloadSilent();
+			}
+		} catch (e) {
+			showToast(errorMessage(e instanceof ApiError ? e.code : 'GENERIC_ERROR'));
+			await loadMealSharing();
+		} finally {
+			answeringOffer = null;
+		}
+	}
+
+	async function declineMealOffer(offer: ShareOffer): Promise<void> {
+		answeringOffer = offer.id;
+		try {
+			await api.declineShareOffer(offer.id);
+			showToast(m.sharing_dismissed_toast());
+			void refreshSharingPending();
+			await loadMealSharing();
+		} finally {
+			answeringOffer = null;
+		}
+	}
+
 	// Exemplo de refeicoes preenchidas, usado so durante o passo do tutorial que
 	// aponta para "Suas refeicoes" - quando a conta e nova e nao tem nada lancado
 	// ainda, mostra o card de verdade com um dia tipico, em vez de ficar vazio.
@@ -426,7 +527,8 @@
 					name: 'Pão integral, 2 fatias',
 					quantity: 50,
 					grams: 50,
-					macros: { kcal: 130, protein_g: 5, carbs_g: 24, fat_g: 2 }
+					macros: { kcal: 130, protein_g: 5, carbs_g: 24, fat_g: 2 },
+					received_from: null
 				},
 				{
 					id: -2,
@@ -437,7 +539,8 @@
 					name: 'Ovos mexidos, 2 unidades',
 					quantity: 100,
 					grams: 100,
-					macros: { kcal: 150, protein_g: 13, carbs_g: 1, fat_g: 11 }
+					macros: { kcal: 150, protein_g: 13, carbs_g: 1, fat_g: 11 },
+					received_from: null
 				}
 			],
 			subtotal: { kcal: 280, protein_g: 18, carbs_g: 25, fat_g: 13 }
@@ -975,6 +1078,9 @@
 	$effect(() => {
 		if (cycleModal) return closeOnBack(() => (cycleModal = false));
 	});
+	$effect(() => {
+		if (sharingMeal) return closeOnBack(() => (sharingMeal = null));
+	});
 </script>
 
 <!-- Sugestao de RECEITA (da biblioteca): borda ambar + icone de prato; "+ Adicionar"
@@ -1332,6 +1438,36 @@
 		</div>
 	{/if}
 
+	<!-- Refeicao que alguem compartilhou com voce: nada entra no diario sem aceite.
+		 Fica acima das refeicoes porque e onde ela vai cair. -->
+	{#each incomingMeals as offer (offer.id)}
+		<section class="mt-3 rounded-3xl bg-white p-4 shadow-sm ring-2 ring-emerald-400">
+			<p class="text-xs font-bold text-emerald-700">
+				{m.sharing_meal_offer_from({ name: offer.from_name })}
+			</p>
+			<p class="mt-0.5 truncate font-bold text-slate-900">{mealOfferTitle(offer)}</p>
+			<p class="text-xs text-slate-500">{mealOfferSummary(offer)}</p>
+			<div class="mt-2.5 flex gap-2">
+				<button
+					type="button"
+					disabled={answeringOffer === offer.id}
+					onclick={() => acceptMealOffer(offer)}
+					class="h-10 flex-1 rounded-xl bg-emerald-600 text-sm font-bold text-white active:bg-emerald-700 disabled:opacity-50"
+				>
+					{m.sharing_add_action()}
+				</button>
+				<button
+					type="button"
+					disabled={answeringOffer === offer.id}
+					onclick={() => declineMealOffer(offer)}
+					class="h-10 shrink-0 rounded-xl px-3 text-sm font-semibold text-slate-500 active:bg-slate-100 disabled:opacity-50"
+				>
+					{m.sharing_dismiss_action()}
+				</button>
+			</div>
+		</section>
+	{/each}
+
 	<div class="mt-3 space-y-3" data-tour="diet-meals">
 		{#each displayMeals as meal, index (meal)}
 			{@const group = mealGroup(meal)}
@@ -1390,6 +1526,23 @@
 				{#if isOpen}
 				<div class="px-4 pb-4" transition:slide={{ duration: 200 }}>
 
+				{#if !demoMealsActive && sentMealsFor(meal).length > 0}
+					<!-- quem enviou fica sabendo se a outra pessoa aceitou ou recusou -->
+					<div class="mt-1 flex flex-wrap gap-1.5">
+						{#each sentMealsFor(meal) as sent (sent.id)}
+							<span
+								class="rounded-full px-2 py-0.5 text-[10px] font-bold {sent.status === 'accepted'
+									? 'bg-emerald-50 text-emerald-700'
+									: sent.status === 'declined'
+										? 'bg-slate-100 text-slate-500'
+										: 'bg-amber-50 text-amber-700'}"
+							>
+								{sentMealLabel(sent)}
+							</span>
+						{/each}
+					</div>
+				{/if}
+
 				{#if plan && (plan.suggestions.length > 0 || plan.recipe_suggestions.length > 0)}
 					<button
 						type="button"
@@ -1412,6 +1565,12 @@
 							>
 								<div class="min-w-0 flex-1">
 									<p class="truncate text-sm font-semibold text-slate-800">{entry.name}</p>
+									{#if entry.received_from}
+										<!-- veio de uma refeicao compartilhada: mesmo selo das receitas recebidas -->
+										<span class="mt-0.5 inline-block rounded-full bg-rose-50 px-2 py-0.5 text-[10px] font-bold text-rose-700">
+											{m.sharing_from({ name: entry.received_from })}
+										</span>
+									{/if}
 									<p class="text-xs text-slate-500">
 										<!-- Grama e a unidade universal e comparavel, entao ela e o
 											 numero. A porcao vira contexto entre parenteses, e so
@@ -1518,6 +1677,31 @@
 						>
 							+ {m.add_food()}
 						</button>
+						{#if group && group.entries.length > 0 && !demoMealsActive}
+							<!-- Sem conexao, o botao leva para onde se convida alguem (botao que
+								 some nao ensina que a funcao existe - mesmo criterio das receitas) -->
+							{#if partners.length > 0}
+								<button
+									type="button"
+									aria-label={m.sharing_meal_share()}
+									title={m.sharing_meal_share()}
+									disabled={sendingMeal}
+									onclick={() => startShareMeal(meal)}
+									class="grid h-11 w-11 shrink-0 place-items-center rounded-2xl border-2 border-slate-200 text-slate-500 active:bg-slate-100 disabled:opacity-50"
+								>
+									<svg viewBox="0 0 24 24" class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3" /><circle cx="6" cy="12" r="3" /><circle cx="18" cy="19" r="3" /><path d="M8.6 13.5l6.8 4M15.4 6.5l-6.8 4" /></svg>
+								</button>
+							{:else}
+								<a
+									href="/perfil/conexoes"
+									aria-label={m.sharing_meal_share()}
+									title={m.sharing_meal_share()}
+									class="grid h-11 w-11 shrink-0 place-items-center rounded-2xl border-2 border-slate-200 text-slate-500 active:bg-slate-100"
+								>
+									<svg viewBox="0 0 24 24" class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3" /><circle cx="6" cy="12" r="3" /><circle cx="18" cy="19" r="3" /><path d="M8.6 13.5l6.8 4M15.4 6.5l-6.8 4" /></svg>
+								</a>
+							{/if}
+						{/if}
 						{#if !group || group.entries.length === 0}
 							<button
 								type="button"
@@ -2131,6 +2315,43 @@
 					{/each}
 				</div>
 			{/if}
+		</div>
+	</div>
+{/if}
+
+<!-- Compartilhar refeicao com mais de uma conexao: escolher para quem vai -->
+{#if sharingMeal}
+	{@const meal = sharingMeal}
+	<div
+		class="fixed inset-0 z-50 flex items-end justify-center bg-black/50 p-4"
+		role="button"
+		tabindex="-1"
+		onclick={() => (sharingMeal = null)}
+		onkeydown={(e) => e.key === 'Escape' && (sharingMeal = null)}
+	>
+		<div
+			class="w-full max-w-md rounded-3xl bg-white p-5"
+			role="dialog"
+			tabindex="-1"
+			onclick={(e) => e.stopPropagation()}
+			onkeydown={() => {}}
+		>
+			<p class="mb-3 font-bold text-slate-900">{m.sharing_meal_share()} · {mealDisplayLabel(meal)}</p>
+			<div class="space-y-2">
+				{#each partners as partner (partner.id)}
+					<button
+						type="button"
+						disabled={sendingMeal}
+						onclick={() => shareMealWith(meal, partner)}
+						class="flex w-full items-center gap-3 rounded-2xl bg-slate-50 p-3 text-left active:bg-slate-100 disabled:opacity-50"
+					>
+						<span class="min-w-0 flex-1 truncate font-semibold text-slate-800">
+							{partner.person_name}
+						</span>
+						<svg viewBox="0 0 24 24" class="h-5 w-5 shrink-0 text-slate-300" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 6l6 6-6 6" stroke-linecap="round" stroke-linejoin="round" /></svg>
+					</button>
+				{/each}
+			</div>
 		</div>
 	</div>
 {/if}

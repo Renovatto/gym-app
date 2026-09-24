@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { ApiError, api, type Connection, type ShareOffer } from '$lib/api';
 	import { errorMessage } from '$lib/errors';
-	import { refreshSharingPending } from '$lib/sharing.svelte';
+	import { mealOfferSummary, mealOfferTitle, refreshSharingPending } from '$lib/sharing.svelte';
 	import { showToast } from '$lib/toast.svelte';
 	import { m } from '$lib/paraglide/messages';
 
@@ -36,7 +36,8 @@
 		try {
 			await api.acceptShareOffer(offer.id);
 			await load();
-			showToast(m.sharing_added_toast());
+			// refeicao vai para o diario, nao para as receitas: o toast diz onde procurar
+			showToast(offer.item_kind === 'meal' ? m.sharing_meal_added_toast() : m.sharing_added_toast());
 		} catch (e) {
 			showToast(errorMessage(e instanceof ApiError ? e.code : 'GENERIC_ERROR'));
 			await load();
@@ -54,6 +55,11 @@
 		} finally {
 			answering = null;
 		}
+	}
+
+	function offerKindLabel(offer: ShareOffer): string {
+		if (offer.item_kind === 'meal') return m.sharing_kind_meal();
+		return offer.item_kind === 'recipe' ? m.sharing_kind_recipe() : m.sharing_kind_food();
 	}
 
 	const accepted = $derived(connections.filter((c) => c.status === 'accepted'));
@@ -120,9 +126,14 @@
 			{#each offers as offer (offer.id)}
 				<div class="rounded-2xl bg-slate-50 p-3">
 					<p class="text-[10px] font-bold tracking-wide text-slate-400 uppercase">
-						{offer.item_kind === 'recipe' ? m.sharing_kind_recipe() : m.sharing_kind_food()}
+						{offerKindLabel(offer)}
 					</p>
-					<p class="truncate font-bold text-slate-900">{offer.item_name}</p>
+					{#if offer.item_kind === 'meal'}
+						<p class="truncate font-bold text-slate-900">{mealOfferTitle(offer)}</p>
+						<p class="text-xs text-slate-500">{mealOfferSummary(offer)}</p>
+					{:else}
+						<p class="truncate font-bold text-slate-900">{offer.item_name}</p>
+					{/if}
 					<p class="text-xs font-semibold text-emerald-700">
 						{m.sharing_from({ name: offer.from_name })}
 					</p>

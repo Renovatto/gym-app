@@ -1,22 +1,23 @@
-"""Conexao entre duas contas e compartilhamento de receita/alimento.
+"""Conexao entre duas contas e compartilhamento de receita, alimento e refeicao.
 
 Fase 1 do social: convite mutuo por e-mail, oferta que espera aceite e copia no
 aceite. Sem perfil publico, sem descoberta de pessoas - as duas ja se conhecem.
 """
 
-from datetime import datetime, timezone
+from datetime import date, datetime, timezone
 
-from fastapi import APIRouter, HTTPException, status
+from fastapi import APIRouter, HTTPException, Query, status
 from sqlmodel import Session, desc, func, or_, select
 
 from ..deps import CurrentUser, SessionDep
 from ..models import (
     Connection,
     ConnectionStatus,
+    DiaryEntry,
     Food,
-    Profile,
     Recipe,
     ShareOffer,
+    ShareOfferMealItem,
     ShareOfferStatus,
     SharedItem,
     SharedItemKind,
@@ -25,26 +26,23 @@ from ..models import (
 from ..schemas import (
     ConnectionInviteIn,
     ConnectionOut,
+    MealShareOfferIn,
     ReceivedItemOut,
+    SentMealOfferOut,
     ShareOfferIn,
     ShareOfferOut,
     SharingPendingCountOut,
 )
-from ..services.sharing import SourceItemGone, copy_food, copy_recipe
+from ..services.sharing import (
+    SourceItemGone,
+    accept_meal,
+    copy_food,
+    copy_recipe,
+    display_name,
+    freeze_meal_items,
+)
 
 router = APIRouter(prefix="/me/sharing", tags=["sharing"])
-
-
-def _display_name(session: Session, user_id: int) -> str:
-    """Nome de quem esta do outro lado. Cai no e-mail quando a pessoa nao preencheu
-    o perfil - melhor mostrar algo identificavel do que um espaco vazio."""
-    profile = session.exec(select(Profile).where(Profile.user_id == user_id)).first()
-    if profile is not None:
-        full_name = " ".join(filter(None, [profile.first_name, profile.last_name])).strip()
-        if full_name:
-            return full_name
-    user = session.get(User, user_id)
-    return user.email if user is not None else ""
 
 
 def _other_user_id(connection: Connection, user_id: int) -> int:
@@ -58,7 +56,7 @@ def _connection_out(session: Session, connection: Connection, user_id: int) -> C
     other = session.get(User, other_id)
     return ConnectionOut(
         id=connection.id,
-        person_name=_display_name(session, other_id),
+        person_name=display_name(session, other_id),
         person_email=other.email if other is not None else "",
         status=connection.status,
         i_invited=connection.requester_user_id == user_id,
@@ -203,10 +201,13 @@ def create_offers(
     """Oferece um ou varios itens de uma vez - mandar as receitas todas no primeiro
     dia e o caso real, uma a uma seria trabalho repetitivo."""
     to_user_id = _accepted_partner_id(session, data.connection_id, user.id)
-    from_name = _display_name(session, user.id)
+    from_name = display_name(session, user.id)
 
     created: list[ShareOffer] = []
     for item in data.items:
+        # refeicao tem rota propria (/meal-offers): ela nao tem um id para apontar
+        if item.item_kind not in (SharedItemKind.recipe, SharedItemKind.food):
+            raise HTTPException(status.HTTP_400_BAD_REQUEST, detail="ITEM_KIND_NOT_SHAREABLE")
         name = _owned_item_name(session, item.item_kind, item.item_id, user.id)
         # ja ofereceu esse item e ainda esta esperando resposta? nao duplica
         already = session.exec(
@@ -253,16 +254,30 @@ def list_offers(user: CurrentUser, session: SessionDep) -> list[ShareOfferOut]:
         .where(ShareOffer.status == ShareOfferStatus.pending)
         .order_by(desc(ShareOffer.created_at))
     ).all()
-    return [
-        ShareOfferOut(
-            id=o.id,
-            item_kind=o.item_kind,
-            item_name=o.item_name,
-            from_name=_display_name(session, o.from_user_id),
-            created_at=o.created_at,
-        )
-        for o in offers
-    ]
+    return [_offer_out(session, o) for o in offers]
+
+
+def _offer_out(session: Session, offer: ShareOffer) -> ShareOfferOut:
+    """Oferta para a caixa de entrada. Refeicao leva junto quantos itens e quantas
+    kcal (somadas no envio), para a pessoa decidir sem abrir nada."""
+    out = ShareOfferOut(
+        id=offer.id,
+        item_kind=offer.item_kind,
+        item_name=offer.item_name,
+        from_name=display_name(session, offer.from_user_id),
+        created_at=offer.created_at,
+    )
+    if offer.item_kind != SharedItemKind.meal:
+        return out
+    items = session.exec(
+        select(ShareOfferMealItem).where(ShareOfferMealItem.offer_id == offer.id)
+    ).all()
+    out.meal_date = offer.meal_date
+    out.meal_type = offer.meal_type
+    out.item_count = len(items)
+    # total da refeicao = soma das kcal de cada item, como estavam no envio
+    out.kcal = round(sum(item.kcal for item in items), 1)
+    return out
 
 
 def _owned_offer(session: Session, offer_id: int, user_id: int) -> ShareOffer:
@@ -277,10 +292,14 @@ def _owned_offer(session: Session, offer_id: int, user_id: int) -> ShareOffer:
 @router.post("/offers/{offer_id}/accept", response_model=ReceivedItemOut)
 def accept_offer(offer_id: int, user: CurrentUser, session: SessionDep) -> ReceivedItemOut:
     """Copia o item para a conta de quem recebeu. Dai em diante o item e dela: pode
-    editar e apagar sem afetar o original."""
+    editar e apagar sem afetar o original. Refeicao vira lancamentos no diario dela,
+    no mesmo dia e refeicao de quem enviou."""
     offer = _owned_offer(session, offer_id, user.id)
+    copy_id: int | None = None
     try:
-        if offer.item_kind == SharedItemKind.recipe:
+        if offer.item_kind == SharedItemKind.meal:
+            accept_meal(session, offer, user)
+        elif offer.item_kind == SharedItemKind.recipe:
             source = session.get(Recipe, offer.item_id)
             if source is None or source.user_id != offer.from_user_id:
                 raise SourceItemGone
@@ -303,7 +322,7 @@ def accept_offer(offer_id: int, user: CurrentUser, session: SessionDep) -> Recei
     return ReceivedItemOut(
         item_kind=offer.item_kind,
         item_id=copy_id,
-        from_name=_display_name(session, offer.from_user_id),
+        from_name=display_name(session, offer.from_user_id),
     )
 
 
@@ -322,13 +341,16 @@ def list_received(user: CurrentUser, session: SessionDep) -> list[ReceivedItemOu
     items = session.exec(
         select(SharedItem)
         .where(SharedItem.owner_user_id == user.id)
+        # lancamento recebido tem o selo proprio no diario; aqui so o que vai para
+        # a lista de receitas/alimentos
+        .where(SharedItem.item_kind.in_([SharedItemKind.recipe, SharedItemKind.food]))
         .order_by(desc(SharedItem.accepted_at))
     ).all()
     names: dict[int, str] = {}
     out: list[ReceivedItemOut] = []
     for item in items:
         if item.from_user_id not in names:
-            names[item.from_user_id] = _display_name(session, item.from_user_id)
+            names[item.from_user_id] = display_name(session, item.from_user_id)
         out.append(
             ReceivedItemOut(
                 item_kind=item.item_kind,
@@ -337,6 +359,83 @@ def list_received(user: CurrentUser, session: SessionDep) -> list[ReceivedItemOu
             )
         )
     return out
+
+
+# --- Refeicao -------------------------------------------------------------
+
+
+@router.post("/meal-offers", response_model=ShareOfferOut, status_code=status.HTTP_201_CREATED)
+def create_meal_offer(
+    data: MealShareOfferIn, user: CurrentUser, session: SessionDep
+) -> ShareOfferOut:
+    """Oferece uma refeicao do diario. Os itens ficam congelados agora: o que a outra
+    pessoa aceitar e o que foi enviado, mesmo que a refeicao mude depois."""
+    to_user_id = _accepted_partner_id(session, data.connection_id, user.id)
+
+    # mesma refeicao ja esperando resposta dessa pessoa? nao duplica
+    already = session.exec(
+        select(ShareOffer)
+        .where(ShareOffer.from_user_id == user.id)
+        .where(ShareOffer.to_user_id == to_user_id)
+        .where(ShareOffer.item_kind == SharedItemKind.meal)
+        .where(ShareOffer.meal_date == data.entry_date)
+        .where(ShareOffer.meal_type == data.meal_type)
+        .where(ShareOffer.status == ShareOfferStatus.pending)
+    ).first()
+    if already is not None:
+        return _offer_out(session, already)
+
+    entries = session.exec(
+        select(DiaryEntry)
+        .where(DiaryEntry.user_id == user.id)
+        .where(DiaryEntry.entry_date == data.entry_date)
+        .where(DiaryEntry.meal_type == data.meal_type)
+        .order_by(DiaryEntry.logged_at, DiaryEntry.id)
+    ).all()
+    if not entries:
+        raise HTTPException(status.HTTP_400_BAD_REQUEST, detail="EMPTY_MEAL")
+
+    offer = ShareOffer(
+        from_user_id=user.id,
+        to_user_id=to_user_id,
+        item_kind=SharedItemKind.meal,
+        # a tela traduz pela refeicao (meal_type); o nome fica so como registro
+        item_name=data.meal_type.value,
+        meal_date=data.entry_date,
+        meal_type=data.meal_type,
+    )
+    session.add(offer)
+    session.flush()
+    freeze_meal_items(session, offer, list(entries))
+    session.commit()
+    session.refresh(offer)
+    return _offer_out(session, offer)
+
+
+@router.get("/sent-meals", response_model=list[SentMealOfferOut])
+def list_sent_meals(
+    user: CurrentUser,
+    session: SessionDep,
+    day: date = Query(..., description="Dia local do cliente (YYYY-MM-DD)"),
+) -> list[SentMealOfferOut]:
+    """Refeicoes que voce enviou nesse dia e o que a outra pessoa respondeu - o selo
+    "Enviada a Ana - aceitou" no seu diario."""
+    offers = session.exec(
+        select(ShareOffer)
+        .where(ShareOffer.from_user_id == user.id)
+        .where(ShareOffer.item_kind == SharedItemKind.meal)
+        .where(ShareOffer.meal_date == day)
+        .order_by(ShareOffer.created_at)
+    ).all()
+    return [
+        SentMealOfferOut(
+            id=o.id,
+            meal_type=o.meal_type,
+            to_name=display_name(session, o.to_user_id),
+            status=o.status,
+        )
+        for o in offers
+    ]
 
 
 @router.get("/pending-count", response_model=SharingPendingCountOut)
