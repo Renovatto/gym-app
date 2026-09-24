@@ -1,7 +1,8 @@
 <script lang="ts">
 	import { goto } from '$app/navigation';
 	import { page } from '$app/state';
-	import { api, type Food } from '$lib/api';
+	import { ApiError, api, type Food } from '$lib/api';
+	import { errorMessage } from '$lib/errors';
 	import FoodPicker from '$lib/components/FoodPicker.svelte';
 	import Stepper from '$lib/components/Stepper.svelte';
 	import { showToast } from '$lib/toast.svelte';
@@ -116,6 +117,9 @@
 			await api.deleteRecipe(Number(recipeId));
 			showToast(m.toast_deleted());
 			await goto('/dieta/receitas');
+		} catch (e) {
+			confirmingDelete = false;
+			showToast(errorMessage(e instanceof ApiError ? e.code : 'GENERIC_ERROR'));
 		} finally {
 			busy = false;
 		}

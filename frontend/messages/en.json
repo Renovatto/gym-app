@@ -949,5 +949,6 @@
 	"sharing_meal_sent_pending": "Sent to {name} · waiting",
 	"sharing_meal_sent_accepted": "Sent to {name} · accepted",
 	"sharing_meal_sent_declined": "Sent to {name} · declined",
-	"error_empty_meal": "This meal is empty. Log something before sharing."
+	"error_empty_meal": "This meal is empty. Log something before sharing.",
+	"error_recipe_in_use_diary": "This recipe has already been logged in the diary. It can't be deleted."
 }

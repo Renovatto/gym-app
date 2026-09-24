@@ -949,5 +949,6 @@
 	"sharing_meal_sent_pending": "Enviada a {name} · aguardando",
 	"sharing_meal_sent_accepted": "Enviada a {name} · aceitou",
 	"sharing_meal_sent_declined": "Enviada a {name} · recusou",
-	"error_empty_meal": "Essa refeição está vazia. Lance algo antes de compartilhar."
+	"error_empty_meal": "Essa refeição está vazia. Lance algo antes de compartilhar.",
+	"error_recipe_in_use_diary": "Esta receita já foi lançada no diário. Não é possível excluir."
 }

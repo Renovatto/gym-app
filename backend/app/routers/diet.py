@@ -520,6 +520,11 @@ def update_recipe(
 @router.delete("/me/recipes/{recipe_id}", status_code=status.HTTP_204_NO_CONTENT)
 def delete_recipe(recipe_id: int, user: CurrentUser, session: SessionDep) -> None:
     recipe = _get_owned_recipe(session, recipe_id, user.id)
+    # mesma regra do alimento: receita ja lancada no diario nao sai - o lancamento
+    # aponta para ela, e apagar violaria a FK com um erro cru (500)
+    in_diary = session.exec(select(DiaryEntry).where(DiaryEntry.recipe_id == recipe_id)).first()
+    if in_diary is not None:
+        raise HTTPException(status.HTTP_400_BAD_REQUEST, detail="RECIPE_IN_USE_DIARY")
     session.delete(recipe)
     session.commit()
 
