@@ -1,0 +1,12 @@
+[
+  {
+    "published_on": "2026-09-24",
+    "importance": "normal",
+    "title_pt_br": "Renove o ciclo de todos os treinos de uma vez",
+    "body_pt_br": "Quando dois ou mais treinos passam da validade, agora há um botão \"Renovar todas as vencidas\" no aviso de hora de variar. Ele mostra a variação de cada treino numa janela só: troque a que não gostar e confirme uma vez, em vez de abrir treino por treino. Os treinos renovados juntos ganham a mesma validade, então o programa volta a andar em sincronia. E um conserto: renovar um treino agora de fato reinicia a validade — antes ele trocava os exercícios, mas o aviso de \"renovar ciclo\" continuava lá.",
+    "title_en": "Renew every workout's cycle at once",
+    "body_en": "When two or more workouts are past their validity, there's now a \"Renew all expired\" button in the time-to-vary notice. It shows each workout's variation in a single window: swap any you don't like and confirm once, instead of opening workout after workout. Workouts renewed together get the same validity, so your program runs in sync again. And a fix: renewing a workout now actually restarts its validity — before, it swapped the exercises but the \"renew cycle\" notice stayed put.",
+    "title_es": "Renueva el ciclo de todos los entrenamientos a la vez",
+    "body_es": "Cuando dos o más entrenamientos pasan de su validez, ahora hay un botón \"Renovar todas las vencidas\" en el aviso de hora de variar. Muestra la variación de cada entrenamiento en una sola ventana: cambia la que no te guste y confirma una vez, en lugar de abrir uno por uno. Los entrenamientos renovados juntos reciben la misma validez, así que tu programa vuelve a ir sincronizado. Y un arreglo: renovar un entrenamiento ahora reinicia de verdad su validez — antes cambiaba los ejercicios, pero el aviso de \"renovar ciclo\" seguía ahí."
+  }
+]
