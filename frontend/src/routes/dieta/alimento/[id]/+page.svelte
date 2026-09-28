@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { closeOnBack } from '$lib/modalBack';
-	import { goto } from '$app/navigation';
+	import { afterNavigate, goto } from '$app/navigation';
 	import { page } from '$app/state';
 	import {
 		api,
@@ -22,6 +22,21 @@
 
 	const foodId = $derived(page.params.id);
 	const isNew = $derived(foodId === 'novo');
+
+	// Sair desta tela volta para quem a chamou (a lista de alimentos, a modal de
+	// adicionar). Mas se ela foi aberta direto - app instalado reaberto aqui, pagina
+	// recarregada - nao ha tela do app antes dela, e o history.back() sairia do app
+	// ou cairia na home. Nesse caso o destino e a lista de alimentos.
+	const FOOD_LIST_PATH = '/dieta/receitas?aba=alimentos';
+	let openedFromInsideApp = $state(false);
+	afterNavigate(({ from }) => {
+		openedFromInsideApp = from !== null;
+	});
+
+	function leave(): void {
+		if (openedFromInsideApp) history.back();
+		else void goto(FOOD_LIST_PATH, { replaceState: true });
+	}
 
 	let name = $state('');
 	// Ver FoodPicker: sem palpite de categoria, o usuario escolhe o grupo certo.
@@ -201,7 +216,7 @@
 			if (isNew) await api.createFood(payload);
 			else await api.updateFood(Number(foodId), payload);
 			showToast(isNew ? m.toast_created() : m.toast_saved());
-			history.back();
+			leave();
 		} catch (e) {
 			showToast(errorMessage(e instanceof ApiError ? e.code : 'GENERIC_ERROR'));
 		} finally {
@@ -215,7 +230,7 @@
 		try {
 			await api.deleteFood(Number(foodId));
 			showToast(m.toast_deleted());
-			await goto('/dieta/receitas'); // volta para uma tela estavel (nao a modal de origem)
+			await goto(FOOD_LIST_PATH); // volta para uma tela estavel (nao a modal de origem)
 		} catch (e) {
 			deleteError = errorMessage(e instanceof ApiError ? e.code : 'GENERIC_ERROR');
 			confirmingDelete = false;
@@ -243,7 +258,7 @@
 		<button
 			type="button"
 			aria-label={m.back()}
-			onclick={() => history.back()}
+			onclick={leave}
 			class="grid h-10 w-10 place-items-center rounded-full bg-white text-slate-500 shadow-sm"
 		>
 			<svg viewBox="0 0 24 24" class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="2">

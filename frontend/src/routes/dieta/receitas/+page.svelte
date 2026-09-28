@@ -1,5 +1,7 @@
 <script lang="ts">
 	import { closeOnBack } from '$lib/modalBack';
+	import { page } from '$app/state';
+	import { goto } from '$app/navigation';
 	import {
 		ApiError,
 		api,
@@ -39,7 +41,21 @@
 	// alcancavel fingindo que se ia lancar uma refeicao (Adicionar > lapis), e nao
 	// tinha onde ser criado nem compartilhado. As abas repetem o par que a modal de
 	// adicionar ja ensina, entao ninguem precisa aprender nada novo.
-	let tab = $state<'foods' | 'recipes'>('recipes');
+	//
+	// A aba fica no endereco (?aba=alimentos): quem abre um alimento daqui e volta
+	// (salvando ou desistindo) reencontra a lista de alimentos, e nao a aba padrao
+	// de receitas. goto com replaceState troca o endereco sem entrada nova no
+	// historico. Nao da para usar o replaceState do SvelteKit: ele e roteamento
+	// raso, o endereco novo nao vira page.url, e na volta a aba se perdia.
+	let tab = $state<'foods' | 'recipes'>(
+		page.url.searchParams.get('aba') === 'alimentos' ? 'foods' : 'recipes'
+	);
+
+	function chooseTab(next: 'foods' | 'recipes'): void {
+		tab = next;
+		const address = next === 'foods' ? '?aba=alimentos' : page.url.pathname;
+		void goto(address, { replaceState: true, noScroll: true, keepFocus: true });
+	}
 
 	let recipes = $state<Recipe[]>([]);
 	let myFoods = $state<Food[]>([]);
@@ -359,7 +375,7 @@
 	<div class="mb-3 grid grid-cols-2 gap-2">
 		<button
 			type="button"
-			onclick={() => (tab = 'foods')}
+			onclick={() => chooseTab('foods')}
 			class="h-11 rounded-2xl font-semibold {tab === 'foods'
 				? 'bg-emerald-600 text-white'
 				: 'bg-white text-slate-600 shadow-sm'}"
@@ -368,7 +384,7 @@
 		</button>
 		<button
 			type="button"
-			onclick={() => (tab = 'recipes')}
+			onclick={() => chooseTab('recipes')}
 			class="h-11 rounded-2xl font-semibold {tab === 'recipes'
 				? 'bg-emerald-600 text-white'
 				: 'bg-white text-slate-600 shadow-sm'}"
