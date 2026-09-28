@@ -1,5 +1,6 @@
 import { pushState } from '$app/navigation';
 import { page } from '$app/state';
+import { untrack } from 'svelte';
 
 /**
  * Faz o botao Voltar do aparelho (e o gesto de deslizar do iOS) FECHAR a modal
@@ -29,12 +30,28 @@ function aoVoltar(): void {
 	abertas.pop()?.close();
 }
 
-export function closeOnBack(close: () => void): () => void {
+/**
+ * `lembrete` vai junto na entrada de historico da modal. Serve para a tela
+ * reabrir a modal quando a pessoa sai por um link de dentro dela e depois volta
+ * (ver AddEntryModal e a tela de Dieta).
+ */
+export function closeOnBack(close: () => void, lembrete: App.PageState = {}): () => void {
 	const trap: Trap = { close };
 	if (abertas.length === 0) window.addEventListener('popstate', aoVoltar);
 	abertas.push(trap);
 	const profundidade = abertas.length;
-	pushState('', { modalDepth: profundidade });
+	// untrack: o pushState do SvelteKit le page.url por dentro, e sem isso o $effect
+	// que chamou esta funcao passaria a depender da URL - qualquer mudanca nela
+	// (um Voltar que so troca o estado, por exemplo) re-executaria o efeito e
+	// empurraria uma entrada extra no historico.
+	untrack(() => {
+		// A pessoa voltou para a entrada que esta mesma modal tinha empurrado antes
+		// de sair por um link (e a tela reabriu a modal). A marca ja esta no
+		// historico: empurrar outra deixaria um Voltar a mais, que nao faz nada.
+		const reabrindoNaPropriaEntrada = page.state.modalDepth === profundidade;
+		if (!reabrindoNaPropriaEntrada) pushState('', { ...lembrete, modalDepth: profundidade });
+	});
+	const enderecoAoAbrir = location.href;
 
 	return () => {
 		const posicao = abertas.indexOf(trap);
@@ -51,6 +68,15 @@ export function closeOnBack(close: () => void): () => void {
 		// justamente essa navegacao - devolvendo a pessoa para a tela que ela acabou
 		// de fechar. Se a marca nao e mais a atual, alguem ja saiu daqui: nao ha o
 		// que consumir.
-		if (fechouSemVoltar && page.state.modalDepth === profundidade) history.back();
+		//
+		// So a marca nao basta quando a saida e um LINK dentro da modal (o "+" de
+		// cadastrar alimento, por exemplo): o SvelteKit desmonta a tela antiga antes
+		// de trocar o page.state, entao aqui a marca ainda parece a nossa - e o back()
+		// desfazia o link, a pessoa tocava no "+" e nao saia do lugar. O endereco ja
+		// mudou nesse momento, entao comparar com o de quando a modal abriu pega o caso.
+		const aindaNaMesmaTela = location.href === enderecoAoAbrir;
+		if (fechouSemVoltar && aindaNaMesmaTela && page.state.modalDepth === profundidade) {
+			history.back();
+		}
 	};
 }

@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { api, type Food, type FoodPortion, type MealType, type Recipe } from '$lib/api';
 	import { closeOnBack } from '$lib/modalBack';
+	import { untrack } from 'svelte';
 	import Stepper from '$lib/components/Stepper.svelte';
 	import { showToast } from '$lib/toast.svelte';
 	import { mealTypeLabel, portionLabel } from '$lib/labels';
@@ -31,9 +32,13 @@
 		trapBack?: boolean;
 	} = $props();
 
-	// Voltar fecha a modal em vez de sair da tela de refeicoes.
+	// Voltar fecha a modal em vez de sair da tela de refeicoes. Refeicao e dia vao
+	// junto no historico: quem sai pelo "+" de cadastrar alimento e desiste volta
+	// para esta modal, nao para a Dieta com ela fechada (a tela de Dieta reabre).
 	$effect(() => {
-		if (trapBack) return closeOnBack(() => onClose());
+		if (!trapBack) return;
+		const lembrete = untrack(() => ({ addEntry: { meal, day } }));
+		return closeOnBack(() => onClose(), lembrete);
 	});
 
 	const nf = new Intl.NumberFormat(getLocale());

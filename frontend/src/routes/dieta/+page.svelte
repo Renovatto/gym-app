@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { closeOnBack } from '$lib/modalBack';
+	import { page } from '$app/state';
 	import {
 		ApiError,
 		api,
@@ -338,6 +339,15 @@
 	// Modal de adicionar alimento/receita (fica aberta para lancar varios itens).
 	let addingToMeal = $state<MealType | null>(null);
 	let showBuildMeal = $state(false);
+
+	// A pessoa saiu da modal por um link (cadastrar alimento, editar alimento) e
+	// voltou: a entrada do historico guarda refeicao e dia, entao a modal reabre
+	// onde ela estava. Le uma vez so, ao montar a tela - e a volta que remonta.
+	const adicaoInterrompida = page.state.addEntry;
+	if (adicaoInterrompida) {
+		day = adicaoInterrompida.day;
+		addingToMeal = adicaoInterrompida.meal;
+	}
 
 	// Marca/desmarca o suplemento no dia (feedback imediato pelo check, sem toast).
 	async function toggleSupplement(s: Supplement): Promise<void> {

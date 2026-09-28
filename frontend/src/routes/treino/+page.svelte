@@ -551,14 +551,20 @@
 	$effect(() => {
 		if (dayWorkouts) return closeOnBack(() => (dayWorkouts = null));
 	});
+	// Estas duas modais trocam de conteudo sem fechar ("Comecar rapido" muda o passo,
+	// "outra variacao" troca a variacao). O efeito depende so de ABERTA/FECHADA: se
+	// dependesse do valor, cada troca fecharia e reabriria a trava do Voltar, e o
+	// back() dessa reabertura fechava a modal - o botao parecia nao fazer nada.
+	const addWorkoutOpen = $derived(addWorkoutStep !== null);
+	const variationOpen = $derived(variation !== null);
 	$effect(() => {
-		if (addWorkoutStep) return closeOnBack(() => (addWorkoutStep = null));
+		if (addWorkoutOpen) return closeOnBack(() => (addWorkoutStep = null));
 	});
 	$effect(() => {
 		if (previewRoutine) return closeOnBack(() => (previewRoutine = null));
 	});
 	$effect(() => {
-		if (variation) return closeOnBack(() => (variation = null));
+		if (variationOpen) return closeOnBack(() => (variation = null));
 	});
 	$effect(() => {
 		if (bulkRenewal !== null) return closeOnBack(() => (bulkRenewal = null));
