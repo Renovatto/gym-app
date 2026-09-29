@@ -6,3 +6,4 @@ alembic>=1.16,<2
 httpx>=0.28,<0.29
 pyjwt==2.13.0
 bcrypt==5.0.0
+pywebpush==2.5.0

@@ -1180,6 +1180,20 @@ export const api = {
 	finishSession: (sessionId: number) =>
 		request<WorkoutSession>(`/me/sessions/${sessionId}/finish`, { method: 'POST' }),
 	getSessions: () => request<SessionSummary[]>('/me/sessions'),
+	// Web Push: aparelho que recebe o aviso de fim do descanso com o app fechado
+	getPushPublicKey: () =>
+		request<{ public_key: string }>('/push/public-key', { auth: false }),
+	savePushSubscription: (subscription: { endpoint: string; p256dh: string; auth: string }) =>
+		request<void>('/me/push/subscriptions', { method: 'PUT', body: subscription }),
+	removePushSubscription: (endpoint: string) =>
+		request<void>('/me/push/subscriptions/remove', { method: 'POST', body: { endpoint } }),
+	scheduleRestTimerPush: (timer: {
+		workout_session_id: number;
+		seconds_remaining: number;
+		title: string;
+		body: string;
+	}) => request<void>('/me/push/rest-timer', { method: 'PUT', body: timer }),
+	cancelRestTimerPush: () => request<void>('/me/push/rest-timer', { method: 'DELETE' }),
 	getWorkoutsByDay: (day: string, tzOffset: number) =>
 		request<WorkoutDayDetail[]>(`/me/sessions/by-day?day=${day}&tz_offset=${tzOffset}`),
 	getWeekSummary: (day: string, tzOffset: number) =>

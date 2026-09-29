@@ -847,3 +847,43 @@ class NewsRead(SQLModel, table=True):
     user_id: int = Field(foreign_key="users.id", primary_key=True, ondelete="CASCADE")
     news_id: int = Field(foreign_key="news_items.id", primary_key=True, ondelete="CASCADE")
     read_at: datetime = Field(default_factory=utcnow)
+
+
+class PushSubscription(SQLModel, table=True):
+    """Aparelho que aceitou receber notificacao push (Web Push).
+
+    O navegador entrega endpoint + chaves ao assinar; o servidor guarda para enviar
+    depois, mesmo com o app fechado. Um mesmo usuario pode ter varios aparelhos, e
+    o endpoint e unico: se outra conta entrar no mesmo aparelho, a linha muda de dono
+    em vez de duplicar."""
+
+    __tablename__ = "push_subscriptions"
+
+    id: int | None = Field(default=None, primary_key=True)
+    user_id: int = Field(foreign_key="users.id", index=True, ondelete="CASCADE")
+    endpoint: str = Field(unique=True)
+    # Chaves publicas do navegador para cifrar a mensagem (so ele consegue abrir).
+    p256dh_key: str
+    auth_secret: str
+    created_at: datetime = Field(default_factory=utcnow)
+
+
+class RestTimerPush(SQLModel, table=True):
+    """Aviso de fim do descanso agendado para ser enviado por push.
+
+    Uma linha por usuario no maximo (so existe um descanso correndo por vez): agendar
+    de novo substitui, pular o descanso apaga. Fica no banco e nao em memoria porque
+    producao roda 2 workers - o pedido de cancelar pode cair no processo que nao
+    agendou - e um deploy no meio do descanso nao pode perder o aviso.
+
+    Titulo e texto chegam prontos do app (vem do messages/*.json no idioma da tela);
+    o servidor so repassa."""
+
+    __tablename__ = "rest_timer_pushes"
+
+    id: int | None = Field(default=None, primary_key=True)
+    user_id: int = Field(foreign_key="users.id", unique=True, ondelete="CASCADE")
+    workout_session_id: int = Field(foreign_key="workout_sessions.id", ondelete="CASCADE")
+    send_at: datetime = Field(index=True)
+    title: str
+    body: str

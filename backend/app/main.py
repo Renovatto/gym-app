@@ -1,4 +1,5 @@
-from contextlib import asynccontextmanager
+import asyncio
+from contextlib import asynccontextmanager, suppress
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
@@ -17,6 +18,7 @@ from .routers import (
     feedback,
     news,
     profile,
+    push,
     sharing,
     stats,
     supplements,
@@ -25,6 +27,7 @@ from .routers import (
     workout,
 )
 from .seed import seed_exercises, seed_foods
+from .services.push import push_enabled, run_rest_timer_loop
 
 
 @asynccontextmanager
@@ -33,7 +36,14 @@ async def lifespan(_app: FastAPI):
     run_migrations()
     seed_exercises()
     seed_foods()
+    # Laco que envia os avisos de fim de descanso por push. Sem chaves VAPID nao ha
+    # para onde enviar, entao nem sobe.
+    rest_timer_task = asyncio.create_task(run_rest_timer_loop()) if push_enabled() else None
     yield
+    if rest_timer_task is not None:
+        rest_timer_task.cancel()
+        with suppress(asyncio.CancelledError):
+            await rest_timer_task
 
 
 app = FastAPI(title="Gym App API", version="0.1.0", lifespan=lifespan)
@@ -75,6 +85,7 @@ app.include_router(supplements.router)
 app.include_router(activities.router)
 app.include_router(sharing.router)
 app.include_router(news.router)
+app.include_router(push.router)
 app.include_router(admin.router)
 
 

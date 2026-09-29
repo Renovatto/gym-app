@@ -91,4 +91,51 @@ worker.addEventListener('fetch', (event) => {
 	);
 });
 
+// --- Web Push: aviso de fim do descanso com o app fechado ---
+
+interface RestDonePush {
+	kind: 'rest_done';
+	title: string;
+	body: string;
+	url: string;
+}
+
+worker.addEventListener('push', (event) => {
+	if (!event.data) return;
+	const push = event.data.json() as RestDonePush;
+	// Toda mensagem precisa virar notificacao visivel: o iOS cancela a assinatura de
+	// quem recebe push e nao mostra nada (e o Chrome mostra um aviso generico no lugar).
+	event.waitUntil(
+		worker.registration.showNotification(push.title, {
+			body: push.body,
+			// mesma tag do aviso local: um descanso novo substitui o anterior na bandeja
+			tag: 'gymapp-rest',
+			icon: '/icon-192.png',
+			badge: '/icon-192.png',
+			data: { url: push.url },
+			// vibra no Android; o iOS ignora e usa a vibracao/som padrao do sistema
+			vibrate: [200, 100, 200],
+			// substituir pela mesma tag normalmente chega em silencio; aqui tem que tocar
+			renotify: true
+		} as NotificationOptions)
+	);
+});
+
+// Tocar na notificacao: volta para o app (reaproveita a janela aberta) na tela do treino.
+worker.addEventListener('notificationclick', (event) => {
+	event.notification.close();
+	const targetUrl = new URL((event.notification.data?.url as string) ?? '/', worker.location.origin).href;
+	event.waitUntil(
+		worker.clients.matchAll({ type: 'window', includeUncontrolled: true }).then(async (windows) => {
+			const existing = windows[0];
+			if (!existing) {
+				await worker.clients.openWindow(targetUrl);
+				return;
+			}
+			await existing.focus();
+			if (existing.url !== targetUrl) await existing.navigate(targetUrl);
+		})
+	);
+});
+
 export {};

@@ -17,6 +17,7 @@
 	import { beginPointerDrag, endPointerDrag } from '$lib/drag';
 	import { triggerAchievementCelebrations } from '$lib/celebrationTrigger';
 	import { showToast } from '$lib/toast.svelte';
+	import { cancelRestTimerPush, scheduleRestTimerPush, showLocalNotification } from '$lib/push';
 	import { m } from '$lib/paraglide/messages';
 
 	interface SetRow {
@@ -131,12 +132,39 @@
 		playTone(1180, 0.6);
 	}
 
-	// Pede permissao de notificacao uma vez (a partir de um gesto do usuario: concluir
-	// uma serie). So assim conseguimos avisar quando o descanso acaba em segundo plano.
+	// Pede permissao de notificacao uma vez. Tem que ser chamado SINCRONO dentro do
+	// toque (antes de qualquer await): o iOS so mostra o pedido durante o gesto do
+	// usuario. A promessa fica guardada para o agendamento do push esperar a resposta.
+	let notifyPermissionAnswered: Promise<void> = Promise.resolve();
+
 	function ensureNotifyPermission(): void {
 		if ('Notification' in window && Notification.permission === 'default') {
-			Notification.requestPermission().catch(() => {});
+			notifyPermissionAnswered = Notification.requestPermission().then(
+				() => {},
+				() => {}
+			);
 		}
+	}
+
+	// Push do fim do descanso: o servidor avisa na hora certa mesmo com o app fechado
+	// (ver lib/push.ts). true = agendado, e a tela nao precisa avisar em segundo plano.
+	let restPushScheduled = false;
+
+	async function syncRestPush(): Promise<void> {
+		await notifyPermissionAnswered;
+		if (!restActive) return;
+		const scheduled = await scheduleRestTimerPush({
+			workoutSessionId: sessionId,
+			secondsRemaining: (restEndsAtMs - Date.now()) / 1000,
+			title: m.rest_done_title(),
+			body: m.rest_done_body()
+		});
+		// o descanso pode ter sido pulado enquanto o pedido ia e voltava
+		if (!restActive) {
+			cancelRestTimerPush();
+			return;
+		}
+		restPushScheduled = scheduled;
 	}
 
 	// Persistencia do descanso: o iOS Safari DESCARTA e recarrega a aba ao voltar do
@@ -167,19 +195,22 @@
 		restNotified = false;
 		countdownAt = -1;
 		saveRest();
-		ensureNotifyPermission();
+		void syncRestPush();
 	}
 
 	function stopRest(): void {
 		restActive = false;
 		restNotified = true; // pulou/encerrou: nao dispara aviso atrasado
 		clearRest();
+		cancelRestTimerPush();
+		restPushScheduled = false;
 	}
 
 	function addRestTime(seconds: number): void {
 		restEndsAtMs += seconds * 1000;
 		restTotal += seconds;
 		saveRest();
+		void syncRestPush(); // o fim mudou: reagenda o aviso no servidor
 	}
 
 	// Restaura o descanso apos um reload (retomada de aba no iOS). Se ainda corre,
@@ -200,15 +231,18 @@
 			restActive = true;
 			restNotified = false;
 			countdownAt = -1;
+			// o reload apagou da memoria se o push estava agendado: reagenda (substitui)
+			void syncRestPush();
 		} else {
 			if (now - saved.endsAt < 5 * 60 * 1000) showToast(m.rest_done_title());
 			clearRest();
 		}
 	}
 
-	// Fim do descanso: bipe (em primeiro plano) e, se a aba estiver oculta e a plataforma
-	// suportar, uma notificacao. iOS Safari (aba normal) nao tem Notification nem vibrate:
-	// nesse caso o tempo fica correto ao voltar (persistido) e avisamos via toast no retorno.
+	// Fim do descanso: bipe (em primeiro plano) e, com a aba oculta, notificacao. Quem
+	// avisa em segundo plano e o push do servidor; a notificacao local so cobre o caso
+	// sem push em que o JavaScript ainda roda oculto (Android). iOS Safari em aba comum
+	// nao tem nenhum dos dois: o tempo fica certo ao voltar (persistido) e o toast avisa.
 	let pendingRestDoneToast = false; // acabou com a aba oculta: avisa ao voltar
 
 	function fireRestDone(): void {
@@ -216,18 +250,23 @@
 		beep();
 		clearRest();
 		if (!document.hidden) {
-			// primeiro plano: toast e o sinal visual garantido (o bipe pode falhar)
+			// primeiro plano: toast e o sinal visual garantido (o bipe pode falhar). A
+			// tela ja avisou, entao o push agendado sairia repetido: cancela.
 			showToast(m.rest_done_title());
+			if (restPushScheduled) cancelRestTimerPush();
 		} else {
 			pendingRestDoneToast = true; // mostra o toast quando a aba voltar a ficar visivel
-			if ('Notification' in window && Notification.permission === 'granted') {
-				try {
-					new Notification(m.rest_done_title(), { body: m.rest_done_body(), tag: 'gymapp-rest' });
-				} catch {
+			if (!restPushScheduled) {
+				void showLocalNotification(
+					m.rest_done_title(),
+					m.rest_done_body(),
+					`/treino/sessao/${sessionId}`
+				).catch(() => {
 					// notificacao bloqueada: o toast no retorno cobre
-				}
+				});
 			}
 		}
+		restPushScheduled = false;
 	}
 
 	// Um "tick" recalcula o relogio, toca o countdown de preparacao (ultimos 3s) e checa
@@ -520,6 +559,8 @@
 	async function toggleSet(block: ExerciseBlock, row: SetRow): Promise<void> {
 		if (row.saving) return;
 		unlockAudio(); // gesto do usuario: libera o audio para o bipe do fim do descanso
+		// ainda dentro do gesto (antes do await): o iOS so mostra o pedido de permissao aqui
+		if (!row.done && !block.isCardio) ensureNotifyPermission();
 		row.saving = true;
 		try {
 			if (!row.done) {

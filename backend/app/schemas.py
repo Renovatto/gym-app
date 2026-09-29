@@ -1239,3 +1239,32 @@ class AdminExercisePage(BaseModel):
 
 class AdminExerciseRegionIn(BaseModel):
     muscle_region: MuscleRegion | None
+
+
+# --- Web Push ---
+
+
+class PushPublicKeyOut(BaseModel):
+    # Vazio = push desligado neste servidor (sem chaves VAPID): o app nem tenta assinar.
+    public_key: str
+
+
+class PushSubscriptionIn(BaseModel):
+    # Campos exatamente como o navegador entrega em PushSubscription.toJSON().
+    endpoint: str = Field(min_length=1, max_length=2048)
+    p256dh: str = Field(min_length=1, max_length=256)
+    auth: str = Field(min_length=1, max_length=256)
+
+
+class PushUnsubscribeIn(BaseModel):
+    endpoint: str = Field(min_length=1, max_length=2048)
+
+
+class RestTimerPushIn(BaseModel):
+    workout_session_id: int
+    # Segundos que FALTAM, e nao o horario de fim: o servidor soma ao proprio relogio,
+    # assim um celular com relogio adiantado ou atrasado nao desloca o aviso.
+    seconds_remaining: int = Field(ge=1, le=3600)
+    # Texto ja traduzido pelo app (messages/*.json); o servidor so repassa.
+    title: str = Field(min_length=1, max_length=120)
+    body: str = Field(max_length=300)

@@ -1,4 +1,5 @@
 import { api, ApiError, clearTokens, getTokens, setTokens, type ProfileData, type UserOut } from './api';
+import { unsubscribeThisDevice } from './push';
 import { clearSharingPending, refreshSharingPending } from './sharing.svelte';
 import { clearNews, refreshNews } from './news.svelte';
 
@@ -49,6 +50,7 @@ export async function signUp(email: string, password: string, locale: string): P
 }
 
 export function signOut(): void {
+	void unsubscribeThisDevice().catch(() => {}); // o aparelho para de receber push de quem saiu
 	clearTokens();
 	session.user = null;
 	session.profile = null;

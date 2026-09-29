@@ -33,6 +33,15 @@ class Settings(BaseSettings):
     smtp_password: str = ""
     # Nome que aparece como remetente na caixa de entrada de quem recebe.
     smtp_from_name: str = "Gym App"
+    # Chaves VAPID (Voluntary Application Server Identification) do Web Push: o par
+    # que prova aos servidores de push (Apple, Google, Mozilla) que a mensagem vem
+    # deste app. Geradas uma vez com tools/gerar_chaves_vapid.py. Sem elas o push fica
+    # desligado e o app segue avisando o fim do descanso so com a tela aberta.
+    vapid_public_key: str = ""
+    vapid_private_key: str = ""
+    # Contato do dono do app exigido pelo VAPID ("mailto:..." ou "https://...").
+    # Vazio = usa o frontend_url se for https (producao), senao o e-mail do admin.
+    vapid_subject: str = ""
 
     model_config = {"env_prefix": "GYMAPP_", "env_file": ".env"}
 
