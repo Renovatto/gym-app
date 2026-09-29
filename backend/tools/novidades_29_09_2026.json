@@ -1,0 +1,52 @@
+[
+  {
+    "published_on": "2026-09-29",
+    "importance": "normal",
+    "title_pt_br": "Recebeu algo? Agora você vê logo que abre o app",
+    "body_pt_br": "Quando alguém compartilha uma refeição, receita ou convite com você, aparece uma faixa verde no topo da tela Hoje. Toque nela para ver tudo o que chegou: na refeição você confere cada item, com a quantidade e as calorias, antes de decidir. É só tocar em \"Adicionar ao diário\" para ela entrar no seu dia, ou em \"Dispensar\". Convites de conexão também podem ser aceitos ali mesmo.",
+    "title_en": "Got something? Now you see it the moment you open the app",
+    "body_en": "When someone shares a meal, recipe or invite with you, a green banner shows up at the top of the Today screen. Tap it to see everything that arrived: for a meal you can check each item, with its amount and calories, before deciding. Just tap \"Add to diary\" to put it in your day, or \"Dismiss\". Connection invites can be accepted right there too.",
+    "title_es": "¿Te llegó algo? Ahora lo ves en cuanto abres la app",
+    "body_es": "Cuando alguien comparte contigo una comida, receta o invitación, aparece una franja verde arriba en la pantalla Hoy. Tócala para ver todo lo que llegó: en una comida revisas cada ítem, con su cantidad y calorías, antes de decidir. Solo toca \"Añadir al diario\" para que entre en tu día, o \"Descartar\". Las invitaciones de conexión también se pueden aceptar ahí mismo."
+  },
+  {
+    "published_on": "2026-09-29",
+    "importance": "normal",
+    "title_pt_br": "Sua semana de treinos na tela Hoje",
+    "body_pt_br": "A tela Hoje agora mostra a sua sequência de semanas e os 7 dias da semana: os dias treinados ganham um ✓, hoje fica destacado e o dia que passou sem treino leva um X vermelho de carimbo. Assim dá para ver na hora quanto falta para fechar a semana (\"Falta 1 treino para chegar a 6 semanas\"), com um botão para já começar o treino. Embaixo fica a sua próxima medalha e quanto falta para ela.",
+    "title_en": "Your training week on the Today screen",
+    "body_en": "The Today screen now shows your weekly streak and the 7 days of the week: trained days get a ✓, today is highlighted and a day that went by without a workout gets a red stamp X. That way you can see at a glance how much is left to close the week (\"1 more workout to reach 6 weeks\"), with a button to start a workout right away. Below it sits your next medal and how far you are from it.",
+    "title_es": "Tu semana de entrenamientos en la pantalla Hoy",
+    "body_es": "La pantalla Hoy ahora muestra tu racha de semanas y los 7 días de la semana: los días entrenados llevan un ✓, hoy queda destacado y el día que pasó sin entrenar lleva una X roja de sello. Así ves al instante cuánto falta para cerrar la semana (\"Falta 1 entrenamiento para llegar a 6 semanas\"), con un botón para empezar a entrenar ya. Debajo está tu próxima medalla y cuánto falta."
+  },
+  {
+    "published_on": "2026-09-29",
+    "importance": "normal",
+    "title_pt_br": "Conquistas renovadas: nível, missões da semana e trilhas",
+    "body_pt_br": "A tela de Conquistas mudou. No topo você vê seu nível e quanto falta para o próximo. Logo abaixo ficam as missões da semana (treinar 3 vezes, pesar 2 vezes, registrar a dieta em 5 dias), que recomeçam toda segunda — sempre tem algo para cumprir, mesmo entre uma medalha e outra. As medalhas agora estão em trilhas (treinos, sequência, dieta, pesagens), cada uma mostrando onde você está e qual é a próxima.",
+    "title_en": "Achievements, renewed: level, weekly missions and trails",
+    "body_en": "The Achievements screen has changed. At the top you see your level and how far you are from the next one. Right below are the weekly missions (work out 3 times, weigh in 2 times, log your diet on 5 days), which restart every Monday — there's always something to complete, even between medals. Medals are now laid out in trails (workouts, streak, diet, weigh-ins), each showing where you are and which one comes next.",
+    "title_es": "Logros renovados: nivel, misiones de la semana y rutas",
+    "body_es": "La pantalla de Logros cambió. Arriba ves tu nivel y cuánto falta para el siguiente. Justo debajo están las misiones de la semana (entrenar 3 veces, pesarte 2 veces, registrar la dieta 5 días), que empiezan de nuevo cada lunes: siempre hay algo por cumplir, incluso entre una medalla y otra. Las medallas ahora están en rutas (entrenamientos, racha, dieta, pesajes), cada una mostrando dónde estás y cuál es la siguiente."
+  },
+  {
+    "published_on": "2026-09-29",
+    "importance": "normal",
+    "title_pt_br": "Um fim de treino para comemorar (e compartilhar)",
+    "body_pt_br": "Ao terminar um treino, agora aparece uma tela de comemoração com o número do treino, o tempo, as séries e o que ele moveu: a sua semana, quanto falta para a próxima medalha, o nível e as missões. Tem um botão para compartilhar o resumo como imagem, com todas essas informações, direto para os seus contatos.",
+    "title_en": "A workout finish worth celebrating (and sharing)",
+    "body_en": "When you finish a workout, a celebration screen now appears with the workout number, time, sets and what it moved: your week, how far the next medal is, your level and your missions. There's a button to share the summary as an image, with all of that information, straight to your contacts.",
+    "title_es": "Un final de entrenamiento para celebrar (y compartir)",
+    "body_es": "Al terminar un entrenamiento, ahora aparece una pantalla de celebración con el número del entrenamiento, el tiempo, las series y lo que movió: tu semana, cuánto falta para la próxima medalla, tu nivel y tus misiones. Hay un botón para compartir el resumen como imagen, con toda esa información, directo a tus contactos."
+  },
+  {
+    "published_on": "2026-09-29",
+    "importance": "normal",
+    "title_pt_br": "Lembretes: refeição, pesagem e sequência",
+    "body_pt_br": "O app agora pode te lembrar. Se você passar do horário em que costuma registrar uma refeição, aparece um cartão na tela Hoje — e se pulou a refeição, é só tocar em \"Pulei hoje\". Em Perfil > Lembretes você liga os avisos no celular, que chegam mesmo com o app fechado: refeição atrasada, 3 dias sem pesar e sequência em risco no sábado. O app aprende seu horário pelo seu próprio diário, não avisa entre 22h e 7h e manda no máximo 3 por dia. Tudo começa desligado, você escolhe. No iPhone, o app precisa estar instalado na tela de início.",
+    "title_en": "Reminders: meals, weigh-ins and streak",
+    "body_en": "The app can now remind you. If you go past the time you usually log a meal, a card shows up on the Today screen — and if you skipped the meal, just tap \"Skipped today\". In Profile > Reminders you turn on phone notifications that arrive even with the app closed: a late meal, 3 days without weighing in, and a streak at risk on Saturday. The app learns your schedule from your own diary, stays quiet between 10pm and 7am and sends at most 3 a day. Everything starts off, you choose. On iPhone, the app needs to be installed on the Home Screen.",
+    "title_es": "Recordatorios: comidas, pesajes y racha",
+    "body_es": "La app ahora puede recordarte. Si pasas de la hora en que sueles registrar una comida, aparece una tarjeta en la pantalla Hoy — y si te saltaste la comida, solo toca \"Hoy me lo salté\". En Perfil > Recordatorios activas los avisos en el móvil, que llegan incluso con la app cerrada: comida atrasada, 3 días sin pesarte y racha en riesgo el sábado. La app aprende tu horario de tu propio diario, no avisa entre las 22h y las 7h y envía como máximo 3 al día. Todo empieza desactivado, tú eliges. En iPhone, la app debe estar instalada en la pantalla de inicio."
+  }
+]
