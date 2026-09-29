@@ -7,9 +7,17 @@ from fastapi import APIRouter, Query
 from sqlmodel import asc, desc, select
 
 from ..deps import CurrentUser, SessionDep
-from ..models import DiaryEntry, UserAchievement, WeightLog, WorkoutSession
-from ..schemas import AchievementOut, AchievementsOut
-from ..services.achievements import ACHIEVEMENTS, build_stats, compute_title, is_unlocked
+from ..models import DiaryEntry, Profile, UserAchievement, WeightLog, WorkoutSession
+from ..schemas import AchievementOut, AchievementsOut, WeeklyMissionOut
+from ..services.achievements import (
+    ACHIEVEMENTS,
+    STREAK_WEEK_GOAL,
+    build_stats,
+    build_weekly_missions,
+    compute_title,
+    is_unlocked,
+    same_iso_week,
+)
 
 router = APIRouter(prefix="/me/achievements", tags=["achievements"])
 
@@ -72,6 +80,7 @@ def list_achievements(
                 code=definition.code,
                 icon=definition.icon,
                 category=definition.category,
+                metric=definition.metric,
                 unlocked=record is not None,
                 unlocked_at=record.unlocked_at if record else None,
                 progress_current=round(stats.get(definition.metric, 0), 1),
@@ -81,12 +90,22 @@ def list_achievements(
     if newly_unlocked:
         session.commit()
 
-    current_week = day.isocalendar()
-    workouts_this_week = sum(
+    week_workout_dates = [d for d in workout_days if same_iso_week(d, day)]
+    workouts_this_week = len(week_workout_dates)
+
+    # Missoes da semana: pesagens e dias de dieta contados no dia LOCAL, como o resto.
+    weigh_ins_this_week = sum(
         1
-        for d in workout_days
-        if d.isocalendar().year == current_week.year
-        and d.isocalendar().week == current_week.week
+        for log in weight_logs
+        if same_iso_week((log.logged_at - timedelta(minutes=tz_offset)).date(), day)
+    )
+    diet_days_this_week = sum(1 for d in set(diet_dates) if same_iso_week(d, day))
+    profile = session.exec(select(Profile).where(Profile.user_id == user.id)).first()
+    missions = build_weekly_missions(
+        workouts_this_week,
+        weigh_ins_this_week,
+        diet_days_this_week,
+        diet_enabled=profile.diet_enabled if profile else False,
     )
 
     title_tier, title_current, title_next = compute_title(stats)
@@ -95,6 +114,12 @@ def list_achievements(
         achievements=out,
         weekly_streak=int(stats["weekly_streak"]),
         workouts_this_week=workouts_this_week,
+        streak_week_goal=STREAK_WEEK_GOAL,
+        week_workout_days=sorted(set(week_workout_dates)),
+        weekly_missions=[
+            WeeklyMissionOut(code=mission.code, current=mission.current, goal=mission.goal)
+            for mission in missions
+        ],
         newly_unlocked=newly_unlocked,
         title_tier=title_tier,
         title_progress_current=title_current,

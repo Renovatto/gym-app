@@ -414,11 +414,21 @@ export interface WeekSummary {
 	days_with_water: number;
 }
 
+// Missao da semana (zera toda segunda): treinar, pesar, registrar a dieta.
+export interface WeeklyMission {
+	code: 'train' | 'weigh' | 'diet';
+	current: number;
+	goal: number;
+}
+
 // Conquista (gamificacao). Nome/descricao sao traduzidos no frontend pelo code.
 export interface AchievementItem {
 	code: string;
 	icon: string;
 	category: string;
+	// metrica medida (total_workouts, weigh_ins, weight_lost_kg...): separa as trilhas
+	// e deixa as medalhas de peso fora da tela inicial
+	metric: string;
 	unlocked: boolean;
 	unlocked_at: string | null;
 	progress_current: number;
@@ -429,11 +439,37 @@ export interface AchievementsResult {
 	achievements: AchievementItem[];
 	weekly_streak: number;
 	workouts_this_week: number;
+	// treinos que a semana precisa para contar na sequencia
+	streak_week_goal: number;
+	// dias locais (YYYY-MM-DD) desta semana, seg-dom, com treino concluido
+	week_workout_days: string[];
+	weekly_missions: WeeklyMission[];
 	newly_unlocked: string[];
 	// Titulo evolutivo (escada fixa por total de treinos - nunca peso/corpo).
 	title_tier: number;
 	title_progress_current: number;
 	title_progress_next: number | null;
+}
+
+// Lembretes (Perfil > Lembretes). usual_meal_minutes = horario de costume aprendido
+// de cada refeicao principal, em minutos desde a meia-noite (null = sem historico).
+export interface ReminderSettings {
+	meals: boolean;
+	weigh_in: boolean;
+	streak: boolean;
+	usual_meal_minutes: Record<string, number | null>;
+}
+
+export interface ReminderSettingsInput {
+	meals: boolean;
+	weigh_in: boolean;
+	streak: boolean;
+	time_zone: string;
+}
+
+export interface OverdueMeal {
+	meal_type: MealType;
+	usual_minutes: number;
 }
 
 // Dica do coach por regras (code traduzido no frontend; severity define a cor).
@@ -564,6 +600,15 @@ export interface ShareOffer {
 	meal_date: string | null;
 	meal_type: MealType | null;
 	item_count: number;
+	kcal: number;
+	// so em refeicao: o que vai entrar no diario, para decidir antes de aceitar
+	meal_items: SharedMealItem[];
+}
+
+export interface SharedMealItem {
+	name: string;
+	source: 'food' | 'recipe';
+	quantity: number; // gramas (alimento) ou porcoes (receita)
 	kcal: number;
 }
 
@@ -1209,6 +1254,20 @@ export const api = {
 		request<CoachResult>(`/me/coach?day=${day}&tz_offset=${tzOffset}`),
 	getAchievements: (day: string, tzOffset: number) =>
 		request<AchievementsResult>(`/me/achievements?day=${day}&tz_offset=${tzOffset}`),
+	// lembretes
+	getReminderSettings: (day: string, tzOffset: number) =>
+		request<ReminderSettings>(`/me/reminders?day=${day}&tz_offset=${tzOffset}`),
+	saveReminderSettings: (day: string, tzOffset: number, input: ReminderSettingsInput) =>
+		request<ReminderSettings>(`/me/reminders?day=${day}&tz_offset=${tzOffset}`, {
+			method: 'PUT',
+			body: input
+		}),
+	getRemindersToday: (day: string, tzOffset: number, timeZone: string) =>
+		request<{ overdue_meals: OverdueMeal[] }>(
+			`/me/reminders/today?day=${day}&tz_offset=${tzOffset}&time_zone=${encodeURIComponent(timeZone)}`
+		),
+	skipMealReminder: (mealType: MealType, day: string) =>
+		request<void>('/me/reminders/skip', { method: 'POST', body: { meal_type: mealType, day } }),
 	// dieta
 	getFoods: (
 		q = '',

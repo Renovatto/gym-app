@@ -3,7 +3,9 @@
 	import {
 		api,
 		localDay,
+		type AchievementsResult,
 		type CoachResult,
+		type OverdueMeal,
 		type DiaryDay,
 		type GoalsOut,
 		type WeightHistory,
@@ -12,6 +14,10 @@
 	import { session } from '$lib/session.svelte';
 	import { news } from '$lib/news.svelte';
 	import WaterCard from '$lib/components/WaterCard.svelte';
+	import SharingBanner from '$lib/components/SharingBanner.svelte';
+	import WeekStreakCard from '$lib/components/WeekStreakCard.svelte';
+	import MealReminderCard from '$lib/components/MealReminderCard.svelte';
+	import { triggerAchievementCelebrations } from '$lib/celebrationTrigger';
 	import MacroSummary from '$lib/components/MacroSummary.svelte';
 	import { celebrate } from '$lib/celebration.svelte';
 	import { POOL_BIRTHDAY, POOL_HOLIDAY, pickRandom } from '$lib/celebrationDefs';
@@ -24,6 +30,9 @@
 	let activeSession = $state<WorkoutSession | null>(null);
 	let coach = $state<CoachResult | null>(null);
 	let weightHistory = $state<WeightHistory | null>(null);
+	let achievements = $state<AchievementsResult | null>(null);
+	let overdueMeals = $state<OverdueMeal[]>([]);
+	const today = localDay();
 	// Modal de info: mesmo componente para IMC (detalhado, com tabela) e TDEE/BMR
 	// (rapido, 1-2 frases) - consistencia de interacao entre os 3 cards.
 	let infoModal = $state<'bmi' | 'tdee' | 'bmr' | null>(null);
@@ -36,6 +45,19 @@
 			api.getActiveSession().then((s) => (activeSession = s));
 			api.getCoach(localDay(), new Date().getTimezoneOffset()).then((c) => (coach = c));
 			api.getWeightHistory().then((w) => (weightHistory = w));
+			const tzOffset = new Date().getTimezoneOffset();
+			// A consulta de conquistas tambem desbloqueia o que foi alcancado: celebra
+			// aqui para a medalha nova nao passar em silencio.
+			api.getAchievements(today, tzOffset).then((a) => {
+				achievements = a;
+				triggerAchievementCelebrations(a);
+			});
+			// Refeicao atrasada (cartao abaixo). O fuso vai junto para o servidor manter
+			// o horario dos lembretes por push certo mesmo quando a pessoa viaja.
+			api
+				.getRemindersToday(today, tzOffset, Intl.DateTimeFormat().resolvedOptions().timeZone)
+				.then((r) => (overdueMeals = r.overdue_meals))
+				.catch(() => (overdueMeals = []));
 			if (dietOn) api.getDiary(localDay()).then((d) => (diary = d));
 		}
 	});
@@ -271,6 +293,9 @@
 	{/if}
 </header>
 
+<!-- Chegou algo compartilhado: faixa no topo, toque abre o painel com os recebidos -->
+<SharingBanner />
+
 <!-- Surpresa de aniversario -->
 {#if isBirthday}
 	<section
@@ -282,6 +307,20 @@
 		</p>
 		<p class="mt-1 text-sm text-emerald-50">{m.birthday_message()}</p>
 	</section>
+{/if}
+
+<!-- Refeicao que passou do horario de costume sem lancamento -->
+{#if dietOn && overdueMeals.length > 0}
+	<MealReminderCard meals={overdueMeals} {today} />
+{/if}
+
+<!-- Sua semana: sequencia, dias treinados/perdidos e a proxima medalha -->
+{#if achievements}
+	<WeekStreakCard
+		data={achievements}
+		{today}
+		trainHref={activeSession ? `/treino/sessao/${activeSession.id}` : '/treino'}
+	/>
 {/if}
 
 <!-- Lembrete de pesagem (com orientacao de melhor hora) -->

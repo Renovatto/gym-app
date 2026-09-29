@@ -142,3 +142,45 @@ def build_stats(
 
 def is_unlocked(definition: AchievementDef, stats: dict[str, float]) -> bool:
     return stats.get(definition.metric, 0) >= definition.goal
+
+
+# --- Missoes da semana -------------------------------------------------------
+# Metas curtas que zeram toda segunda (semana ISO, a mesma do streak). Existem para
+# dar algo a ganhar TODA semana: entre uma medalha e outra podem passar meses, e sem
+# nada no meio a tela de conquistas fica parada. Sao so contagens de comportamento
+# (treinar, pesar, registrar) - nunca resultado no corpo.
+
+# Pesagens na semana para a missao de pesagem: 2 ja mostram a tendencia sem cobrar
+# a balanca todo dia.
+WEEKLY_MISSION_WEIGH_GOAL = 2
+# Dias com registro de dieta na semana: 5 de 7 deixa folga para o fim de semana.
+WEEKLY_MISSION_DIET_GOAL = 5
+
+
+@dataclass(frozen=True)
+class WeeklyMission:
+    code: str  # train | weigh | diet (texto traduzido no frontend)
+    current: int
+    goal: int
+
+
+def same_iso_week(day: date, reference: date) -> bool:
+    return _week_key(day) == _week_key(reference)
+
+
+def build_weekly_missions(
+    workouts_this_week: int,
+    weigh_ins_this_week: int,
+    diet_days_this_week: int,
+    diet_enabled: bool,
+) -> list[WeeklyMission]:
+    """Missoes da semana atual. A de treino usa a MESMA meta do streak (uma semana
+    so conta na sequencia com STREAK_WEEK_GOAL treinos), para as duas nunca dizerem
+    coisas diferentes. A de dieta so existe para quem usa o diario."""
+    missions = [
+        WeeklyMission("train", workouts_this_week, STREAK_WEEK_GOAL),
+        WeeklyMission("weigh", weigh_ins_this_week, WEEKLY_MISSION_WEIGH_GOAL),
+    ]
+    if diet_enabled:
+        missions.append(WeeklyMission("diet", diet_days_this_week, WEEKLY_MISSION_DIET_GOAL))
+    return missions

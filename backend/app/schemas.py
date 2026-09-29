@@ -260,16 +260,31 @@ class AchievementOut(BaseModel):
     code: str
     icon: str
     category: str  # workout | streak | weight | diet
+    # Metrica que a medalha mede (total_workouts, weigh_ins, weight_lost_kg...). A tela
+    # usa para separar as trilhas e para deixar as de peso fora da tela inicial.
+    metric: str
     unlocked: bool
     unlocked_at: datetime | None
     progress_current: float  # valor atual da metrica
     progress_goal: float  # meta para desbloquear
 
 
+class WeeklyMissionOut(BaseModel):
+    code: str  # train | weigh | diet
+    current: int
+    goal: int
+
+
 class AchievementsOut(BaseModel):
     achievements: list[AchievementOut]
     weekly_streak: int
     workouts_this_week: int
+    # Treinos que a semana precisa para contar na sequencia (STREAK_WEEK_GOAL).
+    streak_week_goal: int
+    # Dias locais desta semana (seg-dom) com treino concluido: o cartao da semana
+    # marca cada um e poe o X nos dias que ja passaram sem treino.
+    week_workout_days: list[date]
+    weekly_missions: list[WeeklyMissionOut]
     newly_unlocked: list[str]  # desbloqueadas nesta consulta (para celebrar na tela)
     # Titulo evolutivo (escada fixa por total de treinos - nunca peso/corpo).
     title_tier: int  # indice na escada (0 = iniciante)
@@ -919,6 +934,16 @@ class MealShareOfferIn(BaseModel):
     meal_type: MealType
 
 
+class SharedMealItemOut(BaseModel):
+    """Um item da refeicao oferecida, para quem recebe ver o que vai entrar no diario
+    antes de aceitar ("Arroz integral - 120 g - 150 kcal")."""
+
+    name: str
+    source: EntrySource
+    quantity: float  # gramas (alimento) ou porcoes (receita), igual ao lancamento
+    kcal: float
+
+
 class ShareOfferOut(BaseModel):
     id: int
     item_kind: SharedItemKind
@@ -930,6 +955,7 @@ class ShareOfferOut(BaseModel):
     meal_type: MealType | None = None
     item_count: int = 0
     kcal: float = 0
+    meal_items: list[SharedMealItemOut] = []
 
 
 class SentMealOfferOut(BaseModel):
@@ -1268,3 +1294,39 @@ class RestTimerPushIn(BaseModel):
     # Texto ja traduzido pelo app (messages/*.json); o servidor so repassa.
     title: str = Field(min_length=1, max_length=120)
     body: str = Field(max_length=300)
+
+
+# --- Lembretes (Perfil > Lembretes e cartao de refeicao atrasada) -------------
+
+
+class ReminderSettingsIn(BaseModel):
+    meals: bool
+    weigh_in: bool
+    streak: bool
+    # Fuso IANA do aparelho (Intl.DateTimeFormat().resolvedOptions().timeZone)
+    time_zone: str = Field(max_length=64)
+
+
+class ReminderSettingsOut(BaseModel):
+    meals: bool
+    weigh_in: bool
+    streak: bool
+    # Horario de costume aprendido de cada refeicao principal, em minutos desde a
+    # meia-noite local. None = ainda sem historico (o app nao avisa essa refeicao).
+    usual_meal_minutes: dict[str, int | None]
+
+
+class OverdueMealOut(BaseModel):
+    meal_type: MealType
+    usual_minutes: int
+
+
+class RemindersTodayOut(BaseModel):
+    overdue_meals: list[OverdueMealOut]
+
+
+class MealSkipIn(BaseModel):
+    """"Pulei hoje": a pessoa avisa que nao vai lancar essa refeicao no dia."""
+
+    meal_type: MealType
+    day: date

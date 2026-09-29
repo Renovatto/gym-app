@@ -21,6 +21,8 @@ const ERROR_MESSAGES: Record<string, () => string> = {
 	SOURCE_ITEM_GONE: () => m.error_source_item_gone(),
 	ALREADY_ANSWERED: () => m.error_already_answered(),
 	EMPTY_MEAL: () => m.error_empty_meal(),
+	// lembretes: o fuso vem do aparelho (Intl); so falha com relogio/fuso quebrado
+	INVALID_TIME_ZONE: () => m.error_invalid_time_zone(),
 	// ciclo menstrual: a tela ja evita os tres casos, mas mensagem generica num
 	// erro de data deixaria a pessoa sem saber o que corrigir
 	CYCLE_PHASE_REQUIRED: () => m.error_cycle_phase_required(),

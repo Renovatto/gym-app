@@ -18,6 +18,22 @@
  */
 
 import { build, files, version } from '$service-worker';
+// Textos dos lembretes por push, importados um a um (e nao o pacote inteiro de
+// mensagens) para o service worker nao carregar o app todo traduzido.
+import {
+	meal_breakfast,
+	meal_dinner,
+	meal_lunch,
+	reminder_push_breakfast_title,
+	reminder_push_dinner_title,
+	reminder_push_lunch_title,
+	reminder_push_meal_body,
+	reminder_push_streak_missing_many,
+	reminder_push_streak_missing_one,
+	reminder_push_streak_title,
+	reminder_push_weigh_body,
+	reminder_push_weigh_title
+} from '$lib/paraglide/messages';
 
 const CACHE_NAME = `gymapp-${version}`;
 
@@ -100,9 +116,90 @@ interface RestDonePush {
 	url: string;
 }
 
+// Lembrete (refeicao, pesagem, sequencia). A API manda so o codigo e os numeros - o
+// texto e montado aqui, no idioma da pessoa, com as mesmas mensagens do app. Assim a
+// API continua sem devolver texto de interface pronto.
+interface ReminderPush {
+	kind: 'reminder';
+	code: string; // meal_breakfast | meal_lunch | meal_dinner | weigh_in | streak
+	locale: string;
+	params: { meal?: string; usual_minutes?: number; days?: number; streak?: number; missing?: number };
+	url: string;
+}
+
+type PushLocale = 'pt-br' | 'en' | 'es';
+
+function pushLocale(locale: string): PushLocale {
+	return locale === 'en' || locale === 'es' ? locale : 'pt-br';
+}
+
+// minutos desde a meia-noite -> "13:00" no formato de hora do idioma
+function formatMinutes(minutes: number, locale: PushLocale): string {
+	const date = new Date();
+	date.setHours(Math.floor(minutes / 60), minutes % 60, 0, 0);
+	return new Intl.DateTimeFormat(locale, { hour: 'numeric', minute: '2-digit' }).format(date);
+}
+
+function reminderText(push: ReminderPush): { title: string; body: string } {
+	const locale = pushLocale(push.locale);
+	const options = { locale };
+	const params = push.params;
+	if (push.code.startsWith('meal_')) {
+		const meal = push.code.slice('meal_'.length);
+		const mealNames: Record<string, typeof meal_lunch> = {
+			breakfast: meal_breakfast,
+			lunch: meal_lunch,
+			dinner: meal_dinner
+		};
+		const mealTitles: Record<string, typeof reminder_push_lunch_title> = {
+			breakfast: reminder_push_breakfast_title,
+			lunch: reminder_push_lunch_title,
+			dinner: reminder_push_dinner_title
+		};
+		const mealName = mealNames[meal]?.({}, options) ?? '';
+		return {
+			title: mealTitles[meal]?.({}, options) ?? mealName,
+			body: reminder_push_meal_body(
+				{ meal: mealName.toLowerCase(), time: formatMinutes(params.usual_minutes ?? 0, locale) },
+				options
+			)
+		};
+	}
+	if (push.code === 'weigh_in') {
+		return {
+			title: reminder_push_weigh_title({ days: params.days ?? 3 }, options),
+			body: reminder_push_weigh_body({}, options)
+		};
+	}
+	// sequencia: chega a +1 se a semana fechar
+	const next = (params.streak ?? 0) + 1;
+	return {
+		title: reminder_push_streak_title({ count: params.streak ?? 0 }, options),
+		body:
+			params.missing === 1
+				? reminder_push_streak_missing_one({ next }, options)
+				: reminder_push_streak_missing_many({ count: params.missing ?? 2, next }, options)
+	};
+}
+
 worker.addEventListener('push', (event) => {
 	if (!event.data) return;
-	const push = event.data.json() as RestDonePush;
+	const data = event.data.json() as RestDonePush | ReminderPush;
+	if (data.kind === 'reminder') {
+		const text = reminderText(data);
+		event.waitUntil(
+			worker.registration.showNotification(text.title, {
+				body: text.body,
+				// uma tag por tipo: um lembrete novo do mesmo tipo substitui o antigo
+				tag: `gymapp-${data.code}`,
+				icon: '/icon-192.png',
+				badge: '/icon-192.png',
+				data: { url: data.url }
+			} as NotificationOptions)
+		);
+		return;
+	}
+	const push = data;
 	// Toda mensagem precisa virar notificacao visivel: o iOS cancela a assinatura de
 	// quem recebe push e nao mostra nada (e o Chrome mostra um aviso generico no lugar).
 	event.waitUntil(

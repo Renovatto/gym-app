@@ -14,6 +14,7 @@ from ..models import (
     Connection,
     ConnectionStatus,
     DiaryEntry,
+    EntrySource,
     Food,
     Recipe,
     ShareOffer,
@@ -31,8 +32,10 @@ from ..schemas import (
     SentMealOfferOut,
     ShareOfferIn,
     ShareOfferOut,
+    SharedMealItemOut,
     SharingPendingCountOut,
 )
+from ..services.diet import localized_food_name
 from ..services.sharing import (
     SourceItemGone,
     accept_meal,
@@ -254,10 +257,21 @@ def list_offers(user: CurrentUser, session: SessionDep) -> list[ShareOfferOut]:
         .where(ShareOffer.status == ShareOfferStatus.pending)
         .order_by(desc(ShareOffer.created_at))
     ).all()
-    return [_offer_out(session, o) for o in offers]
+    return [_offer_out(session, o, user.locale) for o in offers]
 
 
-def _offer_out(session: Session, offer: ShareOffer) -> ShareOfferOut:
+def _meal_item_name(session: Session, item: ShareOfferMealItem, locale: str) -> str:
+    """Nome do item no idioma de quem RECEBE (o mesmo que o lancamento tera depois do
+    aceite). Item cuja origem sumiu ainda aparece, sem nome proprio, em vez de sumir
+    da lista e deixar o total de kcal sem explicacao."""
+    if item.source == EntrySource.recipe:
+        recipe = session.get(Recipe, item.recipe_id) if item.recipe_id else None
+        return recipe.name if recipe else "?"
+    food = session.get(Food, item.food_id) if item.food_id else None
+    return localized_food_name(food, locale) if food else "?"
+
+
+def _offer_out(session: Session, offer: ShareOffer, locale: str) -> ShareOfferOut:
     """Oferta para a caixa de entrada. Refeicao leva junto quantos itens e quantas
     kcal (somadas no envio), para a pessoa decidir sem abrir nada."""
     out = ShareOfferOut(
@@ -277,6 +291,15 @@ def _offer_out(session: Session, offer: ShareOffer) -> ShareOfferOut:
     out.item_count = len(items)
     # total da refeicao = soma das kcal de cada item, como estavam no envio
     out.kcal = round(sum(item.kcal for item in items), 1)
+    out.meal_items = [
+        SharedMealItemOut(
+            name=_meal_item_name(session, item, locale),
+            source=item.source,
+            quantity=item.quantity,
+            kcal=round(item.kcal, 1),
+        )
+        for item in items
+    ]
     return out
 
 
@@ -383,7 +406,7 @@ def create_meal_offer(
         .where(ShareOffer.status == ShareOfferStatus.pending)
     ).first()
     if already is not None:
-        return _offer_out(session, already)
+        return _offer_out(session, already, user.locale)
 
     entries = session.exec(
         select(DiaryEntry)
@@ -409,7 +432,7 @@ def create_meal_offer(
     freeze_meal_items(session, offer, list(entries))
     session.commit()
     session.refresh(offer)
-    return _offer_out(session, offer)
+    return _offer_out(session, offer, user.locale)
 
 
 @router.get("/sent-meals", response_model=list[SentMealOfferOut])

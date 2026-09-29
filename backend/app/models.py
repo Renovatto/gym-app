@@ -1,7 +1,7 @@
 from datetime import date, datetime, timezone
 from enum import Enum
 
-from sqlalchemy import Column
+from sqlalchemy import Column, UniqueConstraint
 from sqlalchemy.types import JSON
 from sqlmodel import Field, Relationship, SQLModel
 
@@ -164,6 +164,17 @@ class Profile(SQLModel, table=True):
     tutorial_progress: dict[str, int] = Field(
         default_factory=dict, sa_column=Column(JSON, nullable=False, server_default="{}")
     )
+    # Lembretes por push (Perfil > Lembretes). Desligados por padrao: notificacao que
+    # a pessoa nao pediu vira motivo para desinstalar. Os cartoes dentro do app nao
+    # dependem disso - eles aparecem para todo mundo.
+    reminder_meals: bool = Field(default=False, sa_column_kwargs={"server_default": "false"})
+    reminder_weigh_in: bool = Field(default=False, sa_column_kwargs={"server_default": "false"})
+    reminder_streak: bool = Field(default=False, sa_column_kwargs={"server_default": "false"})
+    # Fuso IANA do aparelho (ex.: "Europe/Madrid"). O laco de lembretes roda com o app
+    # fechado, entao precisa saber sozinho que horas sao para a pessoa - o tz_offset
+    # que as telas mandam so existe durante uma requisicao. IANA e nao offset porque
+    # o offset muda no horario de verao e o lembrete sairia uma hora errado.
+    time_zone: str | None = Field(default=None)
 
     user: User = Relationship(back_populates="profile")
 
@@ -887,3 +898,25 @@ class RestTimerPush(SQLModel, table=True):
     send_at: datetime = Field(index=True)
     title: str
     body: str
+
+
+class ReminderLog(SQLModel, table=True):
+    """Lembrete ja resolvido num dia local: enviado por push ou dispensado pela pessoa
+    ("Pulei hoje").
+
+    Serve a tres coisas: nunca mandar o mesmo lembrete duas vezes no dia, contar o
+    limite diario de lembretes, e esconder o cartao da refeicao que a pessoa disse
+    que pulou. A chave unica (usuario, codigo, dia) e o que impede os 2 workers de
+    producao de enviarem o mesmo aviso: so quem consegue inserir a linha envia."""
+
+    __tablename__ = "reminder_logs"
+    __table_args__ = (UniqueConstraint("user_id", "code", "local_date"),)
+
+    id: int | None = Field(default=None, primary_key=True)
+    user_id: int = Field(foreign_key="users.id", index=True, ondelete="CASCADE")
+    # meal_breakfast | meal_lunch | meal_dinner | weigh_in | streak
+    code: str
+    local_date: date = Field(index=True)
+    # "sent" (push saiu) | "skipped" (a pessoa tocou em "Pulei hoje")
+    outcome: str
+    created_at: datetime = Field(default_factory=utcnow)

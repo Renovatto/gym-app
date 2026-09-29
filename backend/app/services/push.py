@@ -54,7 +54,12 @@ def _vapid_subject() -> str:
     return f"mailto:{admin_email}"
 
 
-def send_push(session: Session, subscription: PushSubscription, payload: dict) -> None:
+def send_push(
+    session: Session,
+    subscription: PushSubscription,
+    payload: dict,
+    ttl_seconds: int = PUSH_TTL_SECONDS,
+) -> None:
     """Envia uma mensagem para um aparelho. Assinatura que o servico de push diz que
     nao existe mais (404/410: app desinstalado, permissao revogada) e apagada."""
     try:
@@ -67,7 +72,7 @@ def send_push(session: Session, subscription: PushSubscription, payload: dict) -
             vapid_private_key=settings.vapid_private_key,
             # dict novo a cada envio: o pywebpush escreve aud/exp dentro dele
             vapid_claims={"sub": _vapid_subject()},
-            ttl=PUSH_TTL_SECONDS,
+            ttl=ttl_seconds,
             # "high" pede entrega imediata mesmo com o aparelho em economia de bateria
             headers={"Urgency": "high"},
             timeout=10,

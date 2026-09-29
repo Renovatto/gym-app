@@ -99,5 +99,16 @@ input[type='date']::-webkit-calendar-picker-indicator {
 	--color-red-700: #fca5a5;
 
 	--color-amber-50: #372a10;
+	--color-amber-100: #4a3712;
+	--color-amber-200: #5c4414;
 	--color-amber-700: #fbbf24;
+	--color-amber-800: #fcd34d;
+	--color-amber-900: #fde68a;
+
+	/* sequencia (laranja) e o X do dia perdido (rosa): cartao da semana e trilhas */
+	--color-orange-50: #3a200d;
+	--color-orange-100: #4d2a0f;
+	--color-orange-700: #fdba74;
+	--color-orange-800: #fed7aa;
+	--color-rose-200: #7f1d3a;
 }

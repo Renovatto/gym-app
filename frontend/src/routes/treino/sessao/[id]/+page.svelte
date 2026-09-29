@@ -6,6 +6,7 @@
 	import {
 		api,
 		localDay,
+		type AchievementsResult,
 		type AlternativeExercise,
 		type Exercise,
 		type RoutineItem,
@@ -13,6 +14,7 @@
 	} from '$lib/api';
 	import ExerciseBrowser from '$lib/components/ExerciseBrowser.svelte';
 	import ExercisePhotoModal from '$lib/components/ExercisePhotoModal.svelte';
+	import WorkoutSummary from '$lib/components/WorkoutSummary.svelte';
 	import Stepper from '$lib/components/Stepper.svelte';
 	import { beginPointerDrag, endPointerDrag } from '$lib/drag';
 	import { triggerAchievementCelebrations } from '$lib/celebrationTrigger';
@@ -628,25 +630,39 @@
 		}
 	}
 
+	// Resumo do fim do treino (tela cheia). Os numeros sao congelados no toque em
+	// Finalizar: o cronometro continua andando e o resumo mostraria outro tempo.
+	let summary = $state<{
+		durationSeconds: number;
+		setsDone: number;
+		exercisesDone: number;
+		achievements: AchievementsResult | null;
+	} | null>(null);
+
 	async function finish(): Promise<void> {
 		finishing = true;
 		stopRest();
+		const durationSeconds = elapsed;
+		const setsDone = doneCount;
+		const exercisesDone = blocks.filter((b) => b.sets.some((s) => s.done)).length;
 		try {
 			await api.finishSession(sessionId);
-			showToast(m.workout_finished_in({ time: formatTime(elapsed) }));
+			showToast(m.workout_finished_in({ time: formatTime(durationSeconds) }));
 			// avalia conquistas: se desbloqueou algo novo (ou subiu de nivel) com este
-			// treino, celebra com a animacao cheia (fica na fila e continua na proxima
-			// tela, o overlay e global). So cai no toast simples se nada de especial rolou.
+			// treino, celebra com a animacao cheia por cima do resumo. So cai no toast
+			// simples se nada de especial rolou.
+			let achievements: AchievementsResult | null = null;
 			try {
-				const result = await api.getAchievements(localDay(), new Date().getTimezoneOffset());
-				const celebrated = triggerAchievementCelebrations(result);
-				if (!celebrated && result.newly_unlocked.length > 0) {
+				achievements = await api.getAchievements(localDay(), new Date().getTimezoneOffset());
+				const celebrated = triggerAchievementCelebrations(achievements);
+				if (!celebrated && achievements.newly_unlocked.length > 0) {
 					setTimeout(() => showToast(m.achievement_unlocked()), 2600);
 				}
 			} catch {
-				// conquistas sao um extra: nunca bloqueiam o fim do treino
+				// conquistas sao um extra: nunca bloqueiam o fim do treino (o resumo
+				// aparece so com tempo, series e exercicios)
 			}
-			await goto('/treino');
+			summary = { durationSeconds, setsDone, exercisesDone, achievements };
 		} finally {
 			finishing = false;
 		}
@@ -1396,4 +1412,16 @@
 <!-- Foto por ultimo no DOM: mesmo z-50 da modal de troca, a ordem decide quem fica por cima -->
 {#if photoOf}
 	<ExercisePhotoModal exercise={photoOf} onClose={() => (photoOf = null)} />
+{/if}
+
+<!-- Resumo do fim do treino: cobre a tela ate a pessoa tocar em Concluir -->
+{#if summary}
+	<WorkoutSummary
+		{routineName}
+		durationSeconds={summary.durationSeconds}
+		setsDone={summary.setsDone}
+		exercisesDone={summary.exercisesDone}
+		achievements={summary.achievements}
+		onDone={() => goto('/treino')}
+	/>
 {/if}

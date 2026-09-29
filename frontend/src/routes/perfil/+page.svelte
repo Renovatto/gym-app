@@ -353,6 +353,19 @@
 </a>
 
 <a
+	href="/perfil/lembretes"
+	class="mb-3 flex items-center justify-between rounded-3xl bg-white p-4 shadow-sm active:bg-slate-50"
+>
+	<div class="flex items-center gap-3">
+		<span class="grid h-10 w-10 place-items-center rounded-2xl bg-emerald-50 text-emerald-600">
+			<svg viewBox="0 0 24 24" class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8a6 6 0 10-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9" /><path d="M13.7 21a2 2 0 01-3.4 0" /></svg>
+		</span>
+		<span class="font-semibold text-slate-800">{m.reminders_title()}</span>
+	</div>
+	<svg viewBox="0 0 24 24" class="h-5 w-5 text-slate-300" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 6l6 6-6 6" stroke-linecap="round" stroke-linejoin="round" /></svg>
+</a>
+
+<a
 	href="/guia"
 	data-tour="profile-guide"
 	class="mb-4 flex items-center justify-between rounded-3xl bg-white p-4 shadow-sm active:bg-slate-50"
