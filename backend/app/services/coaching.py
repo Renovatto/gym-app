@@ -20,6 +20,7 @@ from ..schemas import (
     RoutineVariationOut,
 )
 from .dietplan import maintenance_override as _maintenance_override
+from .diary_tracking import load_day_records
 from .exercises import to_exercise_out
 from .goals import compute_goals
 
@@ -43,6 +44,8 @@ def diet_adherence(session: Session, user: User, end: date, window: int = 7) -> 
     goals = compute_goals(
         profile, latest.weight_kg, maintenance_override=_maintenance_override(session, user.id)
     )
+    # Hoje ainda esta em andamento e nao pode representar um dia inteiro na media.
+    end = end - timedelta(days=1)
     start = end - timedelta(days=window - 1)
     entries = session.exec(
         select(DiaryEntry)
@@ -56,6 +59,10 @@ def diet_adherence(session: Session, user: User, end: date, window: int = 7) -> 
     for entry in entries:
         by_day[entry.entry_date][0] += entry.kcal
         by_day[entry.entry_date][1] += entry.protein_g
+
+    records = load_day_records(session, user.id, start, end)
+    # Uma refeicao sem macros impede pontuar a proteina do dia como se fosse zero.
+    by_day = {day: amounts for day, amounts in by_day.items() if not records[day].estimates}
 
     days = list(by_day.values())
     if not days:

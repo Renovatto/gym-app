@@ -7,6 +7,7 @@ from sqlmodel import Session, desc, select
 from ..deps import CurrentUser, SessionDep
 from ..models import (
     DiaryEntry,
+    DiaryEstimate,
     EntrySource,
     FavoriteKind,
     Food,
@@ -67,6 +68,7 @@ from ..services.recommend import substitutes as compute_substitutes
 from ..services.recommend import suggest_gap
 from ..services.sharing import forget_received_entry, received_from_names
 from ..services.text import normalize_search
+from ..services.diary_tracking import estimate_out, load_day_record
 
 router = APIRouter(tags=["diet"])
 
@@ -606,7 +608,11 @@ def diary_logged_days(
         .where(DiaryEntry.entry_date >= start)
         .where(DiaryEntry.entry_date <= end)
     ).all()
-    return sorted(set(rows))
+    estimates = session.exec(
+        select(DiaryEstimate.entry_date).where(DiaryEstimate.user_id == user.id)
+        .where(DiaryEstimate.entry_date >= start).where(DiaryEstimate.entry_date <= end)
+    ).all()
+    return sorted(set(rows) | set(estimates))
 
 
 @router.get("/me/diary", response_model=DiaryDayOut)
@@ -629,7 +635,13 @@ def get_diary(
         subtotal = sum_macros([e.macros for e in entry_outs])
         meals.append(MealGroupOut(meal_type=meal_type, entries=entry_outs, subtotal=subtotal))
     totals = sum_macros([_entry_out(e).macros for e in entries])
-    return DiaryDayOut(date=day, meals=meals, totals=totals, goals=_daily_goals(session, user.id))
+    record = load_day_record(session, user.id, day)
+    totals.kcal = record.known_kcal
+    return DiaryDayOut(
+        date=day, meals=meals, totals=totals, goals=_daily_goals(session, user.id),
+        estimates=[estimate_out(estimate) for estimate in record.estimates],
+        review=record.review_out(), fingerprint=record.fingerprint,
+    )
 
 
 @router.get("/me/diary/gap", response_model=DiaryGapOut)
@@ -699,9 +711,15 @@ def diet_period_renew(
     session: SessionDep,
     day: date = Query(...),
     adopt_maintenance_kcal: int | None = Query(default=None, ge=800, le=6000),
+    tz_offset: int = Query(0),
 ) -> DietPeriodOut | None:
     """Renova o periodo. Se adopt_maintenance_kcal vier, a meta passa a sair da
     manutencao real medida (override); senao segue a formula do perfil."""
+    if adopt_maintenance_kcal is not None:
+        from .stats import adaptive_tdee
+        estimate = adaptive_tdee(user, session, day, tz_offset)
+        if not estimate.can_adopt or estimate.estimated_maintenance_kcal != adopt_maintenance_kcal:
+            raise HTTPException(409, detail="ESTIMATE_NOT_AVAILABLE")
     return renew_diet_period(session, user, day, adopt_maintenance_kcal)
 
 

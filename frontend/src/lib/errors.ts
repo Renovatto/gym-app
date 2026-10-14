@@ -3,6 +3,13 @@ import { m } from '$lib/paraglide/messages';
 import type { Locale } from '$lib/paraglide/runtime';
 
 const ERROR_MESSAGES: Record<string, () => string> = {
+	DIARY_CHANGED: () => m.error_diary_changed(),
+	DIARY_UNKNOWN_ENERGY: () => m.error_diary_unknown(),
+	DIARY_EMPTY_CONFIRM: () => m.error_diary_empty(),
+	DIARY_FUTURE_DAY: () => m.error_diary_future(),
+	ESTIMATE_NAME_REQUIRED: () => m.error_estimate_reference(),
+	ESTIMATE_REFERENCE_REQUIRED: () => m.error_estimate_reference(),
+	ESTIMATE_NOT_AVAILABLE: () => m.error_estimate_unavailable(),
 	EMAIL_ALREADY_REGISTERED: () => m.error_email_taken(),
 	INVALID_CREDENTIALS: () => m.error_invalid_credentials(),
 	NETWORK_ERROR: () => m.error_network(),

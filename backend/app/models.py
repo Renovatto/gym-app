@@ -519,6 +519,36 @@ class DiaryEntry(SQLModel, table=True):
     logged_at: datetime = Field(default_factory=utcnow)
 
 
+class DiaryDayReview(SQLModel, table=True):
+    """Revisao declarada do dia, independente do filtro calorico e dos alimentos."""
+
+    __tablename__ = "diary_day_reviews"
+    __table_args__ = (UniqueConstraint("user_id", "entry_date"),)
+
+    id: int | None = Field(default=None, primary_key=True)
+    user_id: int = Field(foreign_key="users.id", index=True, ondelete="CASCADE")
+    entry_date: date = Field(index=True)
+    status: str  # complete | incomplete; ausencia da linha significa nao revisado
+    entries_fingerprint: str
+    reviewed_at: datetime = Field(default_factory=utcnow)
+
+
+class DiaryEstimate(SQLModel, table=True):
+    """Refeicao aproximada ou anotacao; nenhum nutriente desconhecido vira zero."""
+
+    __tablename__ = "diary_estimates"
+
+    id: int | None = Field(default=None, primary_key=True)
+    user_id: int = Field(foreign_key="users.id", index=True, ondelete="CASCADE")
+    entry_date: date = Field(index=True)
+    meal_type: MealType
+    name: str
+    portions: float
+    kcal_per_portion: float | None = None
+    reference: str | None = None
+    logged_at: datetime = Field(default_factory=utcnow)
+
+
 class Favorite(SQLModel, table=True):
     """Alimento ou receita marcado como favorito pelo usuario (a estrelinha).
     Tabela propria, e nao coluna em foods/recipes, porque favoritar e do usuario e

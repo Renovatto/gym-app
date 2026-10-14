@@ -19,6 +19,7 @@
 	import CalendarModal from '$lib/components/CalendarModal.svelte';
 	import { errorMessage } from '$lib/errors';
 	import Stepper from '$lib/components/Stepper.svelte';
+	import AdaptiveGoalCard from '$lib/components/AdaptiveGoalCard.svelte';
 	import WeightChart from '$lib/components/WeightChart.svelte';
 	import BodyMetricIcon from '$lib/components/BodyMetricIcon.svelte';
 	import { onMount } from 'svelte';
@@ -455,58 +456,6 @@
 		}
 	}
 
-	// Mensagem do TDEE adaptativo: texto traduzido + tom (cor) conforme o ritmo real.
-	const adaptiveMessage = $derived.by(() => {
-		if (!adaptive || !adaptive.has_enough_data) return null;
-		const byCode: Record<string, { text: string; tone: 'good' | 'warn' | 'info' }> = {
-			ON_TRACK: { text: m.adaptive_on_track(), tone: 'good' },
-			TOO_SLOW: { text: m.adaptive_too_slow(), tone: 'warn' },
-			STALLED: { text: m.adaptive_stalled(), tone: 'warn' },
-			// Os dois codigos abaixo bloqueiam adotar a meta (can_adopt=false), cada um
-			// por uma ponta: TOO_FAST acusa a balanca (agua saindo), MEASURED_BELOW_BMR
-			// acusa o diario (incompleto, gasto medido menor que o gasto em repouso).
-			TOO_FAST: { text: m.adaptive_too_fast(), tone: 'warn' },
-			MEASURED_BELOW_BMR: {
-				text: m.adaptive_below_bmr({ bmr: nf.format(adaptive.bmr_kcal) }),
-				tone: 'warn'
-			},
-			ESTIMATE_READY: { text: m.adaptive_estimate_ready(), tone: 'info' }
-		};
-		return byCode[adaptive.message_code] ?? byCode.ESTIMATE_READY;
-	});
-
-	// Por que a estimativa nao pode virar meta. Sao problemas diferentes e a acao que
-	// resolve cada um tambem e: TOO_FAST pede tempo (esperar a agua sair),
-	// MEASURED_BELOW_BMR pede diario completo.
-	const cannotAdoptReason = $derived(
-		adaptive?.message_code === 'MEASURED_BELOW_BMR'
-			? m.adaptive_cannot_adopt_below_bmr()
-			: m.adaptive_cannot_adopt()
-	);
-
-	// Meta atual ja bate com a sugerida -> a manutencao real ja foi adotada.
-	const goalAlreadyAdopted = $derived(
-		!!adaptive?.has_enough_data && adaptive.current_target_kcal === adaptive.suggested_target_kcal
-	);
-	let adoptingGoal = $state(false);
-	let confirmingAdoptGoal = $state(false);
-
-	// Adota a manutencao real medida: renova o periodo da dieta com ela como base,
-	// substituindo a formula (mesma acao que existe em Dieta > Periodo da dieta).
-	// Muda a meta calorica usada no app inteiro dai em diante, entao sempre confirma antes.
-	async function adoptSuggestedGoal(): Promise<void> {
-		if (!adaptive || adoptingGoal) return;
-		confirmingAdoptGoal = false;
-		adoptingGoal = true;
-		try {
-			await api.renewDietPeriod(localDay(), adaptive.estimated_maintenance_kcal ?? undefined);
-			adaptive = await api.getAdaptiveTdee(localDay(), new Date().getTimezoneOffset());
-			showToast(m.diet_period_renewed());
-		} finally {
-			adoptingGoal = false;
-		}
-	}
-
 	// Monta o payload da pesagem: peso obrigatorio + campos da balanca preenchidos.
 	// Campos vazios ou invalidos sao ignorados (ficam nulos no banco).
 	function buildWeighIn(): WeighInInput {
@@ -762,103 +711,7 @@
 {/if}
 
 {#if dietOn && adaptive}
-	<section class="mb-4 rounded-3xl bg-white p-5 shadow-sm" data-tour="progress-adaptive">
-		<p class="mb-1 text-sm font-bold text-slate-400 uppercase">{m.adaptive_title()}</p>
-		{#if !adaptive.has_enough_data}
-			<p class="text-sm text-slate-500">{m.adaptive_need_data()}</p>
-			<!-- Mostra o alvo de cada exigencia (atual/minimo): sem isso a pessoa nao
-			     descobre qual das tres esta faltando. Verde = ja atingida. -->
-			<p class="mt-2 flex flex-wrap gap-x-2 gap-y-1 text-xs text-slate-400">
-				<span class="font-semibold">{m.adaptive_progress_label()}:</span>
-				{#each [ { have: adaptive.days_logged, need: adaptive.min_days_logged, label: m.adaptive_days_logged() }, { have: adaptive.weigh_ins, need: adaptive.min_weigh_ins, label: m.adaptive_weigh_ins() }, { have: adaptive.span_days, need: adaptive.min_span_days, label: m.adaptive_days_span() } ] as req}
-					<span class={req.have >= req.need ? 'font-semibold text-emerald-600' : ''}>
-						{req.have}/{req.need} {req.label}
-					</span>
-				{/each}
-			</p>
-		{:else}
-			<!-- manutencao real estimada vs estimativa da formula -->
-			<div class="grid grid-cols-2 gap-3">
-				<div class="rounded-2xl bg-slate-50 p-3">
-					<p class="text-2xl font-black text-slate-900">
-						{nf.format(adaptive.estimated_maintenance_kcal ?? 0)}<span class="text-sm font-medium text-slate-400"> kcal</span>
-					</p>
-					<p class="text-xs font-semibold text-slate-500">{m.adaptive_real_maintenance()}</p>
-				</div>
-				<div class="rounded-2xl bg-slate-50 p-3">
-					<p class="text-2xl font-black text-slate-900">
-						{adaptive.weekly_change_kg > 0 ? '+' : ''}{nf.format(adaptive.weekly_change_kg)}<span class="text-sm font-medium text-slate-400"> kg</span>
-					</p>
-					<p class="text-xs font-semibold text-slate-500">{m.adaptive_weekly_change()}</p>
-				</div>
-			</div>
-
-			<!-- comparacao de metas: atual (formula) vs sugerida (dados reais) -->
-			<div class="mt-3 flex items-center justify-between rounded-2xl border-2 border-slate-100 px-4 py-3">
-				<div>
-					<p class="text-xs font-semibold text-slate-400">{m.adaptive_current_target()}</p>
-					<p class="text-lg font-bold text-slate-500">{nf.format(adaptive.current_target_kcal)}</p>
-				</div>
-				<svg viewBox="0 0 24 24" class="h-5 w-5 text-slate-300" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M13 6l6 6-6 6" stroke-linecap="round" stroke-linejoin="round" /></svg>
-				<div class="text-right">
-					<p class="text-xs font-semibold text-emerald-600">{m.adaptive_suggested_target()}</p>
-					<p class="text-lg font-black text-emerald-700">{nf.format(adaptive.suggested_target_kcal ?? 0)}</p>
-				</div>
-			</div>
-
-			{#if adaptiveMessage}
-				<div
-					class="mt-3 rounded-2xl px-4 py-3 text-sm font-semibold
-						{adaptiveMessage.tone === 'good'
-						? 'bg-emerald-50 text-emerald-800'
-						: adaptiveMessage.tone === 'warn'
-							? 'bg-amber-50 text-amber-800'
-							: 'bg-sky-50 text-sky-800'}"
-				>
-					{adaptiveMessage.text}
-				</div>
-			{/if}
-
-			{#if goalAlreadyAdopted}
-				<p class="mt-3 flex items-center gap-1.5 text-xs font-semibold text-emerald-600">
-					<svg viewBox="0 0 24 24" class="h-4 w-4 shrink-0" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 13l4 4L19 7" stroke-linecap="round" stroke-linejoin="round" /></svg>
-					{m.adaptive_already_adopted()}
-				</p>
-			{:else if !adaptive.can_adopt}
-				<!-- a manutencao medida continua visivel acima, mas nao pode virar meta -->
-				<p class="mt-3 text-xs font-semibold text-amber-700">{cannotAdoptReason}</p>
-			{:else if confirmingAdoptGoal}
-				<div class="mt-3 flex items-center gap-2 rounded-2xl bg-emerald-50 p-2">
-					<span class="min-w-0 flex-1 pl-2 text-xs font-semibold text-emerald-800">{m.adaptive_adopt_confirm()}</span>
-					<button
-						type="button"
-						disabled={adoptingGoal}
-						onclick={adoptSuggestedGoal}
-						class="h-11 shrink-0 rounded-xl bg-emerald-600 px-4 text-sm font-bold text-white active:bg-emerald-700 disabled:opacity-50"
-					>
-						{m.confirm()}
-					</button>
-					<button
-						type="button"
-						onclick={() => (confirmingAdoptGoal = false)}
-						class="h-11 shrink-0 rounded-xl px-3 text-sm font-semibold text-slate-500 active:bg-slate-100"
-					>
-						{m.cancel()}
-					</button>
-				</div>
-			{:else}
-				<button
-					type="button"
-					onclick={() => (confirmingAdoptGoal = true)}
-					class="mt-3 h-12 w-full rounded-2xl bg-emerald-600 text-sm font-bold text-white active:bg-emerald-700"
-				>
-					{m.adaptive_adopt_button()}
-				</button>
-			{/if}
-
-			<p class="mt-2 text-xs text-slate-400">{m.adaptive_footnote()}</p>
-		{/if}
-	</section>
+	<AdaptiveGoalCard estimate={adaptive} onchange={(updated) => (adaptive = updated)} />
 {/if}
 
 {#if history}

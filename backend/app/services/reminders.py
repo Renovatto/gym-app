@@ -25,6 +25,7 @@ from sqlmodel import Session, desc, func, select
 from ..db import engine
 from ..models import (
     DiaryEntry,
+    DiaryEstimate,
     MealType,
     Profile,
     PushSubscription,
@@ -159,7 +160,7 @@ def _codes_logged_today(session: Session, user_id: int, today: date) -> dict[str
 
 
 def _meal_logged_on(session: Session, user_id: int, meal_type: MealType, day: date) -> bool:
-    return (
+    has_entry = (
         session.exec(
             select(DiaryEntry.id)
             .where(DiaryEntry.user_id == user_id)
@@ -168,6 +169,12 @@ def _meal_logged_on(session: Session, user_id: int, meal_type: MealType, day: da
         ).first()
         is not None
     )
+    if has_entry:
+        return True
+    return session.exec(
+        select(DiaryEstimate.id).where(DiaryEstimate.user_id == user_id)
+        .where(DiaryEstimate.meal_type == meal_type).where(DiaryEstimate.entry_date == day)
+    ).first() is not None
 
 
 @dataclass(frozen=True)

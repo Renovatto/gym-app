@@ -6,7 +6,6 @@ from sqlmodel import asc, desc, select
 
 from ..deps import CurrentUser, SessionDep
 from ..models import (
-    DiaryEntry,
     Objective,
     Profile,
     StandaloneActivity,
@@ -14,12 +13,13 @@ from ..models import (
     WeightLog,
     WorkoutSession,
 )
-from ..schemas import AdaptiveTdeeOut, WeekSummaryOut
+from ..schemas import AdaptiveDiaryDayOut, AdaptiveTdeeOut, WeekSummaryOut
 from ..services.adaptive import (
     ADAPTIVE_WINDOW_DAYS,
     MIN_DAYS_LOGGED,
     MIN_SPAN_DAYS,
     MIN_WEIGH_INS,
+    INCOMPLETE_DAY_BMR_SHARE,
     estimate_maintenance,
 )
 from ..services.goals import (
@@ -31,6 +31,7 @@ from ..services.goals import (
     target_calories_from_maintenance,
 )
 from ..services.dietplan import maintenance_override as diet_maintenance_override
+from ..services.diary_tracking import DayRecord, load_day_records
 
 router = APIRouter(prefix="/me/summary", tags=["stats"])
 
@@ -89,16 +90,13 @@ def week_summary(
     activity_days = {a.entry_date for a in activities}
     active_dates = sorted(workout_days | activity_days)
 
-    # Dieta: média de kcal por dia com registro (entry_date é dia local)
-    diary = session.exec(
-        select(DiaryEntry)
-        .where(DiaryEntry.user_id == user.id)
-        .where(DiaryEntry.entry_date >= start_day)
-        .where(DiaryEntry.entry_date <= day)
-    ).all()
-    kcal_by_day: dict[date, float] = defaultdict(float)
-    for e in diary:
-        kcal_by_day[e.entry_date] += e.kcal
+    # Dieta: media de kcal por dia com registro (entry_date e dia local).
+    # A media termina ontem; energia conhecida de aproximacoes tambem participa.
+    records = load_day_records(session, user.id, start_day, day - timedelta(days=1))
+    kcal_by_day = {
+        recorded_day: record.known_kcal for recorded_day, record in records.items()
+        if (record.has_record or record.review_status == "complete") and not record.has_unknown_energy
+    }
     days_logged = len(kcal_by_day)
     avg_kcal = round(sum(kcal_by_day.values()) / days_logged) if days_logged else 0
 
@@ -218,18 +216,45 @@ def adaptive_tdee(
     # hoje esta sempre incompleto e entraria na media como um dia inteiro de pouca
     # comida, puxando a manutencao estimada para baixo toda vez que a tela abre.
     last_full_day = day - timedelta(days=1)
-    diary = session.exec(
-        select(DiaryEntry)
-        .where(DiaryEntry.user_id == user.id)
-        .where(DiaryEntry.entry_date >= start_day)
-        .where(DiaryEntry.entry_date <= last_full_day)
-    ).all()
-    kcal_by_day: dict[date, float] = defaultdict(float)
-    for entry in diary:
-        kcal_by_day[entry.entry_date] += entry.kcal
-    daily_intakes = list(kcal_by_day.values())
+    records = load_day_records(session, user.id, start_day, day)
+    daily_intakes: list[float] = []
+    confirmed_intakes: list[float] = []
+    diary_days: list[AdaptiveDiaryDayOut] = []
+    for day_index in range(ADAPTIVE_WINDOW_DAYS):
+        record_day = start_day + timedelta(days=day_index)
+        record = records.get(record_day, DayRecord())
+        # O mesmo piso do servico alimenta a explicacao por data, sem regra no cliente.
+        meets_filter = record.known_kcal >= bmr * INCOMPLETE_DAY_BMR_SHARE
+        reviewed = record.review_status == "complete" and not record.has_unknown_energy
+        if record_day == day:
+            filter_status = "in_progress"
+        elif not record.has_record and not reviewed:
+            filter_status = "missing"
+        elif record.has_unknown_energy or not (meets_filter or reviewed):
+            filter_status = "below_filter"
+        else:
+            filter_status = "included"
+        diary_days.append(AdaptiveDiaryDayOut(
+            date=record_day,
+            kcal=record.known_kcal if not record.has_unknown_energy and (record.has_record or reviewed) else None,
+            filter_status=filter_status, review_status=record.review_status,
+            estimated_meals=len(record.estimates), has_unknown_energy=record.has_unknown_energy,
+        ))
+        if record_day == day or record.has_unknown_energy or record.review_status == "incomplete":
+            continue
+        if reviewed:
+            confirmed_intakes.append(record.known_kcal)
+        elif record.has_record:
+            daily_intakes.append(record.known_kcal)
 
-    estimate = estimate_maintenance(weigh_ins, daily_intakes, KCAL_PER_KG_FAT, bmr)
+    estimate = estimate_maintenance(
+        weigh_ins, daily_intakes, KCAL_PER_KG_FAT, bmr, confirmed_intakes
+    )
+    full_days = diary_days[:-1]
+    days_reviewed = sum(record.review_status == "complete" for record in full_days)
+    # Adotar exige todos os dias encerrados revistos: nao escolhemos uma porcentagem
+    # arbitraria de cobertura nem inferimos as calorias das datas desconhecidas.
+    days_to_review = len(full_days) - days_reviewed
 
     formula_goals = compute_goals(profile, weight_kg)
 
@@ -249,6 +274,11 @@ def adaptive_tdee(
     else:
         message_code = "NOT_ENOUGH_DATA"
 
+    can_adopt = _can_adopt_estimate(message_code, suggested_target) and days_to_review == 0
+    if estimate.has_enough_data and days_to_review and message_code not in UNRELIABLE_ESTIMATE_CODES:
+        message_code = "REVIEW_DIARY"
+    adopted_maintenance = diet_maintenance_override(session, user.id)
+
     return AdaptiveTdeeOut(
         has_enough_data=estimate.has_enough_data,
         span_days=estimate.span_days,
@@ -267,6 +297,10 @@ def adaptive_tdee(
             profile, weight_kg, maintenance_override=diet_maintenance_override(session, user.id)
         ).target_kcal,
         suggested_target_kcal=suggested_target,
-        can_adopt=_can_adopt_estimate(message_code, suggested_target),
+        can_adopt=can_adopt,
         message_code=message_code,
+        window_start=start_day, weight_window_end=day, food_window_end=last_full_day,
+        days_missing=sum(record.filter_status == "missing" for record in full_days),
+        days_reviewed=days_reviewed, days_to_review=days_to_review, diary_days=diary_days,
+        adopted_maintenance_kcal=round(adopted_maintenance) if adopted_maintenance is not None else None,
     )

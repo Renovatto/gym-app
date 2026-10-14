@@ -52,10 +52,16 @@
 	import { m } from '$lib/paraglide/messages';
 	import { getLocale } from '$lib/paraglide/runtime';
 	import { isShowingAnchor } from '$lib/tour.svelte';
+	import DiaryRecordPanel from '$lib/components/DiaryRecordPanel.svelte';
 
 	let diary = $state<DiaryDay | null>(null);
 	let loading = $state(true);
 	let day = $state(localDay());
+	const requestedDay = page.url.searchParams.get('dia');
+	if (requestedDay && /^\d{4}-\d{2}-\d{2}$/.test(requestedDay) && requestedDay <= localDay()
+		&& !Number.isNaN(new Date(requestedDay + 'T12:00:00').getTime())) {
+		day = requestedDay;
+	}
 
 	// "O que falta hoje": lacuna + sugestoes vindas do motor de recomendacao.
 	let gap = $state<DiaryGap | null>(null);
@@ -842,7 +848,7 @@
 	const dayLabel = $derived(
 		isToday ? m.today_title() : df.format(new Date(day + 'T12:00:00'))
 	);
-	const isEmpty = $derived(diary ? diary.meals.every((g) => g.entries.length === 0) : true);
+	const isEmpty = $derived(diary ? diary.meals.every((g) => g.entries.length === 0) && !diary.estimates?.length : true);
 
 	// Refeicao "do horario" para onde a sugestao entra por padrao (da pra mover depois).
 	function mealByTime(): MealType {
@@ -1167,8 +1173,11 @@
 	<SkeletonScreen hero cards={4} cardLines={1} />
 {:else if diary}
 	<div data-tour="diet-goals">
-		<MacroSummary totals={diary.totals} goals={diary.goals} />
+		<MacroSummary totals={diary.totals} goals={diary.goals} hasUnknownEnergy={diary.review?.has_unknown_energy} hasUnknownMacros={diary.review?.has_unknown_macros} />
 	</div>
+	{#key day}
+		<DiaryRecordPanel {diary} {day} onupdate={reloadSilent} onadd={() => (addingToMeal = mealByTime())} expanded={page.url.searchParams.get('revisar') === '1'} />
+	{/key}
 
 	<!-- Ciclo menstrual (opt-in): a borda gradiente viva marca o card sem invadir o
 		 resto da tela. So existe com o acompanhamento ligado, e a informacao nunca

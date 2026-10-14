@@ -19,6 +19,7 @@ from sqlmodel import desc, select
 from sqlmodel import Session
 
 from .cycle import PHASE_BONUS, PHASE_MIN_COVERAGE, phase_boost_food_ids
+from .diary_tracking import load_day_record
 from ..models import (
     DiaryEntry,
     EntrySource,
@@ -177,7 +178,7 @@ def _consumed(session: Session, user_id: int, day: date) -> MacrosOut:
         .where(DiaryEntry.entry_date == day)
     ).all()
     return MacrosOut(
-        kcal=round(sum(e.kcal for e in entries), 1),
+        kcal=load_day_record(session, user_id, day).known_kcal,
         protein_g=round(sum(e.protein_g for e in entries), 1),
         carbs_g=round(sum(e.carbs_g for e in entries), 1),
         fat_g=round(sum(e.fat_g for e in entries), 1),
@@ -372,6 +373,13 @@ def suggest_gap(
     que a pessoa costuma comer NAQUELE horario (ver _meal_food_frequency), deixando a
     sugestao mais realista sem travar quem quer ver o dia inteiro (None = comportamento
     de sempre, sem vies de horario)."""
+    if load_day_record(session, user.id, day).estimates:
+        # Sem todos os macros, uma sugestao para "fechar" a meta inventaria uma lacuna.
+        return DiaryGapOut(
+            date=day, goals=_daily_target(session, user.id),
+            consumed=_consumed(session, user.id, day), remaining=None,
+            primary="unknown", suggestions=[],
+        )
     goals = _daily_target(session, user.id)
     consumed = _consumed(session, user.id, day)
     if goals is None:
@@ -514,7 +522,9 @@ def build_meal(
 ) -> BuildMealOut:
     """'Montar refeicao com o que tenho em casa': terceira porta do motor, ao lado de
     suggest_gap/substitutes. Mesmos codigos de estado que o card do dia ja usa
-    (no_goal/complete) - nao inventa um terceiro estado so pra esta tela."""
+    (no_goal/complete). Aproximacoes sem macros suspendem as sugestoes (unknown)."""
+    if load_day_record(session, user.id, day).estimates:
+        return BuildMealOut(date=day, remaining=None, primary="unknown")
     goals = _daily_target(session, user.id)
     consumed = _consumed(session, user.id, day)
     if goals is None:
@@ -607,6 +617,8 @@ def _bounded_remaining(target: MacrosOut, consumed: MacrosOut, day_left: MacrosO
 def meal_plan(session: Session, user: User, day: date, limit: int = 3) -> MealPlanOut:
     """Cardapio consultivo: por refeicao, o alvo, o que ja tem e sugestoes que fecham."""
     goals = _daily_target(session, user.id)
+    if load_day_record(session, user.id, day).estimates:
+        return MealPlanOut(date=day, goals=goals, meals=[])
     if goals is None:
         return MealPlanOut(date=day, goals=None, meals=[])
 
