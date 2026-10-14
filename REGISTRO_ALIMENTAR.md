@@ -67,6 +67,12 @@ Nao executar downgrade para uma revisao mais antiga que a indicada nem apagar as
 tabelas `_saved`. Em um merge futuro, reverter apenas os arquivos sem coordenar a
 revisao Alembic nao e suficiente: o codigo antigo nao conhece a revisao nova.
 
+A interface tambem tolera o contrato anterior da API, para o caso de um navegador
+ainda manter arquivos novos em cache durante a reversao. Os detalhes por data e a
+revisao so aparecem quando a resposta os suporta; a adocao de uma meta fica
+bloqueada nessa transicao. A compatibilidade e a volta ao contrato novo foram
+verificadas no navegador com respostas antigas simuladas.
+
 ## Verificacao
 
 Depois de aplicar a migracao local:
