@@ -16,8 +16,10 @@
 	let {
 		totals,
 		goals,
-		addHref
-	}: { totals: Macros; goals: Macros | null; addHref?: string } = $props();
+		addHref,
+		hasUnknownEnergy = false,
+		hasUnknownMacros = false
+	}: { totals: Macros; goals: Macros | null; addHref?: string; hasUnknownEnergy?: boolean; hasUnknownMacros?: boolean } = $props();
 
 	const nf = new Intl.NumberFormat(getLocale());
 
@@ -125,7 +127,10 @@
 			</div>
 		</div>
 		<div class="min-w-0 flex-1">
-			{#if goals}
+			{#if hasUnknownEnergy}
+				<p class="text-sm font-semibold text-amber-700">{m.diary_known_energy_only()}</p>
+				<p class="mt-2 text-xs text-slate-500">{m.diary_partial_remaining()}</p>
+			{:else if goals}
 				{#if over}
 					<p class="text-sm font-semibold {STATUS_TEXT[ringStatus]}">
 						{ringStatus === 'near' ? m.near_goal_limit() : m.over_goal()}
@@ -150,6 +155,7 @@
 		</div>
 	</div>
 
+	{#if hasUnknownMacros}<p class="mt-4 rounded-xl bg-amber-50 p-3 text-xs text-amber-800">{m.diary_macros_unknown()}</p>{/if}
 	<div class="mt-5 space-y-3 border-t border-slate-100 pt-4">
 		{#each macros as macro (macro.label)}
 			{@const bar = barGeometry(macro.value, macro.goal)}

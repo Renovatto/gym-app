@@ -50,3 +50,6 @@ jobs:
 
       - name: Check schema alignment
         run: alembic check
+
+      - name: Testar registro alimentar no PostgreSQL
+        run: python -m unittest discover -s tests -v

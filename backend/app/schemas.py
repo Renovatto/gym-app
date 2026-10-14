@@ -308,6 +308,21 @@ class CoachOut(BaseModel):
     min_weigh_ins: int = 0
 
 
+class DiaryReviewOut(BaseModel):
+    status: Literal["unreviewed", "complete", "incomplete"]
+    has_unknown_energy: bool
+    has_unknown_macros: bool
+
+
+class AdaptiveDiaryDayOut(BaseModel):
+    date: date
+    kcal: float | None
+    filter_status: Literal["included", "below_filter", "missing", "in_progress"]
+    review_status: Literal["unreviewed", "complete", "incomplete"]
+    estimated_meals: int
+    has_unknown_energy: bool
+
+
 class AdaptiveTdeeOut(BaseModel):
     # Resultado do TDEE adaptativo: manutencao real estimada pelos dados do usuario.
     has_enough_data: bool
@@ -338,6 +353,41 @@ class AdaptiveTdeeOut(BaseModel):
     # codigo traduzido no frontend: NOT_ENOUGH_DATA, ON_TRACK, TOO_SLOW, STALLED,
     # TOO_FAST, MEASURED_BELOW_BMR, ESTIMATE_READY
     message_code: str
+    window_start: date
+    weight_window_end: date
+    food_window_end: date
+    days_missing: int
+    days_reviewed: int
+    days_to_review: int
+    diary_days: list[AdaptiveDiaryDayOut]
+    adopted_maintenance_kcal: int | None
+
+
+class DiaryReviewIn(BaseModel):
+    status: Literal["complete", "incomplete"]
+    consumed_nothing: bool = False
+    # Confere o conteudo revisto: um lancamento concorrente exige nova leitura.
+    fingerprint: str
+
+
+class DiaryEstimateIn(BaseModel):
+    entry_date: date
+    meal_type: MealType
+    name: str = Field(min_length=1, max_length=160)
+    portions: float = Field(default=1, gt=0, le=50, allow_inf_nan=False)
+    kcal_per_portion: float | None = Field(default=None, ge=0, le=10000, allow_inf_nan=False)
+    reference: str | None = Field(default=None, max_length=240)
+
+
+class DiaryEstimateOut(BaseModel):
+    id: int
+    entry_date: date
+    meal_type: MealType
+    name: str
+    portions: float
+    kcal: float | None
+    kcal_per_portion: float | None
+    reference: str | None
 
 
 class PasswordChange(BaseModel):
@@ -672,6 +722,9 @@ class DiaryDayOut(BaseModel):
     meals: list[MealGroupOut]
     totals: MacrosOut
     goals: MacrosOut | None
+    estimates: list[DiaryEstimateOut] = []
+    review: DiaryReviewOut | None = None
+    fingerprint: str = ""
 
 
 # --- Biblioteca de receitas semente (fase 2) -------------------------------

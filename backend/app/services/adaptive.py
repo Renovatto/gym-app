@@ -117,13 +117,19 @@ def estimate_maintenance(
     daily_intakes: list[float],
     kcal_per_kg_fat: int,
     bmr_kcal: float,
+    confirmed_intakes: list[float] | None = None,
 ) -> AdaptiveEstimate:
     """Estima a manutencao real. weigh_ins = [(dia_indice, peso_kg)] ordenados;
     daily_intakes = kcal total de cada dia que teve diario (o dia de hoje NAO entra:
-    quem monta a lista corta a janela no dia anterior, ver o router)."""
-    complete_days = complete_days_only(daily_intakes, bmr_kcal)
+    quem monta a lista corta a janela no dia anterior, ver o router).
+    confirmed_intakes contem dias explicitamente revistos, com energia conhecida;
+    eles nao sao eliminados apenas por ter um consumo baixo."""
+    filtered_days = complete_days_only(daily_intakes, bmr_kcal)
+    # Dias explicitamente revistos nao sao excluidos apenas por consumo baixo.
+    # Sua energia precisa ser conhecida; o router nunca inclui anotacoes sem kcal.
+    complete_days = filtered_days + (confirmed_intakes or [])
     days_logged = len(complete_days)
-    days_discarded = len(daily_intakes) - days_logged
+    days_discarded = len(daily_intakes) - len(filtered_days)
     span_days = int(weigh_ins[-1][0] - weigh_ins[0][0]) if len(weigh_ins) >= 2 else 0
 
     enough = (

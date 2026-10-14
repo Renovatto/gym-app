@@ -370,7 +370,7 @@
 	{#if dietOn}
 		{#if diary}
 			<div data-tour="home-calories">
-				<MacroSummary totals={diary.totals} goals={diary.goals} addHref="/dieta/adicionar?meal=snack" />
+				<MacroSummary totals={diary.totals} goals={diary.goals} addHref="/dieta/adicionar?meal=snack" hasUnknownEnergy={diary.review?.has_unknown_energy} hasUnknownMacros={diary.review?.has_unknown_macros} />
 			</div>
 		{/if}
 	{:else}

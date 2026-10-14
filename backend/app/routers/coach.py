@@ -12,6 +12,7 @@ from ..models import DiaryEntry, Objective, Profile, WaterLog, WeightLog, Workou
 from ..schemas import CoachNote, CoachOut
 from ..services.adaptive import ADAPTIVE_WINDOW_DAYS, MIN_WEIGH_INS
 from ..services.dietplan import maintenance_override as diet_maintenance_override
+from ..services.diary_tracking import load_day_record
 from ..services.goals import compute_goals
 
 router = APIRouter(prefix="/me/coach", tags=["coach"])
@@ -84,7 +85,8 @@ def coach_notes(
     )
 
     # --- Regras de dieta (so quando o modulo esta ativo) -------------------
-    if profile.diet_enabled and goals is not None:
+    has_estimates = bool(load_day_record(session, user.id, day).estimates)
+    if profile.diet_enabled and goals is not None and not has_estimates:
         diary_today = session.exec(
             select(DiaryEntry)
             .where(DiaryEntry.user_id == user.id)

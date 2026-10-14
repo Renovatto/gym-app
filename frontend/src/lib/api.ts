@@ -509,6 +509,39 @@ export interface AdaptiveTdee {
 	// Estimativa confiavel o bastante para virar meta? False esconde o botao de adotar.
 	can_adopt: boolean;
 	message_code: string;
+	window_start: string;
+	weight_window_end: string;
+	food_window_end: string;
+	days_missing: number;
+	days_reviewed: number;
+	days_to_review: number;
+	diary_days: AdaptiveDiaryDay[];
+	adopted_maintenance_kcal: number | null;
+}
+
+export type DiaryReviewStatus = 'unreviewed' | 'complete' | 'incomplete';
+
+export interface AdaptiveDiaryDay {
+	date: string;
+	kcal: number | null;
+	filter_status: 'included' | 'below_filter' | 'missing' | 'in_progress';
+	review_status: DiaryReviewStatus;
+	estimated_meals: number;
+	has_unknown_energy: boolean;
+}
+
+export interface DiaryEstimateInput {
+	entry_date: string;
+	meal_type: MealType;
+	name: string;
+	portions: number;
+	kcal_per_portion: number | null;
+	reference: string | null;
+}
+
+export interface DiaryEstimate extends DiaryEstimateInput {
+	id: number;
+	kcal: number | null;
 }
 
 // --- Novidades do app ---
@@ -731,6 +764,13 @@ export interface DiaryDay {
 	meals: MealGroup[];
 	totals: Macros;
 	goals: Macros | null;
+	estimates?: DiaryEstimate[];
+	review?: {
+		status: DiaryReviewStatus;
+		has_unknown_energy: boolean;
+		has_unknown_macros: boolean;
+	};
+	fingerprint?: string;
 }
 
 // --- Recomendacao da dieta (motor de encaixe) ---
@@ -1320,6 +1360,13 @@ export const api = {
 		request<Recipe>(`/me/recipes/${id}`, { method: 'PUT', body: recipe }),
 	deleteRecipe: (id: number) => request<void>(`/me/recipes/${id}`, { method: 'DELETE' }),
 	getDiary: (day: string) => request<DiaryDay>(`/me/diary?day=${day}`),
+	reviewDiaryDay: (day: string, input: { status: 'complete' | 'incomplete'; fingerprint: string; consumed_nothing: boolean }) =>
+		request<void>(`/me/diary-records/${day}/review?today=${localDay()}`, { method: 'PUT', body: input }),
+	saveDiaryEstimate: (input: DiaryEstimateInput, id?: number) =>
+		request<DiaryEstimate>(`/me/diary-records/estimates${id === undefined ? '' : `/${id}`}?today=${localDay()}`, {
+			method: id === undefined ? 'POST' : 'PUT', body: input
+		}),
+	deleteDiaryEstimate: (id: number) => request<void>(`/me/diary-records/estimates/${id}`, { method: 'DELETE' }),
 	getDiaryGap: (day: string, limit = 4, mealType?: MealType) =>
 		request<DiaryGap>(
 			`/me/diary/gap?day=${day}&limit=${limit}${mealType ? `&meal_type=${mealType}` : ''}`
@@ -1339,7 +1386,7 @@ export const api = {
 	getDietPeriod: (day: string) => request<DietPeriod | null>(`/me/diet/period?day=${day}`),
 	renewDietPeriod: (day: string, adoptMaintenanceKcal?: number) => {
 		const q = adoptMaintenanceKcal ? `&adopt_maintenance_kcal=${adoptMaintenanceKcal}` : '';
-		return request<DietPeriod | null>(`/me/diet/period/renew?day=${day}${q}`, { method: 'POST' });
+		return request<DietPeriod | null>(`/me/diet/period/renew?day=${day}&tz_offset=${new Date().getTimezoneOffset()}${q}`, { method: 'POST' });
 	},
 	getTrainingPeriodization: (today: string) =>
 		request<RoutinePeriodization[]>(`/me/training/periodization?today=${today}`),
