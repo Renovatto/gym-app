@@ -17,7 +17,9 @@
 	let checkedAt = $state<Date | null>(null);
 	const nf = new Intl.NumberFormat(getLocale());
 	const df = new Intl.DateTimeFormat(getLocale(), { day: '2-digit', month: 'short' });
-	const blocked = $derived(!estimate.can_adopt || refreshFailed);
+	// Durante deploy ou reversao, a API pode responder com o contrato anterior.
+	const hasDayDetails = $derived(Array.isArray(estimate.diary_days));
+	const blocked = $derived(!hasDayDetails || !estimate.can_adopt || refreshFailed);
 	const requirements = $derived([
 		{ have: estimate.days_logged, need: estimate.min_days_logged, label: m.adaptive_food_days() },
 		{ have: estimate.weigh_ins, need: estimate.min_weigh_ins, label: m.adaptive_weigh_ins() },
@@ -165,55 +167,59 @@
 		<p class="text-xs text-slate-500">{m.adaptive_span_help()}</p>
 	</div>
 
-	<details class="mt-4 rounded-2xl bg-slate-50 p-3" data-testid="adaptive-days">
-		<summary class="cursor-pointer text-sm font-bold text-emerald-700"
-			>{m.adaptive_review_days()}</summary
-		>
-		<p class="mt-3 text-xs text-slate-600">
-			{m.adaptive_review_counts({
-				missing: estimate.days_missing,
-				discarded: estimate.days_discarded
-			})}
-		</p>
-		<p class="mt-2 text-xs font-semibold text-slate-700">
-			{m.adaptive_review_progress({
-				have: estimate.days_reviewed,
-				total: estimate.days_reviewed + estimate.days_to_review
-			})}
-		</p>
-		<p class="mt-2 text-xs text-slate-500">{m.diary_filter_help()}</p>
-		<p class="mt-2 text-xs text-slate-500">{m.adaptive_review_policy()}</p>
-		<div class="mt-3 divide-y divide-slate-200">
-			{#each estimate.diary_days as day (day.date)}
-				<a
-					href={`/dieta?dia=${day.date}&revisar=1`}
-					class="flex min-h-16 items-center justify-between gap-2 py-3 text-left"
-				>
-					<div class="min-w-0">
-						<p class="text-xs font-bold text-slate-700">
-							{formatDay(day.date)} · {day.kcal === null
-								? m.diary_energy_unknown()
-								: `${nf.format(day.kcal)} kcal`}
-						</p>
-						<p class="mt-1 text-[11px] text-slate-500">{filterLabel(day)}</p>
-						<p
-							class="mt-1 text-[11px] {day.review_status === 'complete'
-								? 'text-emerald-700'
-								: 'text-slate-500'}"
+	{#if hasDayDetails}
+		<details class="mt-4 rounded-2xl bg-slate-50 p-3" data-testid="adaptive-days">
+			<summary class="cursor-pointer text-sm font-bold text-emerald-700"
+				>{m.adaptive_review_days()}</summary
+			>
+			<p class="mt-3 text-xs text-slate-600">
+				{m.adaptive_review_counts({
+					missing: estimate.days_missing,
+					discarded: estimate.days_discarded
+				})}
+			</p>
+			<p class="mt-2 text-xs font-semibold text-slate-700">
+				{m.adaptive_review_progress({
+					have: estimate.days_reviewed,
+					total: estimate.days_reviewed + estimate.days_to_review
+				})}
+			</p>
+			<p class="mt-2 text-xs text-slate-500">{m.diary_filter_help()}</p>
+			<p class="mt-2 text-xs text-slate-500">{m.adaptive_review_policy()}</p>
+			<div class="mt-3 divide-y divide-slate-200">
+				{#each estimate.diary_days as day (day.date)}
+					<a
+						href={`/dieta?dia=${day.date}&revisar=1`}
+						class="flex min-h-16 items-center justify-between gap-2 py-3 text-left"
+					>
+						<div class="min-w-0">
+							<p class="text-xs font-bold text-slate-700">
+								{formatDay(day.date)} · {day.kcal === null
+									? m.diary_energy_unknown()
+									: `${nf.format(day.kcal)} kcal`}
+							</p>
+							<p class="mt-1 text-[11px] text-slate-500">{filterLabel(day)}</p>
+							<p
+								class="mt-1 text-[11px] {day.review_status === 'complete'
+									? 'text-emerald-700'
+									: 'text-slate-500'}"
+							>
+								{reviewLabel(day)}
+							</p>
+							{#if day.estimated_meals > 0}<span class="text-[11px] text-amber-700"
+									>{m.diary_approx_badge()}{day.has_unknown_energy
+										? ` · ${m.diary_energy_unknown()}`
+										: ''}</span
+								>{/if}
+						</div>
+						<span class="shrink-0 text-xs font-bold text-emerald-700"
+							>{m.diary_review_date()} ›</span
 						>
-							{reviewLabel(day)}
-						</p>
-						{#if day.estimated_meals > 0}<span class="text-[11px] text-amber-700"
-								>{m.diary_approx_badge()}{day.has_unknown_energy
-									? ` · ${m.diary_energy_unknown()}`
-									: ''}</span
-							>{/if}
-					</div>
-					<span class="shrink-0 text-xs font-bold text-emerald-700">{m.diary_review_date()} ›</span>
-				</a>
-			{/each}
-		</div>
-	</details>
+					</a>
+				{/each}
+			</div>
+		</details>
+	{/if}
 
 	<div class="mt-4 rounded-2xl border-2 border-slate-100 p-3">
 		<p class="text-xs font-semibold text-slate-400">{m.adaptive_current_target()}</p>
@@ -221,11 +227,11 @@
 			{nf.format(estimate.current_target_kcal)}
 			<span class="text-xs font-medium text-slate-400">kcal</span>
 		</p>
-		<p class="mt-1 text-xs text-slate-500">
-			{estimate.adopted_maintenance_kcal === null
-				? m.adaptive_formula_base()
-				: m.adaptive_adopted_base({ kcal: nf.format(estimate.adopted_maintenance_kcal) })}
-		</p>
+		{#if hasDayDetails}<p class="mt-1 text-xs text-slate-500">
+				{estimate.adopted_maintenance_kcal === null
+					? m.adaptive_formula_base()
+					: m.adaptive_adopted_base({ kcal: nf.format(estimate.adopted_maintenance_kcal) })}
+			</p>{/if}
 	</div>
 	{#if estimate.suggested_target_kcal !== null}
 		{#if blocked}
@@ -277,12 +283,12 @@
 	{#if checkedAt}<p class="mt-2 text-xs text-slate-400">
 			{m.adaptive_query_time({ time: checkedAt.toLocaleString(getLocale()) })}
 		</p>{/if}
-	<p class="mt-3 text-xs text-slate-500">
-		{m.adaptive_dates({
-			start: formatDay(estimate.window_start),
-			foodEnd: formatDay(estimate.food_window_end),
-			weightEnd: formatDay(estimate.weight_window_end)
-		})}
-	</p>
+	{#if hasDayDetails}<p class="mt-3 text-xs text-slate-500">
+			{m.adaptive_dates({
+				start: formatDay(estimate.window_start),
+				foodEnd: formatDay(estimate.food_window_end),
+				weightEnd: formatDay(estimate.weight_window_end)
+			})}
+		</p>{/if}
 	<p class="mt-2 text-xs text-slate-400">{m.adaptive_today_rule()}</p>
 </section>

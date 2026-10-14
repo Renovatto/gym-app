@@ -1175,9 +1175,17 @@
 	<div data-tour="diet-goals">
 		<MacroSummary totals={diary.totals} goals={diary.goals} hasUnknownEnergy={diary.review?.has_unknown_energy} hasUnknownMacros={diary.review?.has_unknown_macros} />
 	</div>
-	{#key day}
-		<DiaryRecordPanel {diary} {day} onupdate={reloadSilent} onadd={() => (addingToMeal = mealByTime())} expanded={page.url.searchParams.get('revisar') === '1'} />
-	{/key}
+	{#if diary.fingerprint}
+		{#key day}
+			<DiaryRecordPanel
+				{diary}
+				{day}
+				onupdate={reloadSilent}
+				onadd={() => (addingToMeal = mealByTime())}
+				expanded={page.url.searchParams.get('revisar') === '1'}
+			/>
+		{/key}
+	{/if}
 
 	<!-- Ciclo menstrual (opt-in): a borda gradiente viva marca o card sem invadir o
 		 resto da tela. So existe com o acompanhamento ligado, e a informacao nunca
