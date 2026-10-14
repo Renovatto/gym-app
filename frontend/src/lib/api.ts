@@ -1360,11 +1360,9 @@ export const api = {
 		request<Recipe>(`/me/recipes/${id}`, { method: 'PUT', body: recipe }),
 	deleteRecipe: (id: number) => request<void>(`/me/recipes/${id}`, { method: 'DELETE' }),
 	getDiary: (day: string) => request<DiaryDay>(`/me/diary?day=${day}`),
-	reviewDiaryDay: (day: string, input: { status: 'complete' | 'incomplete'; fingerprint: string; consumed_nothing: boolean }) =>
-		request<void>(`/me/diary-records/${day}/review?today=${localDay()}`, { method: 'PUT', body: input }),
-	saveDiaryEstimate: (input: DiaryEstimateInput, id?: number) =>
-		request<DiaryEstimate>(`/me/diary-records/estimates${id === undefined ? '' : `/${id}`}?today=${localDay()}`, {
-			method: id === undefined ? 'POST' : 'PUT', body: input
+	updateDiaryEstimate: (id: number, input: DiaryEstimateInput) =>
+		request<DiaryEstimate>(`/me/diary-records/estimates/${id}?today=${localDay()}`, {
+			method: 'PUT', body: input
 		}),
 	deleteDiaryEstimate: (id: number) => request<void>(`/me/diary-records/estimates/${id}`, { method: 'DELETE' }),
 	getDiaryGap: (day: string, limit = 4, mealType?: MealType) =>

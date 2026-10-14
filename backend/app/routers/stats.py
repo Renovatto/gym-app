@@ -252,8 +252,8 @@ def adaptive_tdee(
     )
     full_days = diary_days[:-1]
     days_reviewed = sum(record.review_status == "complete" for record in full_days)
-    # Adotar exige todos os dias encerrados revistos: nao escolhemos uma porcentagem
-    # arbitraria de cobertura nem inferimos as calorias das datas desconhecidas.
+    # As revisoes antigas continuam no contrato por compatibilidade, sem obrigar
+    # a pessoa a confirmar cada dia para adotar uma estimativa plausivel.
     days_to_review = len(full_days) - days_reviewed
 
     formula_goals = compute_goals(profile, weight_kg)
@@ -274,9 +274,11 @@ def adaptive_tdee(
     else:
         message_code = "NOT_ENOUGH_DATA"
 
-    can_adopt = _can_adopt_estimate(message_code, suggested_target) and days_to_review == 0
-    if estimate.has_enough_data and days_to_review and message_code not in UNRELIABLE_ESTIMATE_CODES:
-        message_code = "REVIEW_DIARY"
+    # Anotacoes antigas sem calorias nao podem ser tratadas como consumo zero.
+    has_missing_calories = any(record.has_unknown_energy for record in full_days)
+    can_adopt = _can_adopt_estimate(message_code, suggested_target) and not has_missing_calories
+    if estimate.has_enough_data and has_missing_calories and message_code not in UNRELIABLE_ESTIMATE_CODES:
+        message_code = "DIARY_CALORIES_MISSING"
     adopted_maintenance = diet_maintenance_override(session, user.id)
 
     return AdaptiveTdeeOut(
