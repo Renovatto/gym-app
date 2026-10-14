@@ -198,17 +198,17 @@ class DiaryTrackingTests(unittest.TestCase):
         response = self.approximation(entry_date=str(self.today + timedelta(days=1)))
         self.assertEqual(response.status_code, 400)
 
-    def test_adoption_requires_reviewed_window_and_is_checked_by_server(self):
+    def test_adoption_does_not_require_daily_confirmation_and_is_checked_by_server(self):
         self.populate_window()
         before = self.adaptive()
         self.assertTrue(before["has_enough_data"])
-        self.assertFalse(before["can_adopt"])
-        self.assertEqual(before["message_code"], "REVIEW_DIARY")
+        self.assertTrue(before["can_adopt"])
+        self.assertEqual(before["message_code"], "ESTIMATE_READY")
         self.assertEqual(before["days_to_review"], 20)
         response = self.client.post('/me/diet/period/renew', params={
             "day": self.today, "tz_offset": -120, "adopt_maintenance_kcal": 2000,
         })
-        self.assertEqual(response.status_code, 409)
+        self.assertEqual(response.status_code, 200)
         for offset in range(1, 21):
             self.assertEqual(self.review(self.today - timedelta(days=offset)).status_code, 200)
         after = self.adaptive()
@@ -222,6 +222,16 @@ class DiaryTrackingTests(unittest.TestCase):
             "day": self.today, "adopt_maintenance_kcal": 2400,
         })
         self.assertEqual(response.status_code, 409)
+
+    def test_legacy_note_without_calories_still_blocks_adoption(self):
+        self.populate_window()
+        self.assertTrue(self.adaptive()["can_adopt"])
+        response = self.approximation(kcal_per_portion=None, reference=None)
+        self.assertEqual(response.status_code, 201)
+        estimate = self.adaptive()
+        self.assertTrue(estimate["has_enough_data"])
+        self.assertFalse(estimate["can_adopt"])
+        self.assertEqual(estimate["message_code"], "DIARY_CALORIES_MISSING")
 
     def test_low_confirmed_day_counts_and_today_food_does_not(self):
         self.populate_window()

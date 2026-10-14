@@ -1,52 +1,50 @@
 # Registro alimentar e ajuste da meta
 
-Branch: `feat/registro-alimentar-e-ajuste-claro`.
+Branch de simplificacao: `fix/simplifica-detalhes-da-meta`.
+Base da simplificacao: `1b25a6b`.
+Branch original: `feat/registro-alimentar-e-ajuste-claro`.
 Base anterior: `1eee189a972e387aedc4db5b1d9641f94413281c`.
 Migracao adicional: `89c5e4e43a4b`; revisao anterior: `018ff10eff0a`.
 
 ## Comportamento
 
-O cartao de Progresso conserva os requisitos visiveis depois do primeiro calculo,
-informa quais dias foram considerados e permite abrir o diario na data escolhida.
-Uma estimativa bloqueada nao aparece como uma recomendacao verde. A origem da meta
-atual e mostrada separadamente da estimativa calculada agora.
+O cartao de Progresso destaca a manutencao estimada, a variacao semanal e a meta
+atual, lado a lado com a sugestao quando ela esta disponivel para adocao.
 
-Em Dieta, "Registro do dia" permite declarar que tudo foi registrado ou que ainda
-faltam informacoes. Alterar alimentos, aceitar compartilhamentos, copiar refeicoes
-ou alterar aproximacoes invalida a revisao quando muda o conteudo revisado. Uma
-assinatura do conteudo evita espalhar essa regra por todos os caminhos de escrita.
-Uma revisao enviada sobre conteudo desatualizado e recusada com `DIARY_CHANGED`.
+Os requisitos, datas analisadas, explicacoes e atualizacao manual ficam dentro de
+"Ver mais informacoes", fechado por padrao. A lista mostra somente dias sem
+lancamento, abaixo do filtro ou com calorias nao informadas. O dia em andamento e
+os dias aceitos nao aparecem nessa lista de pendencias. Os links abrem o diario
+tradicional na data selecionada, sem pedir confirmacao do registro.
 
-Refeicoes aproximadas permitem informar a referencia das calorias por porcao ou
-guardar apenas uma anotacao. Energia desconhecida continua desconhecida; os totais
-conhecidos sao identificados como parciais. Nao sao inventados macronutrientes.
-As sugestoes para fechar metas e a pontuacao de proteina nao tratam esses valores
-ausentes como zero. As aproximacoes ficam separadas das refeicoes do cadastro e
-nao sao copiadas nem compartilhadas automaticamente. A interface informa isso.
+A Dieta usa o fluxo tradicional de alimentos, receitas e porcoes. Nao ha caixa de
+revisao diaria nem formulario para criar refeicoes aproximadas. Quem ja criou
+registros no formulario anterior pode consulta-los, edita-los e exclui-los em
+"Lancamentos anteriores", que so aparece se houver esses dados e inicia fechado.
+Nenhum registro e apagado ou convertido automaticamente.
 
-Nao ha um novo limite arbitrario de refeicoes. Os minimos para **calcular** seguem
-centralizados no servico adaptativo. Para **adotar**, todos os dias alimentares
-encerrados da janela precisam estar revistos e sem energia desconhecida. Essa
-regra conservadora evita selecionar apenas os dias faceis de registrar; nao e uma
-validacao clinica da estimativa. Na janela habitual sao 20 datas alimentares e 21
-datas de peso. Confirmar os dias nao remove os bloqueios de plausibilidade.
+Nao e necessario confirmar cada dia para adotar uma estimativa. Permanecem os
+minimos de dados, os bloqueios de plausibilidade e a validacao no servidor antes de
+adotar a manutencao. Anotacoes antigas sem calorias continuam bloqueando a adocao
+ate serem corrigidas ou excluidas; nao sao transformadas em consumo zero.
 
-Um dia explicitamente confirmado pode participar da estimativa mesmo abaixo do
-filtro calorico. Ausencia de lancamentos nunca significa jejum: um dia sem consumo
-so pode ser confirmado apos declaracao explicita. Hoje nao entra nas medias.
+As tabelas e endpoints anteriores de revisao/aproximacao sao mantidos para
+compatibilidade com clientes em cache e preservacao do historico. Uma revisao
+antiga ainda pode explicar como um dia de consumo baixo entrou no calculo, mas
+nao e uma obrigacao nem uma nova etapa do diario. Hoje nao entra nas medias.
 
 ## Compatibilidade e reversao
 
-Esta entrega nao faz deploy. A publicacao do branch nao modifica a `main` nem o
-banco de producao. O deploy atual so e disparado por push na `main`.
+Publicar apenas um branch nao altera a producao. O deploy e disparado pelo push
+na `main`, depois do merge autorizado e das verificacoes de CI.
 
 O diario original, seus enums e suas colunas permanecem intactos. Apenas duas
 tabelas sao adicionadas: `diary_day_reviews` e `diary_estimates`. Os novos campos de
 API sao adicionais. Os handlers de arrastar refeicoes nao foram modificados.
 
-Para voltar **antes de integrar ou publicar**, basta usar a `main`; nao ha nenhuma
-mudanca de producao para desfazer. Em desenvolvimento, a API antiga exige a
-revisao Alembic anterior, conforme o procedimento abaixo.
+Para desfazer somente a simplificacao, restaure o codigo de `1b25a6b`: nao ha
+nova migracao nem mudanca de schema nesta etapa. Para remover o recurso original
+por completo e voltar a base anterior, use o procedimento abaixo.
 
 Se esta versao ja tiver sido instalada em um ambiente:
 
@@ -102,8 +100,15 @@ Na verificacao manual, cobrir datas locais, falha de atualizacao, confirmacao de
 exclusao, edicao normal, compartilhamento/copia do diario legado, arrasto por mouse
 e toque e persistencia da ordem apos recarregar.
 
-Verificado nesta entrega: 12 testes de integracao aprovados; endpoints novos por
+Verificacoes do recurso original: 12 testes de integracao aprovados; endpoints novos por
 curl; navegação por data, revisao, aproximacoes e exclusao no navegador; arrasto por
 mouse e toque; ordem preservada depois de recarregar; recuperacao de falha de
 atualizacao; migracao de ida e volta com preservacao dos dados. Foram usados apenas
 registros ficticios locais nessas verificacoes.
+
+Na simplificacao, foram aprovados no navegador: detalhes fechados por padrao, lista
+restrita a pendencias, meta atual proxima aos indicadores, ausencia de validacao
+diaria e do formulario sem balanca, preservacao e edicao dos registros anteriores.
+Os gestos de arrastar nao foram repetidos nesta etapa, conforme solicitado. Os 13
+testes de integracao passaram, incluindo adocao sem confirmacao diaria e bloqueio
+preservado para anotacoes antigas sem calorias. Svelte-check e build aprovados.

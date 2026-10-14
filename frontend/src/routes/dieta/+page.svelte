@@ -52,7 +52,7 @@
 	import { m } from '$lib/paraglide/messages';
 	import { getLocale } from '$lib/paraglide/runtime';
 	import { isShowingAnchor } from '$lib/tour.svelte';
-	import DiaryRecordPanel from '$lib/components/DiaryRecordPanel.svelte';
+	import PreviousDiaryEntries from '$lib/components/PreviousDiaryEntries.svelte';
 
 	let diary = $state<DiaryDay | null>(null);
 	let loading = $state(true);
@@ -1175,15 +1175,9 @@
 	<div data-tour="diet-goals">
 		<MacroSummary totals={diary.totals} goals={diary.goals} hasUnknownEnergy={diary.review?.has_unknown_energy} hasUnknownMacros={diary.review?.has_unknown_macros} />
 	</div>
-	{#if diary.fingerprint}
+	{#if diary.estimates?.length}
 		{#key day}
-			<DiaryRecordPanel
-				{diary}
-				{day}
-				onupdate={reloadSilent}
-				onadd={() => (addingToMeal = mealByTime())}
-				expanded={page.url.searchParams.get('revisar') === '1'}
-			/>
+			<PreviousDiaryEntries {diary} {day} onupdate={reloadSilent} />
 		{/key}
 	{/if}
 

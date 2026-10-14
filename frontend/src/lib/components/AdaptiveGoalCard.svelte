@@ -20,6 +20,15 @@
 	// Durante deploy ou reversao, a API pode responder com o contrato anterior.
 	const hasDayDetails = $derived(Array.isArray(estimate.diary_days));
 	const blocked = $derived(!hasDayDetails || !estimate.can_adopt || refreshFailed);
+	const pendingDays = $derived(
+		(estimate.diary_days ?? []).filter(
+			(day) =>
+				day.filter_status !== 'in_progress' &&
+				(day.filter_status === 'missing' ||
+					day.filter_status === 'below_filter' ||
+					day.has_unknown_energy)
+		)
+	);
 	const requirements = $derived([
 		{ have: estimate.days_logged, need: estimate.min_days_logged, label: m.adaptive_food_days() },
 		{ have: estimate.weigh_ins, need: estimate.min_weigh_ins, label: m.adaptive_weigh_ins() },
@@ -29,6 +38,7 @@
 		if (estimate.message_code === 'MEASURED_BELOW_BMR')
 			return m.adaptive_below_bmr({ bmr: nf.format(estimate.bmr_kcal) });
 		if (estimate.message_code === 'TOO_FAST') return m.adaptive_cannot_adopt();
+		if (estimate.message_code === 'DIARY_CALORIES_MISSING') return m.adaptive_calories_missing();
 		if (estimate.message_code === 'REVIEW_DIARY') return m.adaptive_review_policy();
 		const messages: Record<string, () => string> = {
 			ON_TRACK: m.adaptive_on_track,
@@ -43,6 +53,7 @@
 		return df.format(new Date(day + 'T12:00:00'));
 	}
 	function filterLabel(day: AdaptiveDiaryDay): string {
+		if (day.has_unknown_energy) return m.diary_energy_unknown();
 		const labels = {
 			included: m.diary_filter_included,
 			below_filter: m.diary_filter_below_filter,
@@ -50,13 +61,6 @@
 			in_progress: m.diary_filter_in_progress
 		};
 		return labels[day.filter_status]();
-	}
-	function reviewLabel(day: AdaptiveDiaryDay): string {
-		return day.review_status === 'complete'
-			? m.diary_review_complete()
-			: day.review_status === 'incomplete'
-				? m.diary_review_incomplete()
-				: m.diary_review_unreviewed();
 	}
 
 	async function refresh(): Promise<void> {
@@ -95,35 +99,13 @@
 </script>
 
 <section class="mb-4 rounded-3xl bg-white p-5 shadow-sm" data-tour="progress-adaptive">
-	<p class="mb-2 text-sm font-bold text-slate-400 uppercase">{m.adaptive_title()}</p>
+	<p class="mb-3 text-sm font-bold text-slate-400 uppercase">{m.adaptive_title()}</p>
 	{#if estimate.has_enough_data}
-		<p
-			class="mb-2 inline-block rounded-lg px-2.5 py-1 text-xs font-bold {blocked
-				? 'bg-amber-50 text-amber-800'
-				: 'bg-emerald-50 text-emerald-700'}"
-		>
-			{blocked ? m.adaptive_blocked() : m.adaptive_available()}
-		</p>
-		<h2 class="text-base font-bold">{m.adaptive_data_ready()}</h2>
-	{:else}
-		<h2 class="text-base font-bold">{m.adaptive_pending()}</h2>
-	{/if}
-	<p class="mt-2 text-sm text-slate-600">{explanation}</p>
-	{#if estimate.message_code === 'MEASURED_BELOW_BMR'}
-		<p class="mt-2 rounded-2xl bg-amber-50 p-3 text-sm text-amber-800">
-			{m.adaptive_cannot_adopt_below_bmr()}
-		</p>
-	{/if}
-	{#if refreshFailed}<p class="mt-3 text-sm font-semibold text-amber-700" role="alert">
-			{m.adaptive_update_failed()}
-		</p>{/if}
-
-	{#if estimate.has_enough_data}
-		<div class="mt-4 grid grid-cols-2 gap-3">
+		<div class="grid grid-cols-2 gap-3">
 			<div class="rounded-2xl bg-slate-50 p-3">
-				<p class="text-2xl font-black">
+				<p class="text-2xl font-black text-slate-900">
 					{nf.format(estimate.estimated_maintenance_kcal ?? 0)}<span
-						class="text-xs font-medium text-slate-400"
+						class="text-sm font-medium text-slate-400"
 					>
 						kcal</span
 					>
@@ -131,9 +113,9 @@
 				<p class="mt-1 text-xs font-semibold text-slate-500">{m.adaptive_real_maintenance()}</p>
 			</div>
 			<div class="rounded-2xl bg-slate-50 p-3">
-				<p class="text-2xl font-black">
+				<p class="text-2xl font-black text-slate-900">
 					{estimate.weekly_change_kg > 0 ? '+' : ''}{nf.format(estimate.weekly_change_kg)}<span
-						class="text-xs font-medium text-slate-400"
+						class="text-sm font-medium text-slate-400"
 					>
 						kg</span
 					>
@@ -143,152 +125,185 @@
 		</div>
 	{/if}
 
-	<div class="mt-4 space-y-3 border-t border-slate-100 pt-4">
-		<p class="text-xs font-bold text-slate-500">{m.adaptive_requirements()}</p>
-		{#each requirements as requirement (requirement.label)}
-			{@const met = requirement.have >= requirement.need}
-			<div class="flex items-start justify-between gap-3 text-xs">
-				<span class="text-slate-600">{requirement.label}</span>
-				<div class="shrink-0 text-right">
-					<strong class={met ? 'text-emerald-700' : 'text-slate-700'}
-						>{requirement.have}/{requirement.need}</strong
-					>
-					<!-- Falta = minimo menos quantidade, limitada a zero para nao mostrar saldo negativo. -->
-					<p class="mt-0.5 text-[11px] text-slate-500">
-						{met
-							? m.adaptive_requirement_met()
-							: m.adaptive_remaining_count({
-									count: Math.max(0, requirement.need - requirement.have)
-								})}
-					</p>
-				</div>
+	<div
+		class="mt-3 flex items-center justify-between gap-3 rounded-2xl border-2 border-slate-100 px-4 py-3"
+		data-testid="adaptive-current-target"
+	>
+		<div>
+			<p class="text-xs font-semibold text-slate-400">{m.adaptive_current_target()}</p>
+			<p class="mt-1 text-2xl font-black text-slate-700">
+				{nf.format(estimate.current_target_kcal)}<span class="text-xs font-medium text-slate-400">
+					kcal</span
+				>
+			</p>
+		</div>
+		{#if !blocked && estimate.suggested_target_kcal !== null}
+			<svg
+				viewBox="0 0 24 24"
+				class="h-5 w-5 shrink-0 text-slate-300"
+				fill="none"
+				stroke="currentColor"
+				stroke-width="2"
+				aria-hidden="true"
+				><path d="M5 12h14M13 6l6 6-6 6" stroke-linecap="round" stroke-linejoin="round" /></svg
+			>
+			<div class="text-right">
+				<p class="text-xs font-semibold text-emerald-600">{m.adaptive_suggested_target()}</p>
+				<p class="mt-1 text-2xl font-black text-emerald-700">
+					{nf.format(estimate.suggested_target_kcal)}
+				</p>
 			</div>
-		{/each}
-		<p class="text-xs text-slate-500">{m.adaptive_span_help()}</p>
+		{/if}
 	</div>
 
-	{#if hasDayDetails}
-		<details class="mt-4 rounded-2xl bg-slate-50 p-3" data-testid="adaptive-days">
-			<summary class="cursor-pointer text-sm font-bold text-emerald-700"
-				>{m.adaptive_review_days()}</summary
-			>
-			<p class="mt-3 text-xs text-slate-600">
-				{m.adaptive_review_counts({
-					missing: estimate.days_missing,
-					discarded: estimate.days_discarded
-				})}
-			</p>
-			<p class="mt-2 text-xs font-semibold text-slate-700">
-				{m.adaptive_review_progress({
-					have: estimate.days_reviewed,
-					total: estimate.days_reviewed + estimate.days_to_review
-				})}
-			</p>
-			<p class="mt-2 text-xs text-slate-500">{m.diary_filter_help()}</p>
-			<p class="mt-2 text-xs text-slate-500">{m.adaptive_review_policy()}</p>
-			<div class="mt-3 divide-y divide-slate-200">
-				{#each estimate.diary_days as day (day.date)}
-					<a
-						href={`/dieta?dia=${day.date}&revisar=1`}
-						class="flex min-h-16 items-center justify-between gap-2 py-3 text-left"
+	{#if !estimate.has_enough_data}
+		<p class="mt-3 text-sm text-slate-500">{m.adaptive_pending()}</p>
+	{:else}
+		<p
+			class="mt-3 rounded-2xl px-4 py-3 text-sm font-semibold {blocked
+				? 'bg-amber-50 text-amber-800'
+				: 'bg-emerald-50 text-emerald-800'}"
+		>
+			{explanation}
+		</p>
+	{/if}
+	{#if refreshFailed}<p class="mt-3 text-sm font-semibold text-amber-700" role="alert">
+			{m.adaptive_update_failed()}
+		</p>{/if}
+
+	{#if !blocked && estimate.suggested_target_kcal !== null}
+		{#if estimate.current_target_kcal === estimate.suggested_target_kcal}
+			<p class="mt-3 text-xs text-emerald-700">{m.adaptive_same_value()}</p>
+		{:else if confirming}
+			<div class="mt-3 rounded-2xl bg-emerald-50 p-3">
+				<p class="text-sm font-semibold text-emerald-800">{m.adaptive_adopt_confirm()}</p>
+				<div class="mt-3 flex gap-2">
+					<button
+						type="button"
+						onclick={adopt}
+						disabled={adopting || refreshing}
+						class="h-11 flex-1 rounded-xl bg-emerald-600 px-3 font-bold text-white disabled:opacity-50"
+						>{m.confirm()}</button
 					>
-						<div class="min-w-0">
-							<p class="text-xs font-bold text-slate-700">
-								{formatDay(day.date)} · {day.kcal === null
-									? m.diary_energy_unknown()
-									: `${nf.format(day.kcal)} kcal`}
-							</p>
-							<p class="mt-1 text-[11px] text-slate-500">{filterLabel(day)}</p>
-							<p
-								class="mt-1 text-[11px] {day.review_status === 'complete'
-									? 'text-emerald-700'
-									: 'text-slate-500'}"
-							>
-								{reviewLabel(day)}
-							</p>
-							{#if day.estimated_meals > 0}<span class="text-[11px] text-amber-700"
-									>{m.diary_approx_badge()}{day.has_unknown_energy
-										? ` · ${m.diary_energy_unknown()}`
-										: ''}</span
-								>{/if}
-						</div>
-						<span class="shrink-0 text-xs font-bold text-emerald-700"
-							>{m.diary_review_date()} ›</span
-						>
-					</a>
-				{/each}
+					<button
+						type="button"
+						onclick={() => (confirming = false)}
+						class="h-11 flex-1 rounded-xl px-3 font-semibold text-slate-500">{m.cancel()}</button
+					>
+				</div>
 			</div>
-		</details>
+		{:else}
+			<button
+				type="button"
+				onclick={() => (confirming = true)}
+				disabled={adopting || refreshing}
+				class="mt-3 min-h-12 w-full rounded-2xl bg-emerald-600 px-3 py-3 text-sm font-bold text-white disabled:opacity-50"
+				>{m.adaptive_adopt_button()}</button
+			>
+		{/if}
 	{/if}
 
-	<div class="mt-4 rounded-2xl border-2 border-slate-100 p-3">
-		<p class="text-xs font-semibold text-slate-400">{m.adaptive_current_target()}</p>
-		<p class="mt-1 text-xl font-black text-slate-700">
-			{nf.format(estimate.current_target_kcal)}
-			<span class="text-xs font-medium text-slate-400">kcal</span>
-		</p>
-		{#if hasDayDetails}<p class="mt-1 text-xs text-slate-500">
+	<details class="group mt-4 border-t border-slate-100 pt-2" data-testid="adaptive-details">
+		<summary
+			class="flex min-h-11 cursor-pointer list-none items-center justify-between gap-3 text-sm font-semibold text-emerald-700 [&::-webkit-details-marker]:hidden"
+		>
+			{m.adaptive_more_information()}
+			<svg
+				viewBox="0 0 24 24"
+				class="h-4 w-4 transition-transform group-open:rotate-180"
+				fill="none"
+				stroke="currentColor"
+				stroke-width="2"
+				aria-hidden="true"
+				><path d="M6 9l6 6 6-6" stroke-linecap="round" stroke-linejoin="round" /></svg
+			>
+		</summary>
+		<div class="mt-3 space-y-3">
+			<p class="text-xs font-bold text-slate-500">{m.adaptive_requirements()}</p>
+			{#each requirements as requirement (requirement.label)}
+				{@const met = requirement.have >= requirement.need}
+				<div class="flex items-start justify-between gap-3 text-xs">
+					<span class="text-slate-600">{requirement.label}</span>
+					<div class="shrink-0 text-right">
+						<strong class={met ? 'text-emerald-700' : 'text-slate-700'}
+							>{requirement.have}/{requirement.need}</strong
+						>
+						<!-- Falta = minimo menos quantidade, limitada a zero para nao mostrar saldo negativo. -->
+						<p class="mt-0.5 text-[11px] text-slate-500">
+							{met
+								? m.adaptive_requirement_met()
+								: m.adaptive_remaining_count({
+										count: Math.max(0, requirement.need - requirement.have)
+									})}
+						</p>
+					</div>
+				</div>
+			{/each}
+			<p class="text-xs text-slate-500">{m.adaptive_span_help()}</p>
+		</div>
+
+		{#if hasDayDetails}
+			<div class="mt-4 rounded-2xl bg-slate-50 p-3" data-testid="adaptive-days">
+				<h2 class="text-xs font-bold text-slate-600">{m.adaptive_pending_days()}</h2>
+				<p class="mt-2 text-xs text-slate-500">
+					{m.adaptive_review_counts({
+						missing: estimate.days_missing,
+						discarded: estimate.days_discarded
+					})}
+				</p>
+				<p class="mt-2 text-xs text-slate-500">{m.diary_filter_help()}</p>
+				{#if pendingDays.length > 0}
+					<div class="mt-3 divide-y divide-slate-200">
+						{#each pendingDays as day (day.date)}
+							<a
+								href={`/dieta?dia=${day.date}`}
+								class="flex min-h-16 items-center justify-between gap-2 py-3 text-left"
+							>
+								<div class="min-w-0">
+									<p class="text-xs font-bold text-slate-700">
+										{formatDay(day.date)}{day.kcal === null ? '' : ` · ${nf.format(day.kcal)} kcal`}
+									</p>
+									<p class="mt-1 text-[11px] text-slate-500">{filterLabel(day)}</p>
+								</div>
+								<span class="shrink-0 text-xs font-bold text-emerald-700"
+									>{m.diary_open_day()} ›</span
+								>
+							</a>
+						{/each}
+					</div>
+				{:else}
+					<p class="mt-3 text-xs text-slate-500">{m.adaptive_no_pending_days()}</p>
+				{/if}
+			</div>
+			<p class="mt-3 text-xs text-slate-500">
 				{estimate.adopted_maintenance_kcal === null
 					? m.adaptive_formula_base()
 					: m.adaptive_adopted_base({ kcal: nf.format(estimate.adopted_maintenance_kcal) })}
-			</p>{/if}
-	</div>
-	{#if estimate.suggested_target_kcal !== null}
-		{#if blocked}
-			<details class="mt-3 text-xs text-slate-500">
-				<summary class="cursor-pointer">{m.adaptive_calculated_unavailable()}</summary>
-				<p class="mt-2 font-bold">{nf.format(estimate.suggested_target_kcal)} kcal</p>
-			</details>
-		{:else if estimate.current_target_kcal === estimate.suggested_target_kcal}
-			<p class="mt-3 text-xs text-emerald-700">{m.adaptive_same_value()}</p>
-		{:else}
-			<p class="mt-3 text-sm font-bold text-emerald-700">
-				{m.adaptive_suggested_target()}: {nf.format(estimate.suggested_target_kcal)} kcal
 			</p>
-			{#if confirming}
-				<div class="mt-3 rounded-2xl bg-emerald-50 p-3">
-					<p class="text-sm font-semibold text-emerald-800">{m.adaptive_adopt_confirm()}</p>
-					<div class="mt-3 flex gap-2">
-						<button
-							type="button"
-							onclick={adopt}
-							disabled={adopting || refreshing}
-							class="h-11 flex-1 rounded-xl bg-emerald-600 px-3 font-bold text-white disabled:opacity-50"
-							>{m.confirm()}</button
-						><button
-							type="button"
-							onclick={() => (confirming = false)}
-							class="h-11 flex-1 rounded-xl px-3 font-semibold text-slate-500">{m.cancel()}</button
-						>
-					</div>
-				</div>
-			{:else}
-				<button
-					type="button"
-					onclick={() => (confirming = true)}
-					disabled={adopting || refreshing}
-					class="mt-3 min-h-12 w-full rounded-2xl bg-emerald-600 px-3 py-3 text-sm font-bold text-white disabled:opacity-50"
-					>{m.adaptive_adopt_button()}</button
-				>
-			{/if}
+			<p class="mt-3 text-xs text-slate-500">
+				{m.adaptive_dates({
+					start: formatDay(estimate.window_start),
+					foodEnd: formatDay(estimate.food_window_end),
+					weightEnd: formatDay(estimate.weight_window_end)
+				})}
+			</p>
 		{/if}
-	{/if}
-	<button
-		type="button"
-		onclick={refresh}
-		disabled={refreshing || adopting}
-		class="mt-4 min-h-11 w-full rounded-xl border-2 border-slate-200 px-3 py-2 text-sm font-bold text-slate-600 active:bg-slate-50 disabled:opacity-50"
-		>{m.adaptive_update()}</button
-	>
-	{#if checkedAt}<p class="mt-2 text-xs text-slate-400">
-			{m.adaptive_query_time({ time: checkedAt.toLocaleString(getLocale()) })}
-		</p>{/if}
-	{#if hasDayDetails}<p class="mt-3 text-xs text-slate-500">
-			{m.adaptive_dates({
-				start: formatDay(estimate.window_start),
-				foodEnd: formatDay(estimate.food_window_end),
-				weightEnd: formatDay(estimate.weight_window_end)
-			})}
-		</p>{/if}
-	<p class="mt-2 text-xs text-slate-400">{m.adaptive_today_rule()}</p>
+		{#if estimate.message_code === 'MEASURED_BELOW_BMR'}<p class="mt-3 text-xs text-amber-700">
+				{m.adaptive_cannot_adopt_below_bmr()}
+			</p>{/if}
+		{#if blocked && estimate.suggested_target_kcal !== null}<p class="mt-3 text-xs text-slate-500">
+				{m.adaptive_calculated_unavailable()}: {nf.format(estimate.suggested_target_kcal)} kcal
+			</p>{/if}
+		<button
+			type="button"
+			onclick={refresh}
+			disabled={refreshing || adopting}
+			class="mt-4 min-h-11 w-full rounded-xl border-2 border-slate-200 px-3 py-2 text-sm font-bold text-slate-600 active:bg-white disabled:opacity-50"
+			>{m.adaptive_update()}</button
+		>
+		{#if checkedAt}<p class="mt-2 text-xs text-slate-400">
+				{m.adaptive_query_time({ time: checkedAt.toLocaleString(getLocale()) })}
+			</p>{/if}
+		<p class="mt-3 text-xs text-slate-400">{m.adaptive_today_rule()}</p>
+	</details>
 </section>
