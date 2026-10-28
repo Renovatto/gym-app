@@ -36,6 +36,7 @@ from ..schemas import (
     SharingPendingCountOut,
 )
 from ..services.diet import localized_food_name
+from ..services.diary_dates import validate_entry_day
 from ..services.sharing import (
     SourceItemGone,
     accept_meal,
@@ -313,7 +314,10 @@ def _owned_offer(session: Session, offer_id: int, user_id: int) -> ShareOffer:
 
 
 @router.post("/offers/{offer_id}/accept", response_model=ReceivedItemOut)
-def accept_offer(offer_id: int, user: CurrentUser, session: SessionDep) -> ReceivedItemOut:
+def accept_offer(
+    offer_id: int, user: CurrentUser, session: SessionDep,
+    tz_offset: int = Query(0, ge=-840, le=720),
+) -> ReceivedItemOut:
     """Copia o item para a conta de quem recebeu. Dai em diante o item e dela: pode
     editar e apagar sem afetar o original. Refeicao vira lancamentos no diario dela,
     no mesmo dia e refeicao de quem enviou."""
@@ -321,6 +325,9 @@ def accept_offer(offer_id: int, user: CurrentUser, session: SessionDep) -> Recei
     copy_id: int | None = None
     try:
         if offer.item_kind == SharedItemKind.meal:
+            if offer.meal_date is None:
+                raise SourceItemGone
+            validate_entry_day(offer.meal_date, tz_offset)
             accept_meal(session, offer, user)
         elif offer.item_kind == SharedItemKind.recipe:
             source = session.get(Recipe, offer.item_id)
@@ -389,10 +396,12 @@ def list_received(user: CurrentUser, session: SessionDep) -> list[ReceivedItemOu
 
 @router.post("/meal-offers", response_model=ShareOfferOut, status_code=status.HTTP_201_CREATED)
 def create_meal_offer(
-    data: MealShareOfferIn, user: CurrentUser, session: SessionDep
+    data: MealShareOfferIn, user: CurrentUser, session: SessionDep,
+    tz_offset: int = Query(0, ge=-840, le=720),
 ) -> ShareOfferOut:
     """Oferece uma refeicao do diario. Os itens ficam congelados agora: o que a outra
     pessoa aceitar e o que foi enviado, mesmo que a refeicao mude depois."""
+    validate_entry_day(data.entry_date, tz_offset)
     to_user_id = _accepted_partner_id(session, data.connection_id, user.id)
 
     # mesma refeicao ja esperando resposta dessa pessoa? nao duplica

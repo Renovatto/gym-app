@@ -11,6 +11,10 @@ function defaultApiUrl(): string {
 	return `http://localhost:${API_PORT}`;
 }
 
+function withTimezone(path: string): string {
+	return `${path}${path.includes('?') ? '&' : '?'}tz_offset=${new Date().getTimezoneOffset()}`;
+}
+
 const API_URL: string = import.meta.env.VITE_API_URL ?? defaultApiUrl();
 
 // Aborta requests pendurados (API dormindo/caindo) para o app sempre dar retorno
@@ -1163,12 +1167,12 @@ export const api = {
 			body: { connection_id: connectionId, items }
 		}),
 	acceptShareOffer: (id: number) =>
-		request<ReceivedItem>(`/me/sharing/offers/${id}/accept`, { method: 'POST' }),
+		request<ReceivedItem>(withTimezone(`/me/sharing/offers/${id}/accept`), { method: 'POST' }),
 	declineShareOffer: (id: number) =>
 		request<void>(`/me/sharing/offers/${id}/decline`, { method: 'POST' }),
 	getReceivedItems: () => request<ReceivedItem[]>('/me/sharing/received'),
 	shareMeal: (connectionId: number, entryDate: string, mealType: MealType) =>
-		request<ShareOffer>('/me/sharing/meal-offers', {
+		request<ShareOffer>(withTimezone('/me/sharing/meal-offers'), {
 			method: 'POST',
 			body: { connection_id: connectionId, entry_date: entryDate, meal_type: mealType }
 		}),
@@ -1287,9 +1291,9 @@ export const api = {
 		request<AdaptiveTdee>(`/me/summary/adaptive?day=${day}&tz_offset=${tzOffset}`),
 	// Ciclo menstrual (Fase A): o dia local vai na query porque a estimativa por
 	// data depende do "hoje" de quem usa, nao do fuso do servidor.
-	getCycle: (day: string) => request<CycleStatus>(`/me/cycle?day=${day}`),
+	getCycle: (day: string) => request<CycleStatus>(withTimezone(`/me/cycle?day=${day}`)),
 	saveCycle: (day: string, input: CycleInput) =>
-		request<CycleStatus>(`/me/cycle?day=${day}`, { method: 'PUT', body: input }),
+		request<CycleStatus>(withTimezone(`/me/cycle?day=${day}`), { method: 'PUT', body: input }),
 	getCoach: (day: string, tzOffset: number) =>
 		request<CoachResult>(`/me/coach?day=${day}&tz_offset=${tzOffset}`),
 	getAchievements: (day: string, tzOffset: number) =>
@@ -1326,7 +1330,7 @@ export const api = {
 	// mealType filtra os recentes pela refeicao e ordena pelo habito nela (o que a
 	// pessoa mais repete no cafe da manha vem antes do almoco de ontem).
 	getRecentFoods: (mealType?: MealType) =>
-		request<Food[]>(`/me/foods/recent${mealType ? `?meal_type=${mealType}` : ''}`),
+		request<Food[]>(withTimezone(`/me/foods/recent${mealType ? `?meal_type=${mealType}` : ''}`)),
 	getFavoriteFoods: () => request<Food[]>('/me/foods/favorites'),
 	// Liga/desliga a estrelinha; retorna o novo estado (true = favorito).
 	toggleFavorite: (kind: FavoriteKind, refId: number) =>
@@ -1340,7 +1344,7 @@ export const api = {
 		entry_date: string;
 		meal_type: MealType;
 		quantity?: number;
-	}) => request<DiaryEntry>('/me/diary/from-library', { method: 'POST', body: input }),
+	}) => request<DiaryEntry>(withTimezone('/me/diary/from-library'), { method: 'POST', body: input }),
 	createFood: (food: FoodInput) => request<Food>('/me/foods', { method: 'POST', body: food }),
 	updateFood: (id: number, food: FoodInput) =>
 		request<Food>(`/me/foods/${id}`, { method: 'PUT', body: food }),
@@ -1353,7 +1357,7 @@ export const api = {
 	// mesma lista de sempre; com mealType as receitas usadas naquela refeicao vem
 	// na frente das favoritas.
 	getRecipes: (mealType?: MealType) =>
-		request<Recipe[]>(`/me/recipes${mealType ? `?meal_type=${mealType}` : ''}`),
+		request<Recipe[]>(withTimezone(`/me/recipes${mealType ? `?meal_type=${mealType}` : ''}`)),
 	createRecipe: (recipe: RecipeInput) =>
 		request<Recipe>('/me/recipes', { method: 'POST', body: recipe }),
 	updateRecipe: (id: number, recipe: RecipeInput) =>
@@ -1367,20 +1371,20 @@ export const api = {
 	deleteDiaryEstimate: (id: number) => request<void>(`/me/diary-records/estimates/${id}`, { method: 'DELETE' }),
 	getDiaryGap: (day: string, limit = 4, mealType?: MealType) =>
 		request<DiaryGap>(
-			`/me/diary/gap?day=${day}&limit=${limit}${mealType ? `&meal_type=${mealType}` : ''}`
+			withTimezone(`/me/diary/gap?day=${day}&limit=${limit}${mealType ? `&meal_type=${mealType}` : ''}`)
 		),
 	getBuildMeal: (day: string, haveFoodIds: number[], mealType?: MealType) => {
 		const params = new URLSearchParams({ day });
 		haveFoodIds.forEach((id) => params.append('have', String(id)));
 		if (mealType) params.set('meal_type', mealType);
-		return request<BuildMeal>(`/me/diary/build-meal?${params.toString()}`);
+		return request<BuildMeal>(withTimezone(`/me/diary/build-meal?${params.toString()}`));
 	},
 	getSubstitutes: (foodId: number, grams: number, limit = 6) =>
-		request<Substitutes>(`/me/foods/${foodId}/substitutes?grams=${grams}&limit=${limit}`),
+		request<Substitutes>(withTimezone(`/me/foods/${foodId}/substitutes?grams=${grams}&limit=${limit}`)),
 	getMealPlan: (day: string, limit = 3) =>
-		request<MealPlan>(`/me/diary/meal-plan?day=${day}&limit=${limit}`),
+		request<MealPlan>(withTimezone(`/me/diary/meal-plan?day=${day}&limit=${limit}`)),
 	getDietAdherence: (end: string, window = 7) =>
-		request<DietAdherence>(`/me/diet/adherence?end=${end}&window=${window}`),
+		request<DietAdherence>(withTimezone(`/me/diet/adherence?end=${end}&window=${window}`)),
 	getDietPeriod: (day: string) => request<DietPeriod | null>(`/me/diet/period?day=${day}`),
 	renewDietPeriod: (day: string, adoptMaintenanceKcal?: number) => {
 		const q = adoptMaintenanceKcal ? `&adopt_maintenance_kcal=${adoptMaintenanceKcal}` : '';
@@ -1407,14 +1411,16 @@ export const api = {
 	unmarkSupplement: (id: number, day: string) =>
 		request<Supplement>(`/me/supplements/${id}/log?day=${day}`, { method: 'DELETE' }),
 	addDiaryEntry: (entry: DiaryEntryInput) =>
-		request<DiaryEntry>('/me/diary', { method: 'POST', body: entry }),
+		request<DiaryEntry>(withTimezone('/me/diary'), { method: 'POST', body: entry }),
 	updateDiaryEntry: (id: number, quantity: number) =>
 		request<DiaryEntry>(`/me/diary/${id}`, { method: 'PUT', body: { quantity } }),
+	undoDiaryAdditions: (entryIds: number[]) =>
+		request<void>('/me/diary/undo-additions', { method: 'POST', body: { entry_ids: entryIds } }),
 	deleteDiaryEntry: (id: number) => request<void>(`/me/diary/${id}`, { method: 'DELETE' }),
 	copyPreviousDay: (day: string, fromDay: string, mealType?: MealType) => {
 		const params = new URLSearchParams({ day, from_day: fromDay });
 		if (mealType) params.set('meal_type', mealType);
-		return request<DiaryDay>(`/me/diary/copy-previous?${params.toString()}`, { method: 'POST' });
+		return request<DiaryDay>(withTimezone(`/me/diary/copy-previous?${params.toString()}`), { method: 'POST' });
 	},
 	exportData: () => request<unknown>('/me/account/export'),
 	deleteAccount: () => request<void>('/me/account', { method: 'DELETE' })

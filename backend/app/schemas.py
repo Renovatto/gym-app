@@ -686,6 +686,10 @@ class DiaryEntryUpdate(BaseModel):
     quantity: float = Field(gt=0, le=5000)
 
 
+class DiaryUndoAdditionsIn(BaseModel):
+    entry_ids: list[int] = Field(min_length=1)
+
+
 class DiaryFromLibraryIn(BaseModel):
     """Adotar (idempotente) uma receita da biblioteca e ja lancar no diario, 1 toque."""
 

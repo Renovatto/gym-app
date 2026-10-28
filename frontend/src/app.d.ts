@@ -1,5 +1,6 @@
 // See https://svelte.dev/docs/kit/types#app.d.ts
 // for information about these interfaces
+import type { DiaryAddition } from '$lib/diaryFeedback';
 import type { MealType } from '$lib/api';
 
 declare global {
@@ -13,7 +14,7 @@ declare global {
 			modalDepth?: number;
 			// Refeicao e dia da modal de adicionar alimento. Quem sai dela por um link
 			// (cadastrar/editar alimento) e volta encontra a modal aberta de novo.
-			addEntry?: { meal: MealType; day: string };
+			addEntry?: { meal: MealType; day: string; userId?: number; additions?: DiaryAddition[] };
 		}
 		// interface Platform {}
 	}

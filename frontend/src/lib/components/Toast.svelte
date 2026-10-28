@@ -1,15 +1,13 @@
 <script lang="ts">
 	import { fly } from 'svelte/transition';
 	import { cubicOut } from 'svelte/easing';
-	import { toastState } from '$lib/toast.svelte';
+	import ActionToast from '$lib/components/ActionToast.svelte';
+	import { actionToasts, toastState } from '$lib/toast.svelte';
 </script>
 
+<div class="pointer-events-none fixed inset-x-0 top-4 z-[60] flex max-h-[calc(100dvh-2rem)] flex-col items-center gap-2 overflow-y-auto px-4 pb-2">
 {#if toastState.visible}
-	<div
-		class="pointer-events-none fixed inset-x-0 top-4 z-[60] flex justify-center px-4"
-		role="status"
-		aria-live="polite"
-	>
+	<div role="status" aria-live="polite">
 		<!-- Vidro esmeralda: fundo translucido + blur (liquid glass), texto maior e icone
 			 de acento. Legivel no claro e no escuro (tokens .dark remapeiam o verde). -->
 		<div
@@ -27,3 +25,8 @@
 		</div>
 	</div>
 {/if}
+
+	{#each actionToasts as toast (toast.id)}
+		<ActionToast {toast} />
+	{/each}
+</div>
