@@ -439,6 +439,7 @@ class Food(SQLModel, table=True):
     default_portion_g: float = Field(default=100)
     # None = alimento global (catálogo); preenchido = criado pelo usuário.
     user_id: int | None = Field(default=None, foreign_key="users.id", ondelete="CASCADE")
+    archived_at: datetime | None = Field(default=None, index=True)
 
     translations: list["FoodTranslation"] = Relationship(
         back_populates="food", cascade_delete=True
@@ -477,6 +478,7 @@ class Recipe(SQLModel, table=True):
     name: str
     servings: int = Field(default=1)  # quantas porções a receita rende
     created_at: datetime = Field(default_factory=utcnow)
+    archived_at: datetime | None = Field(default=None, index=True)
 
     ingredients: list["RecipeIngredient"] = Relationship(
         back_populates="recipe", cascade_delete=True

@@ -1134,5 +1134,15 @@
 	"diary_limit_error": "You can log meals up to tomorrow.",
 	"diary_tomorrow_one_item": "{meal} · 1 item added.",
 	"diary_tomorrow_items": "{meal} · {count} items added.",
-	"diary_undo_group_description": "The {count} items added to {meal} ({date}) will be deleted."
+	"diary_undo_group_description": "The {count} items added to {meal} ({date}) will be deleted.",
+	"diet_duplicate_alert_title": "{count} group(s) of duplicate content",
+	"diet_duplicate_alert_body": "Review the highlighted items. When you deactivate one, it leaves regular lists and searches while its history stays preserved.",
+	"diet_duplicate_badge": "Possible duplicate",
+	"diet_archived_items": "Deactivated items ({count})",
+	"diet_duplicate_archive_action": "Deactivate this item",
+	"diet_duplicate_archive_confirm": "Deactivate this item? It leaves regular lists and searches; existing records stay preserved.",
+	"diet_duplicate_archived_toast": "Item deactivated. Its history is preserved.",
+	"diet_duplicate_restore_action": "Reactivate this item",
+	"diet_duplicate_restore_confirm": "Reactivate this item so it appears in lists and searches again?",
+	"diet_duplicate_restored_toast": "Item reactivated."
 }

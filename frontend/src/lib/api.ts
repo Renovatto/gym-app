@@ -722,6 +722,7 @@ export interface Food {
 	portions: FoodPortion[];
 	is_custom: boolean;
 	is_favorite: boolean;
+	archived_at: string | null;
 }
 
 export interface RecipeIngredient {
@@ -739,6 +740,18 @@ export interface Recipe {
 	total: Macros;
 	per_serving: Macros;
 	is_favorite: boolean;
+	archived_at: string | null;
+}
+
+export interface DuplicateItem {
+	id: number;
+	name: string;
+	is_custom: boolean;
+}
+
+export interface DuplicateGroup {
+	item_kind: 'food' | 'recipe';
+	items: DuplicateItem[];
 }
 
 export interface DiaryEntry {
@@ -1316,7 +1329,7 @@ export const api = {
 	getFoods: (
 		q = '',
 		category?: FoodCategory,
-		opts?: { scope?: 'mine' | 'catalog'; limit?: number; offset?: number }
+		opts?: { scope?: 'mine' | 'catalog'; limit?: number; offset?: number; includeArchived?: boolean }
 	) => {
 		const params = new URLSearchParams();
 		if (q) params.set('q', q);
@@ -1324,6 +1337,7 @@ export const api = {
 		if (opts?.scope) params.set('scope', opts.scope);
 		if (opts?.limit) params.set('limit', String(opts.limit));
 		if (opts?.offset) params.set('offset', String(opts.offset));
+		if (opts?.includeArchived) params.set('include_archived', 'true');
 		const qs = params.toString();
 		return request<Food[]>(`/foods${qs ? `?${qs}` : ''}`);
 	},
@@ -1356,8 +1370,18 @@ export const api = {
 		request<Recipe>(`/me/recipes/from-library/${slug}`, { method: 'POST' }),
 	// mesma lista de sempre; com mealType as receitas usadas naquela refeicao vem
 	// na frente das favoritas.
-	getRecipes: (mealType?: MealType) =>
-		request<Recipe[]>(withTimezone(`/me/recipes${mealType ? `?meal_type=${mealType}` : ''}`)),
+	getRecipes: (mealType?: MealType, includeArchived = false) => {
+		const params = new URLSearchParams();
+		if (mealType) params.set('meal_type', mealType);
+		if (includeArchived) params.set('include_archived', 'true');
+		const query = params.toString();
+		return request<Recipe[]>(withTimezone(`/me/recipes${query ? `?${query}` : ''}`));
+	},
+	getDietDuplicates: () => request<DuplicateGroup[]>('/me/diet/duplicates'),
+	archiveFood: (id: number) => request<Food>(`/me/foods/${id}/archive`, { method: 'POST' }),
+	unarchiveFood: (id: number) => request<Food>(`/me/foods/${id}/unarchive`, { method: 'POST' }),
+	archiveRecipe: (id: number) => request<Recipe>(`/me/recipes/${id}/archive`, { method: 'POST' }),
+	unarchiveRecipe: (id: number) => request<Recipe>(`/me/recipes/${id}/unarchive`, { method: 'POST' }),
 	createRecipe: (recipe: RecipeInput) =>
 		request<Recipe>('/me/recipes', { method: 'POST', body: recipe }),
 	updateRecipe: (id: number, recipe: RecipeInput) =>

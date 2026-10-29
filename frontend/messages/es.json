@@ -1134,5 +1134,15 @@
 	"diary_limit_error": "Puedes registrar comidas hasta mañana.",
 	"diary_tomorrow_one_item": "{meal} · 1 elemento añadido.",
 	"diary_tomorrow_items": "{meal} · {count} elementos añadidos.",
-	"diary_undo_group_description": "Se eliminarán los {count} elementos añadidos a {meal} ({date})."
+	"diary_undo_group_description": "Se eliminarán los {count} elementos añadidos a {meal} ({date}).",
+	"diet_duplicate_alert_title": "{count} grupo(s) de contenido duplicado",
+	"diet_duplicate_alert_body": "Revisa los elementos destacados. Al desactivar uno, deja de aparecer en las listas y búsquedas habituales, pero se conserva el historial.",
+	"diet_duplicate_badge": "Posible duplicado",
+	"diet_archived_items": "Elementos desactivados ({count})",
+	"diet_duplicate_archive_action": "Desactivar este elemento",
+	"diet_duplicate_archive_confirm": "¿Desactivar este elemento? Dejará las listas y búsquedas habituales; se conservarán los registros anteriores.",
+	"diet_duplicate_archived_toast": "Elemento desactivado. Se conserva su historial.",
+	"diet_duplicate_restore_action": "Reactivar este elemento",
+	"diet_duplicate_restore_confirm": "¿Reactivar este elemento para que vuelva a aparecer en listas y búsquedas?",
+	"diet_duplicate_restored_toast": "Elemento reactivado."
 }

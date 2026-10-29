@@ -56,6 +56,10 @@
 	let busy = $state(false);
 	let deleteError = $state('');
 	let confirmingDelete = $state(false);
+	let confirmingArchive = $state(false);
+	let confirmingUnarchive = $state(false);
+	let archivedAt = $state<string | null>(null);
+	let isDuplicate = $state(false);
 
 	// Compartilhar este alimento. O backend ja aceitava alimento desde o inicio
 	// (a copia leva traducoes e porcoes junto); faltava so a porta na tela - e ela
@@ -101,9 +105,16 @@
 		}
 		// nao ha GET por id: os alimentos proprios sao poucos, entao reaproveita a
 		// listagem "meus" (mesmo padrao ja usado em receitas/[id]).
-		const mine = await api.getFoods('', undefined, { scope: 'mine', limit: 200 });
+		const [mine, duplicates] = await Promise.all([
+			api.getFoods('', undefined, { scope: 'mine', limit: 200, includeArchived: true }),
+			api.getDietDuplicates()
+		]);
 		const food = mine.find((f) => f.id === Number(foodId));
 		if (food) {
+			archivedAt = food.archived_at;
+			isDuplicate = duplicates.some(
+				(group) => group.item_kind === 'food' && group.items.some((item) => item.id === food.id)
+			);
 			name = food.name;
 			category = food.category;
 			kcal = food.kcal;
@@ -121,7 +132,7 @@
 			}
 		}
 		loading = false;
-		void loadPartners();
+		if (food?.archived_at === null) void loadPartners();
 	}
 
 	// Busca externa (Open Food Facts): preenche os campos com dados reais do produto.
@@ -234,6 +245,32 @@
 		} catch (e) {
 			deleteError = errorMessage(e instanceof ApiError ? e.code : 'GENERIC_ERROR');
 			confirmingDelete = false;
+		} finally {
+			busy = false;
+		}
+	}
+
+	async function archive(): Promise<void> {
+		busy = true;
+		try {
+			await api.archiveFood(Number(foodId));
+			showToast(m.diet_duplicate_archived_toast());
+			await goto(FOOD_LIST_PATH);
+		} catch (error) {
+			showToast(errorMessage(error instanceof ApiError ? error.code : 'GENERIC_ERROR'));
+		} finally {
+			busy = false;
+		}
+	}
+
+	async function unarchive(): Promise<void> {
+		busy = true;
+		try {
+			await api.unarchiveFood(Number(foodId));
+			showToast(m.diet_duplicate_restored_toast());
+			await goto(FOOD_LIST_PATH);
+		} catch (error) {
+			showToast(errorMessage(error instanceof ApiError ? error.code : 'GENERIC_ERROR'));
 		} finally {
 			busy = false;
 		}
@@ -426,7 +463,7 @@
 
 	<button
 		type="button"
-		disabled={!canSave || busy}
+		disabled={!canSave || busy || archivedAt !== null}
 		onclick={save}
 		class="mt-3 h-14 w-full rounded-2xl bg-emerald-600 text-lg font-bold text-white active:bg-emerald-700 disabled:opacity-40"
 	>
@@ -459,24 +496,47 @@
 				</button>
 			</div>
 		{:else}
-			{#if partners.length > 0}
+			{#if archivedAt}
+				{#if confirmingUnarchive}
+					<p class="mt-3 rounded-xl bg-amber-50 px-4 py-3 text-sm font-medium text-amber-900">{m.diet_duplicate_restore_confirm()}</p>
+					<div class="mt-2 flex gap-2">
+						<button type="button" onclick={() => (confirmingUnarchive = false)} class="h-12 flex-1 rounded-2xl border-2 border-slate-200 font-semibold text-slate-700 active:bg-slate-100">{m.cancel()}</button>
+						<button type="button" disabled={busy} onclick={unarchive} class="h-12 flex-1 rounded-2xl bg-emerald-600 font-semibold text-white active:bg-emerald-700 disabled:opacity-50">{m.diet_duplicate_restore_action()}</button>
+					</div>
+				{:else}
+					<button type="button" onclick={() => (confirmingUnarchive = true)} class="mt-3 h-12 w-full rounded-2xl bg-emerald-600 font-bold text-white active:bg-emerald-700">{m.diet_duplicate_restore_action()}</button>
+				{/if}
+			{:else}
+				{#if isDuplicate}
+					{#if confirmingArchive}
+						<p class="mt-3 rounded-xl bg-amber-50 px-4 py-3 text-sm font-medium text-amber-900">{m.diet_duplicate_archive_confirm()}</p>
+						<div class="mt-2 flex gap-2">
+							<button type="button" onclick={() => (confirmingArchive = false)} class="h-12 flex-1 rounded-2xl border-2 border-slate-200 font-semibold text-slate-700 active:bg-slate-100">{m.cancel()}</button>
+						<button type="button" disabled={busy} onclick={archive} class="h-12 flex-1 rounded-2xl bg-amber-100 font-semibold text-amber-900 active:bg-amber-200 disabled:opacity-50">{m.diet_duplicate_archive_action()}</button>
+						</div>
+					{:else}
+						<button type="button" onclick={() => (confirmingArchive = true)} class="mt-3 h-12 w-full rounded-2xl border-2 border-amber-200 bg-amber-50 font-bold text-amber-900 active:bg-amber-100">{m.diet_duplicate_archive_action()}</button>
+					{/if}
+				{/if}
+				{#if partners.length > 0}
+					<button
+						type="button"
+						disabled={sharing}
+						onclick={startShare}
+						class="mt-3 flex h-12 w-full items-center justify-center gap-2 rounded-2xl bg-emerald-50 font-bold text-emerald-700 active:bg-emerald-100 disabled:opacity-50"
+					>
+						<svg viewBox="0 0 24 24" class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3" /><circle cx="6" cy="12" r="3" /><circle cx="18" cy="19" r="3" /><path d="M8.6 13.5l6.8 4M15.4 6.5l-6.8 4" /></svg>
+						{m.sharing_share_action()}
+					</button>
+				{/if}
 				<button
 					type="button"
-					disabled={sharing}
-					onclick={startShare}
-					class="mt-3 flex h-12 w-full items-center justify-center gap-2 rounded-2xl bg-emerald-50 font-bold text-emerald-700 active:bg-emerald-100 disabled:opacity-50"
+					onclick={() => (confirmingDelete = true)}
+					class="mt-3 h-12 w-full rounded-2xl border-2 border-red-200 font-semibold text-red-600 active:bg-red-50"
 				>
-					<svg viewBox="0 0 24 24" class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3" /><circle cx="6" cy="12" r="3" /><circle cx="18" cy="19" r="3" /><path d="M8.6 13.5l6.8 4M15.4 6.5l-6.8 4" /></svg>
-					{m.sharing_share_action()}
+					{m.delete_food()}
 				</button>
 			{/if}
-			<button
-				type="button"
-				onclick={() => (confirmingDelete = true)}
-				class="mt-3 h-12 w-full rounded-2xl border-2 border-red-200 font-semibold text-red-600 active:bg-red-50"
-			>
-				{m.delete_food()}
-			</button>
 		{/if}
 	{/if}
 {/if}

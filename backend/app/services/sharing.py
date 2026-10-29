@@ -27,10 +27,41 @@ from ..models import (
     User,
 )
 from .diet import food_macros, localized_food_name, recipe_entry_macros, recipe_grams_per_serving
+from .deduplication import food_content_key, lock_content, recipe_content_key
 
 
 class SourceItemGone(Exception):
     """O original mudou (ou sumiu) na conta de quem enviou entre a oferta e o aceite."""
+
+
+def _record_shared_item(
+    session: Session,
+    owner_user_id: int,
+    item_kind: SharedItemKind,
+    item_id: int,
+    source_item_id: int,
+    from_user_id: int,
+) -> None:
+    """Mantem a origem mesmo quando um item de conteudo igual e reaproveitado."""
+    existing_link = session.exec(
+        select(SharedItem)
+        .where(SharedItem.owner_user_id == owner_user_id)
+        .where(SharedItem.item_kind == item_kind)
+        .where(SharedItem.item_id == item_id)
+        .where(SharedItem.source_item_id == source_item_id)
+        .where(SharedItem.from_user_id == from_user_id)
+    ).first()
+    if existing_link is not None:
+        return
+    session.add(
+        SharedItem(
+            owner_user_id=owner_user_id,
+            item_kind=item_kind,
+            item_id=item_id,
+            source_item_id=source_item_id,
+            from_user_id=from_user_id,
+        )
+    )
 
 
 def display_name(session: Session, user_id: int) -> str:
@@ -45,26 +76,6 @@ def display_name(session: Session, user_id: int) -> str:
     return user.email if user is not None else ""
 
 
-def _existing_copy_id(
-    session: Session,
-    owner_user_id: int,
-    kind: SharedItemKind,
-    source_item_id: int,
-    from_user_id: int,
-) -> int | None:
-    """Id da copia que ja existe para esse mesmo original, se houver.
-
-    Sem isso, aceitar cinco receitas que usam o mesmo alimento pessoal criaria cinco
-    copias do alimento na conta de quem recebeu."""
-    return session.exec(
-        select(SharedItem.item_id)
-        .where(SharedItem.owner_user_id == owner_user_id)
-        .where(SharedItem.item_kind == kind)
-        .where(SharedItem.source_item_id == source_item_id)
-        .where(SharedItem.from_user_id == from_user_id)
-    ).first()
-
-
 def copy_food(session: Session, source: Food, to_user: User, from_user_id: int) -> int:
     """Devolve o id do alimento a usar na conta de quem recebeu.
 
@@ -72,11 +83,18 @@ def copy_food(session: Session, source: Food, to_user: User, from_user_id: int) 
     reaproveitar o id. So alimento pessoal (user_id preenchido) vira copia."""
     if source.user_id is None:
         return source.id
-    already = _existing_copy_id(
-        session, to_user.id, SharedItemKind.food, source.id, from_user_id
-    )
-    if already is not None:
-        return already
+    content_key = food_content_key(source)
+    lock_content(session, to_user.id, "food", content_key)
+    existing_foods = session.exec(
+        select(Food).where(Food.user_id == to_user.id).where(Food.archived_at.is_(None))
+    ).all()
+    for existing_food in existing_foods:
+        if food_content_key(existing_food) == content_key:
+            _record_shared_item(
+                session, to_user.id, SharedItemKind.food, existing_food.id,
+                source.id, from_user_id,
+            )
+            return existing_food.id
 
     copy = Food(
         # slug marca a origem para nao colidir com um alimento que a pessoa ja tenha
@@ -101,38 +119,42 @@ def copy_food(session: Session, source: Food, to_user: User, from_user_id: int) 
         session.add(
             FoodPortion(food_id=copy.id, label_key=portion.label_key, grams=portion.grams)
         )
-    session.add(
-        SharedItem(
-            owner_user_id=to_user.id,
-            item_kind=SharedItemKind.food,
-            item_id=copy.id,
-            source_item_id=source.id,
-            from_user_id=from_user_id,
-        )
+    _record_shared_item(
+        session, to_user.id, SharedItemKind.food, copy.id, source.id, from_user_id
     )
     return copy.id
 
 
 def copy_recipe(session: Session, source: Recipe, to_user: User, from_user_id: int) -> Recipe:
     """Copia a receita e, junto, os alimentos pessoais de que ela depende."""
-    already = _existing_copy_id(
-        session, to_user.id, SharedItemKind.recipe, source.id, from_user_id
-    )
-    if already is not None:
-        existing = session.get(Recipe, already)
-        if existing is not None:
-            return existing
+    content_key = recipe_content_key(session, source)
+    lock_content(session, to_user.id, "recipe", content_key)
+    existing_recipes = session.exec(
+        select(Recipe).where(Recipe.user_id == to_user.id).where(Recipe.archived_at.is_(None))
+    ).all()
+    for existing_recipe in existing_recipes:
+        if recipe_content_key(session, existing_recipe) == content_key:
+            _record_shared_item(
+                session, to_user.id, SharedItemKind.recipe, existing_recipe.id,
+                source.id, from_user_id,
+            )
+            return existing_recipe
 
     copy = Recipe(user_id=to_user.id, name=source.name, servings=source.servings)
     session.add(copy)
     session.flush()
+    ingredients_to_copy: list[tuple[str, float, RecipeIngredient]] = []
     for ingredient in source.ingredients:
-        food = session.get(Food, ingredient.food_id)
-        if food is None:
-            # Preferimos falhar a entregar uma receita silenciosamente sem ingrediente:
-            # os macros ficariam errados sem ninguem perceber. Quem enviou pode
-            # compartilhar de novo depois de arrumar a receita.
+        source_food = session.get(Food, ingredient.food_id)
+        if source_food is None:
             raise SourceItemGone
+        ingredients_to_copy.append(
+            (food_content_key(source_food), ingredient.grams, ingredient)
+        )
+    # A ordem fixa evita deadlock quando receitas diferentes compartilham varios alimentos.
+    for _, _, ingredient in sorted(ingredients_to_copy, key=lambda item: (item[0], item[1])):
+        food = session.get(Food, ingredient.food_id)
+        assert food is not None
         session.add(
             RecipeIngredient(
                 recipe_id=copy.id,
@@ -140,14 +162,8 @@ def copy_recipe(session: Session, source: Recipe, to_user: User, from_user_id: i
                 grams=ingredient.grams,
             )
         )
-    session.add(
-        SharedItem(
-            owner_user_id=to_user.id,
-            item_kind=SharedItemKind.recipe,
-            item_id=copy.id,
-            source_item_id=source.id,
-            from_user_id=from_user_id,
-        )
+    _record_shared_item(
+        session, to_user.id, SharedItemKind.recipe, copy.id, source.id, from_user_id
     )
     return copy
 

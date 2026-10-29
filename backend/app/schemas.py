@@ -631,6 +631,7 @@ class FoodOut(BaseModel):
     portions: list[FoodPortionOut]
     is_custom: bool
     is_favorite: bool = False
+    archived_at: datetime | None = None
 
 
 class FoodIn(BaseModel):
@@ -671,6 +672,18 @@ class RecipeOut(BaseModel):
     total: MacrosOut
     per_serving: MacrosOut
     is_favorite: bool = False
+    archived_at: datetime | None = None
+
+
+class DuplicateItemOut(BaseModel):
+    id: int
+    name: str
+    is_custom: bool
+
+
+class DuplicateGroupOut(BaseModel):
+    item_kind: Literal["food", "recipe"]
+    items: list[DuplicateItemOut]
 
 
 class DiaryEntryIn(BaseModel):

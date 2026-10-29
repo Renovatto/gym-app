@@ -45,6 +45,7 @@ from ..services.sharing import (
     display_name,
     freeze_meal_items,
 )
+from ..services.deduplication import lock_share_acceptance
 
 router = APIRouter(prefix="/me/sharing", tags=["sharing"])
 
@@ -187,12 +188,12 @@ def _owned_item_name(
     snapshot da oferta."""
     if kind == SharedItemKind.recipe:
         recipe = session.get(Recipe, item_id)
-        if recipe is None or recipe.user_id != user_id:
+        if recipe is None or recipe.user_id != user_id or recipe.archived_at is not None:
             raise HTTPException(status.HTTP_404_NOT_FOUND, detail="ITEM_NOT_FOUND")
         return recipe.name
     food = session.get(Food, item_id)
     # alimento do catalogo global nao e "seu" para compartilhar - a outra pessoa ja o ve
-    if food is None or food.user_id != user_id:
+    if food is None or food.user_id != user_id or food.archived_at is not None:
         raise HTTPException(status.HTTP_404_NOT_FOUND, detail="ITEM_NOT_FOUND")
     translation = next(iter(food.translations), None)
     return translation.name if translation is not None else food.slug
@@ -321,6 +322,9 @@ def accept_offer(
     """Copia o item para a conta de quem recebeu. Dai em diante o item e dela: pode
     editar e apagar sem afetar o original. Refeicao vira lancamentos no diario dela,
     no mesmo dia e refeicao de quem enviou."""
+    # Toda aceitacao segura o mesmo lock primeiro: evita ciclos entre copias de
+    # alimentos e receitas, e revalida a oferta depois de esperar por outra aceitacao.
+    lock_share_acceptance(session, user.id)
     offer = _owned_offer(session, offer_id, user.id)
     copy_id: int | None = None
     try:
@@ -378,7 +382,19 @@ def list_received(user: CurrentUser, session: SessionDep) -> list[ReceivedItemOu
     ).all()
     names: dict[int, str] = {}
     out: list[ReceivedItemOut] = []
+    seen_items: set[tuple[SharedItemKind, int]] = set()
     for item in items:
+        current_item = (
+            session.get(Recipe, item.item_id)
+            if item.item_kind == SharedItemKind.recipe
+            else session.get(Food, item.item_id)
+        )
+        if current_item is None or current_item.archived_at is not None:
+            continue
+        item_key = (item.item_kind, item.item_id)
+        if item_key in seen_items:
+            continue
+        seen_items.add(item_key)
         if item.from_user_id not in names:
             names[item.from_user_id] = display_name(session, item.from_user_id)
         out.append(

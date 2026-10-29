@@ -34,7 +34,9 @@ def _localized_recipe_name(entry: dict, locale: str) -> str:
 
 
 def _global_foods_by_slug(session: Session) -> dict[str, Food]:
-    foods = session.exec(select(Food).where(Food.user_id.is_(None))).all()
+    foods = session.exec(
+        select(Food).where(Food.user_id.is_(None)).where(Food.archived_at.is_(None))
+    ).all()
     return {f.slug: f for f in foods}
 
 
@@ -98,7 +100,11 @@ def _favorite_recipe_names(session: Session, user: User) -> set[str]:
     fav_ids = favorite_recipe_ids(session, user.id)
     if not fav_ids:
         return set()
-    my_recipes = session.exec(select(Recipe).where(Recipe.user_id == user.id)).all()
+    my_recipes = session.exec(
+        select(Recipe)
+        .where(Recipe.user_id == user.id)
+        .where(Recipe.archived_at.is_(None))
+    ).all()
     return {r.name for r in my_recipes if r.id in fav_ids}
 
 
@@ -142,7 +148,10 @@ def adopt(session: Session, user: User, slug: str) -> Recipe | None:
         return None
     name = _localized_recipe_name(entry, user.locale)
     existing = session.exec(
-        select(Recipe).where(Recipe.user_id == user.id).where(Recipe.name == name)
+        select(Recipe)
+        .where(Recipe.user_id == user.id)
+        .where(Recipe.name == name)
+        .where(Recipe.archived_at.is_(None))
     ).first()
     if existing is not None:
         return existing

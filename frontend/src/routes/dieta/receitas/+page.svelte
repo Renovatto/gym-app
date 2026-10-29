@@ -6,6 +6,7 @@
 		ApiError,
 		api,
 		type Connection,
+		type DuplicateGroup,
 		type Food,
 		type LibraryRecipe,
 		type ReceivedItem,
@@ -59,6 +60,9 @@
 
 	let recipes = $state<Recipe[]>([]);
 	let myFoods = $state<Food[]>([]);
+	let archivedRecipes = $state<Recipe[]>([]);
+	let archivedFoods = $state<Food[]>([]);
+	let duplicateGroups = $state<DuplicateGroup[]>([]);
 	let library = $state<LibraryRecipe[]>([]);
 	let loading = $state(true);
 	const nf = new Intl.NumberFormat(getLocale());
@@ -76,6 +80,12 @@
 	const receivedFoodFrom = $derived(
 		new Map(received.filter((r) => r.item_kind === 'food').map((r) => [r.item_id, r.from_name]))
 	);
+	const duplicateFoodIds = $derived(
+		new Set(duplicateGroups.filter((group) => group.item_kind === 'food').flatMap((group) => group.items.map((item) => item.id)))
+	);
+	const duplicateRecipeIds = $derived(
+		new Set(duplicateGroups.filter((group) => group.item_kind === 'recipe').flatMap((group) => group.items.map((item) => item.id)))
+	);
 
 	async function loadSharing(): Promise<void> {
 		let allOffers: ShareOffer[];
@@ -91,12 +101,21 @@
 	}
 
 	async function load(): Promise<void> {
-		[recipes, myFoods, library] = await Promise.all([
+		const [activeRecipes, activeFoods, recipeLibrary, allRecipes, allFoods, duplicates] = await Promise.all([
 			api.getRecipes(),
 			// so o que a pessoa criou: o catalogo global nao e dela para editar ou mandar
 			api.getFoods('', undefined, { scope: 'mine', limit: 200 }),
-			api.getRecipeLibrary()
+			api.getRecipeLibrary(),
+			api.getRecipes(undefined, true),
+			api.getFoods('', undefined, { scope: 'mine', limit: 200, includeArchived: true }),
+			api.getDietDuplicates()
 		]);
+		recipes = activeRecipes;
+		myFoods = activeFoods;
+		archivedRecipes = allRecipes.filter((recipe) => recipe.archived_at !== null);
+		archivedFoods = allFoods.filter((food) => food.archived_at !== null);
+		library = recipeLibrary;
+		duplicateGroups = duplicates;
 		await loadSharing();
 		loading = false;
 	}
@@ -106,6 +125,7 @@
 	let showInbox = $state(false);
 	let onlyReceived = $state(false);
 	let answering = $state<number | null>(null);
+	let archivedExpanded = $state(false);
 
 	function tapReceivedPill(): void {
 		if (offers.length > 0) {
@@ -370,6 +390,25 @@
 		<div class="h-8 w-8 animate-spin rounded-full border-4 border-emerald-600 border-t-transparent"></div>
 	</div>
 {:else}
+	{#if duplicateGroups.length > 0}
+		<section class="mb-4 rounded-2xl border-2 border-amber-200 bg-amber-50 p-4" aria-labelledby="duplicate-alert-title">
+			<div class="flex items-start gap-3">
+				<span class="grid h-8 w-8 shrink-0 place-items-center rounded-full bg-amber-100 font-black text-amber-900" aria-hidden="true">!</span>
+				<div class="min-w-0 flex-1">
+					<h2 id="duplicate-alert-title" class="font-bold text-amber-900">{m.diet_duplicate_alert_title({ count: duplicateGroups.length })}</h2>
+					<p class="mt-1 text-sm text-amber-800">{m.diet_duplicate_alert_body()}</p>
+					<ul class="mt-2 space-y-1 text-sm text-amber-900">
+						{#each duplicateGroups as group, groupIndex (groupIndex)}
+							<li>
+								<strong>{group.item_kind === 'food' ? m.sharing_kind_food() : m.sharing_kind_recipe()}:</strong>
+								{group.items.map((item) => item.name).join(' · ')}
+							</li>
+						{/each}
+					</ul>
+				</div>
+			</div>
+		</section>
+	{/if}
 	<!-- Mesmo par de abas da modal de adicionar: o padrao ja e conhecido. A selecao
 		 de compartilhar NAO se perde ao trocar de aba - e de proposito. -->
 	<div class="mb-3 grid grid-cols-2 gap-2">
@@ -479,7 +518,9 @@
 					<div
 						class="flex items-center gap-1 rounded-2xl bg-white p-1.5 shadow-sm {selecting && picked
 							? 'ring-2 ring-emerald-500'
-							: ''}"
+							: duplicateFoodIds.has(food.id)
+								? 'ring-2 ring-amber-600 bg-amber-50'
+								: ''}"
 					>
 						{#if selecting}
 							<button
@@ -499,6 +540,9 @@
 								</span>
 								<div class="min-w-0 flex-1">
 									<p class="truncate font-bold text-slate-900">{food.name}</p>
+									{#if duplicateFoodIds.has(food.id)}
+										<span class="mt-1 inline-block rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-bold text-amber-900">{m.diet_duplicate_badge()}</span>
+									{/if}
 									<p class="truncate text-sm text-slate-500">
 										{nf.format(Math.round(food.kcal))} kcal / 100 g
 									</p>
@@ -511,6 +555,9 @@
 							>
 								<div class="min-w-0 flex-1">
 									<p class="truncate font-bold text-slate-900">{food.name}</p>
+									{#if duplicateFoodIds.has(food.id)}
+										<span class="mt-1 inline-block rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-bold text-amber-900">{m.diet_duplicate_badge()}</span>
+									{/if}
 									<p class="text-sm text-slate-500">
 										{nf.format(Math.round(food.kcal))} kcal / 100 g
 										· {m.default_portion()} {nf.format(food.default_portion_g)} g
@@ -646,7 +693,9 @@
 				<div
 					class="flex items-center gap-1 rounded-2xl bg-white p-1.5 shadow-sm {selecting && picked
 						? 'ring-2 ring-emerald-500'
-						: ''}"
+						: duplicateRecipeIds.has(recipe.id)
+							? 'ring-2 ring-amber-600 bg-amber-50'
+							: ''}"
 				>
 					{#if selecting}
 						<button
@@ -666,6 +715,9 @@
 							</span>
 							<div class="min-w-0 flex-1">
 								<p class="truncate font-bold text-slate-900">{recipe.name}</p>
+								{#if duplicateRecipeIds.has(recipe.id)}
+									<span class="mt-1 inline-block rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-bold text-amber-900">{m.diet_duplicate_badge()}</span>
+								{/if}
 								<p class="truncate text-sm text-slate-500">
 									{nf.format(Math.round(recipe.per_serving.kcal))} kcal/{m.serving_singular()}
 								</p>
@@ -678,6 +730,9 @@
 					>
 						<div class="min-w-0 flex-1">
 							<p class="truncate font-bold text-slate-900">{recipe.name}</p>
+							{#if duplicateRecipeIds.has(recipe.id)}
+								<span class="mt-1 inline-block rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-bold text-amber-900">{m.diet_duplicate_badge()}</span>
+							{/if}
 							<p class="text-sm text-slate-500">
 								{recipe.ingredients.length}
 								{recipe.ingredients.length === 1 ? m.ingredient_singular() : m.ingredient_plural()}
@@ -803,6 +858,44 @@
 			</div>
 		</section>
 		{/if}
+	{/if}
+
+	{#if !selecting && (archivedFoods.length > 0 || archivedRecipes.length > 0)}
+		<section class="mt-6">
+			<button
+				type="button"
+				aria-expanded={archivedExpanded}
+				onclick={() => (archivedExpanded = !archivedExpanded)}
+				class="flex w-full items-center justify-between rounded-2xl bg-slate-100 px-4 py-3 text-left font-bold text-slate-700"
+			>
+				<span>{m.diet_archived_items({ count: archivedFoods.length + archivedRecipes.length })}</span>
+				<span aria-hidden="true">{archivedExpanded ? '−' : '+'}</span>
+			</button>
+			{#if archivedExpanded}
+				<div class="mt-3 space-y-4">
+					{#if archivedFoods.length > 0}
+						<div>
+							<h2 class="mb-2 text-sm font-bold text-slate-500">{m.foods_tab()}</h2>
+							<div class="space-y-2">
+								{#each archivedFoods as food (food.id)}
+									<a href="/dieta/alimento/{food.id}" class="block rounded-xl bg-white px-4 py-3 font-semibold text-slate-600 shadow-sm">{food.name}</a>
+								{/each}
+							</div>
+						</div>
+					{/if}
+					{#if archivedRecipes.length > 0}
+						<div>
+							<h2 class="mb-2 text-sm font-bold text-slate-500">{m.recipes_tab()}</h2>
+							<div class="space-y-2">
+								{#each archivedRecipes as recipe (recipe.id)}
+									<a href="/dieta/receita/{recipe.id}" class="block rounded-xl bg-white px-4 py-3 font-semibold text-slate-600 shadow-sm">{recipe.name}</a>
+								{/each}
+							</div>
+						</div>
+					{/if}
+				</div>
+			{/if}
+		</section>
 	{/if}
 {/if}
 

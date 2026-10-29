@@ -1134,5 +1134,15 @@
 	"diary_limit_error": "Você pode lançar refeições até amanhã.",
 	"diary_tomorrow_one_item": "{meal} · 1 item adicionado.",
 	"diary_tomorrow_items": "{meal} · {count} itens adicionados.",
-	"diary_undo_group_description": "Os {count} itens adicionados a {meal} ({date}) serão excluídos."
+	"diary_undo_group_description": "Os {count} itens adicionados a {meal} ({date}) serão excluídos.",
+	"diet_duplicate_alert_title": "{count} grupo(s) de conteúdo duplicado",
+	"diet_duplicate_alert_body": "Confira os itens destacados. Ao inativar um, ele sai das listas e buscas comuns, mas o histórico é preservado.",
+	"diet_duplicate_badge": "Possível duplicado",
+	"diet_archived_items": "Itens inativados ({count})",
+	"diet_duplicate_archive_action": "Inativar este item",
+	"diet_duplicate_archive_confirm": "Inativar este item? Ele sai das listas e buscas comuns; registros anteriores continuam preservados.",
+	"diet_duplicate_archived_toast": "Item inativado. O histórico foi preservado.",
+	"diet_duplicate_restore_action": "Reativar este item",
+	"diet_duplicate_restore_confirm": "Reativar este item para voltar a encontrá-lo nas listas e buscas?",
+	"diet_duplicate_restored_toast": "Item reativado."
 }

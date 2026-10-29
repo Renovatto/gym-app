@@ -1,7 +1,8 @@
 <script lang="ts">
 	import { goto } from '$app/navigation';
 	import { page } from '$app/state';
-	import { ApiError, api, type Food } from '$lib/api';
+	import { closeOnBack } from '$lib/modalBack';
+	import { ApiError, api, type Connection, type Food } from '$lib/api';
 	import { errorMessage } from '$lib/errors';
 	import FoodPicker from '$lib/components/FoodPicker.svelte';
 	import Stepper from '$lib/components/Stepper.svelte';
@@ -24,6 +25,13 @@
 	let loading = $state(true);
 	let picking = $state(false);
 	let busy = $state(false);
+	let partners = $state<Connection[]>([]);
+	let pickingPartner = $state(false);
+	let sharing = $state(false);
+	let archivedAt = $state<string | null>(null);
+	let isDuplicate = $state(false);
+	let confirmingArchive = $state(false);
+	let confirmingUnarchive = $state(false);
 
 	// Rendimento: por PORCOES (direto, como sempre foi) ou por PESO por porcao (g) -
 	// nesse modo, o numero de porcoes e derivado do peso total / peso por porcao.
@@ -40,17 +48,54 @@
 			servings = 1;
 			ingredients = [];
 		} else {
-			const recipe = await api.getRecipes().then((rs) => rs.find((r) => r.id === Number(recipeId)));
+			const [allRecipes, duplicates] = await Promise.all([
+				api.getRecipes(undefined, true),
+				api.getDietDuplicates()
+			]);
+			const recipe = allRecipes.find((item) => item.id === Number(recipeId));
 			if (recipe) {
+				archivedAt = recipe.archived_at;
+				isDuplicate = duplicates.some(
+					(group) => group.item_kind === 'recipe' && group.items.some((item) => item.id === recipe.id)
+				);
 				name = recipe.name;
 				servings = recipe.servings;
 				ingredients = recipe.ingredients.map((i) => ({ food: i.food, grams: i.grams }));
 				// ponto de partida sensato se o usuario trocar para o modo "peso por porcao"
 				const total = ingredients.reduce((sum, i) => sum + i.grams, 0);
 				servingGrams = Math.max(1, Math.round(total / Math.max(recipe.servings, 1)));
+				if (recipe.archived_at === null) void loadPartners();
 			}
 		}
 		loading = false;
+	}
+
+	async function loadPartners(): Promise<void> {
+		const connections = await api.getConnections();
+		partners = connections.filter((connection) => connection.status === 'accepted');
+	}
+
+	function startShare(): void {
+		if (partners.length === 1) {
+			void shareWith(partners[0]);
+			return;
+		}
+		pickingPartner = true;
+	}
+
+	async function shareWith(partner: Connection): Promise<void> {
+		sharing = true;
+		try {
+			await api.createShareOffers(partner.id, [
+				{ item_kind: 'recipe', item_id: Number(recipeId) }
+			]);
+			pickingPartner = false;
+			showToast(m.sharing_sent_toast({ name: partner.person_name }));
+		} catch (error) {
+			showToast(errorMessage(error instanceof ApiError ? error.code : 'GENERIC_ERROR'));
+		} finally {
+			sharing = false;
+		}
 	}
 
 	// contador de itens adicionados nesta abertura do picker (mostrado no Pronto)
@@ -125,13 +170,81 @@
 		}
 	}
 
+	async function archive(): Promise<void> {
+		busy = true;
+		try {
+			await api.archiveRecipe(Number(recipeId));
+			showToast(m.diet_duplicate_archived_toast());
+			await goto('/dieta/receitas');
+		} catch (error) {
+			showToast(errorMessage(error instanceof ApiError ? error.code : 'GENERIC_ERROR'));
+		} finally {
+			busy = false;
+		}
+	}
+
+	async function unarchive(): Promise<void> {
+		busy = true;
+		try {
+			await api.unarchiveRecipe(Number(recipeId));
+			showToast(m.diet_duplicate_restored_toast());
+			await goto('/dieta/receitas');
+		} catch (error) {
+			showToast(errorMessage(error instanceof ApiError ? error.code : 'GENERIC_ERROR'));
+		} finally {
+			busy = false;
+		}
+	}
+
 	$effect(() => {
 		load();
+	});
+
+	$effect(() => {
+		if (pickingPartner) return closeOnBack(() => (pickingPartner = false));
 	});
 </script>
 
 {#if picking}
 	<FoodPicker onPick={addFood} addedCount={pickerAdded} onClose={() => (picking = false)} />
+{/if}
+
+{#if pickingPartner}
+	<div
+		class="fixed inset-0 z-50 flex items-end justify-center bg-black/50 p-4"
+		role="button"
+		tabindex="-1"
+		onclick={() => (pickingPartner = false)}
+		onkeydown={(event) => event.key === 'Escape' && (pickingPartner = false)}
+	>
+		<div
+			class="w-full max-w-md rounded-3xl bg-white p-5"
+			role="dialog"
+			aria-modal="true"
+			aria-label={m.sharing_share_action()}
+			tabindex="-1"
+			onclick={(event) => event.stopPropagation()}
+			onkeydown={() => {}}
+		>
+			<div class="mb-3 flex items-center justify-between">
+				<h2 class="font-bold text-slate-900">{m.sharing_share_action()}</h2>
+				<button type="button" aria-label={m.cancel()} onclick={() => (pickingPartner = false)} class="grid h-10 w-10 place-items-center rounded-full bg-slate-100 text-slate-500">×</button>
+			</div>
+			<div class="space-y-2">
+				{#each partners as partner (partner.id)}
+					<button
+						type="button"
+						disabled={sharing}
+						onclick={() => shareWith(partner)}
+						class="flex w-full items-center gap-3 rounded-2xl bg-slate-50 p-3 text-left active:bg-slate-100 disabled:opacity-50"
+					>
+						<span class="min-w-0 flex-1 truncate font-semibold text-slate-800">{partner.person_name}</span>
+						<svg viewBox="0 0 24 24" class="h-5 w-5 shrink-0 text-slate-400" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 6l6 6-6 6" stroke-linecap="round" stroke-linejoin="round" /></svg>
+					</button>
+				{/each}
+			</div>
+		</div>
+	</div>
 {/if}
 
 {#if loading}
@@ -245,7 +358,7 @@
 
 	<button
 		type="button"
-		disabled={!canSave || busy}
+		disabled={!canSave || busy || archivedAt !== null}
 		onclick={save}
 		class="mt-3 h-14 w-full rounded-2xl bg-emerald-600 text-lg font-bold text-white active:bg-emerald-700 disabled:opacity-40"
 	>
@@ -253,6 +366,40 @@
 	</button>
 
 	{#if !isNew}
+		{#if archivedAt}
+			{#if confirmingUnarchive}
+				<p class="mt-3 rounded-xl bg-amber-50 px-4 py-3 text-sm font-medium text-amber-900">{m.diet_duplicate_restore_confirm()}</p>
+				<div class="mt-2 flex gap-2">
+					<button type="button" onclick={() => (confirmingUnarchive = false)} class="h-12 flex-1 rounded-2xl border-2 border-slate-200 font-semibold text-slate-700 active:bg-slate-100">{m.cancel()}</button>
+					<button type="button" disabled={busy} onclick={unarchive} class="h-12 flex-1 rounded-2xl bg-emerald-600 font-semibold text-white active:bg-emerald-700 disabled:opacity-50">{m.diet_duplicate_restore_action()}</button>
+				</div>
+			{:else}
+				<button type="button" onclick={() => (confirmingUnarchive = true)} class="mt-3 h-12 w-full rounded-2xl bg-emerald-600 font-bold text-white active:bg-emerald-700">{m.diet_duplicate_restore_action()}</button>
+			{/if}
+		{:else}
+			{#if partners.length > 0}
+				<button
+					type="button"
+					disabled={sharing}
+					onclick={startShare}
+					class="mt-3 flex h-12 w-full items-center justify-center gap-2 rounded-2xl bg-emerald-50 font-bold text-emerald-700 active:bg-emerald-100 disabled:opacity-50"
+				>
+					<svg viewBox="0 0 24 24" class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3" /><circle cx="6" cy="12" r="3" /><circle cx="18" cy="19" r="3" /><path d="M8.6 13.5l6.8 4M15.4 6.5l-6.8 4" /></svg>
+					{m.sharing_share_action()}
+				</button>
+			{/if}
+			{#if isDuplicate}
+				{#if confirmingArchive}
+					<p class="mt-3 rounded-xl bg-amber-50 px-4 py-3 text-sm font-medium text-amber-900">{m.diet_duplicate_archive_confirm()}</p>
+					<div class="mt-2 flex gap-2">
+						<button type="button" onclick={() => (confirmingArchive = false)} class="h-12 flex-1 rounded-2xl border-2 border-slate-200 font-semibold text-slate-700 active:bg-slate-100">{m.cancel()}</button>
+						<button type="button" disabled={busy} onclick={archive} class="h-12 flex-1 rounded-2xl bg-amber-100 font-semibold text-amber-900 active:bg-amber-200 disabled:opacity-50">{m.diet_duplicate_archive_action()}</button>
+					</div>
+				{:else}
+					<button type="button" onclick={() => (confirmingArchive = true)} class="mt-3 h-12 w-full rounded-2xl border-2 border-amber-200 bg-amber-50 font-bold text-amber-900 active:bg-amber-100">{m.diet_duplicate_archive_action()}</button>
+				{/if}
+			{/if}
+		{/if}
 		{#if confirmingDelete}
 			<p class="mt-3 rounded-xl bg-red-50 px-4 py-3 text-sm font-medium text-red-700">
 				{m.confirm_delete()}

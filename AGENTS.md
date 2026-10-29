@@ -160,6 +160,19 @@ documentadas para o usuario na area de consulta. Nao espalhe formula por varios 
   `op.get_context().autocommit_block()` + `ALTER TYPE ... ADD VALUE IF NOT EXISTS`.
   Tabela nova = autogenerate resolve.
 - Busca textual SEMPRE via `normalize_search` (sem acento, sem caixa) dos dois lados.
+- Deduplicacao de receitas e alimentos compartilhados usa identidade de conteudo, nao
+  apenas o ID de origem: itens podem ser editados mantendo o mesmo ID. Para receitas,
+  comparar rendimento, ingredientes e quantidades sem depender do nome da receita ou
+  dos IDs locais dos alimentos. Para alimentos pessoais, comparar dados nutricionais,
+  categoria e porcoes sem depender do nome.
+- Duplicatas existentes sao identificadas e resolvidas por inativacao reversivel, nao
+  por exclusao: manter referencias e historico, e excluir itens inativos das buscas e
+  listas padrao. Ao adicionar compartilhar numa tela de edicao, manter o mesmo fluxo,
+  selecao de conexao e feedback das telas equivalentes.
+- Lancamentos historicos usam macros e quantidades gravadas no proprio lancamento;
+  leitura de dias antigos nao pode recalcular valores a partir de receitas mutaveis.
+  Se um campo historico legado nao foi armazenado (ex.: gramas), manter desconhecido em
+  vez de inferi-lo usando o conteudo atual da receita.
 - Datas locais do usuario: cliente envia dia local + `tz_offset` (Date.getTimezoneOffset()).
 - **Media sobre dias do usuario nunca inclui HOJE.** O dia corrente esta sempre pela
   metade e entraria como um dia inteiro de pouco - o vies e sistematico (sempre para

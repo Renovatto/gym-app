@@ -113,7 +113,11 @@ def _sensible_portion(grams: float) -> float:
 def _visible_foods(
     session: Session, user_id: int, category: FoodCategory | None = None
 ) -> list[Food]:
-    query = select(Food).where((Food.user_id.is_(None)) | (Food.user_id == user_id))
+    query = (
+        select(Food)
+        .where((Food.user_id.is_(None)) | (Food.user_id == user_id))
+        .where(Food.archived_at.is_(None))
+    )
     if category is not None:
         query = query.where(Food.category == category)
     return list(session.exec(query).all())
@@ -122,7 +126,10 @@ def _visible_foods(
 def _staple_food_ids(session: Session) -> set[int]:
     """Ids globais dos itens basicos (ver _STAPLE_SLUGS) - sempre contam como 'tem'."""
     rows = session.exec(
-        select(Food.id).where(Food.user_id.is_(None)).where(Food.slug.in_(_STAPLE_SLUGS))
+        select(Food.id)
+        .where(Food.user_id.is_(None))
+        .where(Food.archived_at.is_(None))
+        .where(Food.slug.in_(_STAPLE_SLUGS))
     ).all()
     return set(rows)
 

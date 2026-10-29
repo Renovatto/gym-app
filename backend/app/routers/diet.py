@@ -1,5 +1,5 @@
 from collections import Counter
-from datetime import date, timedelta
+from datetime import date, datetime, timedelta, timezone
 
 from fastapi import APIRouter, HTTPException, Query, status
 from sqlmodel import Session, desc, select
@@ -36,6 +36,7 @@ from ..schemas import (
     FavoriteToggleOut,
     FoodIn,
     FoodOut,
+    DuplicateGroupOut,
     MacrosOut,
     MealGroupOut,
     MealPlanOut,
@@ -71,6 +72,7 @@ from ..services.recommend import suggest_gap
 from ..services.sharing import forget_received_entry, received_from_names
 from ..services.text import normalize_search
 from ..services.diary_tracking import estimate_out, load_day_record
+from ..services.deduplication import duplicate_groups
 
 router = APIRouter(tags=["diet"])
 
@@ -91,12 +93,15 @@ def list_foods(
     scope: str | None = Query(default=None, pattern=r"^(mine|catalog)$"),
     limit: int = Query(default=60, ge=1, le=200),
     offset: int = Query(default=0, ge=0),
+    include_archived: bool = Query(default=False),
 ) -> list[FoodOut]:
     query = select(Food).where((Food.user_id.is_(None)) | (Food.user_id == user.id))
     if scope == "mine":
         query = query.where(Food.user_id == user.id)
     elif scope == "catalog":
         query = query.where(Food.user_id.is_(None))
+    if not include_archived:
+        query = query.where(Food.archived_at.is_(None))
     if category is not None:
         query = query.where(Food.category == category)
     foods = session.exec(query).all()
@@ -368,7 +373,21 @@ def search_external_foods(
 
 def _visible_food(session: Session, food_id: int, user_id: int) -> Food | None:
     food = session.get(Food, food_id)
+    if food is None or food.archived_at is not None:
+        return None
+    if food.user_id is not None and food.user_id != user_id:
+        return None
+    return food
+
+
+def _recipe_food_for_update(
+    session: Session, food_id: int, user_id: int, existing_food_ids: set[int]
+) -> Food | None:
+    """Keeps an archived ingredient already used by a recipe, without allowing new use."""
+    food = session.get(Food, food_id)
     if food is None or (food.user_id is not None and food.user_id != user_id):
+        return None
+    if food.archived_at is not None and food_id not in existing_food_ids:
         return None
     return food
 
@@ -385,12 +404,13 @@ def _recipe_out(
         total=total,
         per_serving=per_serving,
         is_favorite=is_favorite,
+        archived_at=recipe.archived_at,
     )
 
 
 def _get_owned_recipe_or_none(session: Session, recipe_id: int, user_id: int) -> Recipe | None:
     recipe = session.get(Recipe, recipe_id)
-    if recipe is None or recipe.user_id != user_id:
+    if recipe is None or recipe.user_id != user_id or recipe.archived_at is not None:
         return None
     return recipe
 
@@ -401,10 +421,12 @@ def list_recipes(
     session: SessionDep,
     meal_type: MealType | None = Query(default=None),
     tz_offset: int = Query(0, ge=-840, le=720),
+    include_archived: bool = Query(default=False),
 ) -> list[RecipeOut]:
-    recipes = session.exec(
-        select(Recipe).where(Recipe.user_id == user.id).order_by(desc(Recipe.created_at))
-    ).all()
+    query = select(Recipe).where(Recipe.user_id == user.id)
+    if not include_archived:
+        query = query.where(Recipe.archived_at.is_(None))
+    recipes = session.exec(query.order_by(desc(Recipe.created_at))).all()
     fav_ids = favorite_recipe_ids(session, user.id)
     out = [_recipe_out(session, r, user.locale, r.id in fav_ids) for r in recipes]
     # favoritas primeiro, mantendo a ordem por criacao dentro de cada grupo
@@ -417,6 +439,60 @@ def list_recipes(
         position = {recipe_id: i for i, recipe_id in enumerate(habit)}
         out.sort(key=lambda r: position.get(r.id, len(position)))
     return out
+
+
+@router.get("/me/diet/duplicates", response_model=list[DuplicateGroupOut])
+def list_diet_duplicates(user: CurrentUser, session: SessionDep) -> list[DuplicateGroupOut]:
+    """Agrupa itens ativos com conteudo igual, independentemente do nome ou ID."""
+    return duplicate_groups(session, user.id, user.locale)
+
+
+@router.post("/me/foods/{food_id}/archive", response_model=FoodOut)
+def archive_food(food_id: int, user: CurrentUser, session: SessionDep) -> FoodOut:
+    food = session.get(Food, food_id)
+    if food is None or food.user_id != user.id:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, detail="FOOD_NOT_FOUND")
+    if food.archived_at is None:
+        food.archived_at = datetime.now(timezone.utc)
+        session.add(food)
+        session.commit()
+        session.refresh(food)
+    return to_food_out(food, user.locale, favorite_food_ids(session, user.id))
+
+
+@router.post("/me/foods/{food_id}/unarchive", response_model=FoodOut)
+def unarchive_food(food_id: int, user: CurrentUser, session: SessionDep) -> FoodOut:
+    food = session.get(Food, food_id)
+    if food is None or food.user_id != user.id:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, detail="FOOD_NOT_FOUND")
+    if food.archived_at is not None:
+        food.archived_at = None
+        session.add(food)
+        session.commit()
+        session.refresh(food)
+    return to_food_out(food, user.locale, favorite_food_ids(session, user.id))
+
+
+@router.post("/me/recipes/{recipe_id}/archive", response_model=RecipeOut)
+def archive_recipe(recipe_id: int, user: CurrentUser, session: SessionDep) -> RecipeOut:
+    recipe = _get_owned_recipe(session, recipe_id, user.id, include_archived=True)
+    if recipe.archived_at is None:
+        recipe.archived_at = datetime.now(timezone.utc)
+        session.add(recipe)
+        session.commit()
+        session.refresh(recipe)
+    return _recipe_out(session, recipe, user.locale)
+
+
+@router.post("/me/recipes/{recipe_id}/unarchive", response_model=RecipeOut)
+def unarchive_recipe(recipe_id: int, user: CurrentUser, session: SessionDep) -> RecipeOut:
+    recipe = _get_owned_recipe(session, recipe_id, user.id, include_archived=True)
+    if recipe.archived_at is not None:
+        recipe.archived_at = None
+        session.add(recipe)
+        session.commit()
+        session.refresh(recipe)
+    return _recipe_out(session, recipe, user.locale)
 
 
 @router.get("/recipes/library", response_model=list[LibraryRecipeOut])
@@ -500,9 +576,15 @@ def create_recipe(data: RecipeIn, user: CurrentUser, session: SessionDep) -> Rec
     return _recipe_out(session, recipe, user.locale)
 
 
-def _get_owned_recipe(session: Session, recipe_id: int, user_id: int) -> Recipe:
+def _get_owned_recipe(
+    session: Session, recipe_id: int, user_id: int, include_archived: bool = False
+) -> Recipe:
     recipe = session.get(Recipe, recipe_id)
-    if recipe is None or recipe.user_id != user_id:
+    if (
+        recipe is None
+        or recipe.user_id != user_id
+        or (recipe.archived_at is not None and not include_archived)
+    ):
         raise HTTPException(status.HTTP_404_NOT_FOUND, detail="RECIPE_NOT_FOUND")
     return recipe
 
@@ -514,11 +596,12 @@ def update_recipe(
     recipe = _get_owned_recipe(session, recipe_id, user.id)
     recipe.name = data.name.strip()
     recipe.servings = data.servings
+    existing_food_ids = {ingredient.food_id for ingredient in recipe.ingredients}
     # limpar pela coleção (delete-orphan) evita re-adicionar instâncias deletadas
     recipe.ingredients.clear()
     session.flush()
     for ing in data.ingredients:
-        if _visible_food(session, ing.food_id, user.id) is None:
+        if _recipe_food_for_update(session, ing.food_id, user.id, existing_food_ids) is None:
             raise HTTPException(status.HTTP_400_BAD_REQUEST, detail="FOOD_NOT_FOUND")
         session.add(RecipeIngredient(recipe_id=recipe.id, food_id=ing.food_id, grams=ing.grams))
     session.add(recipe)
@@ -561,22 +644,12 @@ def _daily_goals(session: Session, user_id: int) -> MacrosOut | None:
 
 def _entry_out(
     entry: DiaryEntry,
-    grams_per_serving: dict[int, float] | None = None,
     received_from: str | None = None,
 ) -> DiaryEntryOut:
     """Lancamento para a API.
 
-    `grams` pode estar nulo em lancamento antigo (a coluna e nova). Nesse caso
-    convertemos na leitura: alimento ja E gramas, e receita usa o peso da porcao que
-    o chamador carregou em lote. Sem isso, o registro de ontem continuaria aparecendo
-    em porcoes quebradas para sempre."""
-    grams = entry.grams
-    if grams is None:
-        if entry.source == EntrySource.food:
-            grams = entry.quantity
-        elif grams_per_serving and entry.recipe_id in grams_per_serving:
-            per_serving = grams_per_serving[entry.recipe_id]
-            grams = round(per_serving * entry.quantity, 1) if per_serving > 0 else None
+    `grams` pode estar nulo em lancamento antigo (a coluna e nova). Mantemos esse
+    desconhecido nulo: usar o peso atual da receita alteraria a representacao historica."""
     return DiaryEntryOut(
         id=entry.id,
         meal_type=entry.meal_type,
@@ -585,21 +658,16 @@ def _entry_out(
         recipe_id=entry.recipe_id,
         name=entry.name_snapshot,
         quantity=entry.quantity,
-        grams=grams,
+        grams=(
+            entry.grams
+            if entry.grams is not None or entry.source != EntrySource.food
+            else entry.quantity
+        ),
         macros=MacrosOut(
             kcal=entry.kcal, protein_g=entry.protein_g, carbs_g=entry.carbs_g, fat_g=entry.fat_g
         ),
         received_from=received_from,
     )
-
-
-def _grams_per_serving_map(session: Session, entries: list[DiaryEntry]) -> dict[int, float]:
-    """Peso da porcao de cada receita usada no dia, numa consulta so."""
-    recipe_ids = {e.recipe_id for e in entries if e.recipe_id is not None and e.grams is None}
-    if not recipe_ids:
-        return {}
-    recipes = session.exec(select(Recipe).where(Recipe.id.in_(recipe_ids))).all()
-    return {r.id: recipe_grams_per_serving(r) for r in recipes}
 
 
 @router.get("/me/diary/logged-days", response_model=list[date])
@@ -634,12 +702,11 @@ def get_diary(
         .where(DiaryEntry.user_id == user.id)
         .where(DiaryEntry.entry_date == day)
     ).all()
-    per_serving = _grams_per_serving_map(session, list(entries))
     senders = received_from_names(session, user.id, [e.id for e in entries])
     meals: list[MealGroupOut] = []
     for meal_type in MealType:
         group = [e for e in entries if e.meal_type == meal_type]
-        entry_outs = [_entry_out(e, per_serving, senders.get(e.id)) for e in group]
+        entry_outs = [_entry_out(e, senders.get(e.id)) for e in group]
         subtotal = sum_macros([e.macros for e in entry_outs])
         meals.append(MealGroupOut(meal_type=meal_type, entries=entry_outs, subtotal=subtotal))
     totals = sum_macros([_entry_out(e).macros for e in entries])
