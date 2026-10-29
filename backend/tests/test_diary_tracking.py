@@ -5,13 +5,13 @@ import unittest
 
 from fastapi.testclient import TestClient
 from sqlalchemy import text
-from sqlmodel import Session
+from sqlmodel import Session, select
 
 from app.db import engine
 from app.deps import get_current_user, get_session
 from app.main import app
 from app.models import (
-    DiaryEntry, EntrySource, Food, MealType, Profile, ShareOffer,
+    DiaryEntry, DiaryEstimate, EntrySource, Food, MealType, Profile, ShareOffer,
     ShareOfferMealItem, User, WeightLog,
 )
 
@@ -112,6 +112,64 @@ class DiaryTrackingTests(unittest.TestCase):
         day = next(day for day in self.adaptive()["diary_days"] if day["date"] == str(self.yesterday))
         self.assertTrue(day["has_unknown_energy"])
         self.assertIsNone(day["kcal"])
+
+    def test_logged_days_can_filter_by_meal_type(self):
+        self.entry(self.yesterday)
+        self.session.add(DiaryEntry(
+            user_id=self.user.id, entry_date=self.today, meal_type=MealType.breakfast,
+            source=EntrySource.food, quantity=100, name_snapshot="Cafe da manha de teste",
+            kcal=300, protein_g=10, carbs_g=40, fat_g=8,
+        ))
+        self.session.commit()
+
+        all_days = self.client.get('/me/diary/logged-days', params={
+            "start": self.yesterday, "end": self.today,
+        })
+        lunch_days = self.client.get('/me/diary/logged-days', params={
+            "start": self.yesterday, "end": self.today, "meal_type": "lunch",
+        })
+        breakfast_days = self.client.get('/me/diary/logged-days', params={
+            "start": self.yesterday, "end": self.today, "meal_type": "breakfast",
+        })
+
+        self.assertEqual(all_days.status_code, 200, all_days.text)
+        self.assertEqual(lunch_days.status_code, 200, lunch_days.text)
+        self.assertEqual(breakfast_days.status_code, 200, breakfast_days.text)
+        self.assertEqual(all_days.json(), [str(self.yesterday), str(self.today)])
+        self.assertEqual(lunch_days.json(), [str(self.yesterday)])
+        self.assertEqual(breakfast_days.json(), [str(self.today)])
+
+    def test_delete_meal_removes_only_matching_entries_and_estimates(self):
+        lunch_entry = self.entry(self.yesterday)
+        breakfast_entry = DiaryEntry(
+            user_id=self.user.id, entry_date=self.yesterday, meal_type=MealType.breakfast,
+            source=EntrySource.food, quantity=100, name_snapshot="Cafe da manha",
+            kcal=300, protein_g=10, carbs_g=40, fat_g=8,
+        )
+        lunch_estimate = DiaryEstimate(
+            user_id=self.user.id, entry_date=self.yesterday, meal_type=MealType.lunch,
+            name="Almoco estimado", portions=1,
+        )
+        breakfast_estimate = DiaryEstimate(
+            user_id=self.user.id, entry_date=self.yesterday, meal_type=MealType.breakfast,
+            name="Cafe estimado", portions=1,
+        )
+        self.session.add_all([breakfast_entry, lunch_estimate, breakfast_estimate])
+        self.session.commit()
+
+        response = self.client.delete("/me/diary/delete-meal", params={
+            "day": self.yesterday, "meal_type": "lunch",
+        })
+
+        self.assertEqual(response.status_code, 204, response.text)
+        remaining_entries = self.session.exec(
+            select(DiaryEntry).where(DiaryEntry.user_id == self.user.id)
+        ).all()
+        remaining_estimates = self.session.exec(
+            select(DiaryEstimate).where(DiaryEstimate.user_id == self.user.id)
+        ).all()
+        self.assertEqual([entry.id for entry in remaining_entries], [breakfast_entry.id])
+        self.assertEqual([estimate.id for estimate in remaining_estimates], [breakfast_estimate.id])
 
     def test_empty_day_requires_explicit_no_consumption(self):
         self.assertEqual(self.review().status_code, 400)

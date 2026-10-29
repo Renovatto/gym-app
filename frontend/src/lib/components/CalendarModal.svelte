@@ -16,6 +16,9 @@
 		legend,
 		legendAlt,
 		max,
+		min,
+		disabledDays = new Set<string>(),
+		disabledHint,
 		highlighted,
 		onselect,
 		onclose,
@@ -27,6 +30,9 @@
 		legend?: string;
 		legendAlt?: string;
 		max?: string;
+		min?: string;
+		disabledDays?: Set<string>;
+		disabledHint?: string;
 		highlighted?: string;
 		onselect: (date: string) => void;
 		onclose: () => void;
@@ -48,6 +54,7 @@
 	const initial = untrack(() => new Date(value + 'T12:00:00'));
 	let viewYear = $state(initial.getFullYear());
 	let viewMonth = $state(initial.getMonth());
+	let disabledHintDay = $state<string | null>(null);
 
 	const locale = getLocale();
 	const monthFormatter = new Intl.DateTimeFormat(locale, { month: 'long', year: 'numeric' });
@@ -73,7 +80,11 @@
 
 	function pick(day: number): void {
 		const iso = isoOf(viewYear, viewMonth, day);
-		if (max && iso > max) return; // nao seleciona dia futuro
+		if ((max && iso > max) || (min && iso < min)) return; // bloqueia fora do intervalo permitido
+		if (disabledDays.has(iso)) {
+			disabledHintDay = disabledHintDay === iso ? null : iso;
+			return;
+		}
 		onselect(iso);
 		onclose();
 	}
@@ -126,23 +137,41 @@
 			{#each Array(daysInMonth) as _, i (i)}
 				{@const day = i + 1}
 				{@const iso = isoOf(viewYear, viewMonth, day)}
-				{@const isSelected = iso === value}
 				{@const isMarked = marked.has(iso)}
 				{@const isMarkedAlt = markedAlt.has(iso)}
 				{@const isFuture = max ? iso > max : false}
+				{@const isBeforeMin = min ? iso < min : false}
+				{@const isUnavailable = disabledDays.has(iso)}
+				{@const isSelected = iso === value && !isFuture && !isBeforeMin && !isUnavailable}
+				{@const weekday = new Date(viewYear, viewMonth, day).getDay()}
 				<button
 					type="button"
-					disabled={isFuture}
+					disabled={isFuture || isBeforeMin}
+					aria-disabled={isFuture || isBeforeMin || isUnavailable}
+					aria-describedby={isUnavailable && disabledHintDay === iso ? `calendar-hint-${iso}` : undefined}
+					aria-label={isUnavailable && disabledHint ? `${day} ${monthLabel}, ${disabledHint}` : undefined}
 					onclick={() => pick(day)}
-					class="relative mx-auto grid h-10 w-10 place-items-center rounded-full text-sm font-semibold transition-colors
+					title={isUnavailable ? disabledHint : undefined}
+					class="group relative mx-auto grid h-10 w-10 place-items-center rounded-full text-sm font-semibold transition-colors
 						{iso === highlighted && !isSelected && !isFuture ? 'ring-2 ring-amber-400' : ''}
 						{isSelected
 						? 'bg-emerald-600 text-white'
-						: isFuture
+						: isFuture || isBeforeMin
 							? 'text-slate-300'
+							: isUnavailable
+								? 'bg-amber-50 text-amber-800 ring-1 ring-inset ring-amber-200 hover:ring-2 hover:ring-amber-400 focus-visible:ring-2 focus-visible:ring-amber-400'
 							: 'text-slate-700 active:bg-slate-100'}"
 				>
 					{day}
+					{#if isUnavailable && disabledHint}
+						<span
+							id={`calendar-hint-${iso}`}
+							role="tooltip"
+							class="pointer-events-none absolute bottom-full z-10 mb-2 w-44 rounded-xl bg-ink px-3 py-2 text-left text-xs font-medium text-[#ffffff] opacity-0 shadow-lg transition-opacity group-hover:opacity-100 group-focus-visible:opacity-100 {weekday === 0 ? 'left-0 translate-x-0' : weekday === 6 ? 'left-auto right-0 translate-x-0' : 'left-1/2 -translate-x-1/2'} {disabledHintDay === iso ? 'opacity-100' : ''}"
+						>
+							{disabledHint}
+						</span>
+					{/if}
 					{#if (isMarked || isMarkedAlt) && !isSelected}
 						<span class="absolute bottom-1 left-1/2 flex -translate-x-1/2 gap-0.5">
 							{#if isMarked}

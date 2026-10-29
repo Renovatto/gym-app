@@ -184,6 +184,11 @@ documentadas para o usuario na area de consulta. Nao espalhe formula por varios 
   medida abaixo do BMR e impossivel - o app exibe e explica, mas bloqueia adotar.
 - Frontend: Svelte 5 runes (`$state`/`$derived`/`$effect`), nunca stores. Componente
   `Stepper` para qualquer entrada numerica. Toast global via `showToast`.
+- Em novas mutacoes feitas dentro de uma tela (excluir, salvar, editar ou substituir um item),
+  preserve a posicao de rolagem sempre que possivel: atualize o estado local ou use
+  `reloadSilent()` em vez de `load()`, que substitui a tela por um skeleton e pode levar
+  a pessoa de volta ao topo. Use `load()` quando a transicao realmente precisar da tela
+  de carregamento, como no carregamento inicial ou na troca de dia.
 - i18n: toda string de UI vira chave nos 3 arquivos `messages/{pt-br,en,es}.json` e depois
   `npx paraglide-js compile`. A API retorna codigo de erro, nunca texto pronto.
   **Excecao unica: conteudo escrito em tempo de execucao** (novidades do app, escritas no

@@ -676,14 +676,21 @@ def diary_logged_days(
     session: SessionDep,
     start: date = Query(..., description="Inicio do intervalo (inclusive)"),
     end: date = Query(..., description="Fim do intervalo (inclusive)"),
+    meal_type: MealType | None = Query(default=None),
 ) -> list[date]:
-    """Dias com pelo menos um lancamento no intervalo (para marcar no calendario)."""
-    rows = session.exec(
+    """Dias com lancamentos no intervalo, opcionalmente filtrados por refeicao."""
+    query = (
         select(DiaryEntry.entry_date)
         .where(DiaryEntry.user_id == user.id)
         .where(DiaryEntry.entry_date >= start)
         .where(DiaryEntry.entry_date <= end)
-    ).all()
+    )
+    if meal_type is not None:
+        query = query.where(DiaryEntry.meal_type == meal_type)
+    rows = session.exec(query).all()
+    if meal_type is not None:
+        return sorted(set(rows))
+
     estimates = session.exec(
         select(DiaryEstimate.entry_date).where(DiaryEstimate.user_id == user.id)
         .where(DiaryEstimate.entry_date >= start).where(DiaryEstimate.entry_date <= end)
@@ -892,6 +899,37 @@ def update_diary_entry(
     # editar nao apaga a origem: a tela troca o item pela resposta, entao o selo vem junto
     senders = received_from_names(session, user.id, [entry.id])
     return _entry_out(entry, received_from=senders.get(entry.id))
+
+
+@router.delete("/me/diary/delete-meal", status_code=status.HTTP_204_NO_CONTENT)
+def delete_diary_meal(
+    user: CurrentUser,
+    session: SessionDep,
+    day: date = Query(..., description="Dia local do cliente (YYYY-MM-DD)"),
+    meal_type: MealType = Query(...),
+) -> None:
+    """Apaga, numa transacao, todos os lancamentos e anotacoes da refeicao no dia."""
+    entries = session.exec(
+        select(DiaryEntry)
+        .where(DiaryEntry.user_id == user.id)
+        .where(DiaryEntry.entry_date == day)
+        .where(DiaryEntry.meal_type == meal_type)
+        .with_for_update()
+    ).all()
+    estimates = session.exec(
+        select(DiaryEstimate)
+        .where(DiaryEstimate.user_id == user.id)
+        .where(DiaryEstimate.entry_date == day)
+        .where(DiaryEstimate.meal_type == meal_type)
+        .with_for_update()
+    ).all()
+
+    for entry in entries:
+        forget_received_entry(session, user.id, entry.id)
+        session.delete(entry)
+    for estimate in estimates:
+        session.delete(estimate)
+    session.commit()
 
 
 @router.delete("/me/diary/{entry_id}", status_code=status.HTTP_204_NO_CONTENT)

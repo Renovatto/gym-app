@@ -58,6 +58,7 @@
 
 	let diary = $state<DiaryDay | null>(null);
 	let loading = $state(true);
+	let fullPageLoadRequestId = 0;
 	let day = $state(validDiaryDay(page.url.searchParams.get('dia')));
 
 	// "O que falta hoje": lacuna + sugestoes vindas do motor de recomendacao.
@@ -76,6 +77,11 @@
 	// calendario: dias com lancamentos ficam marcados
 	let showCalendar = $state(false);
 	let loggedDays = $state<Set<string>>(new Set());
+	let mealCopyCalendarOpen = $state(false);
+	let mealCopyFromDay = $state('');
+	let mealCopyRange = $state<{ min: string; max: string } | null>(null);
+	let mealCopyLoggedDays = $state<Set<string>>(new Set());
+	let loadingMealCopyDays = $state(false);
 
 	// Suplementos (adesao diaria; zero-macro nao entra nos macros)
 	let supplements = $state<SupplementsDay | null>(null);
@@ -227,7 +233,7 @@
 			await api.deleteDiaryEntry(editing.id);
 			editing = null;
 			confirmingDeleteEntry = false;
-			await load();
+			await reloadSilent();
 			showToast(m.toast_deleted());
 		} finally {
 			editBusy = false;
@@ -303,24 +309,37 @@
 	// Recarrega os dados SEM o spinner de tela cheia: usado quando a modal de
 	// adicionar lanca um item, para a lista atualizar mantendo a posicao de rolagem.
 	async function reloadSilent(): Promise<void> {
-		const mealSharingLoaded = loadMealSharing();
-		const analysisDay = day > today ? today : day;
-		[diary, gap, mealPlan, supplements, dietPeriod] = await Promise.all([
-			api.getDiary(day),
-			api.getDiaryGap(day, 4, mealByTime()),
-			api.getMealPlan(day),
-			api.getSupplements(day),
+		const requestedDay = day;
+		const mealSharingLoaded = loadMealSharing(requestedDay);
+		const analysisDay = requestedDay > today ? today : requestedDay;
+		const [updatedDiary, updatedGap, updatedMealPlan, updatedSupplements, updatedDietPeriod] = await Promise.all([
+			api.getDiary(requestedDay),
+			api.getDiaryGap(requestedDay, 4, mealByTime()),
+			api.getMealPlan(requestedDay),
+			api.getSupplements(requestedDay),
 			api.getDietPeriod(analysisDay)
 		]);
+		if (day !== requestedDay) return;
+		[diary, gap, mealPlan, supplements, dietPeriod] = [
+			updatedDiary,
+			updatedGap,
+			updatedMealPlan,
+			updatedSupplements,
+			updatedDietPeriod
+		];
 		try {
 			// alimenta o badge de "nova sugestao" do card de Periodo da dieta
-			periodAdaptive = await api.getAdaptiveTdee(analysisDay, new Date().getTimezoneOffset());
+			const updatedAdaptive = await api.getAdaptiveTdee(analysisDay, new Date().getTimezoneOffset());
+			if (day !== requestedDay) return;
+			periodAdaptive = updatedAdaptive;
 		} catch {
 			// extra: sem dados suficientes ainda, o card fica sem badge
 		}
 		try {
 			// fase resolvida para o DIA EXIBIDO (ontem mostra a fase de ontem)
-			cycle = await api.getCycle(day);
+			const updatedCycle = await api.getCycle(requestedDay);
+			if (day !== requestedDay) return;
+			cycle = updatedCycle;
 		} catch {
 			// acompanhamento indisponivel: a tela vive sem o card
 		}
@@ -328,9 +347,10 @@
 	}
 
 	async function load(): Promise<void> {
+		const requestId = ++fullPageLoadRequestId;
 		loading = true;
 		await reloadSilent();
-		loading = false;
+		if (requestId === fullPageLoadRequestId) loading = false;
 	}
 
 	// --- Ciclo menstrual (opt-in) -------------------------------------------
@@ -439,6 +459,67 @@
 	// Repetir o dia anterior copia varios lancamentos de uma vez: sempre confirma antes.
 	let confirmingRepeatDay = $state(false);
 	let confirmingRepeatMeal = $state<MealType | null>(null);
+	let mealCopyRequestId = 0;
+
+	function cancelRepeatMeal(): void {
+		mealCopyRequestId += 1;
+		confirmingRepeatMeal = null;
+		mealCopyCalendarOpen = false;
+		mealCopyRange = null;
+		mealCopyLoggedDays = new Set();
+		loadingMealCopyDays = false;
+	}
+
+	function mealCopyDateRange(): { min: string; max: string } {
+		// A origem precisa anteceder o dia aberto e nunca pode estar no futuro.
+		const lastAllowedDay = shiftDay(day, -1);
+		const max = lastAllowedDay < localDay() ? lastAllowedDay : localDay();
+		// A janela parte dos 30 dias corridos mais recentes, mesmo ao consultar historico antigo.
+		return { min: shiftDay(localDay(), -29), max };
+	}
+
+	async function beginRepeatMeal(meal: MealType): Promise<void> {
+		const requestId = ++mealCopyRequestId;
+		const requestedDay = day;
+		const requestedRange = mealCopyDateRange();
+		confirmingRepeatMeal = meal;
+		mealCopyFromDay = shiftDay(requestedDay, -1);
+		mealCopyRange = requestedRange;
+		mealCopyLoggedDays = new Set();
+		loadingMealCopyDays = true;
+		try {
+			const days = await api.getDiaryLoggedDays(requestedRange.min, requestedRange.max, meal);
+			if (requestId !== mealCopyRequestId || requestedDay !== day || confirmingRepeatMeal !== meal) return;
+			mealCopyLoggedDays = new Set(days);
+		} catch (e) {
+			if (requestId !== mealCopyRequestId || requestedDay !== day || confirmingRepeatMeal !== meal) return;
+			showToast(errorMessage(e instanceof ApiError ? e.code : 'GENERIC_ERROR'));
+			confirmingRepeatMeal = null;
+		} finally {
+			if (requestId === mealCopyRequestId) loadingMealCopyDays = false;
+		}
+	}
+
+	const mealCopyUnavailableDays = $derived.by(() => {
+		const unavailable = new Set<string>();
+		if (!mealCopyRange) return unavailable;
+		for (let date = mealCopyRange.min; date <= mealCopyRange.max; date = shiftDay(date, 1)) {
+			if (!mealCopyLoggedDays.has(date)) unavailable.add(date);
+		}
+		return unavailable;
+	});
+
+	function canCopySelectedMeal(): boolean {
+		if (loadingMealCopyDays || !mealCopyRange) return false;
+		const currentRange = mealCopyDateRange();
+		return (
+			mealCopyFromDay < day &&
+			mealCopyFromDay <= localDay() &&
+			mealCopyFromDay >= currentRange.min &&
+			mealCopyFromDay <= currentRange.max &&
+			mealCopyLoggedDays.has(mealCopyFromDay)
+		);
+	}
 
 	async function repeatPrevious(): Promise<void> {
 		confirmingRepeatDay = false;
@@ -448,10 +529,20 @@
 	}
 
 	async function repeatMeal(meal: MealType): Promise<void> {
+		const targetDay = day;
+		const sourceDay = mealCopyFromDay;
+		const range = mealCopyRange;
+		if (confirmingRepeatMeal !== meal || !range || !canCopySelectedMeal()) return;
+		mealCopyRequestId += 1;
 		confirmingRepeatMeal = null;
-		await api.copyPreviousDay(day, shiftDay(day, -1), meal);
-		await load();
-		showToast(m.day_copied());
+		mealCopyCalendarOpen = false;
+		try {
+			await api.copyPreviousDay(targetDay, sourceDay, meal);
+			if (day === targetDay) await load();
+			showToast(m.meal_copied({ date: pdf.format(new Date(targetDay + 'T12:00:00')) }));
+		} catch (e) {
+			showToast(errorMessage(e instanceof ApiError ? e.code : 'GENERIC_ERROR'));
+		}
 	}
 
 	// --- Compartilhar refeicao --------------------------------------------------
@@ -467,13 +558,14 @@
 	let sendingMeal = $state(false);
 	let answeringOffer = $state<number | null>(null);
 
-	async function loadMealSharing(): Promise<void> {
+	async function loadMealSharing(requestedDay: string = day): Promise<void> {
 		try {
 			const [connections, offers, sent] = await Promise.all([
 				api.getConnections(),
 				api.getShareOffers(),
-				api.getSentMeals(day)
+				api.getSentMeals(requestedDay)
 			]);
+			if (day !== requestedDay) return;
 			partners = connections.filter((c) => c.status === 'accepted');
 			incomingMeals = offers.filter((offer) => offer.item_kind === 'meal');
 			sentMeals = sent;
@@ -669,9 +761,11 @@
 	// trocar o dia (setas/calendario) reseta o layout para o daquele dia
 	$effect(() => {
 		dayMeals = loadDayState(day);
+		cancelRepeatMeal();
 		openMeal = null;
 		showMealChooser = false;
-		confirmingRemoveMeal = null;
+		confirmingDeleteMeal = null;
+		mealSwipeOffsets = {};
 	});
 	function saveDayState(): void {
 		localStorage.setItem(DAY_STATE_KEY, JSON.stringify($state.snapshot(dayMeals)));
@@ -757,20 +851,51 @@
 		return mealTypeLabel(meal);
 	}
 
-	// Remover um card adicionado por engano (so quando vazio; sempre com confirmacao).
-	// Refeicao com lancamentos nao remove: apague os itens primeiro.
-	let confirmingRemoveMeal = $state<MealType | null>(null);
+	// A exclusao da refeicao apaga seus lancamentos e anotacoes juntos, apos confirmacao.
+	let confirmingDeleteMeal = $state<MealType | null>(null);
+	let deletingMeal = $state<MealType | null>(null);
 
-	function removeMealCard(meal: MealType): void {
-		dayMeals.added = dayMeals.added.filter((mt) => mt !== meal);
-		if (meal === 'other') dayMeals.customLabel = null;
-		saveDayState();
-		if (openMeal === meal) openMeal = null;
-		confirmingRemoveMeal = null;
-		showToast(m.toast_deleted());
+	function requestDeleteMeal(meal: MealType): void {
+		cancelRepeatMeal();
+		mealSwipeOffsets = { ...mealSwipeOffsets, [meal]: 0 };
+		confirmingDeleteMeal = meal;
+		openMeal = meal;
+	}
+
+	function cancelDeleteMeal(meal: MealType): void {
+		confirmingDeleteMeal = null;
+		mealSwipeOffsets = { ...mealSwipeOffsets, [meal]: 0 };
+	}
+
+	async function deleteMeal(meal: MealType): Promise<void> {
+		if (confirmingDeleteMeal !== meal || deletingMeal !== null) return;
+		const deletionDay = day;
+		deletingMeal = meal;
+		try {
+			await api.deleteDiaryMeal(deletionDay, meal);
+			if (day === deletionDay) {
+				dayMeals.added = dayMeals.added.filter((addedMeal) => addedMeal !== meal);
+				if (meal === 'other') dayMeals.customLabel = null;
+				saveDayState();
+				await reloadSilent();
+				if (day === deletionDay) {
+					confirmingDeleteMeal = null;
+					if (openMeal === meal) openMeal = null;
+				}
+			}
+			showToast(m.toast_deleted());
+		} catch (e) {
+			showToast(errorMessage(e instanceof ApiError ? e.code : 'GENERIC_ERROR'));
+		} finally {
+			deletingMeal = null;
+		}
 	}
 
 	function toggleMealOpen(meal: MealType): void {
+		if (suppressedMealToggle === meal) {
+			suppressedMealToggle = null;
+			return;
+		}
 		openMeal = openMeal === meal ? null : meal;
 	}
 
@@ -783,6 +908,91 @@
 	let draggingMeal = $state<MealType | null>(null);
 	let dropIndex = $state<number | null>(null);
 	let dragMidpoints: number[] = [];
+	const mealDeleteRevealWidth = 88;
+	let mealSwipeOffsets = $state<Partial<Record<MealType, number>>>({});
+	let swipingMeal = $state<MealType | null>(null);
+	let mealSwipeGesture: {
+		meal: MealType;
+		pointerId: number;
+		startX: number;
+		startY: number;
+		startOffset: number;
+		locked: boolean;
+	} | null = null;
+	let suppressedMealToggle: MealType | null = null;
+
+	function startMealSwipe(meal: MealType, event: PointerEvent): void {
+		if (!event.isPrimary || event.button !== 0 || draggingMeal !== null) return;
+		if ((event.target as HTMLElement).closest('[data-meal-reorder-handle]')) return;
+		mealSwipeGesture = {
+			meal,
+			pointerId: event.pointerId,
+			startX: event.clientX,
+			startY: event.clientY,
+			startOffset: mealSwipeOffsets[meal] ?? 0,
+			locked: false
+		};
+		window.addEventListener('pointermove', moveMealSwipe, { passive: false });
+		window.addEventListener('pointerup', endMealSwipe);
+		window.addEventListener('pointercancel', cancelMealSwipeGesture);
+	}
+
+	function stopMealSwipeListeners(): void {
+		window.removeEventListener('pointermove', moveMealSwipe);
+		window.removeEventListener('pointerup', endMealSwipe);
+		window.removeEventListener('pointercancel', cancelMealSwipeGesture);
+	}
+
+	function moveMealSwipe(event: PointerEvent): void {
+		const gesture = mealSwipeGesture;
+		if (!gesture || gesture.pointerId !== event.pointerId) return;
+		const horizontalDistance = event.clientX - gesture.startX;
+		const verticalDistance = event.clientY - gesture.startY;
+		if (!gesture.locked) {
+			if (Math.max(Math.abs(horizontalDistance), Math.abs(verticalDistance)) < 8) return;
+			if (Math.abs(verticalDistance) >= Math.abs(horizontalDistance)) {
+				cancelMealSwipeGesture();
+				return;
+			}
+			gesture.locked = true;
+			swipingMeal = gesture.meal;
+		}
+		event.preventDefault();
+		const offset = Math.max(0, Math.min(mealDeleteRevealWidth, gesture.startOffset - horizontalDistance));
+		mealSwipeOffsets = { ...mealSwipeOffsets, [gesture.meal]: offset };
+	}
+
+	function endMealSwipe(event: PointerEvent): void {
+		const gesture = mealSwipeGesture;
+		if (!gesture || gesture.pointerId !== event.pointerId) return;
+		stopMealSwipeListeners();
+		mealSwipeGesture = null;
+		swipingMeal = null;
+		if (!gesture.locked) return;
+		suppressedMealToggle = gesture.meal;
+		window.setTimeout(() => {
+			if (suppressedMealToggle === gesture.meal) suppressedMealToggle = null;
+		}, 0);
+		const horizontalDistance = event.clientX - gesture.startX;
+		const deletionThreshold = Math.min(180, (mealCardEls[gesture.meal]?.clientWidth ?? 0) * 0.42);
+		if (horizontalDistance <= -deletionThreshold) {
+			requestDeleteMeal(gesture.meal);
+			return;
+		}
+		const currentOffset = mealSwipeOffsets[gesture.meal] ?? 0;
+		const revealThreshold = mealDeleteRevealWidth * 0.35;
+		const nextOffset = currentOffset >= revealThreshold ? mealDeleteRevealWidth : 0;
+		mealSwipeOffsets = { ...mealSwipeOffsets, [gesture.meal]: nextOffset };
+	}
+
+	function cancelMealSwipeGesture(): void {
+		stopMealSwipeListeners();
+		if (mealSwipeGesture?.locked) {
+			mealSwipeOffsets = { ...mealSwipeOffsets, [mealSwipeGesture.meal]: 0 };
+		}
+		mealSwipeGesture = null;
+		swipingMeal = null;
+	}
 
 	function startMealDrag(meal: MealType, event: PointerEvent): void {
 		const from = materializedMeals.indexOf(meal);
@@ -849,6 +1059,7 @@
 	$effect(() => {
 		return () => {
 			stopMealDragListeners();
+			stopMealSwipeListeners();
 			endPointerDrag();
 		};
 	});
@@ -1514,15 +1725,39 @@
 			{@const group = mealGroup(meal)}
 			{@const plan = mealPlanFor(meal)}
 			{@const isOpen = demoMealsActive ? meal === 'breakfast' : repeatMealTarget ? meal === repeatMealTarget : openMeal === meal}
+			{@const canDeleteMeal = !demoMealsActive && materializedMeals.includes(meal)}
 			{#if isDropTarget(index)}
 				<div class="h-1 rounded-full bg-emerald-500"></div>
 			{/if}
 			<section
 				bind:this={mealCardEls[meal]}
-				class="overflow-hidden rounded-3xl bg-white shadow-sm transition-shadow {draggingMeal === meal
+				class="relative overflow-hidden rounded-3xl bg-white shadow-sm transition-shadow {draggingMeal === meal
 					? 'opacity-60 ring-2 ring-emerald-400'
 					: ''}"
 			>
+				{#if canDeleteMeal && ((mealSwipeOffsets[meal] ?? 0) > 0 || swipingMeal === meal)}
+					<button
+						type="button"
+						aria-label={m.meal_delete_action()}
+						title={m.meal_delete_action()}
+						aria-hidden={(mealSwipeOffsets[meal] ?? 0) === 0}
+						data-meal-delete="swipe"
+						tabindex={(mealSwipeOffsets[meal] ?? 0) > 0 ? 0 : -1}
+						disabled={deletingMeal !== null}
+						onclick={() => requestDeleteMeal(meal)}
+						class="absolute inset-y-0 right-0 z-0 flex w-[88px] flex-col items-center justify-center gap-1 rounded-r-3xl bg-red-600 text-sm font-bold text-slate-50 disabled:opacity-50"
+					>
+						<svg aria-hidden="true" viewBox="0 0 24 24" class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h16M9 7V5h6v2M6 7l1 13h10l1-13" /></svg>
+						{m.meal_delete_action()}
+					</button>
+				{/if}
+				<div
+					role="presentation"
+					class="relative z-10 rounded-3xl bg-white {swipingMeal === meal ? '' : 'transition-transform duration-200'}"
+					style="transform: translateX(-{mealSwipeOffsets[meal] ?? 0}px); touch-action: pan-y;"
+					onpointerdown={canDeleteMeal ? (event) => startMealSwipe(meal, event) : undefined}
+					data-meal-swipe={meal}
+				>
 				<!-- cabecalho: toca para minimizar/expandir (acordeao: um aberto por vez).
 					 A alca a esquerda arrasta para reordenar e fica fora do botao. -->
 				<div class="flex items-center pr-4">
@@ -1531,6 +1766,7 @@
 						tabindex="-1"
 						aria-label={m.meal_reorder()}
 						title={m.meal_reorder()}
+						data-meal-reorder-handle
 						onpointerdown={(e) => startMealDrag(meal, e)}
 						onkeydown={() => {}}
 						class="grid h-12 w-8 shrink-0 cursor-grab touch-none select-none place-items-center text-slate-300 active:text-emerald-600"
@@ -1671,43 +1907,62 @@
 					</div>
 				{/if}
 
-				{#if confirmingRemoveMeal === meal}
-					<!-- remover o card adicionado por engano: sempre com confirmacao -->
+				{#if confirmingDeleteMeal === meal}
+					<!-- Excluir a refeicao inteira exige confirmacao antes de apagar os registros. -->
 					<div class="mt-2 flex items-center gap-2 rounded-2xl bg-red-50 p-2">
-						<span class="min-w-0 flex-1 pl-2 text-sm font-semibold text-red-700">{m.meal_remove_confirm()}</span>
+						<span class="min-w-0 flex-1 pl-2 text-sm font-semibold text-red-700">{m.meal_delete_confirm()}</span>
 						<button
 							type="button"
-							onclick={() => removeMealCard(meal)}
-							class="h-10 shrink-0 rounded-xl bg-red-600 px-4 text-sm font-bold text-white active:bg-red-700"
+							disabled={deletingMeal === meal}
+							onclick={() => deleteMeal(meal)}
+							class="h-10 shrink-0 rounded-xl bg-red-600 px-4 text-sm font-bold text-slate-50 active:bg-red-700"
 						>
-							{m.confirm_delete()}
+							{m.delete()}
 						</button>
 						<button
 							type="button"
-							onclick={() => (confirmingRemoveMeal = null)}
+							disabled={deletingMeal === meal}
+							onclick={() => cancelDeleteMeal(meal)}
 							class="h-10 shrink-0 rounded-xl px-3 text-sm font-semibold text-slate-500 active:bg-slate-100"
 						>
 							{m.cancel()}
 						</button>
 					</div>
 				{:else if confirmingRepeatMeal === meal}
-					<!-- repetir esta refeicao do dia anterior: confirma antes -->
-					<div class="mt-2 flex items-center gap-2 rounded-2xl bg-emerald-50 p-2">
-						<span class="min-w-0 flex-1 pl-2 text-sm font-semibold text-emerald-800">{m.repeat_meal_confirm()}</span>
-						<button
-							type="button"
-							onclick={() => repeatMeal(meal)}
-							class="h-10 shrink-0 rounded-xl bg-emerald-600 px-4 text-sm font-bold text-white active:bg-emerald-700"
-						>
-							{m.confirm()}
-						</button>
-						<button
-							type="button"
-							onclick={() => (confirmingRepeatMeal = null)}
-							class="h-10 shrink-0 rounded-xl px-3 text-sm font-semibold text-slate-500 active:bg-slate-100"
-						>
-							{m.cancel()}
-						</button>
+					<!-- Mantem ontem como origem inicial e deixa buscar outra data no calendario. -->
+					<div class="mt-2 rounded-2xl bg-emerald-50 p-3">
+						<span class="block px-1 text-sm font-semibold text-emerald-800">{m.repeat_meal_confirm()}</span>
+						<div class="mt-2 flex min-w-0 items-center px-1">
+							<span class="min-w-0 text-xs font-semibold leading-5 text-slate-600">
+								{m.repeat_meal_source_date({ date: pdf.format(new Date(mealCopyFromDay + 'T12:00:00')) })}
+							</span>
+						</div>
+						<div class="mt-2 flex flex-wrap items-center justify-end gap-2">
+							<button
+								type="button"
+								disabled={loadingMealCopyDays}
+								onclick={() => (mealCopyCalendarOpen = true)}
+								class="flex h-10 shrink-0 items-center gap-1.5 rounded-xl border border-emerald-200 px-3 text-sm font-bold text-emerald-800 active:bg-emerald-100 disabled:opacity-50"
+							>
+								<svg aria-hidden="true" viewBox="0 0 24 24" class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="16" rx="2" /><path d="M16 3v4M8 3v4M3 10h18" /></svg>
+								{m.repeat_meal_choose_date()}
+							</button>
+							<button
+								type="button"
+								disabled={!canCopySelectedMeal()}
+								onclick={() => repeatMeal(meal)}
+								class="h-10 shrink-0 rounded-xl bg-emerald-600 px-4 text-sm font-bold text-white active:bg-emerald-700 disabled:opacity-50"
+							>
+								{mealCopyFromDay === shiftDay(day, -1) ? m.repeat_meal_yesterday_action() : m.repeat_meal_copy_action()}
+							</button>
+							<button
+								type="button"
+								onclick={cancelRepeatMeal}
+								class="h-10 shrink-0 rounded-xl px-3 text-sm font-semibold text-slate-500 active:bg-slate-100"
+							>
+								{m.cancel()}
+							</button>
+						</div>
 					</div>
 				{:else}
 					<div class="mt-2 flex gap-2">
@@ -1749,27 +2004,30 @@
 								data-tour="diet-repeat-meal"
 								aria-label={m.repeat_meal()}
 								title={m.repeat_meal()}
-								onclick={() => (confirmingRepeatMeal = meal)}
+								onclick={() => beginRepeatMeal(meal)}
 								class="grid h-11 w-11 shrink-0 place-items-center rounded-2xl border-2 border-slate-200 text-slate-500 active:bg-slate-100"
 							>
 								<svg viewBox="0 0 24 24" class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v5h5" /><path d="M3.05 13A9 9 0 1 0 6 5.3L3 8" /><path d="M12 7v5l3 2" /></svg>
 							</button>
-							{#if dayMeals.added.includes(meal)}
-								<button
-									type="button"
-									aria-label={m.meal_remove()}
-									title={m.meal_remove()}
-									onclick={() => (confirmingRemoveMeal = meal)}
-									class="grid h-11 w-11 shrink-0 place-items-center rounded-2xl border-2 border-slate-200 text-slate-400 active:bg-red-50 active:text-red-500"
-								>
-									<svg viewBox="0 0 24 24" class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 7h16M9 7V5h6v2M6 7l1 13h10l1-13" stroke-linecap="round" stroke-linejoin="round" /></svg>
-								</button>
-							{/if}
+						{/if}
+						{#if canDeleteMeal}
+							<button
+								type="button"
+								aria-label={m.meal_delete_action()}
+								title={m.meal_delete_action()}
+								disabled={deletingMeal !== null}
+								onclick={() => requestDeleteMeal(meal)}
+								data-meal-delete="keyboard"
+								class="grid h-11 w-11 shrink-0 place-items-center rounded-2xl border-2 border-slate-200 text-slate-500 active:bg-red-50 active:text-red-600 disabled:opacity-50"
+							>
+								<svg aria-hidden="true" viewBox="0 0 24 24" class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h16M9 7V5h6v2M6 7l1 13h10l1-13" /></svg>
+							</button>
 						{/if}
 					</div>
 				{/if}
 				</div>
 				{/if}
+				</div>
 			</section>
 		{/each}
 		{#if isDropTarget(materializedMeals.length)}
@@ -2407,6 +2665,20 @@
 		onmonth={loadMonthMarks}
 		onselect={(d) => (day = d)}
 		onclose={() => (showCalendar = false)}
+	/>
+{/if}
+
+{#if mealCopyCalendarOpen && confirmingRepeatMeal && mealCopyRange}
+	<CalendarModal
+		value={mealCopyFromDay}
+		marked={mealCopyLoggedDays}
+		min={mealCopyRange.min}
+		max={mealCopyRange.max}
+		disabledDays={mealCopyUnavailableDays}
+		disabledHint={m.repeat_meal_no_entry({ meal: mealTypeLabel(confirmingRepeatMeal) })}
+		legend={mealTypeLabel(confirmingRepeatMeal)}
+		onselect={(date) => (mealCopyFromDay = date)}
+		onclose={() => (mealCopyCalendarOpen = false)}
 	/>
 {/if}
 

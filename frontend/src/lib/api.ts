@@ -1420,8 +1420,8 @@ export const api = {
 		request<ExternalFood[]>(`/me/foods/search-external?q=${encodeURIComponent(q)}&limit=${limit}`),
 	foodByBarcode: (code: string) =>
 		request<ExternalFood>(`/me/foods/by-barcode?code=${encodeURIComponent(code)}`),
-	getDiaryLoggedDays: (start: string, end: string) =>
-		request<string[]>(`/me/diary/logged-days?start=${start}&end=${end}`),
+	getDiaryLoggedDays: (start: string, end: string, mealType?: MealType) =>
+		request<string[]>(`/me/diary/logged-days?start=${start}&end=${end}${mealType ? `&meal_type=${mealType}` : ''}`),
 	getSupplements: (day: string) =>
 		request<SupplementsDay>(`/me/supplements?day=${day}`),
 	createSupplement: (day: string, data: SupplementInput) =>
@@ -1441,6 +1441,8 @@ export const api = {
 	undoDiaryAdditions: (entryIds: number[]) =>
 		request<void>('/me/diary/undo-additions', { method: 'POST', body: { entry_ids: entryIds } }),
 	deleteDiaryEntry: (id: number) => request<void>(`/me/diary/${id}`, { method: 'DELETE' }),
+	deleteDiaryMeal: (day: string, mealType: MealType) =>
+		request<void>(`/me/diary/delete-meal?day=${day}&meal_type=${mealType}`, { method: 'DELETE' }),
 	copyPreviousDay: (day: string, fromDay: string, mealType?: MealType) => {
 		const params = new URLSearchParams({ day, from_day: fromDay });
 		if (mealType) params.set('meal_type', mealType);
