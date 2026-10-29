@@ -7,6 +7,7 @@ const ERROR_MESSAGES: Record<string, () => string> = {
 	DIARY_UNKNOWN_ENERGY: () => m.error_diary_unknown(),
 	DIARY_EMPTY_CONFIRM: () => m.error_diary_empty(),
 	DIARY_FUTURE_DAY: () => m.error_diary_future(),
+	DIARY_DAY_LIMIT: () => m.diary_limit_error(),
 	ESTIMATE_NAME_REQUIRED: () => m.error_estimate_reference(),
 	ESTIMATE_REFERENCE_REQUIRED: () => m.error_estimate_reference(),
 	ESTIMATE_NOT_AVAILABLE: () => m.error_estimate_unavailable(),

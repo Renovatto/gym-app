@@ -1120,5 +1120,19 @@
 	"adaptive_calories_missing": "Há registros com calorias não informadas. Corrija esses lançamentos antes de adotar a estimativa.",
 	"diary_open_day": "Abrir diário",
 	"diary_previous_entries": "Lançamentos anteriores",
-	"diary_previous_entries_help": "Registros criados no formulário anterior. Você pode corrigir ou excluir esses lançamentos aqui. Para registrar novas refeições, use os alimentos e receitas do diário."
+	"diary_previous_entries_help": "Registros criados no formulário anterior. Você pode corrigir ou excluir esses lançamentos aqui. Para registrar novas refeições, use os alimentos e receitas do diário.",
+	"diary_tomorrow_title": "Amanhã",
+	"diary_tomorrow_saved": "Salvo para amanhã · {date}",
+	"diary_undo": "Desfazer",
+	"diary_undo_question": "Desfazer esta inclusão?",
+	"diary_undo_description": "“{name}” será removido de {meal} ({date}).",
+	"diary_undo_confirm": "Confirmar exclusão",
+	"diary_undo_removing": "Excluindo…",
+	"diary_undo_done": "Inclusão desfeita.",
+	"diary_undo_seconds": "{seconds} s",
+	"diary_undo_expires": "Tempo para desfazer.",
+	"diary_limit_error": "Você pode lançar refeições até amanhã.",
+	"diary_tomorrow_one_item": "{meal} · 1 item adicionado.",
+	"diary_tomorrow_items": "{meal} · {count} itens adicionados.",
+	"diary_undo_group_description": "Os {count} itens adicionados a {meal} ({date}) serão excluídos."
 }

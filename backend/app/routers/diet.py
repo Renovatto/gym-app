@@ -27,6 +27,7 @@ from ..schemas import (
     DiaryEntryOut,
     DiaryEntryUpdate,
     DiaryFromLibraryIn,
+    DiaryUndoAdditionsIn,
     DietAdherenceOut,
     DietPeriodOut,
     DiaryGapOut,
@@ -44,6 +45,7 @@ from ..schemas import (
     SubstitutesOut,
 )
 from ..services.coaching import diet_adherence
+from ..services.diary_dates import local_today, validate_entry_day
 from ..services.dietplan import maintenance_override as diet_maintenance_override
 from ..services.dietplan import period_out as diet_period_out
 from ..services.dietplan import renew as renew_diet_period
@@ -133,17 +135,16 @@ _RECENT_MEAL_DAYS = 60
 
 
 def _meal_history(
-    session: Session, user_id: int, meal_type: MealType, source: EntrySource
+    session: Session, user_id: int, meal_type: MealType, source: EntrySource, tz_offset: int = 0,
 ) -> list[int]:
     """Ids lancados NAQUELA refeicao nos ultimos _RECENT_MEAL_DAYS dias, do mais
     recente para o mais antigo e com repeticao. Da mesma lista saem as duas coisas
     que ordenam a tela de adicionar: quantas vezes cada item foi usado (o habito)
     e qual foi usado por ultimo (o desempate)."""
     column = DiaryEntry.food_id if source == EntrySource.food else DiaryEntry.recipe_id
-    # date.today() e do servidor, e nao o dia local do usuario: aqui a data so move a
-    # BORDA de uma janela de 60 dias, onde um dia a mais ou a menos nao muda a ordem.
-    # Dia local continua obrigatorio onde o dia em si e o dado (o diario).
-    since = date.today() - timedelta(days=_RECENT_MEAL_DAYS)
+    # Lancamentos de amanha ainda nao representam habito de consumo.
+    today = local_today(tz_offset)
+    since = today - timedelta(days=_RECENT_MEAL_DAYS)
     rows = session.exec(
         select(column)
         .where(DiaryEntry.user_id == user_id)
@@ -151,6 +152,7 @@ def _meal_history(
         .where(column.is_not(None))
         .where(DiaryEntry.meal_type == meal_type)
         .where(DiaryEntry.entry_date >= since)
+        .where(DiaryEntry.entry_date <= today)
         .order_by(desc(DiaryEntry.logged_at))
     ).all()
     return [ref_id for ref_id in rows if ref_id is not None]
@@ -175,19 +177,21 @@ def recent_foods(
     session: SessionDep,
     limit: int = Query(default=12, ge=1, le=40),
     meal_type: MealType | None = Query(default=None),
+    tz_offset: int = Query(0, ge=-840, le=720),
 ) -> list[FoodOut]:
     """Alimentos lançados mais recentemente pelo usuário, sem repetir.
     Com meal_type, sao so os daquela refeicao e ordenados pelo habito nela (ver
     _rank_by_habit): quem repete o mesmo cafe da manha acha os itens no topo, em vez
     de disputar espaco com o almoco de ontem."""
     if meal_type is not None:
-        seen = _rank_by_habit(_meal_history(session, user.id, meal_type, EntrySource.food))[:limit]
+        seen = _rank_by_habit(_meal_history(session, user.id, meal_type, EntrySource.food, tz_offset))[:limit]
     else:
         rows = session.exec(
             select(DiaryEntry.food_id)
             .where(DiaryEntry.user_id == user.id)
             .where(DiaryEntry.source == EntrySource.food)
             .where(DiaryEntry.food_id.is_not(None))
+            .where(DiaryEntry.entry_date <= local_today(tz_offset))
             .order_by(desc(DiaryEntry.logged_at))
         ).all()
         seen = []
@@ -308,12 +312,13 @@ def food_substitutes(
     session: SessionDep,
     grams: float = Query(..., gt=0, le=2000, description="Porcao atual em gramas"),
     limit: int = Query(default=6, ge=1, le=12),
+    tz_offset: int = Query(0, ge=-840, le=720),
 ) -> SubstitutesOut:
     """Equivalentes na mesma categoria, igualando o macro-ancora (troca inteligente)."""
     food = _visible_food(session, food_id, user.id)
     if food is None:
         raise HTTPException(status.HTTP_404_NOT_FOUND, detail="FOOD_NOT_FOUND")
-    return compute_substitutes(session, user, food, grams, limit)
+    return compute_substitutes(session, user, food, grams, limit, tz_offset)
 
 
 @router.get("/me/foods/by-barcode", response_model=ExternalFoodOut)
@@ -395,6 +400,7 @@ def list_recipes(
     user: CurrentUser,
     session: SessionDep,
     meal_type: MealType | None = Query(default=None),
+    tz_offset: int = Query(0, ge=-840, le=720),
 ) -> list[RecipeOut]:
     recipes = session.exec(
         select(Recipe).where(Recipe.user_id == user.id).order_by(desc(Recipe.created_at))
@@ -407,7 +413,7 @@ def list_recipes(
         # E a mesma lista: so as receitas que a pessoa usa NAQUELA refeicao sobem para
         # a frente das favoritas. Na hora de lancar o jantar de sempre, o habito acha a
         # receita mais rapido que a estrelinha. O sort estavel preserva o resto.
-        habit = _rank_by_habit(_meal_history(session, user.id, meal_type, EntrySource.recipe))
+        habit = _rank_by_habit(_meal_history(session, user.id, meal_type, EntrySource.recipe, tz_offset))
         position = {recipe_id: i for i, recipe_id in enumerate(habit)}
         out.sort(key=lambda r: position.get(r.id, len(position)))
     return out
@@ -445,9 +451,11 @@ def adopt_recipe(slug: str, user: CurrentUser, session: SessionDep) -> RecipeOut
     "/me/diary/from-library", response_model=DiaryEntryOut, status_code=status.HTTP_201_CREATED
 )
 def add_from_library(
-    data: DiaryFromLibraryIn, user: CurrentUser, session: SessionDep
+    data: DiaryFromLibraryIn, user: CurrentUser, session: SessionDep,
+    tz_offset: int = Query(0, ge=-840, le=720),
 ) -> DiaryEntryOut:
     """1 toque: adota a receita da biblioteca (idempotente) e lanca a porcao no diario."""
+    validate_entry_day(data.entry_date, tz_offset)
     recipe = adopt_library_recipe(session, user, data.slug)
     if recipe is None:
         raise HTTPException(status.HTTP_404_NOT_FOUND, detail="RECIPE_NOT_FOUND")
@@ -651,9 +659,10 @@ def diary_gap(
     day: date = Query(..., description="Dia local do cliente (YYYY-MM-DD)"),
     limit: int = Query(default=4, ge=1, le=8),
     meal_type: MealType | None = Query(default=None),
+    tz_offset: int = Query(0, ge=-840, le=720),
 ) -> DiaryGapOut:
     """O que falta pra fechar as metas do dia + alimentos que encaixam na lacuna."""
-    return suggest_gap(session, user, day, limit, meal_type)
+    return suggest_gap(session, user, day, limit, meal_type, tz_offset)
 
 
 @router.get("/me/diary/meal-plan", response_model=MealPlanOut)
@@ -662,9 +671,10 @@ def diary_meal_plan(
     session: SessionDep,
     day: date = Query(..., description="Dia local do cliente (YYYY-MM-DD)"),
     limit: int = Query(default=3, ge=1, le=6),
+    tz_offset: int = Query(0, ge=-840, le=720),
 ) -> MealPlanOut:
     """Cardapio consultivo: por refeicao, o alvo recomendado + sugestoes que fecham."""
-    return compute_meal_plan(session, user, day, limit)
+    return compute_meal_plan(session, user, day, limit, tz_offset)
 
 
 @router.get("/me/diary/build-meal", response_model=BuildMealOut)
@@ -675,13 +685,14 @@ def diary_build_meal(
     have: list[int] = Query(default=[], description="Ids dos alimentos que a pessoa tem em casa"),
     meal_type: MealType | None = Query(default=None),
     limit: int = Query(default=6, ge=1, le=12),
+    tz_offset: int = Query(0, ge=-840, le=720),
 ) -> BuildMealOut:
     """'Montar refeicao com o que tenho em casa': receitas que da pra cozinhar +
     alimentos avulsos que fecham a lacuna do dia, dado o que a pessoa diz que tem."""
     # ids invalidos/de outro usuario sao ignorados em silencio (tela "ao vivo": um id
     # que ficou obsoleto no estado do cliente nao deve travar a busca com 404).
     safe_have = [fid for fid in have if _visible_food(session, fid, user.id) is not None]
-    return compute_build_meal(session, user, day, safe_have, meal_type, limit)
+    return compute_build_meal(session, user, day, safe_have, meal_type, limit, tz_offset)
 
 
 @router.get("/me/diet/adherence", response_model=DietAdherenceOut)
@@ -690,8 +701,11 @@ def diet_adherence_endpoint(
     session: SessionDep,
     end: date = Query(..., description="Ultimo dia da janela (dia local do cliente)"),
     window: int = Query(default=7, ge=1, le=30),
+    tz_offset: int = Query(0, ge=-840, le=720),
 ) -> DietAdherenceOut:
     """Aderencia (recomendado x real) das ultimas janelas de dias."""
+    # A media sempre usa dias encerrados ate ontem no fuso do usuario.
+    end = min(end, local_today(tz_offset))
     return diet_adherence(session, user, end, window)
 
 
@@ -757,7 +771,11 @@ def _entry_macros_and_name(
 
 
 @router.post("/me/diary", response_model=DiaryEntryOut, status_code=status.HTTP_201_CREATED)
-def add_diary_entry(data: DiaryEntryIn, user: CurrentUser, session: SessionDep) -> DiaryEntryOut:
+def add_diary_entry(
+    data: DiaryEntryIn, user: CurrentUser, session: SessionDep,
+    tz_offset: int = Query(0, ge=-840, le=720),
+) -> DiaryEntryOut:
+    validate_entry_day(data.entry_date, tz_offset)
     macros, name = _entry_macros_and_name(
         session, user.id, user.locale, data.source, data.food_id, data.recipe_id, data.quantity
     )
@@ -819,15 +837,40 @@ def delete_diary_entry(entry_id: int, user: CurrentUser, session: SessionDep) ->
     session.commit()
 
 
+@router.post("/me/diary/undo-additions", status_code=status.HTTP_204_NO_CONTENT)
+def undo_diary_additions(
+    payload: DiaryUndoAdditionsIn, user: CurrentUser, session: SessionDep,
+) -> None:
+    """Desfaz os itens capturados na sessao de adicao em uma unica transacao."""
+    entry_ids = sorted(set(payload.entry_ids))
+    entries = session.exec(
+        select(DiaryEntry)
+        .where(DiaryEntry.id.in_(entry_ids))
+        .order_by(DiaryEntry.id)
+        .with_for_update()
+    ).all()
+    # Valida o grupo inteiro antes de apagar qualquer item ou selo de origem.
+    if any(entry.user_id != user.id for entry in entries):
+        raise HTTPException(status.HTTP_404_NOT_FOUND, detail="ENTRY_NOT_FOUND")
+
+    # IDs ausentes ja foram removidos: repetir a mesma requisicao continua seguro.
+    for entry in entries:
+        forget_received_entry(session, user.id, entry.id)
+        session.delete(entry)
+    session.commit()
+
+
 @router.post("/me/diary/copy-previous", response_model=DiaryDayOut)
 def copy_previous_day(
     user: CurrentUser,
     session: SessionDep,
     day: date = Query(...),
     from_day: date = Query(...),
+    tz_offset: int = Query(0, ge=-840, le=720),
     meal_type: MealType | None = Query(default=None),
 ) -> DiaryDayOut:
     """Repete os lançamentos de um dia anterior (opcionalmente só uma refeição)."""
+    validate_entry_day(day, tz_offset)
     query = (
         select(DiaryEntry)
         .where(DiaryEntry.user_id == user.id)

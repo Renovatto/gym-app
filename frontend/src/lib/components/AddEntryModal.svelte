@@ -1,9 +1,13 @@
 <script lang="ts">
-	import { api, type Food, type FoodPortion, type MealType, type Recipe } from '$lib/api';
+	import { api, localDay, type Food, type FoodPortion, type MealType, type Recipe } from '$lib/api';
+	import { session } from '$lib/session.svelte';
+	import { beforeNavigate, replaceState } from '$app/navigation';
+	import { page } from '$app/state';
 	import { closeOnBack } from '$lib/modalBack';
 	import { untrack } from 'svelte';
 	import Stepper from '$lib/components/Stepper.svelte';
 	import { showToast } from '$lib/toast.svelte';
+	import { pendingDiaryAdditions, showDiaryAdditions, type DiaryAddition } from '$lib/diaryFeedback';
 	import { mealTypeLabel, portionLabel } from '$lib/labels';
 	import { normalizeSearch, searchMatches } from '$lib/text';
 	import { m } from '$lib/paraglide/messages';
@@ -37,8 +41,8 @@
 	// para esta modal, nao para a Dieta com ela fechada (a tela de Dieta reabre).
 	$effect(() => {
 		if (!trapBack) return;
-		const lembrete = untrack(() => ({ addEntry: { meal, day } }));
-		return closeOnBack(() => onClose(), lembrete);
+		const lembrete = untrack(() => ({ addEntry: { meal, day, userId: session.user?.id, additions: $state.snapshot(additions) } }));
+		return closeOnBack(finishAdding, lembrete);
 	});
 
 	const nf = new Intl.NumberFormat(getLocale());
@@ -49,7 +53,47 @@
 	let recentFoods = $state<Food[]>([]);
 	let recipes = $state<Recipe[]>([]);
 	let loading = $state(false);
-	let addedCount = $state(0);
+	let additions = $state<DiaryAddition[]>(untrack(() => {
+		const previous = page.state.addEntry;
+		return previous?.day === day && previous.meal === meal && previous.userId === session.user?.id ? pendingDiaryAdditions(previous.additions ?? []) : [];
+	}));
+	const addedCount = $derived(additions.length);
+	let finishRequested = false;
+
+	function rememberAdditions(): void {
+		replaceState('', { ...page.state, addEntry: { meal, day, userId: session.user?.id, additions: $state.snapshot(additions) } });
+	}
+
+	function flushAdditions(): void {
+		showDiaryAdditions(additions);
+		additions = [];
+	}
+
+	beforeNavigate((navigation) => {
+		// Nao abandona uma inclusao cuja resposta ainda nao trouxe o ID para desfazer.
+		if (saving) {
+			navigation.cancel();
+			return;
+		}
+		const destination = navigation.to?.url.pathname ?? '';
+		// Criar/editar catalogo e uma interrupcao: o historico restaura os itens ao voltar.
+		if (/^\/dieta\/(alimento|receita)\//.test(destination)) return;
+		flushAdditions();
+	});
+
+	function finishAdding(): void {
+		if (saving) {
+			finishRequested = true;
+			return;
+		}
+		// O resumo e o desfazer pertencem ao conjunto salvo nesta abertura da tela.
+		flushAdditions();
+		const historyState = { ...page.state };
+		delete historyState.addEntry;
+		replaceState('', historyState);
+		onClose();
+	}
+
 
 	const searching = $derived(query.trim().length > 0);
 
@@ -289,20 +333,24 @@
 		if (!selFood) return;
 		saving = true;
 		try {
-			await api.addDiaryEntry({
+			const savedDay = day;
+			const entry = await api.addDiaryEntry({
 				entry_date: day,
 				meal_type: meal,
 				source: 'food',
 				food_id: selFood.id,
 				quantity: effectiveGrams
 			});
-			showToast(m.toast_added());
+			additions.push({ entry, day: savedDay });
+			rememberAdditions();
+			// A contagem em Pronto confirma cada inclusao; o aviso de amanha espera o fechamento.
+			if (savedDay <= localDay()) showToast(m.toast_added());
 			// permanece aberta: fecha so o painel de quantidade e segue lancando
 			selFood = null;
-			addedCount += 1;
 			onAdded();
 		} finally {
 			saving = false;
+			if (finishRequested) finishAdding();
 		}
 	}
 
@@ -310,19 +358,23 @@
 		if (!selRecipe) return;
 		saving = true;
 		try {
-			await api.addDiaryEntry({
+			const savedDay = day;
+			const entry = await api.addDiaryEntry({
 				entry_date: day,
 				meal_type: meal,
 				source: 'recipe',
 				recipe_id: selRecipe.id,
 				quantity: effectiveServings
 			});
-			showToast(m.toast_added());
+			additions.push({ entry, day: savedDay });
+			rememberAdditions();
+			// A contagem em Pronto confirma cada inclusao; o aviso de amanha espera o fechamento.
+			if (savedDay <= localDay()) showToast(m.toast_added());
 			selRecipe = null;
-			addedCount += 1;
 			onAdded();
 		} finally {
 			saving = false;
+			if (finishRequested) finishAdding();
 		}
 	}
 </script>
@@ -398,7 +450,8 @@
 			</div>
 			<button
 				type="button"
-				onclick={onClose}
+				onclick={finishAdding}
+				disabled={saving}
 				class="shrink-0 rounded-full bg-emerald-600 px-5 py-2.5 text-sm font-bold text-white active:bg-emerald-700"
 			>
 				{m.done()}{addedCount > 0 ? ` (${addedCount})` : ''}

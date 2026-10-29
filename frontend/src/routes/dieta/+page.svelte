@@ -1,4 +1,6 @@
 <script lang="ts">
+	import { DIARY_CHANGED_EVENT, showDiaryAdded } from '$lib/diaryFeedback';
+	import { shiftLocalDay, validDiaryDay } from '$lib/diaryDates';
 	import { closeOnBack } from '$lib/modalBack';
 	import { page } from '$app/state';
 	import {
@@ -56,12 +58,7 @@
 
 	let diary = $state<DiaryDay | null>(null);
 	let loading = $state(true);
-	let day = $state(localDay());
-	const requestedDay = page.url.searchParams.get('dia');
-	if (requestedDay && /^\d{4}-\d{2}-\d{2}$/.test(requestedDay) && requestedDay <= localDay()
-		&& !Number.isNaN(new Date(requestedDay + 'T12:00:00').getTime())) {
-		day = requestedDay;
-	}
+	let day = $state(validDiaryDay(page.url.searchParams.get('dia')));
 
 	// "O que falta hoje": lacuna + sugestoes vindas do motor de recomendacao.
 	let gap = $state<DiaryGap | null>(null);
@@ -276,29 +273,48 @@
 
 	const nf = new Intl.NumberFormat(getLocale());
 	const df = new Intl.DateTimeFormat(getLocale(), { weekday: 'short', day: '2-digit', month: 'short' });
-	const today = localDay();
+	let today = $state(localDay());
+	const tomorrow = $derived(shiftLocalDay(today, 1));
 	const isToday = $derived(day === today);
+	const isTomorrow = $derived(day === tomorrow);
+	const isFutureDay = $derived(day > today);
+	const shiftDay = shiftLocalDay;
 
-	function shiftDay(base: string, delta: number): string {
-		const d = new Date(base + 'T12:00:00');
-		d.setDate(d.getDate() + delta);
-		return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
-	}
+	$effect(() => {
+		const refreshDay = () => { today = localDay(); };
+		const timer = setInterval(refreshDay, 30000);
+		window.addEventListener('focus', refreshDay);
+		document.addEventListener('visibilitychange', refreshDay);
+		return () => {
+			clearInterval(timer);
+			window.removeEventListener('focus', refreshDay);
+			document.removeEventListener('visibilitychange', refreshDay);
+		};
+	});
+
+	$effect(() => {
+		function onDiaryChanged(event: Event): void {
+			if ((event as CustomEvent<string>).detail === day) void reloadSilent();
+		}
+		window.addEventListener(DIARY_CHANGED_EVENT, onDiaryChanged);
+		return () => window.removeEventListener(DIARY_CHANGED_EVENT, onDiaryChanged);
+	});
 
 	// Recarrega os dados SEM o spinner de tela cheia: usado quando a modal de
 	// adicionar lanca um item, para a lista atualizar mantendo a posicao de rolagem.
 	async function reloadSilent(): Promise<void> {
 		const mealSharingLoaded = loadMealSharing();
+		const analysisDay = day > today ? today : day;
 		[diary, gap, mealPlan, supplements, dietPeriod] = await Promise.all([
 			api.getDiary(day),
 			api.getDiaryGap(day, 4, mealByTime()),
 			api.getMealPlan(day),
 			api.getSupplements(day),
-			api.getDietPeriod(day)
+			api.getDietPeriod(analysisDay)
 		]);
 		try {
 			// alimenta o badge de "nova sugestao" do card de Periodo da dieta
-			periodAdaptive = await api.getAdaptiveTdee(day, new Date().getTimezoneOffset());
+			periodAdaptive = await api.getAdaptiveTdee(analysisDay, new Date().getTimezoneOffset());
 		} catch {
 			// extra: sem dados suficientes ainda, o card fica sem badge
 		}
@@ -351,7 +367,7 @@
 	// onde ela estava. Le uma vez so, ao montar a tela - e a volta que remonta.
 	const adicaoInterrompida = page.state.addEntry;
 	if (adicaoInterrompida) {
-		day = adicaoInterrompida.day;
+		day = validDiaryDay(adicaoInterrompida.day);
 		addingToMeal = adicaoInterrompida.meal;
 	}
 
@@ -846,7 +862,7 @@
 	}
 
 	const dayLabel = $derived(
-		isToday ? m.today_title() : df.format(new Date(day + 'T12:00:00'))
+		isToday ? m.today_title() : isTomorrow ? m.diary_tomorrow_title() : df.format(new Date(day + 'T12:00:00'))
 	);
 	const isEmpty = $derived(diary ? diary.meals.every((g) => g.entries.length === 0) && !diary.estimates?.length : true);
 
@@ -862,15 +878,16 @@
 	async function addSuggestion(s: FoodSuggestion, meal: MealType = mealByTime()): Promise<void> {
 		addBusy = true;
 		try {
-			await api.addDiaryEntry({
+			const savedDay = day;
+			const entry = await api.addDiaryEntry({
 				entry_date: day,
 				meal_type: meal,
 				source: 'food',
 				food_id: s.food.id,
 				quantity: s.grams
 			});
+			showDiaryAdded(entry, savedDay, m.reco_added());
 			await load();
-			showToast(m.reco_added());
 		} finally {
 			addBusy = false;
 		}
@@ -880,9 +897,10 @@
 	async function addRecipeBySlug(slug: string, meal: MealType): Promise<void> {
 		addBusy = true;
 		try {
-			await api.addDiaryFromLibrary({ slug, entry_date: day, meal_type: meal });
+			const savedDay = day;
+			const entry = await api.addDiaryFromLibrary({ slug, entry_date: day, meal_type: meal });
+			showDiaryAdded(entry, savedDay, m.reco_added());
 			await load();
-			showToast(m.reco_added());
 		} finally {
 			addBusy = false;
 		}
@@ -954,7 +972,8 @@
 		if (suggSubsMeal === null) return;
 		addBusy = true;
 		try {
-			await api.addDiaryEntry({
+			const savedDay = day;
+			const entry = await api.addDiaryEntry({
 				entry_date: day,
 				meal_type: suggSubsMeal,
 				source: 'food',
@@ -962,8 +981,8 @@
 				quantity: item.grams
 			});
 			suggSubs = null;
+			showDiaryAdded(entry, savedDay, m.reco_added());
 			await load();
-			showToast(m.reco_added());
 		} finally {
 			addBusy = false;
 		}
@@ -1152,7 +1171,8 @@
 		<button
 			type="button"
 			onclick={() => (showCalendar = true)}
-			class="flex min-w-24 items-center justify-center gap-1.5 rounded-full bg-white px-3 py-1.5 text-sm font-semibold text-slate-600 shadow-sm active:bg-slate-100"
+			title={df.format(new Date(day + 'T12:00:00'))}
+			class="flex min-w-24 items-center justify-center gap-1.5 rounded-full px-3 py-1.5 text-sm font-semibold shadow-sm transition-colors motion-reduce:transition-none {isTomorrow ? 'bg-amber-50 text-amber-900 ring-1 ring-amber-300' : 'bg-white text-slate-600 active:bg-slate-100'}"
 		>
 			<svg viewBox="0 0 24 24" class="h-4 w-4 text-slate-400" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="17" rx="2" /><path d="M3 9h18M8 2v4M16 2v4" stroke-linecap="round" /></svg>
 			{dayLabel}
@@ -1160,7 +1180,7 @@
 		<button
 			type="button"
 			aria-label={m.next_day()}
-			disabled={isToday}
+			disabled={day >= tomorrow}
 			onclick={() => (day = shiftDay(day, 1))}
 			class="grid h-9 w-9 place-items-center rounded-full bg-white text-slate-500 shadow-sm active:bg-slate-100 disabled:opacity-30"
 		>
@@ -1184,7 +1204,7 @@
 	<!-- Ciclo menstrual (opt-in): a borda gradiente viva marca o card sem invadir o
 		 resto da tela. So existe com o acompanhamento ligado, e a informacao nunca
 		 depende do efeito (movimento reduzido para a animacao e a borda fica). -->
-	{#if cycle?.enabled}
+	{#if cycle?.enabled && !isFutureDay}
 		<div class="cycle-card relative mt-3 rounded-2xl bg-white p-3.5 shadow-sm">
 			{#if cycle.phase}
 				<button
@@ -1235,7 +1255,7 @@
 		</div>
 	{/if}
 
-	{#if dietPeriod}
+	{#if dietPeriod && !isFutureDay}
 		<button
 			type="button"
 			onclick={openPeriodModal}
@@ -1757,7 +1777,7 @@
 		{/if}
 	</div>
 
-	{#if supplements && supplements.total > 0}
+	{#if !isFutureDay && supplements && supplements.total > 0}
 		<section class="mt-4 rounded-3xl bg-white p-4 shadow-sm" data-tour="diet-supplements">
 			<div class="mb-3 flex items-center justify-between gap-2">
 				<div>
@@ -1800,7 +1820,7 @@
 				{/each}
 			</div>
 		</section>
-	{:else if !loading}
+	{:else if !loading && !isFutureDay}
 		<section class="mt-4 rounded-3xl bg-white p-4 shadow-sm" data-tour="diet-supplements">
 			<h2 class="font-bold text-slate-900">{m.supplements_title()}</h2>
 			<p class="mt-1 text-xs text-slate-500">{m.supp_empty_hint()}</p>
@@ -2382,7 +2402,8 @@
 	<CalendarModal
 		value={day}
 		marked={loggedDays}
-		max={today}
+		max={tomorrow}
+		highlighted={tomorrow}
 		onmonth={loadMonthMarks}
 		onselect={(d) => (day = d)}
 		onclose={() => (showCalendar = false)}

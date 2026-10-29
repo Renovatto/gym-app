@@ -16,6 +16,7 @@
 		legend,
 		legendAlt,
 		max,
+		highlighted,
 		onselect,
 		onclose,
 		onmonth
@@ -26,6 +27,7 @@
 		legend?: string;
 		legendAlt?: string;
 		max?: string;
+		highlighted?: string;
 		onselect: (date: string) => void;
 		onclose: () => void;
 		onmonth?: (year: number, month: number) => void;
@@ -133,6 +135,7 @@
 					disabled={isFuture}
 					onclick={() => pick(day)}
 					class="relative mx-auto grid h-10 w-10 place-items-center rounded-full text-sm font-semibold transition-colors
+						{iso === highlighted && !isSelected && !isFuture ? 'ring-2 ring-amber-400' : ''}
 						{isSelected
 						? 'bg-emerald-600 text-white'
 						: isFuture

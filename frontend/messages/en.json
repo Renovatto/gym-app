@@ -1120,5 +1120,19 @@
 	"adaptive_calories_missing": "Some entries have no calorie information. Correct them before adopting the estimate.",
 	"diary_open_day": "Open diary",
 	"diary_previous_entries": "Previous entries",
-	"diary_previous_entries_help": "Entries created with the previous form. You can correct or delete them here. To log new meals, use the diary’s foods and recipes."
+	"diary_previous_entries_help": "Entries created with the previous form. You can correct or delete them here. To log new meals, use the diary’s foods and recipes.",
+	"diary_tomorrow_title": "Tomorrow",
+	"diary_tomorrow_saved": "Saved for tomorrow · {date}",
+	"diary_undo": "Undo",
+	"diary_undo_question": "Undo these additions?",
+	"diary_undo_description": "“{name}” will be removed from {meal} ({date}).",
+	"diary_undo_confirm": "Confirm deletion",
+	"diary_undo_removing": "Deleting…",
+	"diary_undo_done": "Additions undone.",
+	"diary_undo_seconds": "{seconds} s",
+	"diary_undo_expires": "Time left to undo.",
+	"diary_limit_error": "You can log meals up to tomorrow.",
+	"diary_tomorrow_one_item": "{meal} · 1 item added.",
+	"diary_tomorrow_items": "{meal} · {count} items added.",
+	"diary_undo_group_description": "The {count} items added to {meal} ({date}) will be deleted."
 }

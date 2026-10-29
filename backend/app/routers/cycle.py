@@ -29,11 +29,11 @@ def _tracking_row(session: SessionDep, user_id: int) -> CycleTracking | None:
 
 
 def _to_out(
-    tracking: CycleTracking | None, day: date, session: SessionDep, user: User
+    tracking: CycleTracking | None, day: date, session: SessionDep, user: User, tz_offset: int = 0,
 ) -> CycleOut:
     phase, source, day_in_cycle, stale = resolve_phase(tracking, day)
     # so busca sugestao quando ha fase: desligado nao custa consulta nenhuma
-    suggestions = phase_food_suggestions(session, user, day) if phase else []
+    suggestions = phase_food_suggestions(session, user, day, tz_offset=tz_offset) if phase else []
     return CycleOut(
         suggestions=suggestions,
         enabled=bool(tracking and tracking.enabled),
@@ -54,8 +54,9 @@ def get_cycle(
     # dia LOCAL do cliente (padrao do projeto): a estimativa por data depende do
     # "hoje" de quem usa, nao do fuso do servidor
     day: date = Query(...),
+    tz_offset: int = Query(0, ge=-840, le=720),
 ) -> CycleOut:
-    return _to_out(_tracking_row(session, user.id), day, session, user)
+    return _to_out(_tracking_row(session, user.id), day, session, user, tz_offset)
 
 
 @router.put("", response_model=CycleOut)
@@ -64,6 +65,7 @@ def save_cycle(
     user: CurrentUser,
     session: SessionDep,
     day: date = Query(...),
+    tz_offset: int = Query(0, ge=-840, le=720),
 ) -> CycleOut:
     """Upsert da configuracao inteira (uma linha por usuaria).
 
@@ -89,4 +91,4 @@ def save_cycle(
     session.add(tracking)
     session.commit()
     session.refresh(tracking)
-    return _to_out(tracking, day, session, user)
+    return _to_out(tracking, day, session, user, tz_offset)

@@ -22,3 +22,7 @@ admin/.svelte-kit/
 # Documentacao interna de infra: contem IP, caminhos e dados operacionais do
 # servidor. O repositorio e publico, entao nada daqui pode ser versionado.
 docs/
+
+# Resultados locais dos testes de interface.
+frontend/test-results/
+frontend/playwright-report/

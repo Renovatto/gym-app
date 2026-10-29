@@ -20,6 +20,7 @@ from sqlmodel import Session
 
 from .cycle import PHASE_BONUS, PHASE_MIN_COVERAGE, phase_boost_food_ids
 from .diary_tracking import load_day_record
+from .diary_dates import local_today
 from ..models import (
     DiaryEntry,
     EntrySource,
@@ -126,9 +127,11 @@ def _staple_food_ids(session: Session) -> set[int]:
     return set(rows)
 
 
-def _food_frequency(session: Session, user_id: int, today: date) -> Counter:
+def _food_frequency(session: Session, user_id: int, today: date, tz_offset: int = 0) -> Counter:
     """Quantas vezes o usuario lancou cada alimento nos ultimos _RECENT_DAYS dias
     (para personalizar o ranking pelo habito atual, ver _RECENT_DAYS)."""
+    # O dia selecionado pode ser amanha; planejamento ainda nao e habito consumido.
+    today = min(today, local_today(tz_offset))
     since = today - timedelta(days=_RECENT_DAYS)
     rows = session.exec(
         select(DiaryEntry.food_id)
@@ -136,14 +139,19 @@ def _food_frequency(session: Session, user_id: int, today: date) -> Counter:
         .where(DiaryEntry.source == EntrySource.food)
         .where(DiaryEntry.food_id.is_not(None))
         .where(DiaryEntry.entry_date >= since)
+        .where(DiaryEntry.entry_date <= today)
     ).all()
     return Counter(fid for fid in rows if fid is not None)
 
 
-def _meal_food_frequency(session: Session, user_id: int, meal_type: MealType, today: date) -> Counter:
+def _meal_food_frequency(
+    session: Session, user_id: int, meal_type: MealType, today: date, tz_offset: int = 0,
+) -> Counter:
     """Como _food_frequency, mas so conta lancamentos NAQUELE tipo de refeicao - o
     sinal que realmente evita sugestao fora de hora (ex.: camarao no cafe da manha):
     um alimento so pesa aqui se a pessoa MESMA ja comeu ele nesse horario antes."""
+    # O dia selecionado pode ser amanha; planejamento ainda nao e habito consumido.
+    today = min(today, local_today(tz_offset))
     since = today - timedelta(days=_RECENT_DAYS)
     rows = session.exec(
         select(DiaryEntry.food_id)
@@ -152,6 +160,7 @@ def _meal_food_frequency(session: Session, user_id: int, meal_type: MealType, to
         .where(DiaryEntry.food_id.is_not(None))
         .where(DiaryEntry.meal_type == meal_type)
         .where(DiaryEntry.entry_date >= since)
+        .where(DiaryEntry.entry_date <= today)
     ).all()
     return Counter(fid for fid in rows if fid is not None)
 
@@ -365,6 +374,7 @@ def suggest_recipes(
 
 def suggest_gap(
     session: Session, user: User, day: date, limit: int = 4, meal_type: MealType | None = None,
+    tz_offset: int = 0,
 ) -> DiaryGapOut:
     """O que falta hoje + alimentos que fecham a lacuna (motor reativo).
 
@@ -397,12 +407,12 @@ def suggest_gap(
             primary="complete", suggestions=[],
         )
     primary_attr, primary_code = chosen
-    freq = _food_frequency(session, user.id, day)
+    freq = _food_frequency(session, user.id, day, tz_offset)
     max_freq = max(freq.values(), default=1)
     fav_ids = favorite_food_ids(session, user.id)
     meal_freq, max_meal_freq = None, 0
     if meal_type is not None:
-        meal_freq = _meal_food_frequency(session, user.id, meal_type, day)
+        meal_freq = _meal_food_frequency(session, user.id, meal_type, day, tz_offset)
         max_meal_freq = max(meal_freq.values(), default=0)
     suggestions = _rank_suggestions(
         session, user, remaining, primary_attr, freq, max_freq, limit, fav_ids,
@@ -418,7 +428,7 @@ def suggest_gap(
 
 
 def phase_food_suggestions(
-    session: Session, user: User, day: date, limit: int = 3
+    session: Session, user: User, day: date, limit: int = 3, tz_offset: int = 0,
 ) -> list[FoodSuggestionOut]:
     """Alimentos da fase do ciclo que cabem no que falta do dia.
 
@@ -442,7 +452,7 @@ def phase_food_suggestions(
     chosen = _choose_primary(remaining)
     if chosen is None:
         return []  # dia fechado: nao ha lacuna para preencher
-    freq = _food_frequency(session, user.id, day)
+    freq = _food_frequency(session, user.id, day, tz_offset)
     return _rank_suggestions(
         session, user, remaining, chosen[0], freq, max(freq.values(), default=1),
         limit, favorite_food_ids(session, user.id), restrict_ids=phase_ids,
@@ -518,7 +528,7 @@ def match_pantry_recipes(
 
 def build_meal(
     session: Session, user: User, day: date, have_ids: list[int],
-    meal_type: MealType | None = None, limit: int = 6,
+    meal_type: MealType | None = None, limit: int = 6, tz_offset: int = 0,
 ) -> BuildMealOut:
     """'Montar refeicao com o que tenho em casa': terceira porta do motor, ao lado de
     suggest_gap/substitutes. Mesmos codigos de estado que o card do dia ja usa
@@ -536,12 +546,12 @@ def build_meal(
 
     have_set = set(have_ids)
     staple_ids = _staple_food_ids(session)
-    freq = _food_frequency(session, user.id, day)
+    freq = _food_frequency(session, user.id, day, tz_offset)
     max_freq = max(freq.values(), default=1)
     fav_ids = favorite_food_ids(session, user.id)
     meal_freq, max_meal_freq = None, 0
     if meal_type is not None:
-        meal_freq = _meal_food_frequency(session, user.id, meal_type, day)
+        meal_freq = _meal_food_frequency(session, user.id, meal_type, day, tz_offset)
         max_meal_freq = max(meal_freq.values(), default=0)
 
     food_matches = _rank_suggestions(
@@ -614,7 +624,9 @@ def _bounded_remaining(target: MacrosOut, consumed: MacrosOut, day_left: MacrosO
     )
 
 
-def meal_plan(session: Session, user: User, day: date, limit: int = 3) -> MealPlanOut:
+def meal_plan(
+    session: Session, user: User, day: date, limit: int = 3, tz_offset: int = 0,
+) -> MealPlanOut:
     """Cardapio consultivo: por refeicao, o alvo, o que ja tem e sugestoes que fecham."""
     goals = _daily_target(session, user.id)
     if load_day_record(session, user.id, day).estimates:
@@ -633,7 +645,7 @@ def meal_plan(session: Session, user: User, day: date, limit: int = 3) -> MealPl
         ).all()
     )
     remaining_day = _remaining(goals, _sum_entries(entries))
-    freq = _food_frequency(session, user.id, day)
+    freq = _food_frequency(session, user.id, day, tz_offset)
     max_freq = max(freq.values(), default=1)
     fav_ids = favorite_food_ids(session, user.id)
     # resolvido uma vez: a fase e a mesma para as quatro refeicoes do dia
@@ -651,7 +663,7 @@ def meal_plan(session: Session, user: User, day: date, limit: int = 3) -> MealPl
         consumed_meal = _sum_entries([e for e in entries if e.meal_type == meal_type])
         meal_remaining = _bounded_remaining(target, consumed_meal, remaining_day)
         chosen = _choose_primary(meal_remaining)
-        meal_freq = _meal_food_frequency(session, user.id, meal_type, day)
+        meal_freq = _meal_food_frequency(session, user.id, meal_type, day, tz_offset)
         max_meal_freq = max(meal_freq.values(), default=0)
         suggestions = (
             _rank_suggestions(
@@ -679,13 +691,13 @@ def meal_plan(session: Session, user: User, day: date, limit: int = 3) -> MealPl
 
 
 def substitutes(
-    session: Session, user: User, food: Food, grams: float, limit: int = 6
+    session: Session, user: User, food: Food, grams: float, limit: int = 6, tz_offset: int = 0,
 ) -> SubstitutesOut:
     """Equivalentes na mesma categoria, igualando o macro-ancora e mostrando o delta de kcal."""
     anchor = _CATEGORY_ANCHOR.get(food.category, "kcal")
     source_macros = food_macros(food, grams)
     source_anchor_value = _attr(source_macros, anchor)  # anchor pode ser 'kcal'
-    freq = _food_frequency(session, user.id, date.today())
+    freq = _food_frequency(session, user.id, local_today(tz_offset), tz_offset)
     fav_ids = favorite_food_ids(session, user.id)
 
     ranked: list[tuple[float, Food, float, MacrosOut, float]] = []

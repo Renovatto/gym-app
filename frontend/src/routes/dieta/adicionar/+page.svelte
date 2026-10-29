@@ -4,11 +4,12 @@
 	// (ex.: botao "+" do dashboard) continuarem funcionando.
 	import { goto } from '$app/navigation';
 	import { page } from '$app/state';
-	import { localDay, type MealType } from '$lib/api';
+	import { type MealType } from '$lib/api';
+	import { validDiaryDay } from '$lib/diaryDates';
 	import AddEntryModal from '$lib/components/AddEntryModal.svelte';
 
 	const meal = $derived((page.url.searchParams.get('meal') ?? 'breakfast') as MealType);
-	const entryDay = $derived(page.url.searchParams.get('day') ?? localDay());
+	const entryDay = $derived(validDiaryDay(page.url.searchParams.get('day')));
 </script>
 
 <!-- trapBack={false}: aqui a "modal" e a tela toda, entao o Voltar do aparelho ja
@@ -18,6 +19,6 @@
 	{meal}
 	day={entryDay}
 	trapBack={false}
-	onClose={() => goto('/dieta', { replaceState: true })}
+	onClose={() => goto(`/dieta?dia=${entryDay}`, { replaceState: true })}
 	onAdded={() => {}}
 />

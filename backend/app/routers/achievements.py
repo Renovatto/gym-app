@@ -9,6 +9,7 @@ from sqlmodel import asc, desc, select
 from ..deps import CurrentUser, SessionDep
 from ..models import DiaryEntry, Profile, UserAchievement, WeightLog, WorkoutSession
 from ..schemas import AchievementOut, AchievementsOut, WeeklyMissionOut
+from ..services.diary_dates import local_today
 from ..services.achievements import (
     ACHIEVEMENTS,
     STREAK_WEEK_GOAL,
@@ -29,6 +30,9 @@ def list_achievements(
     day: date = Query(..., description="Dia local do cliente"),
     tz_offset: int = Query(0, description="Date.getTimezoneOffset() do cliente"),
 ) -> AchievementsOut:
+    # Consultar amanha nao antecipa a semana nem as conquistas de consumo.
+    today = local_today(tz_offset)
+    day = min(day, today)
     # Datas locais dos treinos concluidos (para contagem, semana e streak).
     sessions = session.exec(
         select(WorkoutSession)
@@ -52,7 +56,9 @@ def list_achievements(
 
     # Dieta: numero de dias distintos com algum lancamento.
     diet_dates = session.exec(
-        select(DiaryEntry.entry_date).where(DiaryEntry.user_id == user.id)
+        select(DiaryEntry.entry_date)
+        .where(DiaryEntry.user_id == user.id)
+        .where(DiaryEntry.entry_date <= today)
     ).all()
     diet_days = len(set(diet_dates))
 

@@ -1,6 +1,7 @@
 <script lang="ts">
 	import {
 		api,
+		localDay,
 		type BuildMeal,
 		type Food,
 		type FoodSuggestion,
@@ -13,6 +14,7 @@
 	import RecipeViewModal from '$lib/components/RecipeViewModal.svelte';
 	import Spinner from '$lib/components/Spinner.svelte';
 	import { mealTypeLabel } from '$lib/labels';
+	import { showDiaryAdditions, type DiaryAddition } from '$lib/diaryFeedback';
 	import { showToast } from '$lib/toast.svelte';
 	import { m } from '$lib/paraglide/messages';
 	import { getLocale } from '$lib/paraglide/runtime';
@@ -34,7 +36,7 @@
 	} = $props();
 
 	// Voltar fecha a modal em vez de descartar a refeicao sendo montada.
-	$effect(() => closeOnBack(() => onClose()));
+	$effect(() => closeOnBack(finishAdding));
 
 	const nf = new Intl.NumberFormat(getLocale());
 
@@ -126,39 +128,57 @@
 	}
 
 	let addBusy = $state(false);
+	let additions = $state<DiaryAddition[]>([]);
+	let finishRequested = false;
+
+	function finishAdding(): void {
+		if (addBusy) {
+			finishRequested = true;
+			return;
+		}
+		showDiaryAdditions(additions);
+		additions = [];
+		onClose();
+	}
 	async function addRecipeMatch(match: PantryRecipeMatch): Promise<void> {
 		if (addBusy) return;
 		addBusy = true;
 		try {
 			// quantity precisa ir explicito: e calculada (pode ser fracionaria), diferente
 			// da sugestao simples do card do dia, que sempre usa 1 porcao implicita.
-			await api.addDiaryFromLibrary({
+			const savedDay = day;
+			const entry = await api.addDiaryFromLibrary({
 				slug: match.slug,
 				entry_date: day,
 				meal_type: meal,
 				quantity: match.quantity
 			});
-			showToast(m.reco_added());
+			additions.push({ entry, day: savedDay });
+			if (savedDay <= localDay()) showToast(m.reco_added());
 			onAdded();
 		} finally {
 			addBusy = false;
+			if (finishRequested) finishAdding();
 		}
 	}
 	async function addFoodMatch(fm: FoodSuggestion): Promise<void> {
 		if (addBusy) return;
 		addBusy = true;
 		try {
-			await api.addDiaryEntry({
+			const savedDay = day;
+			const entry = await api.addDiaryEntry({
 				entry_date: day,
 				meal_type: meal,
 				source: 'food',
 				food_id: fm.food.id,
 				quantity: fm.grams
 			});
-			showToast(m.reco_added());
+			additions.push({ entry, day: savedDay });
+			if (savedDay <= localDay()) showToast(m.reco_added());
 			onAdded();
 		} finally {
 			addBusy = false;
+			if (finishRequested) finishAdding();
 		}
 	}
 
@@ -176,10 +196,11 @@
 			</div>
 			<button
 				type="button"
-				onclick={onClose}
+				onclick={finishAdding}
+				disabled={addBusy}
 				class="shrink-0 rounded-full bg-emerald-600 px-5 py-2.5 text-sm font-bold text-white active:bg-emerald-700"
 			>
-				{m.done()}
+				{m.done()}{additions.length > 0 ? ` (${additions.length})` : ''}
 			</button>
 		</div>
 

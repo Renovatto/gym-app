@@ -32,6 +32,7 @@ from ..services.goals import (
 )
 from ..services.dietplan import maintenance_override as diet_maintenance_override
 from ..services.diary_tracking import DayRecord, load_day_records
+from ..services.diary_dates import local_today
 
 router = APIRouter(prefix="/me/summary", tags=["stats"])
 
@@ -56,6 +57,8 @@ def week_summary(
     # "Esta semana": com janela movel, abrir o app numa segunda mostrava desde a terca
     # anterior, ou seja, a semana passada. Segunda como inicio segue o isocalendar()
     # que as conquistas ja usam - as duas telas precisam contar a mesma semana.
+    # O resumo termina no dia real mesmo quando o diario seleciona amanha.
+    day = min(day, local_today(tz_offset))
     start_day = day - timedelta(days=day.weekday())
     start_utc, end_utc = _utc_window(start_day, day, tz_offset)
 
@@ -177,6 +180,8 @@ def adaptive_tdee(
     day: date = Query(..., description="Dia local do cliente (fim da janela)"),
     tz_offset: int = Query(0, description="Date.getTimezoneOffset() do cliente"),
 ) -> AdaptiveTdeeOut:
+    # Uma consulta futura nao transforma hoje ou amanha em dias completos.
+    day = min(day, local_today(tz_offset))
     profile = session.exec(select(Profile).where(Profile.user_id == user.id)).first()
     if profile is None:
         raise HTTPException(status.HTTP_404_NOT_FOUND, detail="PROFILE_NOT_FOUND")
