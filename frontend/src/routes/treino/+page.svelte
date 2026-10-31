@@ -1,11 +1,16 @@
 <script lang="ts">
 	import { closeOnBack } from '$lib/modalBack';
 	import { slide } from 'svelte/transition';
-	import { goto } from '$app/navigation';
+import { beforeNavigate, goto } from '$app/navigation';
 	import {
 		api,
+		ApiError,
 		localDay,
 		type Exercise,
+		type RoutineDifficulty,
+		type WorkoutEquipmentMode,
+		type RoutineGeneration,
+		type RoutineGenerationPreview,
 		type Routine,
 		type RoutineItemInput,
 		type RoutinePeriodization,
@@ -17,11 +22,14 @@
 	} from '$lib/api';
 	import CalendarModal from '$lib/components/CalendarModal.svelte';
 	import ExercisePhotoModal from '$lib/components/ExercisePhotoModal.svelte';
+	import ExerciseBrowser from '$lib/components/ExerciseBrowser.svelte';
+	import Stepper from '$lib/components/Stepper.svelte';
 	import LogActivityModal from '$lib/components/LogActivityModal.svelte';
-	import { activityKindLabel } from '$lib/labels';
+	import { activityKindLabel, levelLabel } from '$lib/labels';
 	import { showToast } from '$lib/toast.svelte';
 	import SkeletonScreen from '$lib/components/SkeletonScreen.svelte';
 	import { m } from '$lib/paraglide/messages';
+	import { errorMessage } from '$lib/errors';
 	import { getLocale } from '$lib/paraglide/runtime';
 	import { isShowingAnchor } from '$lib/tour.svelte';
 
@@ -141,21 +149,161 @@
 	let variationSourceId = $state<number | null>(null);
 	let variationLoading = $state<number | null>(null);
 	let variationBusy = $state(false);
+	let variationApplyUnknown = $state(false);
+	let variationOperationKey = $state<string | null>(null);
+	let variationApplyIntent = $state<{ type: 'renew' } | { type: 'copy'; archiveOriginal: boolean } | null>(null);
+	let variationCopyName = $state('');
+	let variationSetupOpen = $state(false);
+	let variationLevel = $state<RoutineDifficulty>('intermediate');
+	let variationEquipment = $state<WorkoutEquipmentMode>('mixed');
+	let variationSetupMode = $state<'single' | 'bulk'>('single');
+	let selectedRenewalIds = $state<number[]>([]);
+	let variationSwapTarget = $state<{ routineId: number; itemIndex: number; bulk: boolean } | null>(null);
 
-	async function openVariation(routineId: number): Promise<void> {
+	function openVariation(routineId: number): void {
 		variationSourceId = routineId;
-		variationLoading = routineId;
+		variation = null;
+		variationSetupOpen = true;
+		variationSetupMode = 'single';
 		choosingVariationFate = false;
+	}
+
+	function closeVariation(): void {
+		if (variationBusy || variationApplyUnknown) return;
+		variation = null;
+		choosingVariationFate = false;
+		resetVariationApply();
+	}
+
+	async function generateVariationPreview(): Promise<void> {
+		if (variationSetupMode === 'single' && variationSourceId === null) return;
+		if (variationSetupMode === 'bulk' && selectedRenewalIds.length === 0) return;
+		variationLoading = variationSourceId ?? -1;
+		bulkRenewalLoading = variationSetupMode === 'bulk';
+		const selectedLevel = variationLevel;
+		const selectedEquipment = variationEquipment;
 		try {
-			variation = await api.getRoutineVariation(routineId);
+			if (variationSetupMode === 'single') {
+				variation = await api.getRoutineVariation(
+					variationSourceId!,
+					selectedLevel,
+					selectedEquipment
+				);
+				resetVariationApply();
+			} else {
+				const selected = selectedRenewalIds;
+				bulkRenewal = await Promise.all(
+					selected.map((routineId) =>
+						api.getRoutineVariation(routineId, selectedLevel, selectedEquipment)
+					)
+				);
+			}
+			variationSetupOpen = false;
+		} catch (error) {
+			showToast(errorMessage(error instanceof ApiError ? error.code : 'GENERIC_ERROR'));
 		} finally {
 			variationLoading = null;
+			bulkRenewalLoading = false;
 		}
 	}
 
 	async function anotherVariation(): Promise<void> {
-		if (variationSourceId === null) return;
-		variation = await api.getRoutineVariation(variationSourceId);
+		if (variationSourceId === null || variationBusy || variationApplyUnknown) return;
+		variationBusy = true;
+		try {
+			variation = await api.getRoutineVariation(
+				variationSourceId,
+				variationLevel,
+				variationEquipment
+			);
+			resetVariationApply();
+		} catch (error) {
+			showToast(errorMessage(error instanceof ApiError ? error.code : 'GENERIC_ERROR'));
+		} finally {
+			variationBusy = false;
+		}
+	}
+
+	function resetVariationApply(): void {
+		variationApplyUnknown = false;
+		variationOperationKey = null;
+		variationApplyIntent = null;
+		variationCopyName = '';
+	}
+
+	function exerciseMatchesPreferences(
+		exercise: Exercise,
+		level: RoutineDifficulty,
+		equipmentMode: WorkoutEquipmentMode
+	): boolean {
+		const allowedLevels: Record<RoutineDifficulty, string[]> = {
+			beginner: ['beginner'],
+			intermediate: ['beginner', 'intermediate'],
+			advanced: ['beginner', 'intermediate', 'expert']
+		};
+		const allowedEquipment: Record<WorkoutEquipmentMode, string[]> = {
+			free_weights: ['barbell', 'dumbbell', 'kettlebell', 'bodyweight'],
+			machines: ['machine', 'cable'],
+			mixed: ['barbell', 'dumbbell', 'kettlebell', 'bodyweight', 'machine', 'cable']
+		};
+		return (
+			exercise.level !== null &&
+			allowedLevels[level].includes(exercise.level) &&
+			allowedEquipment[equipmentMode].includes(exercise.equipment)
+		);
+	}
+
+	function chooseVariationReplacement(exercise: Exercise): void {
+		if (!variationSwapTarget) return;
+		if (!exerciseMatchesPreferences(exercise, variationLevel, variationEquipment)) {
+			showToast(m.routine_exercise_outside_preferences());
+			return;
+		}
+		const { routineId, itemIndex, bulk } = variationSwapTarget;
+		if (bulk && bulkRenewal) {
+			bulkRenewal = bulkRenewal.map((routineVariation) =>
+				routineVariation.routine_id !== routineId
+					? routineVariation
+					: {
+							...routineVariation,
+							items: routineVariation.items.map((item, index) =>
+								index === itemIndex
+									? { ...item, new_exercise: exercise, matches_preferences: true }
+									: item
+							)
+						}
+			);
+			bulkOperationKey = null;
+			bulkApplyUnknown = false;
+		} else if (variation?.routine_id === routineId) {
+			variation = {
+				...variation,
+				items: variation.items.map((item, index) =>
+					index === itemIndex
+						? { ...item, new_exercise: exercise, matches_preferences: true }
+						: item
+				)
+			};
+			resetVariationApply();
+		}
+		variationSwapTarget = null;
+	}
+
+	function variationSwapSelectedIds(): Set<number> {
+		if (!variationSwapTarget) return new Set();
+		if (variationSwapTarget.bulk) {
+			const source = bulkRenewal?.find((item) => item.routine_id === variationSwapTarget!.routineId);
+			return new Set(
+				(source?.items ?? [])
+					.filter((_, index) => index !== variationSwapTarget!.itemIndex)
+					.map((item) => item.new_exercise.id)
+			);
+		}
+		return new Set(
+			(variation?.items ?? [])
+				.filter((_, index) => index !== variationSwapTarget!.itemIndex)
+				.map((item) => item.new_exercise.id)
+		);
 	}
 
 	// itens de rotina a partir da variacao (troca o exercicio, mantem series/alvos)
@@ -176,16 +324,9 @@
 
 	async function saveVariation(): Promise<void> {
 		if (!variation) return;
-		variationBusy = true;
-		try {
-			// salvar na rotina E renovar: reinicia a validade do ciclo junto
-			await api.renewRoutines([{ routine_id: variation.routine_id, items: variationItems() }]);
-			variation = null;
-			await load();
-			showToast(m.vary_saved());
-		} finally {
-			variationBusy = false;
-		}
+		if (variationApplyIntent === null) variationApplyIntent = { type: 'renew' };
+		if (variationApplyIntent.type !== 'renew') return;
+		await applyVariationIntent();
 	}
 
 	// "Usar hoje" cria uma rotina NOVA a partir da variacao. Sem escolher o destino da
@@ -195,18 +336,65 @@
 
 	async function useVariationToday(archiveOriginal: boolean): Promise<void> {
 		if (!variation) return;
-		variationBusy = true;
-		try {
+		if (variationApplyIntent === null) {
+			variationApplyIntent = { type: 'copy', archiveOriginal };
 			const label = new Date().toLocaleDateString(getLocale(), { day: '2-digit', month: '2-digit' });
-			const name = `${variation.name} — ${m.variation_word()} ${label}`.slice(0, 80);
-			const created = await api.createRoutine(name, variationItems());
-			if (archiveOriginal && variationSourceId !== null) {
-				await api.archiveRoutine(variationSourceId);
-				showToast(m.routine_archived_toast());
+			variationCopyName = `${variation.name} — ${m.variation_word()} ${label}`.slice(0, 80);
+		}
+		if (
+			variationApplyIntent.type !== 'copy' ||
+			variationApplyIntent.archiveOriginal !== archiveOriginal
+		) return;
+		await applyVariationIntent();
+	}
+
+	async function applyVariationIntent(): Promise<void> {
+		if (!variation || !variationApplyIntent || variationBusy) return;
+		variationBusy = true;
+		variationOperationKey ??= crypto.randomUUID();
+		try {
+			const intent = variationApplyIntent;
+			const source = allRoutines.find((routine) => routine.id === variation!.routine_id);
+			if (!source) throw new ApiError('ROUTINE_PLAN_STALE', 409);
+			const isRenewal = intent.type === 'renew';
+			const archiveOriginal = intent.type === 'copy' && intent.archiveOriginal;
+			if (isRenewal || archiveOriginal) {
+				if (source.archived_at) throw new ApiError('ROUTINE_PLAN_STALE', 409);
 			}
+			const result = await api.applyRoutinePlan({
+				operation_key: variationOperationKey,
+				destination: 'append',
+				routines: [
+					isRenewal
+						? { routine_id: source.id, name: variation.name, items: variationItems() }
+						: { name: variationCopyName, items: variationItems() }
+				],
+				archive_ids: archiveOriginal ? [source.id] : [],
+				expected_sources: { [source.id]: source.revision },
+				source_ids: !isRenewal && !archiveOriginal ? [source.id] : []
+			});
 			variation = null;
 			choosingVariationFate = false;
-			await start(created.id);
+			resetVariationApply();
+			if (!isRenewal && intent.archiveOriginal) showToast(m.routine_archived_toast());
+			if (isRenewal) {
+				showToast(m.vary_saved());
+				await refreshAfterRoutineApply();
+				return;
+			}
+			try {
+				await start(result.routines[0].id);
+			} catch {
+				showToast(m.routine_created_start_failed());
+			}
+			await refreshAfterRoutineApply();
+		} catch (error) {
+			if (error instanceof ApiError && error.code === 'NETWORK_ERROR') {
+				variationApplyUnknown = true;
+			} else {
+				resetVariationApply();
+			}
+			showToast(errorMessage(error instanceof ApiError ? error.code : 'GENERIC_ERROR'));
 		} finally {
 			variationBusy = false;
 		}
@@ -219,17 +407,17 @@
 	let bulkRenewalBusy = $state(false);
 	// rotina cuja variacao esta sendo sorteada de novo (desabilita so o botao dela)
 	let rerollingRoutineId = $state<number | null>(null);
+	let bulkOperationKey = $state<string | null>(null);
+	let bulkApplyUnknown = $state(false);
 
 	async function openBulkRenewal(): Promise<void> {
 		selectedPeriod = null;
-		bulkRenewalLoading = true;
-		try {
-			bulkRenewal = await Promise.all(
-				renewableRoutines.map((p) => api.getRoutineVariation(p.routine_id))
-			);
-		} finally {
-			bulkRenewalLoading = false;
-		}
+		selectedRenewalIds = renewableRoutines.map((period) => period.routine_id);
+		variationSetupMode = 'bulk';
+		variationSetupOpen = true;
+		bulkRenewal = null;
+		bulkOperationKey = null;
+		bulkApplyUnknown = false;
 	}
 
 	async function rerollBulkVariation(index: number): Promise<void> {
@@ -237,27 +425,61 @@
 		const routineId = bulkRenewal[index].routine_id;
 		rerollingRoutineId = routineId;
 		try {
-			const fresh = await api.getRoutineVariation(routineId);
-			if (bulkRenewal) bulkRenewal[index] = fresh;
+			const fresh = await api.getRoutineVariation(routineId, variationLevel, variationEquipment);
+			if (bulkRenewal) {
+				bulkRenewal[index] = fresh;
+				bulkOperationKey = null;
+				bulkApplyUnknown = false;
+			}
 		} finally {
 			rerollingRoutineId = null;
 		}
 	}
 
 	async function confirmBulkRenewal(): Promise<void> {
-		if (!bulkRenewal) return;
+		if (!bulkRenewal || bulkApplyUnknown && !bulkOperationKey) return;
 		bulkRenewalBusy = true;
 		try {
 			const count = bulkRenewal.length;
-			await api.renewRoutines(
-				bulkRenewal.map((v) => ({ routine_id: v.routine_id, items: variationToItems(v) }))
+			const sources = bulkRenewal.map((variation) =>
+				allRoutines.find((routine) => routine.id === variation.routine_id)
 			);
+			if (sources.some((routine) => !routine)) throw new ApiError('ROUTINE_PLAN_STALE', 409);
+			bulkOperationKey ??= crypto.randomUUID();
+			await api.applyRoutinePlan({
+				operation_key: bulkOperationKey,
+				destination: 'append',
+				routines: bulkRenewal.map((routineVariation) => ({
+					routine_id: routineVariation.routine_id,
+					name: routineVariation.name,
+					items: variationToItems(routineVariation)
+				})),
+				expected_sources: Object.fromEntries(
+					sources.map((routine) => [routine!.id, routine!.revision])
+				)
+			});
 			bulkRenewal = null;
-			await load();
+			bulkOperationKey = null;
+			bulkApplyUnknown = false;
 			showToast(m.renew_all_toast({ count }));
+			await refreshAfterRoutineApply();
+		} catch (error) {
+			if (error instanceof ApiError && error.code === 'NETWORK_ERROR') {
+				bulkApplyUnknown = true;
+			} else {
+				bulkOperationKey = null;
+				bulkApplyUnknown = false;
+			}
+			showToast(errorMessage(error instanceof ApiError ? error.code : 'GENERIC_ERROR'));
 		} finally {
 			bulkRenewalBusy = false;
 		}
+	}
+
+	function closeBulkRenewal(): void {
+		if (bulkRenewalBusy || bulkApplyUnknown) return;
+		bulkRenewal = null;
+		bulkOperationKey = null;
 	}
 
 	// Rotina "vencida" (passou do mesociclo): sinaliza hora de variar o estimulo.
@@ -270,6 +492,21 @@
 		return df.format(new Date(iso + 'T12:00:00'));
 	}
 	let creatingTemplate = $state(false);
+	let templatePreview = $state<RoutineGenerationPreview | null>(null);
+	let templateFrequency = $state(3);
+	let templateLevel = $state<RoutineDifficulty>('beginner');
+	let templateEquipment = $state<WorkoutEquipmentMode>('mixed');
+	let templatePreviewPreferences = $state<{
+		level: RoutineDifficulty;
+		equipment: WorkoutEquipmentMode;
+	} | null>(null);
+	let templateDestination = $state<'append' | 'replace'>('append');
+	let templateSwapTarget = $state<{ routineIndex: number; itemIndex: number } | null>(null);
+	let templateApplyBusy = $state(false);
+	let templateApplyUnknown = $state(false);
+	let templateOperationKey = $state<string | null>(null);
+	let templatePreviewSourceIds = $state<number[]>([]);
+	let templatePreviewSourceRevisions = $state<Record<number, string>>({});
 	// null = fechado; 'choose' = escolher como montar; 'template' = escolher a frequencia
 	let addWorkoutStep = $state<'choose' | 'template' | null>(null);
 	let completingId = $state<number | null>(null);
@@ -302,13 +539,153 @@
 
 	async function useTemplate(frequency: number): Promise<void> {
 		creatingTemplate = true;
+		const selectedLevel = templateLevel;
+		const selectedEquipment = templateEquipment;
 		try {
-			await api.createFromTemplate(frequency);
+			templateFrequency = frequency;
+			const preview = await api.previewRoutines(frequency, selectedLevel, selectedEquipment);
+			templatePreview = preview;
+			templatePreviewPreferences = { level: selectedLevel, equipment: selectedEquipment };
+			templateDestination = routines.length > 0 ? 'append' : 'replace';
+			templatePreviewSourceIds = routines.map((routine) => routine.id);
+			templatePreviewSourceRevisions = Object.fromEntries(
+				routines.map((routine) => [routine.id, routine.revision])
+			);
+			templateOperationKey = crypto.randomUUID();
+			templateApplyUnknown = false;
 			addWorkoutStep = null;
-			await load();
-			showToast(m.toast_created());
 		} finally {
 			creatingTemplate = false;
+		}
+	}
+
+	function updateTemplateItem(
+		routineIndex: number,
+		itemIndex: number,
+		changes: Partial<RoutineGeneration['items'][number]>
+	): void {
+		if (!templatePreview) return;
+		const nextRoutines = templatePreview.routines.map((routine, currentRoutineIndex) => ({
+			...routine,
+			items: routine.items.map((item, currentItemIndex) =>
+				currentRoutineIndex === routineIndex && currentItemIndex === itemIndex
+					? { ...item, ...changes }
+					: item
+			)
+		}));
+		templatePreview = { ...templatePreview, routines: nextRoutines };
+		templateOperationKey = crypto.randomUUID();
+		templateApplyUnknown = false;
+	}
+
+	function toggleRenewalSelection(routineId: number): void {
+		selectedRenewalIds = selectedRenewalIds.includes(routineId)
+			? selectedRenewalIds.filter((selectedId) => selectedId !== routineId)
+			: [...selectedRenewalIds, routineId];
+	}
+
+	function resetTemplateOperationKey(): void {
+		if (templateApplyUnknown) return;
+		templateOperationKey = crypto.randomUUID();
+	}
+
+	function closeTemplatePreview(): void {
+		if (templateApplyBusy || templateApplyUnknown) return;
+		templatePreview = null;
+		templatePreviewPreferences = null;
+		templateSwapTarget = null;
+		templateOperationKey = null;
+	}
+
+	function chooseTemplateReplacement(exercise: Exercise): void {
+		if (!templateSwapTarget) return;
+		const current = templatePreview?.routines[templateSwapTarget.routineIndex]?.items[
+			templateSwapTarget.itemIndex
+		];
+		if (!current) return;
+		if (
+			current.exercise.muscle_group !== exercise.muscle_group ||
+			current.exercise.kind !== exercise.kind
+		) {
+			showToast(m.routine_exercise_same_group_type());
+			return;
+		}
+		const preferences = templatePreviewPreferences;
+		if (
+			!preferences ||
+			!exerciseMatchesPreferences(exercise, preferences.level, preferences.equipment)
+		) {
+			showToast(m.routine_exercise_outside_preferences());
+			return;
+		}
+		const { routineIndex, itemIndex } = templateSwapTarget;
+		const existing = templatePreview?.routines[routineIndex]?.items ?? [];
+		if (existing.some((item, index) => index !== itemIndex && item.exercise.id === exercise.id)) {
+			return;
+		}
+		updateTemplateItem(routineIndex, itemIndex, { exercise, target_weight_kg: null });
+		templateSwapTarget = null;
+	}
+
+	function templateSwapSelectedIds(): Set<number> {
+		if (!templateSwapTarget || !templatePreview) return new Set();
+		return new Set(
+			templatePreview.routines[templateSwapTarget.routineIndex].items
+				.filter((_, index) => index !== templateSwapTarget!.itemIndex)
+				.map((item) => item.exercise.id)
+		);
+	}
+
+	async function applyTemplatePreview(): Promise<void> {
+		if (!templatePreview || !templateOperationKey || templateApplyBusy) return;
+		templateApplyBusy = true;
+		try {
+			await api.applyRoutinePlan({
+				operation_key: templateOperationKey,
+				destination: templateDestination,
+				routines: templatePreview.routines.map((routine) => ({
+					name: routine.name,
+					items: routine.items.map((item) => ({
+						exercise_id: item.exercise.id,
+						slot_id: item.slot_id,
+						target_sets: item.target_sets,
+						target_reps: item.target_reps,
+						target_weight_kg: item.target_weight_kg,
+						target_duration_min: item.target_duration_min,
+						rest_seconds: item.rest_seconds
+					}))
+				})),
+				expected_active_ids: templateDestination === 'replace' ? templatePreviewSourceIds : [],
+				expected_sources:
+					templateDestination === 'replace' ? templatePreviewSourceRevisions : {},
+				generation: {
+					frequency: templateFrequency,
+					level: templatePreviewPreferences?.level ?? templateLevel,
+					equipment_mode: templatePreviewPreferences?.equipment ?? templateEquipment
+				}
+			});
+			templatePreview = null;
+			templatePreviewPreferences = null;
+			templateOperationKey = null;
+			templateApplyUnknown = false;
+			showToast(m.toast_created());
+			await refreshAfterRoutineApply();
+		} catch (error) {
+			if (error instanceof ApiError && error.code === 'NETWORK_ERROR') {
+				templateApplyUnknown = true;
+			} else {
+				showToast(errorMessage(error instanceof ApiError ? error.code : 'GENERIC_ERROR'));
+			}
+		} finally {
+			templateApplyBusy = false;
+		}
+	}
+
+	async function refreshAfterRoutineApply(): Promise<void> {
+		try {
+			await load();
+		} catch (error) {
+			showToast(errorMessage(error instanceof ApiError ? error.code : 'GENERIC_ERROR'));
 		}
 	}
 
@@ -555,19 +932,45 @@
 	// "outra variacao" troca a variacao). O efeito depende so de ABERTA/FECHADA: se
 	// dependesse do valor, cada troca fecharia e reabriria a trava do Voltar, e o
 	// back() dessa reabertura fechava a modal - o botao parecia nao fazer nada.
-	const addWorkoutOpen = $derived(addWorkoutStep !== null);
 	const variationOpen = $derived(variation !== null);
+	const bulkRenewalOpen = $derived(bulkRenewal !== null);
+	const workoutSetupOpen = $derived(addWorkoutStep !== null || templatePreview !== null);
+
+	function closeWorkoutSetupOnBack(): void {
+		if (templatePreview !== null) {
+			closeTemplatePreview();
+			return;
+		}
+		addWorkoutStep = null;
+	}
+	// A escolha do formato e a previa sao etapas da mesma jornada/modal. Um unico
+	// trap evita que o cleanup da primeira etapa consuma o historico da previa.
 	$effect(() => {
-		if (addWorkoutOpen) return closeOnBack(() => (addWorkoutStep = null));
+		if (workoutSetupOpen) return closeOnBack(closeWorkoutSetupOnBack);
 	});
 	$effect(() => {
 		if (previewRoutine) return closeOnBack(() => (previewRoutine = null));
 	});
 	$effect(() => {
-		if (variationOpen) return closeOnBack(() => (variation = null));
+		if (variationOpen) return closeOnBack(closeVariation);
 	});
 	$effect(() => {
-		if (bulkRenewal !== null) return closeOnBack(() => (bulkRenewal = null));
+		if (bulkRenewalOpen) return closeOnBack(closeBulkRenewal);
+	});
+	$effect(() => {
+		if (variationSetupOpen) return closeOnBack(() => (variationSetupOpen = false));
+	});
+	$effect(() => {
+		if (templateSwapTarget) return closeOnBack(() => (templateSwapTarget = null));
+	});
+	$effect(() => {
+		if (variationSwapTarget) return closeOnBack(() => (variationSwapTarget = null));
+	});
+
+	beforeNavigate(({ cancel }) => {
+		if (!templateApplyUnknown && !variationApplyUnknown && !bulkApplyUnknown) return;
+		cancel();
+		showToast(m.routine_apply_unknown());
 	});
 </script>
 
@@ -894,6 +1297,42 @@
 	<section class="rounded-3xl bg-white p-6 shadow-sm">
 		<h2 class="text-lg font-bold text-slate-900">{m.no_routines_title()}</h2>
 		<p class="mt-1 text-sm text-slate-500">{m.no_routines_text()}</p>
+		<p class="mt-5 mb-2 text-sm font-semibold text-slate-600">{m.workout_level_label()}</p>
+		<div class="grid grid-cols-3 gap-2">
+			{#each ['beginner', 'intermediate', 'advanced'] as level (level)}
+				<button
+					type="button"
+					disabled={creatingTemplate}
+					aria-pressed={templateLevel === level}
+					onclick={() => (templateLevel = level as RoutineDifficulty)}
+					class="min-h-11 rounded-xl border px-2 text-xs font-semibold {templateLevel === level
+						? 'workout-action border-emerald-700'
+						: 'border-slate-200 bg-white text-slate-600'} disabled:opacity-50"
+				>
+					{level === 'advanced' ? m.level_expert() : levelLabel(level as 'beginner' | 'intermediate')}
+				</button>
+			{/each}
+		</div>
+		<p class="mt-4 mb-2 text-sm font-semibold text-slate-600">{m.workout_equipment_label()}</p>
+		<div class="grid grid-cols-3 gap-2">
+			{#each ['free_weights', 'machines', 'mixed'] as equipmentMode (equipmentMode)}
+				<button
+					type="button"
+					disabled={creatingTemplate}
+					aria-pressed={templateEquipment === equipmentMode}
+					onclick={() => (templateEquipment = equipmentMode as WorkoutEquipmentMode)}
+					class="min-h-11 rounded-xl border px-2 text-xs font-semibold {templateEquipment === equipmentMode
+						? 'workout-action border-emerald-700'
+						: 'border-slate-200 bg-white text-slate-600'} disabled:opacity-50"
+				>
+					{equipmentMode === 'free_weights'
+						? m.workout_equipment_free_weights()
+						: equipmentMode === 'machines'
+							? m.workout_equipment_machines()
+							: m.workout_equipment_mixed()}
+				</button>
+			{/each}
+		</div>
 		<p class="mt-5 mb-2 text-sm font-semibold text-slate-600">{m.pick_frequency()}</p>
 		<div class="grid grid-cols-2 gap-2">
 			{#each [2, 3, 4, 5] as freq (freq)}
@@ -1643,14 +2082,60 @@
 	</div>
 {/if}
 
+{#if variationSetupOpen}
+	<div class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4" role="presentation">
+		<div class="w-full max-w-md rounded-3xl bg-white p-5 shadow-xl" role="dialog" aria-modal="true" aria-labelledby="variation-setup-title">
+			<h2 id="variation-setup-title" class="text-lg font-bold text-slate-900">
+				{variationSetupMode === 'single' ? m.vary_title() : m.renew_all_title()}
+			</h2>
+			<p class="mt-1 text-sm text-slate-500">{m.routine_generation_preferences_title()}</p>
+			{#if variationSetupMode === 'single'}
+				<p class="mt-1 text-sm font-semibold text-slate-700">{allRoutines.find((routine) => routine.id === variationSourceId)?.name}</p>
+			{:else}
+				<p class="mt-3 text-sm font-semibold text-slate-700">{m.renew_select_intro()}</p>
+				<div class="mt-2 max-h-36 space-y-1 overflow-y-auto">
+					{#each renewableRoutines as period (period.routine_id)}
+						<label class="flex min-h-11 items-center gap-3 rounded-xl bg-slate-50 px-3 text-sm text-slate-800">
+							<input type="checkbox" disabled={bulkRenewalLoading} checked={selectedRenewalIds.includes(period.routine_id)} onchange={() => toggleRenewalSelection(period.routine_id)} />
+							<span class="truncate">{period.name}</span>
+						</label>
+					{/each}
+				</div>
+			{/if}
+			<p class="mt-4 mb-2 text-sm font-semibold text-slate-600">{m.workout_level_label()}</p>
+			<div class="grid grid-cols-3 gap-2">
+				{#each ['beginner', 'intermediate', 'advanced'] as level (level)}
+					<button type="button" disabled={variationLoading !== null || bulkRenewalLoading} aria-pressed={variationLevel === level} onclick={() => (variationLevel = level as RoutineDifficulty)} class="min-h-11 rounded-xl border px-2 text-xs font-semibold {variationLevel === level ? 'workout-action border-emerald-700' : 'border-slate-200 bg-white text-slate-600'} disabled:opacity-50">
+						{level === 'advanced' ? m.level_expert() : levelLabel(level as 'beginner' | 'intermediate')}
+					</button>
+				{/each}
+			</div>
+			<p class="mt-4 mb-2 text-sm font-semibold text-slate-600">{m.workout_equipment_label()}</p>
+			<div class="grid grid-cols-3 gap-2">
+				{#each ['free_weights', 'machines', 'mixed'] as equipmentMode (equipmentMode)}
+					<button type="button" disabled={variationLoading !== null || bulkRenewalLoading} aria-pressed={variationEquipment === equipmentMode} onclick={() => (variationEquipment = equipmentMode as WorkoutEquipmentMode)} class="min-h-11 rounded-xl border px-2 text-xs font-semibold {variationEquipment === equipmentMode ? 'workout-action border-emerald-700' : 'border-slate-200 bg-white text-slate-600'} disabled:opacity-50">
+						{equipmentMode === 'free_weights' ? m.workout_equipment_free_weights() : equipmentMode === 'machines' ? m.workout_equipment_machines() : m.workout_equipment_mixed()}
+					</button>
+				{/each}
+			</div>
+			<div class="mt-5 flex gap-2">
+				<button type="button" disabled={variationLoading !== null || bulkRenewalLoading} onclick={() => (variationSetupOpen = false)} class="h-12 flex-1 rounded-2xl border-2 border-slate-200 font-semibold text-slate-700">{m.cancel()}</button>
+				<button type="button" disabled={variationLoading !== null || bulkRenewalLoading || (variationSetupMode === 'bulk' && selectedRenewalIds.length === 0)} onclick={generateVariationPreview} class="workout-action h-12 flex-1 rounded-2xl font-bold disabled:opacity-50">
+					{variationLoading !== null || bulkRenewalLoading ? m.routine_applying() : m.routine_preview_action()}
+				</button>
+			</div>
+		</div>
+	</div>
+{/if}
+
 <!-- Variar o treino: previa (de -> para) e escolher usar hoje ou salvar -->
 {#if variation}
 	<div
 		class="fixed inset-0 z-40 flex items-center justify-center bg-black/50 p-4"
 		role="button"
 		tabindex="-1"
-		onclick={() => (variation = null)}
-		onkeydown={(e) => e.key === 'Escape' && (variation = null)}
+		onclick={closeVariation}
+		onkeydown={(e) => e.key === 'Escape' && closeVariation()}
 	>
 		<div
 			class="flex max-h-[85dvh] w-full max-w-md flex-col rounded-3xl bg-white p-5"
@@ -1664,20 +2149,21 @@
 				<button
 					type="button"
 					aria-label={m.back()}
-					onclick={() => (variation = null)}
+					disabled={variationBusy || variationApplyUnknown}
+					onclick={closeVariation}
 					class="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-slate-100 text-slate-500 active:bg-slate-200"
 				>
 					<svg viewBox="0 0 24 24" class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 6l12 12M18 6L6 18" stroke-linecap="round" /></svg>
 				</button>
 			</div>
 			<p class="mb-3 text-sm text-slate-500">{variation.name}</p>
+			{#if variation.items.some((item) => !item.matches_preferences)}
+				<p class="mb-2 rounded-xl bg-amber-50 p-3 text-sm text-amber-900">{m.routine_variation_partial()}</p>
+			{/if}
 			<div class="space-y-1.5 overflow-y-auto">
 				{#each variation.items as it, i (i)}
-					<button
-						type="button"
-						onclick={() => (photoOf = it.new_exercise)}
-						class="flex w-full items-center gap-3 rounded-2xl bg-slate-50 p-2 text-left active:bg-slate-100"
-					>
+					<div class="flex items-center gap-2 rounded-2xl bg-slate-50 p-2">
+					<button type="button" onclick={() => (photoOf = it.new_exercise)} class="flex min-w-0 flex-1 items-center gap-3 text-left">
 						<span class="grid h-12 w-12 shrink-0 place-items-center overflow-hidden rounded-xl bg-slate-100">
 							{#if it.new_exercise.media_urls.length > 0}
 								<img src={it.new_exercise.media_urls[0]} alt="" class="h-full w-full object-cover" loading="lazy" />
@@ -1691,16 +2177,21 @@
 						</div>
 						<svg viewBox="0 0 24 24" class="h-4 w-4 shrink-0 text-slate-300" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3" /><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7z" /></svg>
 					</button>
+					<button type="button" disabled={variationBusy || variationApplyUnknown} onclick={() => (variationSwapTarget = { routineId: variation!.routine_id, itemIndex: i, bulk: false })} class="min-h-10 shrink-0 rounded-xl border border-emerald-200 bg-white px-3 text-xs font-bold text-emerald-800 disabled:opacity-50">{m.replace_exercise()}</button>
+					</div>
 				{/each}
 			</div>
-			{#if choosingVariationFate}
+			{#if variationApplyUnknown}
+				<p class="mt-3 rounded-xl bg-amber-50 px-4 py-3 text-sm text-amber-900">{m.routine_apply_unknown()}</p>
+				<button type="button" disabled={variationBusy} onclick={applyVariationIntent} class="workout-action mt-2 h-12 w-full rounded-2xl font-bold disabled:opacity-50">{variationBusy ? m.routine_applying() : m.routine_retry_same()}</button>
+			{:else if choosingVariationFate}
 				<p class="mt-3 shrink-0 rounded-xl bg-slate-100 px-4 py-3 text-sm font-medium text-slate-700">
 					{m.vary_today_archive_question()}
 				</p>
 				<div class="mt-2 flex shrink-0 gap-2">
 					<button
 						type="button"
-						disabled={variationBusy}
+						disabled={variationBusy || variationApplyUnknown}
 						onclick={() => useVariationToday(false)}
 						class="h-12 flex-1 rounded-2xl border-2 border-slate-200 font-semibold text-slate-700 active:bg-slate-100 disabled:opacity-50"
 					>
@@ -1708,9 +2199,9 @@
 					</button>
 					<button
 						type="button"
-						disabled={variationBusy}
+						disabled={variationBusy || variationApplyUnknown}
 						onclick={() => useVariationToday(true)}
-						class="h-12 flex-1 rounded-2xl bg-emerald-600 font-bold text-white active:bg-emerald-700 disabled:opacity-50"
+						class="workout-action h-12 flex-1 rounded-2xl font-bold disabled:opacity-50"
 					>
 						{m.vary_today_archive_original()}
 					</button>
@@ -1718,8 +2209,9 @@
 			{:else}
 			<button
 				type="button"
+				disabled={variationBusy || variationApplyUnknown}
 				onclick={anotherVariation}
-				class="mt-3 flex h-10 w-full shrink-0 items-center justify-center gap-2 rounded-2xl border-2 border-slate-200 text-sm font-bold text-slate-600 active:bg-slate-100"
+				class="mt-3 flex h-10 w-full shrink-0 items-center justify-center gap-2 rounded-2xl border-2 border-slate-200 text-sm font-bold text-slate-600 active:bg-slate-100 disabled:opacity-50"
 			>
 				<svg viewBox="0 0 24 24" class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4v6h6M20 20v-6h-6M20 8a8 8 0 00-14-3M4 16a8 8 0 0014 3" stroke-linecap="round" stroke-linejoin="round" /></svg>
 				{m.vary_another()}
@@ -1727,7 +2219,7 @@
 			<div class="mt-2 flex shrink-0 gap-2">
 				<button
 					type="button"
-					disabled={variationBusy}
+					disabled={variationBusy || variationApplyUnknown}
 					onclick={() => (choosingVariationFate = true)}
 					class="h-12 flex-1 rounded-2xl border-2 border-emerald-200 font-bold text-emerald-700 active:bg-emerald-50 disabled:opacity-50"
 				>
@@ -1735,9 +2227,9 @@
 				</button>
 				<button
 					type="button"
-					disabled={variationBusy}
+					disabled={variationBusy || variationApplyUnknown}
 					onclick={saveVariation}
-					class="h-12 flex-1 rounded-2xl bg-emerald-600 font-bold text-white active:bg-emerald-700 disabled:opacity-50"
+					class="workout-action h-12 flex-1 rounded-2xl font-bold disabled:opacity-50"
 				>
 					{m.vary_save()}
 				</button>
@@ -1753,8 +2245,8 @@
 		class="fixed inset-0 z-40 flex items-center justify-center bg-black/50 p-4"
 		role="button"
 		tabindex="-1"
-		onclick={() => (bulkRenewal = null)}
-		onkeydown={(e) => e.key === 'Escape' && (bulkRenewal = null)}
+		onclick={closeBulkRenewal}
+		onkeydown={(e) => e.key === 'Escape' && closeBulkRenewal()}
 	>
 		<div
 			class="flex max-h-[85dvh] w-full max-w-md flex-col rounded-3xl bg-white p-5"
@@ -1768,13 +2260,17 @@
 				<button
 					type="button"
 					aria-label={m.close()}
-					onclick={() => (bulkRenewal = null)}
+					disabled={bulkRenewalBusy || bulkApplyUnknown}
+					onclick={closeBulkRenewal}
 					class="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-slate-100 text-slate-500 active:bg-slate-200"
 				>
 					<svg viewBox="0 0 24 24" class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 6l12 12M18 6L6 18" stroke-linecap="round" /></svg>
 				</button>
 			</div>
 			<p class="mb-3 text-sm text-slate-500">{m.renew_all_intro()}</p>
+			{#if bulkRenewal.some((item) => item.items.some((exercise) => !exercise.matches_preferences))}
+				<p class="mb-2 rounded-xl bg-amber-50 p-3 text-sm text-amber-900">{m.routine_variation_partial()}</p>
+			{/if}
 			<div class="space-y-4 overflow-y-auto">
 				{#each bulkRenewal as routineVariation, index (routineVariation.routine_id)}
 					<section>
@@ -1784,7 +2280,7 @@
 								type="button"
 								aria-label={m.vary_another()}
 								title={m.vary_another()}
-								disabled={rerollingRoutineId === routineVariation.routine_id}
+								disabled={rerollingRoutineId === routineVariation.routine_id || bulkApplyUnknown}
 								onclick={() => rerollBulkVariation(index)}
 								class="grid h-9 w-9 shrink-0 place-items-center rounded-full text-emerald-700 active:bg-emerald-50 disabled:opacity-50"
 							>
@@ -1793,11 +2289,8 @@
 						</div>
 						<div class="space-y-1.5">
 							{#each routineVariation.items as it, i (i)}
-								<button
-									type="button"
-									onclick={() => (photoOf = it.new_exercise)}
-									class="flex w-full items-center gap-3 rounded-2xl bg-slate-50 p-2 text-left active:bg-slate-100"
-								>
+								<div class="flex items-center gap-2 rounded-2xl bg-slate-50 p-2">
+								<button type="button" onclick={() => (photoOf = it.new_exercise)} class="flex min-w-0 flex-1 items-center gap-3 text-left">
 									<span class="grid h-10 w-10 shrink-0 place-items-center overflow-hidden rounded-xl bg-slate-100">
 										{#if it.new_exercise.media_urls.length > 0}
 											<img src={it.new_exercise.media_urls[0]} alt="" class="h-full w-full object-cover" loading="lazy" />
@@ -1810,6 +2303,8 @@
 										<p class="truncate text-sm font-bold text-slate-900">{it.new_exercise.name}</p>
 									</div>
 								</button>
+								<button type="button" disabled={bulkRenewalBusy || bulkApplyUnknown} onclick={() => (variationSwapTarget = { routineId: routineVariation.routine_id, itemIndex: i, bulk: true })} class="min-h-10 shrink-0 rounded-xl border border-emerald-200 bg-white px-3 text-xs font-bold text-emerald-800 disabled:opacity-50">{m.replace_exercise()}</button>
+								</div>
 							{/each}
 						</div>
 					</section>
@@ -1818,20 +2313,190 @@
 			<div class="mt-3 flex shrink-0 gap-2">
 				<button
 					type="button"
-					onclick={() => (bulkRenewal = null)}
+					disabled={bulkRenewalBusy || bulkApplyUnknown}
+					onclick={closeBulkRenewal}
 					class="h-12 flex-1 rounded-2xl border-2 border-slate-200 font-semibold text-slate-700 active:bg-slate-100"
 				>
-					{m.cancel()}
+								{m.cancel()}
 				</button>
 				<button
 					type="button"
 					disabled={bulkRenewalBusy || rerollingRoutineId !== null}
 					onclick={confirmBulkRenewal}
-					class="h-12 flex-1 rounded-2xl bg-emerald-600 font-bold text-white active:bg-emerald-700 disabled:opacity-50"
+					class="workout-action h-12 flex-1 rounded-2xl font-bold disabled:opacity-50"
 				>
-					{m.renew_all_confirm({ count: bulkRenewal.length })}
+					{bulkRenewalBusy ? m.routine_applying() : bulkApplyUnknown ? m.routine_retry_same() : m.renew_all_confirm({ count: bulkRenewal.length })}
 				</button>
 			</div>
+		</div>
+	</div>
+{/if}
+
+{#if templatePreview}
+	<div
+		class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-3"
+		role="presentation"
+		onclick={closeTemplatePreview}
+		onkeydown={(event) => event.key === 'Escape' && closeTemplatePreview()}
+	>
+		<div
+			class="flex max-h-[92dvh] w-full max-w-md flex-col rounded-3xl bg-white p-5 shadow-xl"
+			role="dialog"
+			aria-modal="true"
+			aria-labelledby="routine-preview-title"
+			tabindex="-1"
+			onclick={(event) => event.stopPropagation()}
+			onkeydown={() => {}}
+		>
+			<div class="mb-3 flex items-start justify-between gap-3">
+				<div>
+					<h2 id="routine-preview-title" class="text-lg font-bold text-slate-900">{m.routine_preview_title()}</h2>
+					<p class="text-sm text-slate-500">{templateFrequency}× · {templatePreview.routines.length} {m.workout_routines_count()}</p>
+				</div>
+				<button
+					type="button"
+					aria-label={m.close()}
+					disabled={templateApplyBusy || templateApplyUnknown}
+					onclick={closeTemplatePreview}
+					class="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-slate-100 text-slate-600 disabled:opacity-50"
+				>
+					×
+				</button>
+			</div>
+			{#if templatePreview.omitted_slots > 0}
+				<p class="mb-3 rounded-xl bg-amber-50 p-3 text-sm text-amber-900">{m.routine_preview_omitted({ count: templatePreview.omitted_slots })}</p>
+			{/if}
+			<div class="min-h-0 flex-1 space-y-4 overflow-y-auto pr-1">
+				{#each templatePreview.routines as routine, routineIndex (routineIndex)}
+					<section class="rounded-2xl border border-slate-200 p-3">
+						<label class="mb-2 block text-xs font-semibold text-slate-500" for="routine-preview-name-{routineIndex}">{m.routine_name_label()}</label>
+						<input
+							id="routine-preview-name-{routineIndex}"
+							value={routine.name}
+							disabled={templateApplyBusy || templateApplyUnknown}
+							oninput={(event) => {
+								templatePreview!.routines[routineIndex].name = event.currentTarget.value;
+								resetTemplateOperationKey();
+							}}
+							class="mb-3 h-11 w-full rounded-xl border border-slate-200 bg-white px-3 font-bold text-slate-900 outline-none focus:border-emerald-600 disabled:bg-slate-100"
+						/>
+						<div class="space-y-3">
+							{#each routine.items as item, itemIndex (item.exercise.id)}
+								<div class="rounded-xl bg-slate-50 p-3">
+									<div class="flex items-center gap-2">
+										<p class="min-w-0 flex-1 truncate text-sm font-semibold text-slate-900">{item.exercise.name}</p>
+										<button
+											type="button"
+											disabled={templateApplyBusy || templateApplyUnknown}
+											onclick={() => (templateSwapTarget = { routineIndex, itemIndex })}
+											class="min-h-10 shrink-0 rounded-xl border border-emerald-200 bg-white px-3 text-xs font-bold text-emerald-800 disabled:opacity-50"
+										>
+											{m.replace_exercise()}
+										</button>
+									</div>
+									<div class="mt-2 grid grid-cols-2 gap-3">
+										<label class="text-xs font-semibold text-slate-500">
+											{m.sets_label()}
+											<Stepper bind:value={item.target_sets} min={1} max={20} disabled={templateApplyBusy || templateApplyUnknown} onchange={resetTemplateOperationKey} />
+										</label>
+										<label class="text-xs font-semibold text-slate-500">
+											{m.reps_label()}
+											<Stepper bind:value={item.target_reps} min={1} max={100} disabled={templateApplyBusy || templateApplyUnknown} onchange={resetTemplateOperationKey} />
+										</label>
+									</div>
+								</div>
+							{/each}
+						</div>
+					</section>
+				{/each}
+			</div>
+			{#if routines.length > 0}
+				<div class="mt-3 rounded-2xl bg-slate-50 p-3">
+					<p class="mb-2 text-sm font-semibold text-slate-700">{m.routine_destination_label()}</p>
+					<div class="grid grid-cols-2 gap-2">
+						<button
+							type="button"
+							aria-pressed={templateDestination === 'append'}
+							disabled={templateApplyBusy || templateApplyUnknown}
+							onclick={() => {
+								templateDestination = 'append';
+								resetTemplateOperationKey();
+							}}
+						class="min-h-11 rounded-xl border px-2 text-sm font-semibold {templateDestination === 'append' ? 'workout-action border-emerald-700' : 'border-slate-200 bg-white text-slate-700'}"
+						>
+							{m.routine_destination_append()}
+						</button>
+						<button
+							type="button"
+							aria-pressed={templateDestination === 'replace'}
+							disabled={templateApplyBusy || templateApplyUnknown}
+							onclick={() => {
+								templateDestination = 'replace';
+								resetTemplateOperationKey();
+							}}
+						class="min-h-11 rounded-xl border px-2 text-sm font-semibold {templateDestination === 'replace' ? 'workout-action border-emerald-700' : 'border-slate-200 bg-white text-slate-700'}"
+						>
+							{m.routine_destination_replace()}
+						</button>
+					</div>
+					{#if templateDestination === 'replace'}
+						<p class="mt-2 text-xs text-slate-600">{m.routine_replace_impact({ count: templatePreviewSourceIds.length })}</p>
+						{#if routines.length > 0}
+							<ul class="mt-2 list-inside list-disc text-xs text-slate-600">
+								{#each routines as routine (routine.id)}<li>{routine.name}</li>{/each}
+							</ul>
+						{/if}
+					{/if}
+				</div>
+			{/if}
+			{#if templateApplyUnknown}
+				<p class="mt-3 rounded-xl bg-amber-50 p-3 text-sm text-amber-900">{m.routine_apply_unknown()}</p>
+			{/if}
+			<div class="mt-3 flex gap-2">
+				<button
+					type="button"
+					disabled={templateApplyBusy || templateApplyUnknown}
+					onclick={closeTemplatePreview}
+					class="h-12 flex-1 rounded-2xl border-2 border-slate-200 font-semibold text-slate-700 disabled:opacity-50"
+				>
+					{m.cancel()}
+				</button>
+				<button
+					type="button"
+					disabled={templateApplyBusy}
+					onclick={applyTemplatePreview}
+					class="workout-action h-12 flex-1 rounded-2xl font-bold disabled:opacity-50"
+				>
+					{templateApplyBusy ? m.routine_applying() : templateApplyUnknown ? m.routine_retry_same() : m.routine_apply_confirm()}
+				</button>
+			</div>
+		</div>
+	</div>
+{/if}
+
+{#if templateSwapTarget}
+	<div class="fixed inset-0 z-[60] flex items-end justify-center bg-black/50 p-3 sm:items-center">
+		<div class="max-h-[88dvh] w-full max-w-md overflow-y-auto rounded-3xl bg-slate-100 p-4">
+			<div class="mb-3 flex items-center justify-between">
+				<h2 class="text-lg font-bold text-slate-900">{m.replace_exercise()}</h2>
+				<button type="button" aria-label={m.close()} onclick={() => (templateSwapTarget = null)} class="grid h-10 w-10 place-items-center rounded-full bg-white text-slate-600">×</button>
+			</div>
+			<ExerciseBrowser
+				onPick={chooseTemplateReplacement}
+				selectedIds={templateSwapSelectedIds()}
+			/>
+		</div>
+	</div>
+{/if}
+
+{#if variationSwapTarget}
+	<div class="fixed inset-0 z-[60] flex items-end justify-center bg-black/50 p-3 sm:items-center">
+		<div class="max-h-[88dvh] w-full max-w-md overflow-y-auto rounded-3xl bg-slate-100 p-4">
+			<div class="mb-3 flex items-center justify-between">
+				<h2 class="text-lg font-bold text-slate-900">{m.replace_exercise()}</h2>
+				<button type="button" aria-label={m.close()} onclick={() => (variationSwapTarget = null)} class="grid h-10 w-10 place-items-center rounded-full bg-white text-slate-600">×</button>
+			</div>
+			<ExerciseBrowser onPick={chooseVariationReplacement} selectedIds={variationSwapSelectedIds()} />
 		</div>
 	</div>
 {/if}

@@ -6,6 +6,7 @@
 		step = 1,
 		unit = '',
 		decimals = 0,
+		disabled = false,
 		size = 'md',
 		onchange
 	}: {
@@ -15,6 +16,7 @@
 		step?: number;
 		unit?: string;
 		decimals?: number;
+		disabled?: boolean;
 		// md: controle padrao (formularios). sm: compacto para caber dois numa linha (execucao do treino).
 		size?: 'md' | 'sm';
 		onchange?: (value: number) => void;
@@ -87,6 +89,7 @@
 		<div class="flex items-baseline justify-center gap-0.5">
 			<input
 				inputmode="decimal"
+				disabled={disabled}
 				class="w-full min-w-0 border-none bg-transparent text-center text-lg font-bold text-slate-900 outline-none"
 				value={display(value)}
 				onfocus={(e) => e.currentTarget.select()}
@@ -99,12 +102,14 @@
 			<button
 				type="button"
 				aria-label="-"
+				disabled={disabled}
 				class="h-9 flex-1 rounded-lg border-2 border-slate-200 bg-white text-lg font-bold text-slate-700 active:bg-slate-100"
 				onclick={() => nudge(-1)}>−</button
 			>
 			<button
 				type="button"
 				aria-label="+"
+				disabled={disabled}
 				class="h-9 flex-1 rounded-lg border-2 border-slate-200 bg-white text-lg font-bold text-slate-700 active:bg-slate-100"
 				onclick={() => nudge(1)}>+</button
 			>
@@ -115,12 +120,14 @@
 		<button
 			type="button"
 			aria-label="-"
+			disabled={disabled}
 			class="h-12 w-12 shrink-0 rounded-xl border-2 border-slate-200 bg-white text-2xl font-bold text-slate-700 active:bg-slate-100"
 			onclick={() => nudge(-1)}>−</button
 		>
 		<div class="flex min-w-0 flex-1 items-baseline justify-center gap-0.5">
 			<input
 				inputmode="decimal"
+				disabled={disabled}
 				class="w-full min-w-0 border-none bg-transparent text-center text-2xl font-bold text-slate-900 outline-none"
 				value={display(value)}
 				onfocus={(e) => e.currentTarget.select()}
@@ -132,6 +139,7 @@
 		<button
 			type="button"
 			aria-label="+"
+			disabled={disabled}
 			class="h-12 w-12 shrink-0 rounded-xl border-2 border-slate-200 bg-white text-2xl font-bold text-slate-700 active:bg-slate-100"
 			onclick={() => nudge(1)}>+</button
 		>

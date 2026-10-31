@@ -295,6 +295,20 @@ class RoutineExercise(SQLModel, table=True):
     routine: Routine = Relationship(back_populates="items")
 
 
+class WorkoutRoutineReceipt(SQLModel, table=True):
+    """Resposta de uma aplicacao de rotinas, reutilizada em repeticoes apos timeout."""
+
+    __tablename__ = "workout_routine_receipts"
+    __table_args__ = (UniqueConstraint("user_id", "operation_key"),)
+
+    id: int | None = Field(default=None, primary_key=True)
+    user_id: int = Field(foreign_key="users.id", index=True, ondelete="CASCADE")
+    operation_key: str = Field(max_length=80)
+    request_hash: str = Field(max_length=64)
+    response_json: dict = Field(sa_type=JSON)
+    created_at: datetime = Field(default_factory=utcnow)
+
+
 class WorkoutSession(SQLModel, table=True):
     __tablename__ = "workout_sessions"
 

@@ -10,6 +10,26 @@ body {
 	background-color: var(--color-slate-50);
 }
 
+:root,
+.dark {
+	--color-workout-action: #047857;
+	--color-workout-action-active: #065f46;
+}
+
+.workout-action {
+	background-color: var(--color-workout-action) !important;
+	color: #fff !important;
+}
+
+.workout-action:active {
+	background-color: var(--color-workout-action-active) !important;
+}
+
+.workout-action:focus-visible {
+	outline: 3px solid #f59e0b;
+	outline-offset: 2px;
+}
+
 /*
  * Evita o "zoom por duplo-toque" do navegador ao clicar rapido em botoes (ex.: os
  * +/- do Stepper durante o treino). manipulation mantem rolagem e toque normais,

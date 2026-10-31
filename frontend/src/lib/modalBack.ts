@@ -23,11 +23,16 @@ import { untrack } from 'svelte';
 // Pilha das modais abertas. Com duas empilhadas (uma confirmacao dentro de uma
 // modal, por exemplo), o Voltar fecha SO a de cima - sem a pilha, o popstate
 // chegaria em todas ao mesmo tempo e o app fecharia as duas de uma vez.
-type Trap = { close: () => void };
+type Trap = { close: () => void; depth: number };
 const abertas: Trap[] = [];
 
 function aoVoltar(): void {
-	abertas.pop()?.close();
+	const trap = abertas.at(-1);
+	if (!trap) return;
+	// Fechar manualmente uma modal aninhada chama history.back() para consumir
+	// a entrada dela. Esse popstate retorna ao nivel da modal pai e nao deve fecha-la.
+	const profundidadeAtual = page.state.modalDepth ?? 0;
+	if (profundidadeAtual < trap.depth) abertas.pop()?.close();
 }
 
 /**
@@ -36,10 +41,10 @@ function aoVoltar(): void {
  * (ver AddEntryModal e a tela de Dieta).
  */
 export function closeOnBack(close: () => void, lembrete: App.PageState = {}): () => void {
-	const trap: Trap = { close };
+	const trap: Trap = { close, depth: abertas.length + 1 };
 	if (abertas.length === 0) window.addEventListener('popstate', aoVoltar);
 	abertas.push(trap);
-	const profundidade = abertas.length;
+	const profundidade = trap.depth;
 	// untrack: o pushState do SvelteKit le page.url por dentro, e sem isso o $effect
 	// que chamou esta funcao passaria a depender da URL - qualquer mudanca nela
 	// (um Voltar que so troca o estado, por exemplo) re-executaria o efeito e

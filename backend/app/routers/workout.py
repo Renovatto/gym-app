@@ -1,4 +1,6 @@
 from datetime import date, datetime, time, timedelta, timezone
+import hashlib
+import json
 
 from fastapi import APIRouter, Body, HTTPException, Query, status
 from sqlmodel import Session, asc, desc, select
@@ -6,7 +8,9 @@ from sqlmodel import Session, asc, desc, select
 from ..deps import CurrentUser, SessionDep
 from ..models import (
     Exercise,
+    ExerciseKind,
     ExerciseLevel,
+    Equipment,
     MuscleGroup,
     MuscleRegion,
     Routine,
@@ -15,6 +19,7 @@ from ..models import (
     SetLog,
     User,
     WorkoutSession,
+    WorkoutRoutineReceipt,
 )
 from ..schemas import (
     AlternativeExerciseOut,
@@ -30,6 +35,12 @@ from ..schemas import (
     RoutinePeriodizationOut,
     RoutineRenewIn,
     RoutineVariationOut,
+    RoutineGenerationIn,
+    RoutineGenerationItemOut,
+    RoutineGenerationOut,
+    RoutineGenerationRoutineOut,
+    RoutinePlanIn,
+    RoutinePlanOut,
     SessionOrderIn,
     SessionOut,
     SessionStartIn,
@@ -155,7 +166,147 @@ def _routine_out(session: Session, routine: Routine, user: User) -> RoutineOut:
         position=routine.position,
         items=out_items,
         archived_at=routine.archived_at,
+        revision=_routine_revision(routine),
     )
+
+
+def _routine_revision(routine: Routine) -> str:
+    """Fingerprint estrutural para evitar aplicar uma previa sobre uma rotina alterada."""
+    snapshot = {
+        "id": routine.id,
+        "name": routine.name,
+        "position": routine.position,
+        "cycle_started_at": routine.cycle_started_at.isoformat(),
+        "archived_at": routine.archived_at.isoformat() if routine.archived_at else None,
+        "items": [
+            {
+                "id": item.id,
+                "exercise_id": item.exercise_id,
+                "position": item.position,
+                "target_sets": item.target_sets,
+                "target_reps": item.target_reps,
+                "target_weight_kg": item.target_weight_kg,
+                "target_duration_min": item.target_duration_min,
+                "rest_seconds": item.rest_seconds,
+            }
+            for item in sorted(routine.items, key=lambda current: current.position)
+        ],
+    }
+    encoded = json.dumps(snapshot, sort_keys=True, separators=(",", ":"), default=str)
+    return hashlib.sha256(encoded.encode()).hexdigest()
+
+
+def _lock_workout_state(session: Session, user_id: int) -> None:
+    """Serializa inicio de sesion y cambios estructurales con el mismo lock de usuario."""
+    session.exec(select(User).where(User.id == user_id).with_for_update()).first()
+
+
+def _equipment_options(mode: str) -> set[Equipment]:
+    free_weights = {Equipment.barbell, Equipment.dumbbell, Equipment.kettlebell, Equipment.bodyweight}
+    machines = {Equipment.machine, Equipment.cable}
+    if mode == "free_weights":
+        return free_weights
+    if mode == "machines":
+        return machines
+    return free_weights | machines
+
+
+def _allowed_levels(level: str) -> set[ExerciseLevel]:
+    levels = {
+        "beginner": [ExerciseLevel.beginner],
+        "intermediate": [ExerciseLevel.beginner, ExerciseLevel.intermediate],
+        "advanced": [ExerciseLevel.beginner, ExerciseLevel.intermediate, ExerciseLevel.expert],
+    }
+    return set(levels[level])
+
+
+def _select_generation_exercise(
+    session: Session,
+    user: User,
+    original: Exercise,
+    used_ids: set[int],
+    allowed_levels: set[ExerciseLevel],
+    allowed_equipment: set[Equipment],
+) -> Exercise | None:
+    if (
+        original.id not in used_ids
+        and original.level in allowed_levels
+        and original.equipment in allowed_equipment
+    ):
+        return original
+
+    candidates = session.exec(
+        select(Exercise)
+        .where((Exercise.user_id.is_(None)) | (Exercise.user_id == user.id))
+        .where(Exercise.muscle_group == original.muscle_group)
+        .where(Exercise.kind == original.kind)
+        .where(Exercise.level.in_(allowed_levels))
+        .where(Exercise.equipment.in_(allowed_equipment))
+    ).all()
+    candidates = sorted(
+        (candidate for candidate in candidates if candidate.id not in used_ids),
+        key=lambda candidate: candidate.id,
+    )
+    return candidates[0] if candidates else None
+
+
+def _build_generation_preview(
+    session: Session, user: User, data: RoutineGenerationIn
+) -> tuple[RoutineGenerationOut, list[dict[str, tuple[MuscleGroup, ExerciseKind]]]]:
+    template = TEMPLATES.get(data.frequency)
+    if template is None:
+        raise HTTPException(status.HTTP_400_BAD_REQUEST, detail="TEMPLATE_NOT_FOUND")
+
+    levels = _allowed_levels(data.level)
+    equipment = _equipment_options(data.equipment_mode)
+    generated: list[RoutineGenerationRoutineOut] = []
+    required_slots: list[dict[str, tuple[MuscleGroup, ExerciseKind]]] = []
+    omitted_slots = 0
+    for routine_index, (name, slugs) in enumerate(template):
+        used_ids: set[int] = set()
+        items: list[RoutineGenerationItemOut] = []
+        routine_slots: dict[str, tuple[MuscleGroup, ExerciseKind]] = {}
+        for slot_index, slug in enumerate(slugs):
+            original = exercise_by_slug(session, slug)
+            if original is None:
+                omitted_slots += 1
+                continue
+            selected = _select_generation_exercise(
+                session, user, original, used_ids, levels, equipment
+            )
+            if selected is None:
+                omitted_slots += 1
+                continue
+            slot_id = f"d{routine_index}s{slot_index}"
+            routine_slots[slot_id] = (original.muscle_group, original.kind)
+            used_ids.add(selected.id)
+            cardio = selected.kind == ExerciseKind.cardio
+            items.append(
+                RoutineGenerationItemOut(
+                    slot_id=slot_id,
+                    exercise=to_exercise_out(session, selected, user.locale),
+                    target_sets=1 if cardio else 3,
+                    target_reps=0 if cardio else 10,
+                    target_duration_min=20 if cardio else None,
+                    rest_seconds=60 if cardio else 90,
+                )
+            )
+        if not items:
+            raise HTTPException(
+                status.HTTP_409_CONFLICT, detail="ROUTINE_GENERATION_UNAVAILABLE"
+            )
+        generated.append(RoutineGenerationRoutineOut(name=name, items=items))
+        required_slots.append(routine_slots)
+    return RoutineGenerationOut(routines=generated, omitted_slots=omitted_slots), required_slots
+
+
+@router.post("/me/routines/preview", response_model=RoutineGenerationOut)
+def preview_routines(
+    data: RoutineGenerationIn, user: CurrentUser, session: SessionDep
+) -> RoutineGenerationOut:
+    """Gera uma proposta sem gravar rotinas, preservando grupo e tipo por vaga."""
+    preview, _ = _build_generation_preview(session, user, data)
+    return preview
 
 
 @router.get("/me/routines", response_model=list[RoutineOut])
@@ -183,15 +334,26 @@ def training_periodization(
 
 @router.get("/me/routines/{routine_id}/variation", response_model=RoutineVariationOut)
 def routine_variation_endpoint(
-    routine_id: int, user: CurrentUser, session: SessionDep
+    routine_id: int,
+    user: CurrentUser,
+    session: SessionDep,
+    level: str | None = Query(default=None, pattern="^(beginner|intermediate|advanced)$"),
+    equipment_mode: str | None = Query(default=None, pattern="^(free_weights|machines|mixed)$"),
 ) -> RoutineVariationOut:
     """Propoe uma variacao da rotina (exercicios diferentes, mesmo grupo muscular)."""
     routine = _get_owned_routine(session, routine_id, user.id)
-    return routine_variation(session, routine, user.locale)
+    return routine_variation(
+        session,
+        routine,
+        user.locale,
+        _allowed_levels(level) if level else None,
+        _equipment_options(equipment_mode) if equipment_mode else None,
+    )
 
 
 @router.post("/me/routines", response_model=RoutineOut, status_code=status.HTTP_201_CREATED)
 def create_routine(data: RoutineIn, user: CurrentUser, session: SessionDep) -> RoutineOut:
+    _lock_workout_state(session, user.id)
     count = len(session.exec(select(Routine.id).where(Routine.user_id == user.id)).all())
     routine = Routine(user_id=user.id, name=data.name, position=count)
     session.add(routine)
@@ -222,6 +384,164 @@ def _add_items(
         )
 
 
+@router.post("/me/routines/apply", response_model=RoutinePlanOut)
+def apply_routine_plan(
+    data: RoutinePlanIn, user: CurrentUser, session: SessionDep
+) -> RoutinePlanOut:
+    """Aplica a proposta aceita numa transacao e guarda o recibo idempotente."""
+    _lock_workout_state(session, user.id)
+    payload = data.model_dump(mode="json", exclude={"operation_key"})
+    request_hash = hashlib.sha256(
+        json.dumps(payload, sort_keys=True, separators=(",", ":")).encode()
+    ).hexdigest()
+    receipt = session.exec(
+        select(WorkoutRoutineReceipt)
+        .where(WorkoutRoutineReceipt.user_id == user.id)
+        .where(WorkoutRoutineReceipt.operation_key == data.operation_key)
+    ).first()
+    if receipt is not None:
+        if receipt.request_hash != request_hash:
+            raise HTTPException(status.HTTP_409_CONFLICT, detail="ROUTINE_OPERATION_KEY_REUSED")
+        return RoutinePlanOut.model_validate(receipt.response_json)
+
+    if data.destination == "replace":
+        active_ids = session.exec(
+            select(Routine.id)
+            .where(Routine.user_id == user.id)
+            .where(Routine.archived_at.is_(None))
+        ).all()
+        if sorted(active_ids) != sorted(data.expected_active_ids):
+            raise HTTPException(status.HTTP_409_CONFLICT, detail="ROUTINE_PLAN_STALE")
+        if any(draft.routine_id is not None for draft in data.routines):
+            raise HTTPException(status.HTTP_400_BAD_REQUEST, detail="ROUTINE_PLAN_INVALID")
+    elif data.expected_active_ids:
+        raise HTTPException(status.HTTP_400_BAD_REQUEST, detail="ROUTINE_PLAN_INVALID")
+
+    updated_source_ids = [
+        draft.routine_id for draft in data.routines if draft.routine_id is not None
+    ]
+    replace_source_ids = data.expected_active_ids if data.destination == "replace" else []
+    all_source_ids = updated_source_ids + data.archive_ids + replace_source_ids + data.source_ids
+    source_ids = set(all_source_ids)
+    if len(source_ids) != len(all_source_ids):
+        raise HTTPException(status.HTTP_400_BAD_REQUEST, detail="ROUTINE_PLAN_INVALID")
+    if source_ids != set(data.expected_sources):
+        raise HTTPException(status.HTTP_400_BAD_REQUEST, detail="ROUTINE_PLAN_INVALID")
+
+    if data.generation is not None:
+        if (
+            any(draft.routine_id is not None for draft in data.routines)
+            or data.archive_ids
+            or data.source_ids
+            or (
+                data.destination == "append" and data.expected_sources
+            )
+            or (
+                data.destination == "replace"
+                and set(data.expected_sources) != set(data.expected_active_ids)
+            )
+        ):
+            raise HTTPException(status.HTTP_400_BAD_REQUEST, detail="ROUTINE_PLAN_INVALID")
+        generated_preview, required_slots = _build_generation_preview(
+            session, user, data.generation
+        )
+        if len(data.routines) != len(generated_preview.routines):
+            raise HTTPException(status.HTTP_400_BAD_REQUEST, detail="ROUTINE_GENERATION_COVERAGE")
+        levels = _allowed_levels(data.generation.level)
+        equipment = _equipment_options(data.generation.equipment_mode)
+        for draft, allowed_slots in zip(data.routines, required_slots, strict=True):
+            submitted_slots = [item.slot_id for item in draft.items]
+            if (
+                any(slot_id is None for slot_id in submitted_slots)
+                or len(submitted_slots) != len(set(submitted_slots))
+                or set(submitted_slots) != set(allowed_slots)
+            ):
+                raise HTTPException(status.HTTP_400_BAD_REQUEST, detail="ROUTINE_GENERATION_COVERAGE")
+            for item in draft.items:
+                expected_group, expected_kind = allowed_slots[item.slot_id]
+                exercise = _visible_exercise(session, item.exercise_id, user.id)
+                if exercise is None:
+                    raise HTTPException(status.HTTP_400_BAD_REQUEST, detail="EXERCISE_NOT_FOUND")
+                if exercise.muscle_group != expected_group or exercise.kind != expected_kind:
+                    raise HTTPException(status.HTTP_400_BAD_REQUEST, detail="ROUTINE_SLOT_MISMATCH")
+                if exercise.level not in levels or exercise.equipment not in equipment:
+                    raise HTTPException(
+                        status.HTTP_400_BAD_REQUEST,
+                        detail="ROUTINE_ITEM_OUTSIDE_PREFERENCES",
+                    )
+    elif any(item.slot_id is not None for draft in data.routines for item in draft.items):
+        raise HTTPException(status.HTTP_400_BAD_REQUEST, detail="ROUTINE_PLAN_INVALID")
+
+    source_routines: dict[int, Routine] = {}
+    for routine_id in source_ids:
+        routine = _get_owned_routine(session, routine_id, user.id)
+        if routine.archived_at is not None or _routine_revision(routine) != data.expected_sources[routine_id]:
+            raise HTTPException(status.HTTP_409_CONFLICT, detail="ROUTINE_PLAN_STALE")
+        source_routines[routine_id] = routine
+
+    for draft in data.routines:
+        exercise_ids = [item.exercise_id for item in draft.items]
+        if len(exercise_ids) != len(set(exercise_ids)):
+            raise HTTPException(status.HTTP_400_BAD_REQUEST, detail="ROUTINE_ITEMS_DUPLICATED")
+
+    archived_ids: set[int] = set()
+    if data.destination == "replace":
+        archived_ids.update(data.expected_active_ids)
+    archived_ids.update(data.archive_ids)
+    for routine_id in archived_ids:
+        routine = source_routines.get(routine_id)
+        if routine is None:
+            routine = _get_owned_routine(session, routine_id, user.id)
+        _archive(routine)
+        session.add(routine)
+
+    created_or_updated: list[Routine] = []
+    active_positions = session.exec(
+        select(Routine.position)
+        .where(Routine.user_id == user.id)
+        .where(Routine.archived_at.is_(None))
+    ).all()
+    next_position = max(active_positions, default=-1) + 1
+    if data.destination == "replace":
+        next_position = 0
+
+    for offset, draft in enumerate(data.routines):
+        if draft.routine_id is not None:
+            routine = source_routines[draft.routine_id]
+            routine.name = draft.name.strip()
+            _replace_items(session, routine, draft.items, user.id)
+            routine.cycle_started_at = datetime.now(timezone.utc)
+        else:
+            routine = Routine(
+                user_id=user.id,
+                name=draft.name.strip(),
+                position=next_position + offset,
+            )
+            session.add(routine)
+            session.flush()
+            _add_items(session, routine, draft.items, user.id)
+        session.add(routine)
+        created_or_updated.append(routine)
+
+    session.flush()
+    for routine in created_or_updated:
+        session.refresh(routine)
+    result = RoutinePlanOut(
+        routines=[_routine_out(session, routine, user) for routine in created_or_updated],
+        archived_ids=sorted(archived_ids),
+    )
+    session.add(
+        WorkoutRoutineReceipt(
+            user_id=user.id,
+            operation_key=data.operation_key,
+            request_hash=request_hash,
+            response_json=result.model_dump(mode="json"),
+        )
+    )
+    session.commit()
+    return result
+
+
 def _replace_items(
     session: Session, routine: Routine, items: list[RoutineItemIn], user_id: int
 ) -> None:
@@ -247,6 +567,7 @@ def get_routine(routine_id: int, user: CurrentUser, session: SessionDep) -> Rout
 def update_routine(
     routine_id: int, data: RoutineIn, user: CurrentUser, session: SessionDep
 ) -> RoutineOut:
+    _lock_workout_state(session, user.id)
     routine = _get_owned_routine(session, routine_id, user.id)
     routine.name = data.name
     _replace_items(session, routine, data.items, user.id)
@@ -261,6 +582,10 @@ def renew_routines(data: RoutineRenewIn, user: CurrentUser, session: SessionDep)
     """Renova o ciclo de uma ou varias rotinas: troca os exercicios pela variacao
     escolhida e reinicia a validade. Tudo numa transacao so - ou renova todas, ou
     nenhuma (um exercicio invalido no meio nao deixa o programa pela metade)."""
+    _lock_workout_state(session, user.id)
+    renewal_ids = [renewal.routine_id for renewal in data.renewals]
+    if len(renewal_ids) != len(set(renewal_ids)):
+        raise HTTPException(status.HTTP_400_BAD_REQUEST, detail="ROUTINE_PLAN_INVALID")
     renewed_at = datetime.now(timezone.utc)
     routines: list[Routine] = []
     for renewal in data.renewals:
@@ -277,6 +602,7 @@ def renew_routines(data: RoutineRenewIn, user: CurrentUser, session: SessionDep)
 
 @router.delete("/me/routines/{routine_id}", status_code=status.HTTP_204_NO_CONTENT)
 def delete_routine(routine_id: int, user: CurrentUser, session: SessionDep) -> None:
+    _lock_workout_state(session, user.id)
     routine = _get_owned_routine(session, routine_id, user.id)
     # Preserva o histórico: sessões guardam routine_name, então só soltamos o vínculo.
     linked = session.exec(
@@ -301,6 +627,9 @@ def _archive(routine: Routine) -> None:
 @router.post("/me/routines/archive", response_model=list[RoutineOut])
 def archive_routines(data: RoutineArchiveIn, user: CurrentUser, session: SessionDep) -> list[RoutineOut]:
     """Arquiva varias rotinas de uma vez (trocar o ciclo inteiro em uma acao so)."""
+    _lock_workout_state(session, user.id)
+    if len(data.routine_ids) != len(set(data.routine_ids)):
+        raise HTTPException(status.HTTP_400_BAD_REQUEST, detail="ROUTINE_PLAN_INVALID")
     routines = [_get_owned_routine(session, rid, user.id) for rid in data.routine_ids]
     for routine in routines:
         if routine.archived_at is None:
@@ -314,6 +643,7 @@ def archive_routines(data: RoutineArchiveIn, user: CurrentUser, session: Session
 
 @router.post("/me/routines/{routine_id}/archive", response_model=RoutineOut)
 def archive_routine(routine_id: int, user: CurrentUser, session: SessionDep) -> RoutineOut:
+    _lock_workout_state(session, user.id)
     routine = _get_owned_routine(session, routine_id, user.id)
     if routine.archived_at is None:
         _archive(routine)
@@ -327,6 +657,7 @@ def archive_routine(routine_id: int, user: CurrentUser, session: SessionDep) -> 
 def unarchive_routine(routine_id: int, user: CurrentUser, session: SessionDep) -> RoutineOut:
     """Devolve a rotina ao ciclo, sempre como a ULTIMA: reaparecer numa posicao
     antiga bagunca a ordem de quem ja esta treinando o ciclo atual."""
+    _lock_workout_state(session, user.id)
     routine = _get_owned_routine(session, routine_id, user.id)
     positions = session.exec(
         select(Routine.position)
@@ -342,35 +673,6 @@ def unarchive_routine(routine_id: int, user: CurrentUser, session: SessionDep) -
     session.commit()
     session.refresh(routine)
     return _routine_out(session, routine, user)
-
-
-@router.post("/me/routines/from-template", response_model=list[RoutineOut], status_code=status.HTTP_201_CREATED)
-def create_from_template(
-    user: CurrentUser,
-    session: SessionDep,
-    frequency: int = Query(..., ge=2, le=5),
-) -> list[RoutineOut]:
-    template = TEMPLATES.get(frequency)
-    if template is None:
-        raise HTTPException(status.HTTP_400_BAD_REQUEST, detail="TEMPLATE_NOT_FOUND")
-    base = len(session.exec(select(Routine.id).where(Routine.user_id == user.id)).all())
-    created: list[Routine] = []
-    for offset, (name, slugs) in enumerate(template):
-        routine = Routine(user_id=user.id, name=name, position=base + offset)
-        session.add(routine)
-        session.flush()
-        for position, slug in enumerate(slugs):
-            ex = exercise_by_slug(session, slug)
-            if ex is None:
-                continue
-            session.add(
-                RoutineExercise(routine_id=routine.id, exercise_id=ex.id, position=position)
-            )
-        created.append(routine)
-    session.commit()
-    for r in created:
-        session.refresh(r)
-    return [_routine_out(session, r, user) for r in created]
 
 
 # --- Sessões (executar treino) -------------------------------------------
@@ -455,6 +757,8 @@ def complete_routine(
     """Registra o treino como feito conforme planejado, sem passar pela execução
     passo a passo. Cria uma sessão já finalizada com as séries-alvo marcadas.
     Aceita data passada para lançar um treino esquecido."""
+    _lock_workout_state(session, user.id)
+    _lock_workout_state(session, user.id)
     _reject_future_day(data)
     routine = _get_owned_routine(session, routine_id, user.id)
     now = _completed_at(data)
@@ -565,6 +869,7 @@ def sessions_by_day(
 
 @router.post("/me/sessions", response_model=SessionOut, status_code=status.HTTP_201_CREATED)
 def start_session(data: SessionStartIn, user: CurrentUser, session: SessionDep) -> SessionOut:
+    _lock_workout_state(session, user.id)
     # evita sessões duplicadas: reaproveita a ativa com séries, descarta a vazia
     active = _find_active_session(session, user.id)
     if active is not None:

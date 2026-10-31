@@ -37,7 +37,15 @@ const ERROR_MESSAGES: Record<string, () => string> = {
 	CYCLE_DATE_REQUIRED: () => m.error_cycle_date_required(),
 	CYCLE_DATE_FUTURE: () => m.error_cycle_date_future(),
 	WEIGH_IN_FUTURE_DATE: () => m.error_weigh_in_future(),
-	ACTIVITY_DATE_FUTURE: () => m.error_activity_date_future()
+	ACTIVITY_DATE_FUTURE: () => m.error_activity_date_future(),
+	ROUTINE_PLAN_STALE: () => m.error_routine_plan_stale(),
+	ROUTINE_GENERATION_UNAVAILABLE: () => m.error_routine_generation_unavailable(),
+	ROUTINE_PLAN_INVALID: () => m.error_routine_plan_invalid(),
+	ROUTINE_OPERATION_KEY_REUSED: () => m.error_routine_operation_key_reused(),
+	ROUTINE_ITEMS_DUPLICATED: () => m.error_routine_items_duplicated(),
+	ROUTINE_GENERATION_COVERAGE: () => m.error_routine_generation_coverage(),
+	ROUTINE_SLOT_MISMATCH: () => m.error_routine_slot_mismatch(),
+	ROUTINE_ITEM_OUTSIDE_PREFERENCES: () => m.error_routine_item_outside_preferences()
 };
 
 export function errorMessage(code: string): string {

@@ -305,6 +305,50 @@ export interface Routine {
 	items: RoutineItem[];
 	// null = ativa (no ciclo); com data = arquivada (fora do ciclo, mas consultavel)
 	archived_at: string | null;
+	revision: string;
+}
+
+export type RoutineDifficulty = 'beginner' | 'intermediate' | 'advanced';
+export type WorkoutEquipmentMode = 'free_weights' | 'machines' | 'mixed';
+
+export interface RoutineGenerationItem {
+	slot_id: string;
+	exercise: Exercise;
+	target_sets: number;
+	target_reps: number;
+	target_weight_kg: number | null;
+	target_duration_min: number | null;
+	rest_seconds: number;
+}
+
+export interface RoutineGeneration {
+	name: string;
+	items: RoutineGenerationItem[];
+}
+
+export interface RoutineGenerationPreview {
+	routines: RoutineGeneration[];
+	omitted_slots: number;
+}
+
+export interface RoutinePlanInput {
+	operation_key: string;
+	destination: 'append' | 'replace';
+	routines: { routine_id?: number; name: string; items: Array<RoutineItemInput & { slot_id?: string }> }[];
+	expected_active_ids?: number[];
+	expected_sources?: Record<number, string>;
+	source_ids?: number[];
+	archive_ids?: number[];
+	generation?: {
+		frequency: number;
+		level: RoutineDifficulty;
+		equipment_mode: WorkoutEquipmentMode;
+	};
+}
+
+export interface RoutinePlanResult {
+	routines: Routine[];
+	archived_ids: number[];
 }
 
 export interface RoutineItemInput {
@@ -324,6 +368,7 @@ export interface RoutineVariationItem {
 	target_weight_kg: number | null;
 	target_duration_min: number | null;
 	rest_seconds: number;
+	matches_preferences: boolean;
 }
 
 export interface RoutineVariation {
@@ -1215,8 +1260,25 @@ export const api = {
 	getRoutines: (includeArchived = false) =>
 		request<Routine[]>(`/me/routines${includeArchived ? '?include_archived=true' : ''}`),
 	getRoutine: (id: number) => request<Routine>(`/me/routines/${id}`),
-	getRoutineVariation: (id: number) =>
-		request<RoutineVariation>(`/me/routines/${id}/variation`),
+	getRoutineVariation: (
+		id: number,
+		level?: RoutineDifficulty,
+		equipmentMode?: WorkoutEquipmentMode
+	) => {
+		const params = new URLSearchParams();
+		if (level) params.set('level', level);
+		if (equipmentMode) params.set('equipment_mode', equipmentMode);
+		return request<RoutineVariation>(
+			`/me/routines/${id}/variation${params.size ? `?${params.toString()}` : ''}`
+		);
+	},
+	previewRoutines: (frequency: number, level: RoutineDifficulty, equipmentMode: WorkoutEquipmentMode) =>
+		request<RoutineGenerationPreview>('/me/routines/preview', {
+			method: 'POST',
+			body: { frequency, level, equipment_mode: equipmentMode }
+		}),
+	applyRoutinePlan: (plan: RoutinePlanInput) =>
+		request<RoutinePlanResult>('/me/routines/apply', { method: 'POST', body: plan }),
 	createRoutine: (name: string, items: RoutineItemInput[]) =>
 		request<Routine>('/me/routines', { method: 'POST', body: { name, items } }),
 	updateRoutine: (id: number, name: string, items: RoutineItemInput[]) =>
@@ -1232,8 +1294,6 @@ export const api = {
 		request<Routine>(`/me/routines/${id}/unarchive`, { method: 'POST' }),
 	archiveRoutines: (routineIds: number[]) =>
 		request<Routine[]>('/me/routines/archive', { method: 'POST', body: { routine_ids: routineIds } }),
-	createFromTemplate: (frequency: number) =>
-		request<Routine[]>(`/me/routines/from-template?frequency=${frequency}`, { method: 'POST' }),
 	// day ausente = treino de agora. Com day, registra um treino esquecido em data
 	// passada (o backend usa o meio-dia local daquele dia).
 	completeRoutine: (routineId: number, day?: string) =>

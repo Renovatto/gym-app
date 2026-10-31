@@ -427,6 +427,7 @@ class ExerciseOut(BaseModel):
 
 class RoutineItemIn(BaseModel):
     exercise_id: int
+    slot_id: str | None = Field(default=None, max_length=40)
     target_sets: int = Field(default=3, ge=1, le=20)
     target_reps: int = Field(default=10, ge=0, le=100)
     target_weight_kg: float | None = Field(default=None, ge=0, le=1000)
@@ -457,6 +458,54 @@ class RoutineRenewIn(BaseModel):
     renewals: list[RoutineRenewalIn] = Field(min_length=1, max_length=50)
 
 
+class RoutineGenerationIn(BaseModel):
+    frequency: int = Field(ge=2, le=5)
+    level: Literal["beginner", "intermediate", "advanced"]
+    equipment_mode: Literal["free_weights", "machines", "mixed"]
+
+
+class RoutineGenerationItemOut(BaseModel):
+    slot_id: str
+    exercise: ExerciseOut
+    target_sets: int
+    target_reps: int
+    target_weight_kg: float | None = None
+    target_duration_min: int | None = None
+    rest_seconds: int = 90
+
+
+class RoutineGenerationRoutineOut(BaseModel):
+    name: str
+    items: list[RoutineGenerationItemOut]
+
+
+class RoutineGenerationOut(BaseModel):
+    routines: list[RoutineGenerationRoutineOut]
+    omitted_slots: int = 0
+
+
+class RoutineDraftIn(BaseModel):
+    routine_id: int | None = None
+    name: str = Field(min_length=1, max_length=80)
+    items: list[RoutineItemIn] = Field(min_length=1, max_length=30)
+
+
+class RoutinePlanIn(BaseModel):
+    operation_key: str = Field(min_length=16, max_length=80)
+    destination: Literal["append", "replace"]
+    routines: list[RoutineDraftIn] = Field(min_length=1, max_length=50)
+    expected_active_ids: list[int] = Field(default_factory=list, max_length=50)
+    expected_sources: dict[int, str] = Field(default_factory=dict, max_length=50)
+    source_ids: list[int] = Field(default_factory=list, max_length=50)
+    archive_ids: list[int] = Field(default_factory=list, max_length=50)
+    generation: RoutineGenerationIn | None = None
+
+
+class RoutinePlanOut(BaseModel):
+    routines: list["RoutineOut"]
+    archived_ids: list[int]
+
+
 class RoutineItemOut(BaseModel):
     id: int
     exercise: ExerciseOut
@@ -476,6 +525,7 @@ class RoutineOut(BaseModel):
     items: list[RoutineItemOut]
     # None = ativa; com data = arquivada (fora do ciclo, mas consultavel)
     archived_at: datetime | None = None
+    revision: str
 
 
 class SetLogIn(BaseModel):
@@ -934,6 +984,7 @@ class RoutineVariationItemOut(BaseModel):
     target_weight_kg: float | None
     target_duration_min: int | None
     rest_seconds: int
+    matches_preferences: bool = True
 
 
 class RoutineVariationOut(BaseModel):

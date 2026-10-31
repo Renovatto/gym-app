@@ -7,12 +7,12 @@
 """
 
 import random
-from collections import defaultdict
+from collections import Counter, defaultdict
 from datetime import date, timedelta
 
 from sqlmodel import Session, desc, select
 
-from ..models import DiaryEntry, Exercise, Profile, Routine, User, WeightLog
+from ..models import DiaryEntry, Equipment, Exercise, ExerciseLevel, Profile, Routine, User, WeightLog
 from ..schemas import (
     DietAdherenceOut,
     RoutinePeriodizationOut,
@@ -113,26 +113,54 @@ def routines_periodization(
     return out
 
 
-def routine_variation(session: Session, routine: Routine, locale: str) -> RoutineVariationOut:
+def routine_variation(
+    session: Session,
+    routine: Routine,
+    locale: str,
+    allowed_levels: set[ExerciseLevel] | None = None,
+    allowed_equipment: set[Equipment] | None = None,
+) -> RoutineVariationOut:
     """Propoe uma variacao da rotina: troca cada exercicio por outro do MESMO grupo
     muscular (e mesmo tipo), mantendo o esquema de series. Sem alternativa no grupo,
     mantem o exercicio original. Evita repetir exercicio dentro da mesma variacao."""
     used_ids: set[int] = set()
+    remaining_original_ids = Counter(item.exercise_id for item in routine.items)
     items: list[RoutineVariationItemOut] = []
     for item in routine.items:
+        remaining_original_ids[item.exercise_id] -= 1
         original = session.get(Exercise, item.exercise_id)
         if original is None:
             continue
-        candidates = session.exec(
+        candidate_query = (
             select(Exercise)
             .where((Exercise.user_id.is_(None)) | (Exercise.user_id == routine.user_id))
             .where(Exercise.muscle_group == original.muscle_group)
             .where(Exercise.kind == original.kind)
             .where(Exercise.id != original.id)
-        ).all()
-        pool = [c for c in candidates if c.id not in used_ids]
+        )
+        if allowed_levels is not None:
+            candidate_query = candidate_query.where(Exercise.level.in_(allowed_levels))
+        if allowed_equipment is not None:
+            candidate_query = candidate_query.where(Exercise.equipment.in_(allowed_equipment))
+        candidates = session.exec(candidate_query).all()
+        reserved_ids = {
+            exercise_id
+            for exercise_id, count in remaining_original_ids.items()
+            if count > 0
+        }
+        pool = [
+            candidate
+            for candidate in candidates
+            if candidate.id not in used_ids and candidate.id not in reserved_ids
+        ]
         chosen = random.choice(pool) if pool else original
         used_ids.add(chosen.id)
+        matches_preferences = (
+            (allowed_levels is None or original.level in allowed_levels)
+            and (allowed_equipment is None or original.equipment in allowed_equipment)
+            if chosen.id == original.id
+            else True
+        )
         items.append(
             RoutineVariationItemOut(
                 original_exercise=to_exercise_out(session, original, locale),
@@ -142,6 +170,7 @@ def routine_variation(session: Session, routine: Routine, locale: str) -> Routin
                 target_weight_kg=item.target_weight_kg,
                 target_duration_min=item.target_duration_min,
                 rest_seconds=item.rest_seconds,
+                matches_preferences=matches_preferences,
             )
         )
     return RoutineVariationOut(routine_id=routine.id, name=routine.name, items=items)
