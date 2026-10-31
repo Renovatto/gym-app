@@ -1,7 +1,7 @@
 from datetime import date, datetime, timezone
 from enum import Enum
 
-from sqlalchemy import Column, UniqueConstraint
+from sqlalchemy import Column, DateTime, UniqueConstraint
 from sqlalchemy.types import JSON
 from sqlmodel import Field, Relationship, SQLModel
 
@@ -306,7 +306,7 @@ class WorkoutRoutineReceipt(SQLModel, table=True):
     operation_key: str = Field(max_length=80)
     request_hash: str = Field(max_length=64)
     response_json: dict = Field(sa_type=JSON)
-    created_at: datetime = Field(default_factory=utcnow)
+    created_at: datetime = Field(default_factory=utcnow, sa_type=DateTime(timezone=True))
 
 
 class WorkoutSession(SQLModel, table=True):

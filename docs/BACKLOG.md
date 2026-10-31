@@ -6,3 +6,4 @@
 - **Status:** concluído (implementação e validação local)
 - **Aprovado em:** 2026-10-30
 - **Correção de regressão (2026-10-31):** escolha rápida e prévia compartilham uma única entrada de Voltar; modais filhas consomem só sua própria profundidade; validado em E2E para adicionar, substituir e trocar exercício.
+- **Correção do deploy (2026-10-31):** modelo declara `created_at` do recibo como timestamp com fuso, igual à migration; `alembic check` local sem diferenças.

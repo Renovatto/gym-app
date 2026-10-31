@@ -86,6 +86,11 @@ class WorkoutRoutinePlanTests(unittest.TestCase):
             ],
         }
 
+    def test_receipt_timestamp_metadata_matches_the_postgres_timezone_column(self):
+        timestamp_type = WorkoutRoutineReceipt.__table__.c.created_at.type
+
+        self.assertTrue(timestamp_type.timezone)
+
     def apply(self, key: str, **overrides) -> dict:
         payload = {
             "operation_key": key,
