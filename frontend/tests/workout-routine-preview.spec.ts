@@ -77,6 +77,74 @@ async function setupRoutinePreview(
 		const path = url.pathname;
 		if (path === '/me') return route.fulfill({ json: { id: 1, locale: 'pt-BR', has_profile: true, plan: 'free', is_admin: false } });
 		if (path === '/me/news') return route.fulfill({ json: { items: [], unread_count: 0, pending_important: null } });
+		if (path === '/me/sessions/42' && request.method() === 'GET') {
+			return route.fulfill({
+				json: {
+					id: 42,
+					routine_id: 7,
+					routine_name: 'Treino A',
+					started_at: '2026-10-31T08:00:00',
+					finished_at: null,
+					paused_at: null,
+					paused_seconds: 0,
+					exercise_order: [],
+					sets: [],
+					swaps: []
+				}
+			});
+		}
+		if (path === '/me/routines/7' && request.method() === 'GET') {
+			return route.fulfill({
+				json: {
+					id: 7,
+					name: 'Treino A',
+					position: 0,
+					archived_at: null,
+					revision: 'revision-7',
+					items: [{
+						id: 71,
+						exercise,
+						position: 0,
+						target_sets: 3,
+						target_reps: 10,
+						target_weight_kg: null,
+						target_duration_min: null,
+						rest_seconds: 90,
+						last_weight_kg: null
+					}]
+				}
+			});
+		}
+		if (path === '/exercises/901/alternatives') {
+			return route.fulfill({
+				json: [
+					{
+						exercise: {
+							...exercise,
+							id: 903,
+							slug: 'voador-maquina',
+							name: 'Voador máquina',
+							equipment: 'machine',
+							media_urls: ['data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 2 2"%3E%3C/svg%3E']
+						},
+						last_weight_kg: null,
+						same_equipment: false
+					},
+					{
+						exercise: {
+							...exercise,
+							id: 904,
+							slug: 'crucifixo-maquina',
+							name: 'Crucifixo máquina',
+							equipment: 'machine',
+							media_urls: ['data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 2 2"%3E%3C/svg%3E']
+						},
+						last_weight_kg: null,
+						same_equipment: false
+					}
+				]
+			});
+		}
 		if (path === '/me/routines' && request.method() === 'GET') return route.fulfill({ json: routines });
 		if (path === '/me/routines/preview' && request.method() === 'POST') {
 			previewRequests.push(request.postDataJSON());
@@ -85,13 +153,24 @@ async function setupRoutinePreview(
 		}
 		if (path === '/exercises') {
 			return route.fulfill({
-				json: [{
-					...exercise,
-					id: 903,
-					slug: 'voador-maquina',
-					name: 'Voador máquina',
-					equipment: 'machine'
-				}]
+				json: [
+					{
+						...exercise,
+						id: 903,
+						slug: 'voador-maquina',
+						name: 'Voador máquina',
+						equipment: 'machine',
+						media_urls: ['data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 2 2"%3E%3C/svg%3E']
+					},
+					{
+						...exercise,
+						id: 904,
+						slug: 'crucifixo-maquina',
+						name: 'Crucifixo máquina',
+						equipment: 'machine',
+						media_urls: ['data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 2 2"%3E%3C/svg%3E']
+					}
+				]
 			});
 		}
 		if (path === '/me/routines/apply' && request.method() === 'POST') {
@@ -190,7 +269,7 @@ test('locks generation preferences and keeps preview open when replacing an exer
 	await expect(page.getByText('Revise seu novo ciclo')).toBeVisible();
 	await page.getByRole('button', { name: 'Trocar' }).first().click();
 	await expect(page.getByText('Voador máquina')).toBeVisible();
-	await page.getByRole('button', { name: '+' }).last().click();
+	await page.getByText('Voador máquina').locator('xpath=../..').getByRole('button', { name: '+' }).click();
 	await expect(page.getByText('Revise seu novo ciclo')).toBeVisible();
 	await page.getByRole('button', { name: 'Confirmar ciclo' }).click();
 	await expect.poll(() => requests.applyRequests.length).toBe(1);
@@ -198,6 +277,60 @@ test('locks generation preferences and keeps preview open when replacing an exer
 		generation: { frequency: 2, level: 'intermediate', equipment_mode: 'mixed' }
 	});
 	expect(requests.applyRequests[0].routines[0].items[0].exercise_id).toBe(903);
+});
+
+test('closing exercise photos keeps the swap picker and workout preview open', async ({ page }) => {
+	await setupRoutinePreview(page);
+	await page.goto('/treino');
+	await page.getByRole('button', { name: '2× dias/semana' }).click();
+	await expect(page.getByText('Revise seu novo ciclo')).toBeVisible();
+	await page.getByRole('button', { name: 'Trocar' }).first().click();
+	await expect(page.getByRole('textbox', { name: 'Buscar exercício…' })).toBeVisible();
+
+	await page.getByRole('button', { name: 'Ver foto' }).first().click();
+	await expect(page.getByRole('dialog').last().getByRole('heading', { name: 'Voador máquina' })).toBeVisible();
+	await page.goBack();
+	await expect(page.getByRole('textbox', { name: 'Buscar exercício…' })).toBeVisible();
+	await expect(page.getByText('Revise seu novo ciclo')).toBeVisible();
+
+	await page.getByRole('button', { name: 'Ver foto' }).nth(1).click();
+	await expect(page.getByRole('dialog').last().getByRole('heading', { name: 'Crucifixo máquina' })).toBeVisible();
+	await page.getByRole('button', { name: 'Fechar' }).last().click();
+	await expect(page.getByRole('textbox', { name: 'Buscar exercício…' })).toBeVisible();
+	await expect(page.getByText('Revise seu novo ciclo')).toBeVisible();
+});
+
+test('closing photos during an active-session swap preserves the exercise browser', async ({ page }) => {
+	await setupRoutinePreview(page);
+	await page.goto('/treino/sessao/42');
+	await expect(page.getByText('Supino com halteres')).toBeVisible();
+	await page.getByRole('button', { name: 'Trocar exercício' }).click();
+	await expect(page.getByRole('heading', { name: 'Trocar só hoje' })).toBeVisible();
+	await expect(page.getByText('Voador máquina')).toBeVisible();
+	await page.getByRole('button', { name: 'Ver foto' }).nth(1).click();
+	await expect(page.getByRole('dialog').last().getByRole('heading', { name: 'Voador máquina' })).toBeVisible();
+	await page.getByRole('button', { name: 'Fechar' }).last().click();
+	await expect(page.getByRole('heading', { name: 'Trocar só hoje' })).toBeVisible();
+	await expect(page.getByText('Voador máquina')).toBeVisible();
+	await page.getByRole('button', { name: 'Ver foto' }).nth(2).click();
+	await expect(page.getByRole('dialog').last().getByRole('heading', { name: 'Crucifixo máquina' })).toBeVisible();
+	await page.getByRole('button', { name: 'Fechar' }).last().click();
+	await expect(page.getByRole('heading', { name: 'Trocar só hoje' })).toBeVisible();
+
+	await page.getByRole('button', { name: 'Buscar outro exercício' }).click();
+	await expect(page.getByRole('textbox', { name: 'Buscar exercício…' })).toBeVisible();
+
+	await page.getByRole('button', { name: 'Ver foto' }).nth(1).click();
+	await expect(page.getByRole('dialog').last().getByRole('heading', { name: 'Voador máquina' })).toBeVisible();
+	await page.getByRole('button', { name: 'Fechar' }).last().click();
+	await expect(page.getByRole('textbox', { name: 'Buscar exercício…' })).toBeVisible();
+	await expect(page.getByRole('heading', { name: 'Trocar só hoje' })).toBeVisible();
+
+	await page.getByRole('button', { name: 'Ver foto' }).nth(2).click();
+	await expect(page.getByRole('dialog').last().getByRole('heading', { name: 'Crucifixo máquina' })).toBeVisible();
+	await page.goBack();
+	await expect(page.getByRole('textbox', { name: 'Buscar exercício…' })).toBeVisible();
+	await expect(page.getByRole('heading', { name: 'Trocar só hoje' })).toBeVisible();
 });
 
 for (const destination of ['Adicionar aos atuais', 'Substituir os atuais']) {
