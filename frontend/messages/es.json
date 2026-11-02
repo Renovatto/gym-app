@@ -597,6 +597,8 @@
 	"repeat_meal_no_entry": "No se registró {meal} en esta fecha.",
 	"repeat_meal_copy_action": "Copiar",
 	"repeat_meal_yesterday_action": "Ayer",
+	"repeat_meal_preview_title": "Elementos de esta comida",
+	"repeat_meal_preview_loading": "Cargando vista previa...",
 	"meal_copied": "Comida copiada al {date}",
 	"repeat_day_confirm": "¿Repetir todo el día anterior?",
 	"repeat_previous_day": "Repetir todo el día anterior",

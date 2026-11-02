@@ -597,6 +597,8 @@
 	"repeat_meal_no_entry": "No {meal} was logged on this date.",
 	"repeat_meal_copy_action": "Copy",
 	"repeat_meal_yesterday_action": "Yesterday",
+	"repeat_meal_preview_title": "Items in this meal",
+	"repeat_meal_preview_loading": "Loading preview...",
 	"meal_copied": "Meal copied to {date}",
 	"repeat_day_confirm": "Repeat the entire previous day?",
 	"repeat_previous_day": "Repeat the entire previous day",

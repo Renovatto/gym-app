@@ -597,6 +597,8 @@
 	"repeat_meal_no_entry": "Não houve lançamento de {meal} nesta data.",
 	"repeat_meal_copy_action": "Copiar",
 	"repeat_meal_yesterday_action": "Ontem",
+	"repeat_meal_preview_title": "Itens desta refeição",
+	"repeat_meal_preview_loading": "Carregando prévia...",
 	"meal_copied": "Refeição copiada para {date}",
 	"repeat_day_confirm": "Repetir todo o dia anterior?",
 	"repeat_previous_day": "Repetir todo o dia anterior",

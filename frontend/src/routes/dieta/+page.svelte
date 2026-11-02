@@ -82,6 +82,10 @@
 	let mealCopyRange = $state<{ min: string; max: string } | null>(null);
 	let mealCopyLoggedDays = $state<Set<string>>(new Set());
 	let loadingMealCopyDays = $state(false);
+	let mealCopyPreview = $state<DiaryEntry[]>([]);
+	let loadingMealCopyPreview = $state(false);
+	let mealCopyPreviewOpen = $state(false);
+	let mealCopyPreviewRequestId = 0;
 
 	// Suplementos (adesao diaria; zero-macro nao entra nos macros)
 	let supplements = $state<SupplementsDay | null>(null);
@@ -486,11 +490,13 @@
 		mealCopyFromDay = shiftDay(requestedDay, -1);
 		mealCopyRange = requestedRange;
 		mealCopyLoggedDays = new Set();
+		mealCopyPreview = [];
 		loadingMealCopyDays = true;
 		try {
 			const days = await api.getDiaryLoggedDays(requestedRange.min, requestedRange.max, meal);
 			if (requestId !== mealCopyRequestId || requestedDay !== day || confirmingRepeatMeal !== meal) return;
 			mealCopyLoggedDays = new Set(days);
+			void loadMealCopyPreview(mealCopyFromDay, meal);
 		} catch (e) {
 			if (requestId !== mealCopyRequestId || requestedDay !== day || confirmingRepeatMeal !== meal) return;
 			showToast(errorMessage(e instanceof ApiError ? e.code : 'GENERIC_ERROR'));
@@ -499,6 +505,35 @@
 			if (requestId === mealCopyRequestId) loadingMealCopyDays = false;
 		}
 	}
+
+	async function loadMealCopyPreview(sourceDay: string, meal: MealType): Promise<void> {
+		const requestId = ++mealCopyPreviewRequestId;
+		loadingMealCopyPreview = true;
+		mealCopyPreview = [];
+		try {
+			const sourceDiary = await api.getDiary(sourceDay);
+			if (requestId !== mealCopyPreviewRequestId || confirmingRepeatMeal !== meal || mealCopyFromDay !== sourceDay) return;
+			mealCopyPreview = sourceDiary.meals.find((group) => group.meal_type === meal)?.entries ?? [];
+		} catch (e) {
+			if (requestId === mealCopyPreviewRequestId) showToast(errorMessage(e instanceof ApiError ? e.code : 'GENERIC_ERROR'));
+		} finally {
+			if (requestId === mealCopyPreviewRequestId) loadingMealCopyPreview = false;
+		}
+	}
+
+	function selectMealCopyDay(sourceDay: string): void {
+		mealCopyFromDay = sourceDay;
+		mealCopyPreviewOpen = true;
+		if (confirmingRepeatMeal) void loadMealCopyPreview(sourceDay, confirmingRepeatMeal);
+	}
+
+	function closeMealCopyPreview(): void {
+		mealCopyPreviewOpen = false;
+	}
+
+	$effect(() => {
+		if (mealCopyPreviewOpen) return closeOnBack(closeMealCopyPreview);
+	});
 
 	const mealCopyUnavailableDays = $derived.by(() => {
 		const unavailable = new Set<string>();
@@ -534,8 +569,10 @@
 		const range = mealCopyRange;
 		if (confirmingRepeatMeal !== meal || !range || !canCopySelectedMeal()) return;
 		mealCopyRequestId += 1;
+		mealCopyPreviewRequestId += 1;
 		confirmingRepeatMeal = null;
 		mealCopyCalendarOpen = false;
+		mealCopyPreviewOpen = false;
 		try {
 			await api.copyPreviousDay(targetDay, sourceDay, meal);
 			if (day === targetDay) await load();
@@ -1937,6 +1974,21 @@
 								{m.repeat_meal_source_date({ date: pdf.format(new Date(mealCopyFromDay + 'T12:00:00')) })}
 							</span>
 						</div>
+						<div class="mt-2 rounded-xl bg-white/80 px-3 py-2">
+							{#if loadingMealCopyPreview}
+								<p class="text-sm text-slate-500">{m.repeat_meal_preview_loading()}</p>
+							{:else}
+								<p class="mb-1 text-xs font-bold uppercase tracking-wide text-slate-500">{m.repeat_meal_preview_title()}</p>
+								<ul class="space-y-1">
+									{#each mealCopyPreview as entry (entry.id)}
+										<li class="flex items-baseline justify-between gap-3 text-sm text-slate-700">
+											<span class="min-w-0 truncate">{entry.name}</span>
+											<span class="shrink-0 text-xs text-slate-500">{entryQuantityLabel(entry)}</span>
+										</li>
+									{/each}
+								</ul>
+							{/if}
+						</div>
 						<div class="mt-2 flex flex-wrap items-center justify-end gap-2">
 							<button
 								type="button"
@@ -1949,7 +2001,7 @@
 							</button>
 							<button
 								type="button"
-								disabled={!canCopySelectedMeal()}
+								disabled={loadingMealCopyPreview || !canCopySelectedMeal()}
 								onclick={() => repeatMeal(meal)}
 								class="h-10 shrink-0 rounded-xl bg-emerald-600 px-4 text-sm font-bold text-white active:bg-emerald-700 disabled:opacity-50"
 							>
@@ -2677,9 +2729,61 @@
 		disabledDays={mealCopyUnavailableDays}
 		disabledHint={m.repeat_meal_no_entry({ meal: mealTypeLabel(confirmingRepeatMeal) })}
 		legend={mealTypeLabel(confirmingRepeatMeal)}
-		onselect={(date) => (mealCopyFromDay = date)}
+		closeOnSelect={false}
+		onselect={selectMealCopyDay}
 		onclose={() => (mealCopyCalendarOpen = false)}
 	/>
+{/if}
+
+{#if mealCopyPreviewOpen && confirmingRepeatMeal}
+	<div
+		class="fixed inset-0 z-[60] flex items-center justify-center bg-black/50 p-4"
+		role="button"
+		tabindex="-1"
+		onclick={closeMealCopyPreview}
+		onkeydown={(event) => {
+			event.stopPropagation();
+			if (event.key === 'Escape') closeMealCopyPreview();
+		}}
+	>
+		<div
+			class="w-full max-w-md rounded-3xl bg-white p-5 shadow-xl"
+			role="dialog"
+			aria-modal="true"
+			tabindex="-1"
+			onclick={(event) => event.stopPropagation()}
+			onkeydown={() => {}}
+		>
+			<div class="flex items-start justify-between gap-3">
+				<div>
+					<p class="text-xs font-bold uppercase tracking-wide text-emerald-700">{mealDisplayLabel(confirmingRepeatMeal)}</p>
+					<h2 class="mt-1 text-lg font-bold text-slate-900">{m.repeat_meal_source_date({ date: pdf.format(new Date(mealCopyFromDay + 'T12:00:00')) })}</h2>
+				</div>
+				<button type="button" aria-label={m.close()} onclick={closeMealCopyPreview} class="grid h-10 w-10 shrink-0 place-items-center rounded-xl text-slate-500 active:bg-slate-100">
+					<svg aria-hidden="true" viewBox="0 0 24 24" class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="m18 6-12 12M6 6l12 12" /></svg>
+				</button>
+			</div>
+			<div class="mt-4 rounded-2xl bg-slate-50 p-3">
+				{#if loadingMealCopyPreview}
+					<p class="text-sm text-slate-500">{m.repeat_meal_preview_loading()}</p>
+				{:else}
+					<p class="mb-2 text-xs font-bold uppercase tracking-wide text-slate-500">{m.repeat_meal_preview_title()}</p>
+					<ul class="space-y-2">
+						{#each mealCopyPreview as entry (entry.id)}
+							<li class="flex items-baseline justify-between gap-3 text-sm text-slate-700">
+								<span class="min-w-0">{entry.name}</span>
+								<span class="shrink-0 text-xs text-slate-500">{entryQuantityLabel(entry)}</span>
+							</li>
+						{/each}
+					</ul>
+				{/if}
+			</div>
+			<div class="mt-4 flex gap-2">
+				<button type="button" onclick={closeMealCopyPreview} class="h-11 flex-1 rounded-xl border border-slate-200 px-4 text-sm font-bold text-slate-700 active:bg-slate-100">{m.cancel()}</button>
+				<button type="button" disabled={loadingMealCopyPreview || !canCopySelectedMeal()} onclick={() => repeatMeal(confirmingRepeatMeal!)} class="h-11 flex-1 rounded-xl bg-emerald-600 px-4 text-sm font-bold text-white active:bg-emerald-700 disabled:opacity-50">{m.repeat_meal_copy_action()}</button>
+			</div>
+		</div>
+	</div>
 {/if}
 
 <!-- Adicionar alimento/receita sem sair da tela: modal que fica aberta para varios itens -->

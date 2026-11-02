@@ -20,6 +20,7 @@
 		disabledDays = new Set<string>(),
 		disabledHint,
 		highlighted,
+		closeOnSelect = true,
 		onselect,
 		onclose,
 		onmonth
@@ -34,6 +35,7 @@
 		disabledDays?: Set<string>;
 		disabledHint?: string;
 		highlighted?: string;
+		closeOnSelect?: boolean;
 		onselect: (date: string) => void;
 		onclose: () => void;
 		onmonth?: (year: number, month: number) => void;
@@ -86,7 +88,7 @@
 			return;
 		}
 		onselect(iso);
-		onclose();
+		if (closeOnSelect) onclose();
 	}
 </script>
 
