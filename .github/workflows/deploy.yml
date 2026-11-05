@@ -78,8 +78,13 @@ jobs:
           path: admin/build/
           retention-days: 7
 
+  # Segundo portao: migracoes do zero, schema alinhado e testes do backend no
+  # Postgres. Roda em todo push na main, mesmo sem mudanca em backend/.
+  backend:
+    uses: ./.github/workflows/backend-migrations.yml
+
   deploy:
-    needs: ci
+    needs: [ci, backend]
     runs-on: ubuntu-latest
 
     steps:

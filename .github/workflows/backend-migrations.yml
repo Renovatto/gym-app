@@ -1,7 +1,11 @@
 name: backend-migrations
 
 on:
+  # Na main quem chama este workflow e o deploy.yml, que so publica se ele passar.
+  # O gatilho de push ignora a main para os testes nao rodarem duas vezes.
+  workflow_call:
   push:
+    branches-ignore: [main]
     paths:
       - "backend/**"
       - ".github/workflows/backend-migrations.yml"
