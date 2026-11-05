@@ -46,6 +46,17 @@ curto; busque o codigo mais claro.
 - Use os modelos explicitamente ao disparar subagentes. Se o modelo solicitado
   nao estiver disponivel, informe a limitacao em vez de substituir silenciosamente.
 
+### Modelos no Claude
+
+- No Claude, todas as regras de subagentes deste arquivo valem iguais, trocando os
+  modelos por estes equivalentes:
+  - `gpt-6-luna` -> `sonnet`
+  - `gpt-6.1-sol` -> `opus`
+  - `gpt-6-astra` -> `fable` (nao utilizar nesta configuracao)
+- Informe explicitamente o modelo e o esforco `medium` ao disparar cada subagente.
+- A politica Luna + Sol, inclusive sua avaliacao, vale como Sonnet + Opus. O revisor
+  dedicado usa `opus` com esforco `medium`.
+
 ### Revisao
 
 - Use um revisor dedicado com `gpt-6.1-sol`, esforco `medium` e contexto separado
@@ -208,4 +219,4 @@ documentadas para o usuario na area de consulta. Nao espalhe formula por varios 
 1. `cd frontend && npx svelte-check --tsconfig ./tsconfig.json` -> 0 erros.
 2. `npm run build` -> sucesso.
 3. Testar endpoints novos com curl.
-4. Mensagem de commit em portugues, sem mencao a IA/Codex.
+4. Mensagem de commit em portugues, sem mencao a IA/Codex/Claude.
