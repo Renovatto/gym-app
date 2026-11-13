@@ -18,6 +18,7 @@
  */
 
 import { build, files, version } from '$service-worker';
+import { shellRequests } from '$lib/sw-shell';
 // Textos dos lembretes por push, importados um a um (e nao o pacote inteiro de
 // mensagens) para o service worker nao carregar o app todo traduzido.
 import {
@@ -55,7 +56,7 @@ worker.addEventListener('install', (event) => {
 	// custo conhecido e uma tela ainda aberta pedir um arquivo que o deploy trocou -
 	// incomodo pontual, contra um bug que faz o app parecer quebrado.
 	worker.skipWaiting();
-	event.waitUntil(caches.open(CACHE_NAME).then((cache) => cache.addAll(SHELL)));
+	event.waitUntil(caches.open(CACHE_NAME).then((cache) => cache.addAll(shellRequests(SHELL, worker.location.origin))));
 });
 
 worker.addEventListener('activate', (event) => {
