@@ -144,6 +144,20 @@ jobs:
           fi
           echo "aplicacao no ar"
 
+      # O HTML e o service worker precisam ir com Cache-Control: no-cache. Sem isso
+      # o navegador guarda o index.html por heuristica e segue rodando um build
+      # antigo depois do deploy (em 13/11/2026 isso deixou o login chamando a API
+      # no dominio antigo). O cabecalho vem do nginx do servidor, fora deste repo.
+      - name: Verificar cache do HTML e do service worker
+        run: |
+          for caminho in / /login /service-worker.js /admin/; do
+            if ! curl -sI -m 20 "https://gymapp.rsaaon.com$caminho" | grep -qi '^cache-control:.*no-cache'; then
+              echo "$caminho sem Cache-Control: no-cache (conferir o nginx do servidor)" >&2
+              exit 1
+            fi
+          done
+          echo "HTML e service worker sempre revalidados"
+
       # Confere o painel separado: publicar o build nao basta, o /admin so existe
       # se o nginx tiver o location apontando para a pasta dele.
       - name: Verificar o painel admin no ar
