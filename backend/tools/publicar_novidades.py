@@ -25,7 +25,7 @@ import os
 import sys
 from urllib import error, request
 
-API_PADRAO = "https://rgymapp.duckdns.org/api"
+API_PADRAO = "https://gymapp.rsaaon.com/api"
 CAMPOS = (
     "published_on",
     "title_pt_br",
