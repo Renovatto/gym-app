@@ -42,7 +42,7 @@ jobs:
       # quais o check falharia por imports inexistentes.
       - name: Build do frontend
         env:
-          VITE_API_URL: https://rgymapp.duckdns.org/api
+          VITE_API_URL: https://gymapp.rsaaon.com/api
         run: npm run build
 
       - name: Checagem de tipos
@@ -65,7 +65,7 @@ jobs:
       - name: Build do painel admin
         working-directory: admin
         env:
-          VITE_API_URL: https://rgymapp.duckdns.org/api
+          VITE_API_URL: https://gymapp.rsaaon.com/api
         run: npm run build
 
       - name: Checagem de tipos do admin
@@ -137,7 +137,7 @@ jobs:
 
       - name: Verificar a aplicacao no ar
         run: |
-          codigo=$(curl -s -o /dev/null -m 20 -w '%{http_code}' https://rgymapp.duckdns.org/)
+          codigo=$(curl -s -o /dev/null -m 20 -w '%{http_code}' https://gymapp.rsaaon.com/)
           if [ "$codigo" != "200" ]; then
             echo "Frontend respondeu $codigo (esperado 200)" >&2
             exit 1
@@ -148,7 +148,7 @@ jobs:
       # se o nginx tiver o location apontando para a pasta dele.
       - name: Verificar o painel admin no ar
         run: |
-          codigo=$(curl -s -o /dev/null -m 20 -w '%{http_code}' https://rgymapp.duckdns.org/admin/)
+          codigo=$(curl -s -o /dev/null -m 20 -w '%{http_code}' https://gymapp.rsaaon.com/admin/)
           if [ "$codigo" != "200" ]; then
             echo "Painel admin respondeu $codigo (esperado 200)" >&2
             exit 1

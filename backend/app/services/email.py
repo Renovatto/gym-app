@@ -173,7 +173,7 @@ def _render_email_html(
 </td></tr>
 <tr><td align="center" style="padding:14px 0 4px;"><p style="margin:0;font-family:{_FONT_STACK};font-size:14px;line-height:20px;color:{_SLATE_500};">{footnote}</p></td></tr>
 <tr><td style="padding:24px 0 0;"><div style="border-top:1px solid {_SLATE_200};font-size:1px;line-height:1px;">&nbsp;</div></td></tr>
-<tr><td align="center" style="padding:20px 0 4px;"><p style="margin:0;font-family:{_FONT_STACK};font-size:12px;line-height:18px;color:{_SLATE_400};">Gym App &middot; rgymapp.duckdns.org<br>{ignore_note}</p></td></tr>
+<tr><td align="center" style="padding:20px 0 4px;"><p style="margin:0;font-family:{_FONT_STACK};font-size:12px;line-height:18px;color:{_SLATE_400};">Gym App &middot; gymapp.rsaaon.com<br>{ignore_note}</p></td></tr>
 <tr><td align="center" style="padding:12px 0 32px;"><p style="margin:0;font-family:{_FONT_STACK};font-size:12px;line-height:18px;color:{_SLATE_400};word-break:break-all;">{link_fallback_lead}<br><a href="{button_url}" style="color:{_SLATE_500};">{button_url}</a></p></td></tr>
 </table>
 </td>
